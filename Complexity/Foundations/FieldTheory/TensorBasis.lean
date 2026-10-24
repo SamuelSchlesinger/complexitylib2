@@ -24,7 +24,7 @@ import Mathlib.RingTheory.Polynomial.Basic
 
 Let `E / K` be a finite field extension of degree `∏ᵢ mᵢ`, with the `mᵢ` pairwise coprime, and let
 `αᵢ ∈ E` have minimal polynomials of degree `mᵢ`. Then the monomials `∏ᵢ αᵢ ^ Jᵢ`, `Jᵢ < mᵢ`, form
-a `K`-basis of `E` (`Cslib.AffineDisperser.prodPowBasis`), the basis that the tensor product
+a `K`-basis of `E` (`Cslib.prodPowBasis`), the basis that the tensor product
 `⨂ᵢ K[X] / (minpoly αᵢ)` would have.
 
 The proof counts. The span of the monomials is closed under multiplication by each `αᵢ`, since
@@ -37,19 +37,19 @@ irreducible polynomials of the small degrees `pᵢ`, which can be found by exhau
 
 ## Main definitions
 
-* `Cslib.AffineDisperser.prodPowBasis`: the monomial basis `J ↦ ∏ᵢ αᵢ ^ Jᵢ`.
+* `Cslib.prodPowBasis`: the monomial basis `J ↦ ∏ᵢ αᵢ ^ Jᵢ`.
 
 ## Main results
 
-* `Cslib.AffineDisperser.top_le_span_prod_pow`: the monomials span `E`.
-* `Cslib.AffineDisperser.prodPowBasis_apply`: the basis vectors are the monomials.
-* `Cslib.AffineDisperser.prodPowBasis_mul_prodPowBasis`: the structure constants of the basis,
+* `Cslib.top_le_span_prod_pow`: the monomials span `E`.
+* `Cslib.prodPowBasis_apply`: the basis vectors are the monomials.
+* `Cslib.prodPowBasis_mul_prodPowBasis`: the structure constants of the basis,
   from the remainders of the powers `αᵢ ^ e`, `e < 2 mᵢ`.
 -/
 
 @[expose] public section
 
-namespace Cslib.AffineDisperser
+namespace Cslib
 
 open Function Module Polynomial
 
@@ -202,4 +202,4 @@ theorem prodPowBasis_mul_prodPowBasis (hm : Pairwise (Nat.Coprime on m))
   refine Finset.sum_congr rfl fun M _ => ?_
   simp_rw [Algebra.smul_def, Finset.prod_mul_distrib, map_prod]
 
-end Cslib.AffineDisperser
+end Cslib

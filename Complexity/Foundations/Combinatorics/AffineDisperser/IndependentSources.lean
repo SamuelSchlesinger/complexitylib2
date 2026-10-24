@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Foundations.Combinatorics.AffineDisperser.Moore
+public import Complexity.Foundations.LinearAlgebra.Matrix.Moore
 public import Mathlib.RingTheory.Trace.Defs
 import Complexity.Foundations.FieldTheory.Finite.ReducedMonomial
 import Mathlib.Algebra.CharP.Lemmas
@@ -32,7 +32,7 @@ The proof follows [BenSassonKopparty2012]. Parametrize `Yᵢ` by its image-subsp
 `Qᵢ`; then `w ↦ Tr (μ ∏ᵢ Δ(Qᵢ ∘ wᵢ))` is a reduced polynomial function whose coefficient at
 `∏ᵢ ∏ₗ wᵢₗ ^ 2 ^ τᵢₗ` is `∑_ρ μ ^ 2 ^ ρ ∏ᵢ per(Mᵢ[τᵢ - ρ]) ^ 2 ^ ρ`, where
 `Mᵢ[τ] = (aᵢ (τ l - m) ^ 2 ^ m)`. Using the zero pattern of the coefficients `aᵢ`
-(`Cslib.AffineDisperser.CoeffPattern`) we choose `τ` so that every `Mᵢ[τᵢ]` is triangular with
+(`Cslib.CoeffPattern`) we choose `τ` so that every `Mᵢ[τᵢ]` is triangular with
 nonzero diagonal while for every rotation `ρ ≠ 0` some `Mᵢ[τᵢ - ρ]` has a zero row
 [BenSassonKopparty2012, Claims 6.2 and 6.3]. That coefficient is then `μ ∏ᵢ per(Mᵢ[τᵢ]) ≠ 0`,
 and a reduced polynomial with a nonzero coefficient is a nonzero function
@@ -290,7 +290,7 @@ omit [NeZero n] in
 private theorem permanent_ne_zero_of_isTriangular [CharP F 2] {τ : Fin k → ZMod n}
     (h : IsTriangular a τ) :
     (Matrix.of fun l m : Fin k => a (τ l - (m : ℕ)) ^ 2 ^ (m : ℕ)).permanent ≠ 0 := by
-  rw [← det_eq_permanent, Matrix.det_of_isUpperTriangular]
+  rw [← Matrix.det_eq_permanent_of_charTwo, Matrix.det_of_isUpperTriangular]
   · exact Finset.prod_ne_zero_iff.2 fun l _ => pow_ne_zero _ (h.1 l)
   · intro l m hml
     simp [h.2 l m hml]
@@ -319,7 +319,6 @@ theorem exists_trace_mul_prod_det_mooreMatrix_ne_zero {ι : Type*} [Fintype ι] 
     ∃ u : (i : ι) → Fin (k i) → F, (∀ i l, u i l ∈ Y i) ∧
       Algebra.trace (ZMod 2) F (μ * ∏ i, (mooreMatrix (u i)).det) ≠ 0 := by
   classical
-  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   cases nonempty_fintype F
   have hn0 : 0 < n := hn ▸ Module.finrank_pos
   have : NeZero n := ⟨hn0.ne'⟩
@@ -347,7 +346,7 @@ theorem exists_trace_mul_prod_det_mooreMatrix_ne_zero {ι : Type*} [Fintype ι] 
       ∑ τ' : (i : ι) → Fin (k i) → ZMod n, C τ' * ∏ i, ∏ l, w i l ^ 2 ^ (τ' i l).val := by
     intro w
     rw [FiniteField.algebraMap_trace_eq_sum_pow, hn, Nat.card_zmod]
-    simp_rw [det_eq_permanent, permanent_mooreMatrix_linearizedEval hn]
+    simp_rw [Matrix.det_eq_permanent_of_charTwo, permanent_mooreMatrix_linearizedEval hn]
     have hrot : ∀ (ρ : ℕ) (i : ι),
         (∑ σ : Fin (k i) → ZMod n, P i σ * ∏ l, w i l ^ 2 ^ (σ l).val) ^ 2 ^ ρ =
           ∑ σ : Fin (k i) → ZMod n,

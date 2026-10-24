@@ -120,7 +120,7 @@ info: 'Cslib.AffineDisperser.isMulTable_monomialTable' depends on axioms:
 #print axioms isMulTable_monomialTable
 
 /--
-info: 'Cslib.AffineDisperser.prodPowBasis_mul_prodPowBasis' depends on axioms:
+info: 'Cslib.prodPowBasis_mul_prodPowBasis' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

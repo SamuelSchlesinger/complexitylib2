@@ -9,7 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Foundations.Combinatorics.AffineDisperser.IndependentSources
-public import Complexity.Foundations.Combinatorics.AffineDisperser.PivotSpace
+public import Complexity.Foundations.LinearAlgebra.PivotSpace
 public import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 public import Mathlib.RingTheory.MvPolynomial.Symmetric.Defs
 import Mathlib.Algebra.CharP.Lemmas
@@ -206,7 +206,6 @@ theorem exists_traceSym_ne {n s r t : ℕ} (hn : finrank (ZMod 2) F = n)
       finrank (ZMod 2) A.direction) :
     ∃ x ∈ A, ∃ y ∈ A, traceSym μ r t x ≠ traceSym μ r t y := by
   classical
-  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   cases nonempty_fintype F
   set M := max (r + 1) s with hM
   have h2 : n * r < t * (n * r / t + 1) := Nat.lt_mul_div_succ (n * r) ht
@@ -338,7 +337,8 @@ theorem exists_traceSym_ne {n s r t : ℕ} (hn : finrank (ZMod 2) F = n)
   have hI₀term : ∑ c : κ → ZMod 2, ∏ j ∈ I₀, x c j ^ (2 ^ (r + 1 - j) - 1) =
       ∏ i : I₀, (mooreMatrix (u i)).det := by
     simp_rw [hprod I₀]
-    rw [Cslib.sum_cube_prod_affine_eq_permanent, ← det_eq_permanent, ← Matrix.det_transpose]
+    rw [Cslib.sum_cube_prod_affine_eq_permanent, ← Matrix.det_eq_permanent_of_charTwo,
+      ← Matrix.det_transpose]
     have hblock : (Matrix.of fun p q : κ => v q.1 q.2 p.1 ^ 2 ^ (p.2 : ℕ)).transpose.BlockTriangular
         Sigma.fst := by
       intro q p hpq

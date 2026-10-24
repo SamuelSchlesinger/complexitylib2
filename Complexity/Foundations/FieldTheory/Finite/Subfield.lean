@@ -86,12 +86,16 @@ theorem card_sq_le_of_ne_top {K : Subfield F} (hK : K ≠ ⊤) : Nat.card K ^ 2 
 
 variable [Algebra (ZMod 2) F]
 
+/-- A nontrivial `𝔽₂`-algebra has characteristic two. -/
+instance charP_two_of_algebra_zmod_two (R : Type*) [Ring R] [Nontrivial R] [Algebra (ZMod 2) R] :
+    CharP R 2 :=
+  charP_of_injective_algebraMap' (ZMod 2) 2
+
 /-- **Subfields of `𝔽_{2 ^ n}`**: if every prime factor of `n` exceeds `L`, every proper subfield
 of a field with `2 ^ n` elements has at most `2 ^ (n / (L + 1))` elements. -/
 theorem card_subfield_le_of_lt_prime {n L : ℕ} (hn : finrank (ZMod 2) F = n)
     (hL : ∀ q, q.Prime → q ∣ n → L < q) (K : Subfield F) (hK : K ≠ ⊤) :
     Nat.card K ≤ 2 ^ (n / (L + 1)) := by
-  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   cases nonempty_fintype F
   have : CharP K 2 := K.subtype.charP Subtype.val_injective 2
   have : Fintype K := Fintype.ofFinite K

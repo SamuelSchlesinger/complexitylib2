@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Foundations.FieldTheory.Finite.Subfield
 public import Mathlib.Algebra.Algebra.ZMod
 public import Mathlib.Algebra.Field.Subfield.Basic
 public import Mathlib.Algebra.Module.ZMod
@@ -42,23 +43,22 @@ composite-degree fields.
 
 ## Main definitions
 
-* `Cslib.AffineDisperser.IsLinearized`: every exponent of a polynomial is a power of two.
-* `Cslib.AffineDisperser.IsLinearized.toLinearMap`: the `𝔽₂`-linear map given by evaluating a
-  linearized polynomial.
-* `Cslib.AffineDisperser.subspacePoly`: the subspace polynomial of a finite family.
-* `Cslib.AffineDisperser.linearizedEval`: evaluation of a coefficient vector indexed by `ZMod n`.
-* `Cslib.AffineDisperser.CoeffPattern`: the zero pattern of an image-subspace polynomial.
+* `Cslib.IsLinearized`: every exponent of a polynomial is a power of two.
+* `Cslib.IsLinearized.toLinearMap`: the `𝔽₂`-linear map given by evaluating a linearized
+  polynomial.
+* `Cslib.subspacePoly`: the subspace polynomial of a finite family.
+* `Cslib.linearizedEval`: evaluation of a coefficient vector indexed by `ZMod n`.
+* `Cslib.CoeffPattern`: the zero pattern of an image-subspace polynomial.
 
 ## Main results
 
-* `Cslib.AffineDisperser.isLinearized_subspacePoly`,
-  `Cslib.AffineDisperser.eval_subspacePoly_eq_zero_iff`: subspace polynomials are linearized and
-  vanish exactly on the span.
-* `Cslib.AffineDisperser.exists_isLinearized_range_eq`: the image-subspace polynomial.
-* `Cslib.AffineDisperser.eq_zero_of_linearizedEval_eq_zero`: a nonzero linearized function of
-  `2`-degree below `m` has fewer than `2 ^ m` roots.
-* `Cslib.AffineDisperser.exists_coeffPattern`: the structural lemma, for subspaces of dimension
-  larger than every proper subfield.
+* `Cslib.isLinearized_subspacePoly`, `Cslib.eval_subspacePoly_eq_zero_iff`: subspace polynomials
+  are linearized and vanish exactly on the span.
+* `Cslib.exists_isLinearized_range_eq`: the image-subspace polynomial.
+* `Cslib.eq_zero_of_linearizedEval_eq_zero`: a nonzero linearized function of `2`-degree below `m`
+  has fewer than `2 ^ m` roots.
+* `Cslib.exists_coeffPattern`: the structural lemma, for subspaces of dimension larger than every
+  proper subfield.
 
 ## References
 
@@ -68,7 +68,7 @@ composite-degree fields.
 
 @[expose] public section
 
-namespace Cslib.AffineDisperser
+namespace Cslib
 
 open Polynomial Module
 
@@ -159,9 +159,7 @@ def IsLinearized.toLinearMap [Algebra (ZMod 2) F] {P : F[X]} (hP : IsLinearized 
   AddMonoidHom.toZModLinearMap 2
     { toFun := P.eval
       map_zero' := hP.eval_zero
-      map_add' := by
-        have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
-        exact hP.eval_add }
+      map_add' := hP.eval_add }
 
 /-- The linear map of a linearized polynomial `P` sends `x` to `P.eval x`. -/
 @[simp]
@@ -206,7 +204,6 @@ theorem subspacePoly_snoc {m : ℕ} (b : Fin m → F) (v : F) :
 
 /-- Subspace polynomials are linearized [Ore1933]. -/
 theorem isLinearized_subspacePoly {m : ℕ} (b : Fin m → F) : IsLinearized (subspacePoly b) := by
-  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   induction m with
   | zero =>
     have : subspacePoly b = X := by simp [subspacePoly]
@@ -236,7 +233,6 @@ theorem exists_isLinearized_range_eq [Finite F] (W : Submodule (ZMod 2) F) :
       Q.natDegree = 2 ^ (finrank (ZMod 2) F - finrank (ZMod 2) W) ∧
       ∀ y, y ∈ W ↔ ∃ x, Q.eval x = y := by
   classical
-  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   cases nonempty_fintype F
   have hcard : Fintype.card F = 2 ^ finrank (ZMod 2) F := by
     rw [Module.card_eq_pow_finrank (K := ZMod 2) (V := F), ZMod.card]
@@ -354,7 +350,6 @@ theorem pow_two_pow_mod [Finite F] {n : ℕ} (hn : finrank (ZMod 2) F = n) (x : 
 theorem linearizedEval_pow_two_pow [Finite F] {n : ℕ} [NeZero n] (hn : finrank (ZMod 2) F = n)
     (a : ZMod n → F) (k : ℕ) (x : F) :
     linearizedEval a x ^ 2 ^ k = linearizedEval (fun j => a (j - (k : ZMod n)) ^ 2 ^ k) x := by
-  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   rw [linearizedEval, sum_pow_char_pow, linearizedEval]
   refine Fintype.sum_equiv (Equiv.addRight (k : ZMod n)) _ _ fun j => ?_
   rw [Equiv.coe_addRight, add_sub_cancel_right, mul_pow, ← pow_mul, ← pow_add,
@@ -411,7 +406,6 @@ theorem exists_subfield_card_le [Finite F] {n k : ℕ} (hn : finrank (ZMod 2) F 
     ∃ K : Subfield F, K ≠ ⊤ ∧ Nat.card W ≤ Nat.card K := by
   classical
   cases nonempty_fintype F
-  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   let K := RingHom.eqLocusField (iterateFrobenius F 2 k) (RingHom.id F)
   have hmem : ∀ x, x ∈ K ↔ x ^ 2 ^ k = x := fun x => by
     simp [K, RingHom.eqLocusField, iterateFrobenius_def]
@@ -469,7 +463,6 @@ theorem exists_coeffPattern [Finite F] {n s : ℕ} [NeZero n] (hn : finrank (ZMo
     (hsW : s < finrank (ZMod 2) W) :
     ∃ a : ZMod n → F, (∀ x, linearizedEval a x ∈ W) ∧ CoeffPattern n (finrank (ZMod 2) W) a := by
   classical
-  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   cases nonempty_fintype F
   obtain ⟨Q, hQ, hQm, hQdeg, hQW⟩ := exists_isLinearized_range_eq W
   obtain ⟨d, hd⟩ : ∃ d, finrank (ZMod 2) W = d := ⟨_, rfl⟩
@@ -609,4 +602,4 @@ theorem exists_coeffPattern [Finite F] {n s : ℕ} [NeZero n] (hn : finrank (ZMo
     have := (hWcard ▸ hcard).trans (hs K hK)
     exact absurd ((Nat.pow_le_pow_iff_right (by norm_num)).1 this) (by omega)
 
-end Cslib.AffineDisperser
+end Cslib

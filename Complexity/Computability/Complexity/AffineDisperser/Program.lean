@@ -21,7 +21,7 @@ The explicit disperser on `N` bits works in the field `𝔽_{2 ^ n}`, `n = p₁ 
 basis `∏ᵢ αᵢ ^ Jᵢ` in roots `αᵢ` of the least-code irreducible polynomials `gᵢ` of the prime
 degrees `pᵢ`. Its multiplication table depends only on the `gᵢ`: coordinate `M` of the product of
 the monomials `J` and `K` is the product over `i` of the coefficient of `X ^ Mᵢ` in the remainder of
-`X ^ (Jᵢ + Kᵢ)` modulo `gᵢ` (`Cslib.AffineDisperser.prodPowBasis_mul_prodPowBasis`). With the
+`X ^ (Jᵢ + Kᵢ)` modulo `gᵢ` (`Cslib.prodPowBasis_mul_prodPowBasis`). With the
 monomials numbered in the mixed radix `(p₁, …, pₖ)` (`Cslib.AffineDisperser.mixedDigit`), the
 table is computed from the remainders of the powers of `X` (`Cslib.AffineDisperser.monomialTable`,
 `Cslib.AffineDisperser.isMulTable_monomialTable`), and the polynomials `gᵢ` by exhaustive search

@@ -47,7 +47,7 @@ example (a u : GaloisField 2 3) :
   simp [mooreMatrix, Matrix.det_unique]
 
 -- In characteristic two the determinant is the permanent.
-example (M : Matrix (Fin 3) (Fin 3) (ZMod 2)) : M.det = M.permanent := det_eq_permanent M
+example (M : Matrix (Fin 3) (Fin 3) (ZMod 2)) : M.det = M.permanent := M.det_eq_permanent_of_charTwo
 
 theorem strictAnti_three_sub : StrictAnti fun i : Fin 3 => 3 - (i : ℕ) := fun i j hij =>
   show 3 - (j : ℕ) < 3 - (i : ℕ) by have := j.2; have : (i : ℕ) < j := hij; omega
@@ -232,7 +232,7 @@ info: 'Cslib.AffineDisperser.exists_traceSymBits_ne' depends on axioms:
 #print axioms exists_traceSymBits_ne
 
 /--
-info: 'Cslib.AffineDisperser.top_le_span_prod_pow' depends on axioms:
+info: 'Cslib.top_le_span_prod_pow' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
@@ -246,7 +246,7 @@ info: 'Cslib.card_subfield_le_of_lt_prime' depends on axioms:
 #print axioms card_subfield_le_of_lt_prime
 
 /--
-info: 'Cslib.AffineDisperser.four_pow_le_mul_prod_primesIoc' depends on axioms:
+info: 'Cslib.four_pow_le_mul_prod_primesIoc' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
@@ -290,21 +290,21 @@ info: 'Cslib.AffineDisperser.eq_of_covering' depends on axioms:
 #print axioms eq_of_covering
 
 /--
-info: 'Cslib.AffineDisperser.exists_coeffPattern' depends on axioms:
+info: 'Cslib.exists_coeffPattern' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms exists_coeffPattern
 
 /--
-info: 'Cslib.AffineDisperser.exists_isLinearized_range_eq' depends on axioms:
+info: 'Cslib.exists_isLinearized_range_eq' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms exists_isLinearized_range_eq
 
 /--
-info: 'Cslib.AffineDisperser.sum_cube_pow_eq_det_mooreMatrix' depends on axioms:
+info: 'Cslib.sum_cube_pow_eq_det_mooreMatrix' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
