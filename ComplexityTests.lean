@@ -258,6 +258,7 @@ import ComplexityTests.MassProduction.Pipeline
 import ComplexityTests.MassProduction.Scheduler
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MathlibTM2
+import ComplexityTests.MathlibTM2Reverse
 import ComplexityTests.MathlibTM2Space
 import ComplexityTests.MemoizePPT
 import ComplexityTests.ModularGap

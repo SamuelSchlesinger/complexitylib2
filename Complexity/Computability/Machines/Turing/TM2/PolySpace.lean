@@ -20,6 +20,9 @@ All source stacks count towards space, including the initial input and final out
 The terminating-computation theorem derives an exponential clock from the polynomial stack
 bound; it does not require a runtime certificate. The simulation gives polynomial space overhead,
 rather than an assertion of a linear space bound.
+`TM2.Reverse.Transfer` supplies the converse comparison and PSPACE decision equivalence under
+the original binary encodings. Its target counts input and output storage, so it does not
+preserve sublinear native work-space bounds.
 
 ## Main results
 

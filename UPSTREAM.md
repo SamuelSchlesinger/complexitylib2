@@ -50,11 +50,14 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   [Complexitylib PR #72](https://github.com/SamuelSchlesinger/complexitylib/pull/72).
   Its dependent finite-table helpers (`Encodings/DPi` and `Complexity/PolyTime/DPi` under
   `Machines/Turing/MultiTape`) extend the existing table API. Coordinate these helpers with
-  the machine-calculus work above before upstreaming. The bridges preserve polynomial-time
-  computability and transfer terminating polynomial-stack-space computations under explicit word
-  encodings. The latter uses configuration counting and the existing binary-clock iteration API;
-  it claims polynomial space overhead, with input and output stacks counted, rather than linear
-  overhead or a converse class equivalence.
+  the machine-calculus work above before upstreaming. The forward bridges preserve polynomial
+  time and transfer terminating polynomial-stack-space computations, using configuration counting
+  and binary-clock iteration for space. The reverse compiler in `TM2/Reverse` constructs a
+  finite-alphabet `FinTM2`, including canonical `haltList` cleanup, with linear time overhead and
+  total stack length at most input length plus native work space plus output length.
+  `Reverse/Transfer` proves polynomial-time and PSPACE equivalence under the original binary
+  encodings; `TM2/Recoding` supplies the word conversions without decoding the typed embeddings.
+  These comparisons do not preserve sublinear work-space conventions.
 * **Probabilistic programs.** Coordinate the shared `PFunctor.FreeM` API with #1086–#1089 and
   typed oracles with #1129. The copied PMF blocks have their own markers and removal instructions
   in [Probability/PMF.lean](Complexity/Probability/PMF.lean); remove only the merged blocks.
