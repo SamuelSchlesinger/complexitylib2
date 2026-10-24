@@ -83,11 +83,11 @@ namespace Cslib.Complexity
 open Cslib.Logic.PL Turing.MultiTapeTM ComputableTidilyInPolyTime
 
 /-- The graphs whose declared vertices can be colored with `k` colors, adjacent vertices getting
-different colors. -/
+different colors [Karp1972]. -/
 def KColoring (k : ℕ) : Set Graph := {G | (G.toSimpleGraph.induce {v | v ∈ G.1}).Colorable k}
 
 /-- The graphs whose declared vertices can be colored with three colors, adjacent vertices getting
-different colors. -/
+different colors [Sipser, Chapter 7][Sipser2013]. -/
 abbrev ThreeColoring : Set Graph := KColoring 3
 
 /-- Membership in `KColoring k` as a coloring by natural numbers below `k`. -/
@@ -758,7 +758,7 @@ theorem polyTimeReducible_ThreeSAT_ThreeColoring :
 theorem ThreeColoring_npHard : NPHard encGraph ThreeColoring :=
   CookLevin.SAT_npHard.trans polyTimeReducible_SAT_ThreeColoring
 
-/-- **`ThreeColoring` is NP-complete.** -/
+/-- **`ThreeColoring` is NP-complete** [Garey and Johnson][GareyJohnson1979]. -/
 theorem ThreeColoring_npComplete : NPComplete encGraph ThreeColoring :=
   ⟨KColoring.mem_NP 3, ThreeColoring_npHard⟩
 
@@ -774,7 +774,7 @@ theorem polyTimeReducible_SAT_KColoring {k : ℕ} (hk : 3 ≤ k) :
 theorem KColoring_npHard {k : ℕ} (hk : 3 ≤ k) : NPHard encGraph (KColoring k) :=
   CookLevin.SAT_npHard.trans (polyTimeReducible_SAT_KColoring hk)
 
-/-- **For `k ≥ 3`, `KColoring k` is NP-complete.** -/
+/-- **For `k ≥ 3`, `KColoring k` is NP-complete** [Garey and Johnson][GareyJohnson1979]. -/
 theorem KColoring_npComplete {k : ℕ} (hk : 3 ≤ k) : NPComplete encGraph (KColoring k) :=
   ⟨KColoring.mem_NP k, KColoring_npHard hk⟩
 

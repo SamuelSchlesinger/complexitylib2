@@ -202,6 +202,7 @@ def tokensDecoder : Decoder (encList encToken) := .list (.pair kindDecoder .nat)
 /-- Whether a token list is the token list of a formula. -/
 def wellFormed (ts : List (QBF.Kind × ℕ)) : Bool := decide (ts.foldl wfStep (true, 1) = (true, 0))
 
+/-- `wellFormed ts` holds exactly when `ts` is the token list of a formula. -/
 theorem wellFormed_iff (ts : List (QBF.Kind × ℕ)) :
     wellFormed ts = true ↔ ∃ φ : QBF ℕ, φ.tokens = ts := by
   rw [wellFormed, decide_eq_true_iff, foldl_wfStep_eq_iff]
@@ -261,6 +262,7 @@ to the word. -/
 def isCode (w : List Bool) : Bool :=
   wellFormed (tokensDecoder.decode w) && decide (encList encToken (tokensDecoder.decode w) = w)
 
+/-- A word passes `isCode` exactly when it encodes a formula. -/
 theorem isCode_iff (w : List Bool) : isCode w = true ↔ ∃ φ, encQBF φ = w := by
   unfold isCode
   rw [Bool.and_eq_true, wellFormed_iff, decide_eq_true_iff]
@@ -271,6 +273,7 @@ theorem isCode_iff (w : List Bool) : isCode w = true ↔ ∃ φ, encQBF φ = w :
     rw [encQBF_apply, tokensDecoder.decode_enc]
     exact ⟨⟨φ, rfl⟩, rfl⟩
 
+/-- Whether a word encodes a formula is decidable in polynomial time. -/
 theorem isCode_pt : ComputableTidilyInPolyTime isCode encBits encBool := by
   obtain ⟨d, e, hD⟩ := tokensDecoder.computable
   have hD := hD.computableTidilyInPolyTime
@@ -294,6 +297,7 @@ theorem encQBF_decodeQBF (w : List Bool) :
   · exact absurd ((isCode_iff w).mp h₃) h₁
   · rfl
 
+/-- `decodeQBF` is polynomial-time. -/
 theorem decodeQBF_pt : ComputableTidilyInPolyTime decodeQBF encBits encQBF :=
   (ComputableTidilyInPolyTime.ite' isCode_pt ComputableTidilyInPolyTime.id'
     (ComputableTidilyInPolyTime.const (encQBF .bot))).of_enc_eq fun w => encQBF_decodeQBF w

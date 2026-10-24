@@ -127,6 +127,8 @@ product `B u * B w`. -/
 def IsMulTable (B : Basis (Fin n) (ZMod 2) F) (tab : List (List (List Bool))) : Prop :=
   tab.length = n ∧ ∀ u w : Fin n, B u * B w = fieldOfBits B (tableEntry tab u w)
 
+/-- With a multiplication table of the basis `B`, `fieldMul` multiplies: the element with
+coordinates `fieldMul tab a b` is the product of those with coordinates `a` and `b`. -/
 theorem fieldOfBits_fieldMul {B : Basis (Fin n) (ZMod 2) F} {tab : List (List (List Bool))}
     (htab : IsMulTable B tab) (a b : List Bool) :
     fieldOfBits B (fieldMul tab a b) = fieldOfBits B a * fieldOfBits B b := by
@@ -229,6 +231,9 @@ private theorem fieldOfBits_foldl_esymmStep {B : Basis (Fin n) (ZMod 2) F}
     rw [List.foldl_cons, h2 j (by rw [hlen]; exact hj), List.map_cons, ← Multiset.cons_coe,
       Multiset.cons_add, Multiset.add_cons]
 
+/-- **The dynamic program for `e_t`**: with a multiplication table of the basis `B` and `0 < t`,
+`esymmCoords tab t zs` has the coordinates of the `t`-th elementary symmetric polynomial of the
+elements with coordinates `zs`. -/
 theorem fieldOfBits_esymmCoords {B : Basis (Fin n) (ZMod 2) F} {tab : List (List (List Bool))}
     (htab : IsMulTable B tab) {t : ℕ} (ht : 0 < t) (zs : List (List Bool)) :
     fieldOfBits B (esymmCoords tab t zs) = (↑(zs.map (fieldOfBits B)) : Multiset F).esymm t := by
@@ -258,6 +263,8 @@ elements. -/
 def traceBit (τ a : List Bool) : Bool :=
   ((List.range τ.length).map fun u => a.getD u false && τ.getD u false).foldl xor false
 
+/-- **The trace as a bit**: with a multiplication table of the basis `B`,
+`traceBit (traceVector tab) a` is the trace over `ZMod 2` of the element with coordinates `a`. -/
 theorem traceBit_traceVector {B : Basis (Fin n) (ZMod 2) F} {tab : List (List (List Bool))}
     (htab : IsMulTable B tab) (a : List Bool) :
     traceBit (traceVector tab) a = bitEquiv (Algebra.trace (ZMod 2) F (fieldOfBits B a)) := by

@@ -36,6 +36,11 @@ offset `pathOffset`, which a machine can recompute from the path alone.
 * `Cslib.TreeEval.Tree.getElem_body_pathOffset`: the bits of the node at a path, read off the body
   at its offset; `Cslib.TreeEval.Tree.getElem_body_gate` and `Cslib.TreeEval.Tree.getElem_body_leaf`
   for gates and leaves.
+
+## References
+
+* [S. Cook, P. McKenzie, D. Wehr, M. Braverman and R. Santhanam, *Pebbles and branching programs
+  for tree evaluation*][CMWBS2012] introduce the problem, with gates given by their tables.
 -/
 
 @[expose] public section

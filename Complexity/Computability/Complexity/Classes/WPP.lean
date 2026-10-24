@@ -81,12 +81,14 @@ open scoped symmDiff
 
 variable {α β : Type} {enc : α ↪ List Bool} {A B : Set α}
 
-/-- Wide gaps: zero on nonmembers and a nonzero binary FP target on members. -/
+/-- Wide gaps: zero on nonmembers and a nonzero binary FP target on members
+[Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994]. -/
 def WPP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ g ∈ GapP enc, ∃ f : α → ℤ, ComputableInPolyTime f enc encIntBin ∧
     (∀ a, f a ≠ 0) ∧ (∀ a, g a = 0 ∨ g a = f a) ∧ ∀ a, a ∈ A ↔ g a = f a}
 
-/-- Wide gaps with a target computed in polynomial time from unary input length. -/
+/-- Wide gaps with a target computed in polynomial time from unary input length
+[Fenner, Fortnow and Kurtz][FennerFortnowKurtz1994]. -/
 def LWPP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ g ∈ GapP enc, ∃ f : ℕ → ℤ, ComputableInPolyTime f encUnary encIntBin ∧
     (∀ n, f n ≠ 0) ∧ (∀ a, g a = 0 ∨ g a = f (enc a).length) ∧

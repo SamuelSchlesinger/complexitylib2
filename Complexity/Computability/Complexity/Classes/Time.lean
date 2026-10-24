@@ -151,7 +151,8 @@ private theorem exists_linear_of_eventually_le {t₁ t₂ : ℕ → ℕ} (h : �
 
 /-- The problems decidable within time `O(t n)`, that is `c₁ * t n + c₂` for constants `c₁` and
 `c₂`, on instances whose encoding under `enc` has length `n`, by a machine with a binary alphabet
-and finitely many states, with any space bound. -/
+and finitely many states, with any space bound
+[Arora and Barak, Definition 1.12][AroraBarak09]. -/
 def DTIME (enc : α ↪ List Bool) (t : ℕ → ℕ) : Set (Set α) :=
   {A | ∃ c₁ c₂ : ℕ, ∃ s : ℕ → ℕ,
     DecidableInTimeAndSpace A enc (fun a => c₁ * t (enc a).length + c₂) fun a => s (enc a).length}
@@ -265,7 +266,8 @@ end TimedReductions
 /-- The problems decidable within time `O(t n)`, that is `c₁ * t n + c₂` for constants `c₁` and
 `c₂`, on instances whose encoding under `enc` has length `n`, by a nondeterministic machine with a
 binary alphabet and finitely many states: every computation path of that many steps has halted,
-and `a ∈ A` exactly when some computation path halts with output `[true]`. -/
+and `a ∈ A` exactly when some computation path halts with output `[true]`
+[Arora and Barak, Definition 2.5][AroraBarak09]. -/
 def NTIME (enc : α ↪ List Bool) (t : ℕ → ℕ) : Set (Set α) :=
   {A | ∃ c₁ c₂ : ℕ, MultiTapeNTM.DecidableInTime A enc fun a => c₁ * t (enc a).length + c₂}
 
@@ -308,7 +310,8 @@ theorem DTIME_subset_NTIME {enc : α ↪ List Bool} {t : ℕ → ℕ} : DTIME en
 /-- The problems decidable with bounded error within time `O(t n)`, that is `c₁ * t n + c₂` for
 constants `c₁` and `c₂`, on instances whose encoding under `enc` has length `n`, by a fair-coin
 machine with a binary alphabet and finitely many states: every run of that many steps has halted,
-and outputs the right answer with probability at least `2 / 3`. -/
+and outputs the right answer with probability at least `2 / 3`
+[Arora and Barak, Definition 7.2][AroraBarak09]. -/
 def BPTIME (enc : α ↪ List Bool) (t : ℕ → ℕ) : Set (Set α) :=
   {A | ∃ c₁ c₂ : ℕ, ∃ (k : ℕ) (State : Type) (_ : Finite State)
     (machine : MultiTapePTM k Bool State),

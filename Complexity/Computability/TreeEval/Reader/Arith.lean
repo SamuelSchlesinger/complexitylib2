@@ -31,6 +31,12 @@ the multilinear extension of a gate.
   bits of the inputs.
 * `Cslib.TreeEval.Reader.eval_gatePoly_eq_sum`: the multilinear extension of an output bit of a
   gate as a sum over the table indices `k < 4^ℓ`.
+
+## References
+
+* [J. Cook and I. Mertz, *Tree Evaluation is in Space O(log n · log log n)*][CookMertz2024]
+* [O. Goldreich, *On the Cook–Mertz Tree Evaluation procedure*][Goldreich2024TreeEval],
+  Algorithm 1, which the machine runs.
 -/
 
 @[expose] public section

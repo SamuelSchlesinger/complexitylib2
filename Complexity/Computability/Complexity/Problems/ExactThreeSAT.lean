@@ -54,7 +54,8 @@ namespace Cslib.Complexity
 open Cslib.Logic.PL Turing.MultiTapeTM
 
 /-- The satisfiable formulas all of whose clauses have exactly three literals, not necessarily
-distinct. -/
+distinct. The 3-satisfiability of [Garey and Johnson, Problem LO2][GareyJohnson1979] requires
+them to be distinct. -/
 def ExactThreeSAT : Set (CNF ℕ) := {φ | (∀ c ∈ φ, c.length = 3) ∧ φ.Satisfiable}
 
 namespace ExactThreeSAT

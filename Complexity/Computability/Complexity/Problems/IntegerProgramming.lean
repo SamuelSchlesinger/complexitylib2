@@ -49,8 +49,9 @@ namespace Cslib.Complexity
 
 open Finset Turing.MultiTapeTM ComputableTidilyInPolyTime
 
-/-- The systems of linear equations with natural coefficients that have a zero-one solution. A
-constraint `(a, t)` asks for `∑ j < a.length, a[j] * x j = t`. -/
+/-- The systems of linear equations with natural coefficients that have a zero-one solution, the
+equality form of Karp's zero-one integer programming [Karp1972]. A constraint `(a, t)` asks for
+`∑ j < a.length, a[j] * x j = t`. -/
 def ZeroOneIP : Set (List (List ℕ × ℕ)) :=
   {C | ∃ x : ℕ → Bool, ∀ c ∈ C, ∑ j ∈ range c.1.length, c.1.getD j 0 * (x j).toNat = c.2}
 
@@ -152,7 +153,7 @@ theorem ZeroOneIP_npHard : NPHard (encList (encPair (encList encNat) encNat)) Ze
   ThreeSAT_npHard.trans polyTimeReducible_ThreeSAT_ZeroOneIP
 
 /-- **Zero-one integer programming is NP-complete**, in equality form with natural coefficients
-in binary. -/
+in binary [Karp1972]. -/
 theorem ZeroOneIP_npComplete : NPComplete (encList (encPair (encList encNat) encNat)) ZeroOneIP :=
   ⟨ZeroOneIP.mem_NP, ZeroOneIP_npHard⟩
 

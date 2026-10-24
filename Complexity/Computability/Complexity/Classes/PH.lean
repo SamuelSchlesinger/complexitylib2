@@ -190,7 +190,8 @@ theorem isAlternatingVerifier_true_singleton {p : Polynomial ℕ} :
 
 /-- The level `Σₖ` of the polynomial hierarchy, with respect to the encoding `enc` of instances:
 the problems verified in polynomial time through `k` alternating blocks of polynomially long
-certificates, the first existential. -/
+certificates, the first existential [Arora and Barak, Definition 5.4][AroraBarak09],
+[Wrathall][Wrathall1976]. -/
 def SigmaP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (ps : List (Polynomial ℕ)) (V : α × List Bool → Bool), ps.length = k ∧
     ComputableInPolyTime V (encPair enc encBits) encBool ∧
@@ -198,13 +199,15 @@ def SigmaP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
 
 /-- The level `Πₖ` of the polynomial hierarchy, with respect to the encoding `enc` of instances:
 the problems verified in polynomial time through `k` alternating blocks of polynomially long
-certificates, the first universal. -/
+certificates, the first universal [Arora and Barak, Definition 5.4][AroraBarak09],
+[Wrathall][Wrathall1976]. -/
 def PiP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (ps : List (Polynomial ℕ)) (V : α × List Bool → Bool), ps.length = k ∧
     ComputableInPolyTime V (encPair enc encBits) encBool ∧
       IsAlternatingVerifier enc false ps V A}
 
-/-- The polynomial hierarchy: the union of the levels `Σₖ`. -/
+/-- The polynomial hierarchy: the union of the levels `Σₖ` [Stockmeyer][Stockmeyer1976],
+[Arora and Barak, Definition 5.4][AroraBarak09]. -/
 def PH (enc : α ↪ List Bool) : Set (Set α) := ⋃ k, SigmaP k enc
 
 variable {k : ℕ}
@@ -235,6 +238,7 @@ theorem mem_PiP_iff_tidy : A ∈ PiP k enc ↔
         IsAlternatingVerifier enc false ps V A := by
   simp only [mem_PiP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
+/-- A problem is in the polynomial hierarchy exactly when it is in some level `Σₖ`. -/
 theorem mem_PH : A ∈ PH enc ↔ ∃ k, A ∈ SigmaP k enc := Set.mem_iUnion
 
 /-! ### The first levels -/
@@ -277,15 +281,19 @@ theorem PiP_zero : PiP 0 enc = P enc :=
 
 /-! ### Inclusions between levels -/
 
+/-- `Σₖ ⊆ Σₖ₊₁`: a block of certificates of length `0` is added at the end. -/
 theorem SigmaP_subset_SigmaP_succ (k : ℕ) : SigmaP k enc ⊆ SigmaP (k + 1) enc :=
   fun _ ⟨ps, V, hk, hV, h⟩ => ⟨ps ++ [0], V, by simp [hk], hV, h.append_zero⟩
 
+/-- `Πₖ ⊆ Πₖ₊₁`: a block of certificates of length `0` is added at the end. -/
 theorem PiP_subset_PiP_succ (k : ℕ) : PiP k enc ⊆ PiP (k + 1) enc :=
   fun _ ⟨ps, V, hk, hV, h⟩ => ⟨ps ++ [0], V, by simp [hk], hV, h.append_zero⟩
 
+/-- `Σₖ ⊆ Πₖ₊₁`: a universal block of certificates of length `0` is added at the start. -/
 theorem SigmaP_subset_PiP_succ (k : ℕ) : SigmaP k enc ⊆ PiP (k + 1) enc :=
   fun _ ⟨ps, V, hk, hV, h⟩ => ⟨0 :: ps, V, by simp [hk], hV, h.zero_cons⟩
 
+/-- `Πₖ ⊆ Σₖ₊₁`: an existential block of certificates of length `0` is added at the start. -/
 theorem PiP_subset_SigmaP_succ (k : ℕ) : PiP k enc ⊆ SigmaP (k + 1) enc :=
   fun _ ⟨ps, V, hk, hV, h⟩ => ⟨0 :: ps, V, by simp [hk], hV, h.zero_cons⟩
 
@@ -307,8 +315,10 @@ theorem PH_eq_iUnion_PiP : PH enc = ⋃ k, PiP k enc :=
     (SigmaP_subset_PiP_succ k).trans (Set.subset_iUnion (fun k => PiP k enc) (k + 1))).antisymm
     (Set.iUnion_subset PiP_subset_PH)
 
+/-- `NP ⊆ PH`, since `NP = Σ₁`. -/
 theorem NP_subset_PH : NP enc ⊆ PH enc := SigmaP_one (enc := enc) ▸ SigmaP_subset_PH 1
 
+/-- `P ⊆ PH`, since `P ⊆ Σ₀`. -/
 theorem P_subset_PH : P enc ⊆ PH enc :=
   P_subset_SigmaP_zero.trans (SigmaP_subset_PH 0)
 
@@ -338,6 +348,7 @@ theorem SigmaP_eq_preimage_compl_PiP : SigmaP k enc = compl ⁻¹' PiP k enc := 
 theorem PiP_one_eq_coNP : PiP 1 enc = coNP enc := by
   rw [PiP_eq_preimage_compl_SigmaP, SigmaP_one, coNP_eq_preimage_compl_NP]
 
+/-- `coNP ⊆ PH`, since `coNP = Π₁`. -/
 theorem coNP_subset_PH : coNP enc ⊆ PH enc :=
   PiP_one_eq_coNP ▸ PiP_subset_PH 1
 

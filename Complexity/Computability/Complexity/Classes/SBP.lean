@@ -59,7 +59,8 @@ open Turing.MultiTapeTM
 
 variable {α β : Type} {enc : α ↪ List Bool} {A B : Set α}
 
-/-- A #P count at least an FP threshold on members and strictly below half on nonmembers.
+/-- A #P count at least an FP threshold on members and strictly below half on nonmembers
+[Böhler, Glaßer and Meister][BoehlerGlasserMeister2006], [Watson, Definition 2][Watson2012].
 The threshold is encoded in binary and may be exponentially large. -/
 def SBP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableInPolyTime k enc encNat ∧

@@ -107,7 +107,8 @@ variable {α β γ : Type} {enc : α ↪ List Bool} {encB : β ↪ List Bool} {e
   {A : Set α} {B : Set β} {C : Set γ}
 
 /-- The problems decided in logarithmic space with respect to the encoding `enc`: a Boolean
-function deciding membership is computable in logarithmic space. -/
+function deciding membership is computable in logarithmic space
+[Sipser, Section 8.4][Sipser2013]. -/
 def L (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ f : α → Bool, ComputableInLogSpace f enc encBool ∧ ∀ a, a ∈ A ↔ f a = true}
 

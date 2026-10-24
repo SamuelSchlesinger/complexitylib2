@@ -64,7 +64,7 @@ namespace Cslib.Complexity
 open Circuits Circuits.Boolean Turing.MultiTapeTM Cslib.Logic.PL
 
 /-- **Circuit satisfiability**: the De Morgan circuits with one output that output true on some
-input. -/
+input [Arora and Barak, Section 6.1][AroraBarak09]. -/
 def CircuitSAT : Set (Σ n, Circuit signature n 1) :=
   {c | ∃ x : BitString c.1, c.2.eval interpretation x 0 = true}
 
@@ -425,7 +425,7 @@ theorem CircuitSAT_npHard : NPHard (encCircuit 1) CircuitSAT :=
   CookLevin.SAT_npHard.trans SAT.polyTimeReducible_CircuitSAT
 
 /-- **Circuit satisfiability is `NP`-complete**, for the binary encoding of circuits
-`encCircuit 1`. -/
+`encCircuit 1` [Arora and Barak, Section 6.1][AroraBarak09]. -/
 theorem CircuitSAT_npComplete : NPComplete (encCircuit 1) CircuitSAT :=
   ⟨CircuitSAT.mem_NP, CircuitSAT_npHard⟩
 

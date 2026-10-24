@@ -149,6 +149,8 @@ theorem promiseClass_injective : Function.Injective (promiseClass (α := α)) :=
   (promiseClass_subset_promiseClass_iff.1 h.le).antisymm
     (promiseClass_subset_promiseClass_iff.1 h.ge)
 
+/-- Two classes of decision problems have the same lift to promise problems exactly when they are
+equal. -/
 theorem promiseClass_inj : promiseClass C = promiseClass D ↔ C = D :=
   promiseClass_injective.eq_iff
 
@@ -183,7 +185,7 @@ section PromiseP
 variable {α : Type*} {enc : α ↪ List Bool} {Q : PromiseProblem α}
 
 /-- The promise problems solved by polynomial-time algorithms, with respect to the encoding `enc`
-of instances: the lift of `P enc`. -/
+of instances: the lift of `P enc` [Goldreich][Goldreich2006]. -/
 def PromiseP (enc : α ↪ List Bool) : Set (PromiseProblem α) := promiseClass (P enc)
 
 /-- **Goldreich's definition of promise-P**: a promise problem is in `PromiseP` when a
@@ -202,7 +204,7 @@ section PromiseNP
 variable {α : Type} {enc : α ↪ List Bool} {Q : PromiseProblem α}
 
 /-- The promise problems with polynomial-time verifiers, with respect to the encoding `enc` of
-instances: the lift of `NP enc`. -/
+instances: the lift of `NP enc` [Goldreich][Goldreich2006]. -/
 def PromiseNP (enc : α ↪ List Bool) : Set (PromiseProblem α) := promiseClass (NP enc)
 
 /-- **Goldreich's definition of promise-NP**: a promise problem is in `PromiseNP` when a

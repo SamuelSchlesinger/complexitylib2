@@ -520,6 +520,8 @@ theorem acceptProb_round_prover {x : Graph × Graph} (hx : x ∈ GraphNonIsomorp
   obtain ⟨σ, hσ⟩ := exists_equiv_of_mem_support_relabelDist hm hm'
   exact mem_GraphIsomorphism_iff.2 ⟨σ, hσ⟩
 
+/-- One round is an interactive proof for `GraphNonIsomorphism` with completeness `1` and
+soundness error `17 / 32`. -/
 theorem isInteractiveProof_round :
     IsInteractiveProof round GraphNonIsomorphism 1 (17 / 32) where
   complete x hx := ⟨prover x, (acceptProb_round_prover hx).ge⟩
@@ -537,6 +539,8 @@ theorem acceptProb_verifier_le {x : Graph × Graph} (hx : x ∈ GraphIsomorphism
     acceptProb (verifier x) P ≤ (17 / 32) ^ 2 :=
   acceptProb_sequentialRepeat_le (acceptProb_round_le hx) 2 P
 
+/-- The verifier, two sequential rounds, is an interactive proof for `GraphNonIsomorphism` with
+completeness `1` and soundness error `(17 / 32) ^ 2`. -/
 theorem isInteractiveProof_verifier :
     IsInteractiveProof verifier GraphNonIsomorphism 1 ((17 / 32) ^ 2) where
   complete x hx := ⟨prover x, (acceptProb_verifier_prover hx).ge⟩

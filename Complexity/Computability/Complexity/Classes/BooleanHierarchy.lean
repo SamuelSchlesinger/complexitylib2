@@ -198,13 +198,14 @@ private theorem empty_mem_NP : (∅ : Set α) ∈ NP enc :=
 private theorem univ_mem_NP : (Set.univ : Set α) ∈ NP enc :=
   ⟨0, fun _ => true, .const _, by simp [IsVerifier]⟩
 
-/-- The `n`th level of the Boolean hierarchy over NP, with level zero containing only `∅`. -/
+/-- The `n`th level of the Boolean hierarchy over NP, with level zero containing only `∅`
+[Cai et al.][CaiEtAl1988]. -/
 def BH (enc : α ↪ List Bool) (n : ℕ) : Set (Set α) := differenceHierarchy (NP enc) n
 
 /-- The complement of the `n`th level of the Boolean hierarchy over NP. -/
 def coBH (enc : α ↪ List Bool) (n : ℕ) : Set (Set α) := {A | Aᶜ ∈ BH enc n}
 
-/-- The union of all finite levels of the Boolean hierarchy over NP. -/
+/-- The union of all finite levels of the Boolean hierarchy over NP [Cai et al.][CaiEtAl1988]. -/
 def BooleanHierarchy (enc : α ↪ List Bool) : Set (Set α) := ⋃ n, BH enc n
 
 /-- Every finite level belongs to the full Boolean hierarchy. -/
@@ -243,9 +244,11 @@ theorem coBH_zero : coBH enc 0 = {Set.univ} := by
   ext A
   simp [coBH, BH_zero, Set.compl_empty_iff]
 
+/-- The first level is precisely NP. -/
 @[simp]
 theorem BH_one : BH enc 1 = NP enc := differenceHierarchy_one _
 
+/-- The first dual level is precisely coNP. -/
 @[simp]
 theorem coBH_one : coBH enc 1 = coNP enc := by
   ext A

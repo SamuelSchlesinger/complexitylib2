@@ -39,6 +39,7 @@ both capacity and goal, reduces `SubsetSum` to `Knapsack`.
 ## References
 
 * [R. M. Karp, *Reducibility among combinatorial problems*][Karp1972]
+* [M. R. Garey and D. S. Johnson, *Computers and Intractability*][GareyJohnson1979]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
@@ -51,7 +52,7 @@ open scoped List
 
 /-- Instances `(items, capacity, goal)` of the 0-1 knapsack problem, items given as
 `(weight, value)`: some sub-multiset of the items has total weight at most the capacity and total
-value at least the goal. -/
+value at least the goal [Garey and Johnson][GareyJohnson1979]. -/
 def Knapsack : Set (List (ℕ × ℕ) × ℕ × ℕ) :=
   {x | ∃ s ≤ (x.1 : Multiset (ℕ × ℕ)),
     (s.map Prod.fst).sum ≤ x.2.1 ∧ x.2.2 ≤ (s.map Prod.snd).sum}
@@ -137,7 +138,8 @@ theorem polyTimeReducible_SubsetSum_Knapsack :
 theorem Knapsack_npHard : NPHard encKnapsack Knapsack :=
   SubsetSum_npHard.trans polyTimeReducible_SubsetSum_Knapsack
 
-/-- **The 0-1 knapsack problem is NP-complete**, with all numbers in binary. -/
+/-- **The 0-1 knapsack problem is NP-complete**, with all numbers in binary
+[Garey and Johnson][GareyJohnson1979]. -/
 theorem Knapsack_npComplete : NPComplete encKnapsack Knapsack :=
   ⟨Knapsack.mem_NP, Knapsack_npHard⟩
 
