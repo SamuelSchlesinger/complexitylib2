@@ -67,7 +67,7 @@ output of a decision tree of depth `d`, read as signs, has Fourier weight only o
 `d` coordinates, and its squared coefficients sum to one. -/
 theorem totalInfluence_le_depth (g : β → Bool) (t : DecisionTree ι β) :
     totalInfluence (fun x => signVal (g (t.eval x))) ≤ t.depth :=
-  totalInfluence_signVal_le_of_degree (fun x => g (t.eval x)) fun _ hS =>
-    fourierCoeff_eq_zero_of_depth_lt (fun b => signVal (g b)) t hS
+  totalInfluence_signVal_le_of_fourierCoeff_eq_zero (fun x => g (t.eval x)) fun _ =>
+    fourierCoeff_eq_zero_of_depth_lt (fun b => signVal (g b)) t
 
 end Cslib.DecisionTree

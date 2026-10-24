@@ -7,16 +7,17 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.BooleanAnalysis.Degree
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity
 
 /-!
 # The Bonami Lemma
 
-A real function `f` on the cube has *degree at most `k`* when its Fourier coefficients on the
-sets of more than `k` coordinates vanish; over `ℝ` this is membership in
-`BitString.lowDegree ℝ ι k` (`BitString.mem_lowDegree_iff_fourierCoeff_eq_zero`). The
-**Bonami Lemma** says that low-degree functions of uniformly random bits are *reasonable*: if `f`
-has degree at most `k`, then `𝔼 f ^ 4 ≤ 9 ^ k (𝔼 f ^ 2) ^ 2`, that is, `‖f‖_4 ≤ √3 ^ k ‖f‖_2`
+A real function `f` on the cube has *degree at most `k`* when `f ∈ BitString.lowDegree ℝ ι k`,
+equivalently when its Fourier coefficients on the sets of more than `k` coordinates vanish
+(`BitString.mem_lowDegree_iff_fourierCoeff_eq_zero`). The **Bonami Lemma** says that low-degree
+functions of uniformly random bits are *reasonable*: if `f` has degree at most `k`, then
+`𝔼 f ^ 4 ≤ 9 ^ k (𝔼 f ^ 2) ^ 2`, that is, `‖f‖_4 ≤ √3 ^ k ‖f‖_2`
 (`BitString.expect_pow_four_le`) [Bonami1970] [O'Donnell, Section 9.1][ODonnell2014]. More
 generally `‖f‖_q ≤ √(q - 1) ^ k ‖f‖_2` for every `q ≥ 2`
 (`BitString.lpNorm_le_sqrt_pow_mul_lpNorm_two`) [O'Donnell, Theorem 9.21][ODonnell2014].
@@ -29,9 +30,11 @@ Theorem, rather than his induction on the number of coordinates for the case `q 
 
 ## Main results
 
-* `Cslib.BitString.lpNorm_le_sqrt_pow_mul_lpNorm_two`: `‖f‖_q ≤ √(q - 1) ^ k ‖f‖_2` for `f` of
-  degree at most `k`.
-* `Cslib.BitString.expect_pow_four_le`: the Bonami Lemma.
+* `Cslib.BitString.lpNorm_le_sqrt_pow_mul_lpNorm_two`,
+  `Cslib.BitString.lpNorm_le_sqrt_pow_mul_lpNorm_two_of_fourierCoeff_eq_zero`:
+  `‖f‖_q ≤ √(q - 1) ^ k ‖f‖_2` for `f` of degree at most `k`.
+* `Cslib.BitString.expect_pow_four_le`,
+  `Cslib.BitString.expect_pow_four_le_of_fourierCoeff_eq_zero`: the Bonami Lemma.
 
 ## References
 
@@ -48,10 +51,11 @@ open scoped BigOperators
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-/-- **Low-degree functions are hypercontractive**: if `f` has degree at most `k`, then
-`‖f‖_q ≤ √(q - 1) ^ k ‖f‖_2` for every `q ≥ 2` [O'Donnell, Theorem 9.21][ODonnell2014]. -/
-theorem lpNorm_le_sqrt_pow_mul_lpNorm_two {q : ℝ} (hq : 2 ≤ q) {k : ℕ} {f : (ι → Bool) → ℝ}
-    (hf : ∀ S : Finset ι, k < #S → fourierCoeff f S = 0) :
+/-- **Low-degree functions are hypercontractive**, Fourier-coefficient form: if the Fourier
+coefficients of `f` vanish above degree `k`, then `‖f‖_q ≤ √(q - 1) ^ k ‖f‖_2` for every `q ≥ 2`
+[O'Donnell, Theorem 9.21][ODonnell2014]. -/
+theorem lpNorm_le_sqrt_pow_mul_lpNorm_two_of_fourierCoeff_eq_zero {q : ℝ} (hq : 2 ≤ q) {k : ℕ}
+    {f : (ι → Bool) → ℝ} (hf : ∀ S : Finset ι, k < #S → fourierCoeff f S = 0) :
     lpNorm q f ≤ √(q - 1) ^ k * lpNorm 2 f := by
   set c := √(q - 1)
   have hc : 0 < c := Real.sqrt_pos.2 (by linarith)
@@ -78,10 +82,18 @@ theorem lpNorm_le_sqrt_pow_mul_lpNorm_two {q : ℝ} (hq : 2 ≤ q) {k : ℕ} {f 
           (pow_le_pow_left₀ (pow_nonneg hc.le _) (pow_le_pow_right₀ hc1 (not_lt.1 hS)) 2)
           (sq_nonneg _)
 
+/-- **Low-degree functions are hypercontractive**: if `f` has degree at most `k`, then
+`‖f‖_q ≤ √(q - 1) ^ k ‖f‖_2` for every `q ≥ 2` [O'Donnell, Theorem 9.21][ODonnell2014]. -/
+theorem lpNorm_le_sqrt_pow_mul_lpNorm_two {q : ℝ} (hq : 2 ≤ q) {k : ℕ} {f : (ι → Bool) → ℝ}
+    (hf : f ∈ lowDegree ℝ ι k) :
+    lpNorm q f ≤ √(q - 1) ^ k * lpNorm 2 f :=
+  lpNorm_le_sqrt_pow_mul_lpNorm_two_of_fourierCoeff_eq_zero hq
+    (mem_lowDegree_iff_fourierCoeff_eq_zero.1 hf)
+
 /-- **The Bonami Lemma**: if `f` has degree at most `k`, then `𝔼 f ^ 4 ≤ 9 ^ k (𝔼 f ^ 2) ^ 2`,
 that is, `‖f‖_4 ≤ √3 ^ k ‖f‖_2` [Bonami1970] [O'Donnell, Section 9.1][ODonnell2014]. -/
 theorem expect_pow_four_le {k : ℕ} {f : (ι → Bool) → ℝ}
-    (hf : ∀ S : Finset ι, k < #S → fourierCoeff f S = 0) :
+    (hf : f ∈ lowDegree ℝ ι k) :
     𝔼 x, f x ^ 4 ≤ 9 ^ k * (𝔼 x, f x ^ 2) ^ 2 := by
   have h := lpNorm_le_sqrt_pow_mul_lpNorm_two (by norm_num : (2 : ℝ) ≤ 4) hf
   have h4 := pow_le_pow_left₀ (lpNorm_nonneg _ _) h 4
@@ -92,5 +104,13 @@ theorem expect_pow_four_le {k : ℕ} {f : (ι → Bool) → ℝ}
   rw [mul_pow, h9, show lpNorm 2 f ^ 4 = (lpNorm 2 f ^ 2) ^ 2 by ring, lpNorm_two_sq,
     ← Real.rpow_natCast, Nat.cast_ofNat, lpNorm_rpow (by norm_num)] at h4
   simpa only [Real.rpow_ofNat, Even.pow_abs (by decide : Even 4)] using h4
+
+/-- **The Bonami Lemma**, Fourier-coefficient form: if the Fourier coefficients of `f` vanish above
+degree `k`, then `𝔼 f ^ 4 ≤ 9 ^ k (𝔼 f ^ 2) ^ 2` [Bonami1970]
+[O'Donnell, Section 9.1][ODonnell2014]. -/
+theorem expect_pow_four_le_of_fourierCoeff_eq_zero {k : ℕ} {f : (ι → Bool) → ℝ}
+    (hf : ∀ S : Finset ι, k < #S → fourierCoeff f S = 0) :
+    𝔼 x, f x ^ 4 ≤ 9 ^ k * (𝔼 x, f x ^ 2) ^ 2 :=
+  expect_pow_four_le (mem_lowDegree_iff_fourierCoeff_eq_zero.2 hf)
 
 end Cslib.BitString
