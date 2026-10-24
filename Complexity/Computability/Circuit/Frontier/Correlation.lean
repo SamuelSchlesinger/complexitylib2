@@ -30,7 +30,9 @@ value at most `ε` is an agreement of at most `1/2 + ε/2`. The circuit model an
 (`Cslib.Circuits.Circuit.innerSize`) are those of `Cslib.Circuits.Frontier.AverageCaseBound`. The
 best previously published average-case bounds for the full binary basis are `2.5 n`, for an
 explicit affine extractor [Chen–Kabanets][ChenKabanets2015], and `2.6 n`, for non-explicit
-quadratic extractors [Golovnev–Kulikov–Smal–Tamaki][GKST2016].
+quadratic extractors [Golovnev–Kulikov–Smal–Tamaki][GKST2016]. Because the family here is chosen
+nonconstructively, the comparable bound is the non-explicit one; nothing here improves on the
+explicit `2.5 n`.
 
 ## The argument
 
