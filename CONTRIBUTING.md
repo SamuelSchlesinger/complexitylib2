@@ -173,8 +173,8 @@ python3 scripts/upstream.py Complexity.Computability.DecisionTree.Basic --cslib 
 
 This previews copying a module to its mirrored CSLib path, rewriting imports, and removing the
 upstream marker. Omit `--dry-run` to prepare the worktree and regenerate its root imports.
-The script writes whole files; integrate additions to existing files and alternative destinations
-manually.
+The script writes whole new files and refuses to overwrite an existing destination; integrate
+additions to existing files and alternative destinations manually.
 Validate there according to CSLib's current instructions before opening a PR. Record its number
 and head SHA in the module's `-- upstream:` marker.
 
