@@ -125,7 +125,7 @@ noncomputable def clientCertificate :
 
 /-- One finite native machine implements the fixed client across all runtime configurations. -/
 theorem client_step_inO :
-    ComputableTidilyInO (fun q : ℕ × FiniteState model 2 => FiniteState.step q.1 client q.2)
+    ComputableInO (fun q : ℕ × FiniteState model 2 => FiniteState.step q.1 client q.2)
       (FiniteState.inputEncoding encoding) (FiniteState.resultEncoding encoding)
       (FiniteState.stepTime encoding nativePrimitives client)
       (FiniteState.stepSpace encoding nativePrimitives client) :=
@@ -136,7 +136,7 @@ and invalid `k = 0`) without fixing the configuration in its transition table. -
 theorem uniform_machine_across_configs :
     ∃ (c k : ℕ) (State : Type) (_ : Finite State) (tm : Turing.MultiTapeTM k Bool State),
       (∀ q : ℕ × FiniteState model 2,
-        tm.ComputesTidilyInTimeAndSpace
+        tm.ComputesInTimeAndSpace
           (FiniteState.inputEncoding encoding q)
           (FiniteState.resultEncoding encoding (FiniteState.step q.1 client q.2))
           (c * (FiniteState.stepTime encoding nativePrimitives client q + 1))
@@ -264,7 +264,7 @@ theorem retained_exponential_run_bound (k : ℕ) (hk : 1 ≤ k) :
       (FiniteState.le_runSpace_of_run_eq_inl encoding expPrimitives
         [.op (.const 0 1)] (Nat.zero_le 1) hrun)⟩
 
-open Turing.MultiTapeTM.ComputableTidilyInPolyTime
+open Turing.MultiTapeTM.ComputableInPolyTime
 
 /-- Six-instruction program that sets register `0` to `0`, stores its input `x` (initially in
 register `1`) at sparse address `0`, loads it back into register `0`, adds registers `0` and `1`
@@ -281,13 +281,13 @@ def doubleInit (x : ℕ) : FiniteState model 2 :=
 noncomputable def doubleInitCert :
     NativeCertificate doubleInit encNat (FiniteState.encoding encoding) :=
   FiniteState.initConstCertificate (r := 2) encoding
-    (NativeCertificate.linear ComputableTidilyInDegree.id'.inO_one)
+    (NativeCertificate.linear ComputableInDegree.id'.inO_one)
     (NativeCertificate.const 0)
     (NativeCertificate.const ∅)
 
 theorem doubleInitCert_isPolynomial : doubleInitCert.IsPolynomial :=
   FiniteState.initConstCertificate_isPolynomial (r := 2) encoding _ _ _
-    (NativeCertificate.linear_isPolynomial ComputableTidilyInDegree.id'.inO_one)
+    (NativeCertificate.linear_isPolynomial ComputableInDegree.id'.inO_one)
     (NativeCertificate.const_isPolynomial 0)
     (NativeCertificate.const_isPolynomial ∅)
 
@@ -296,7 +296,7 @@ theorem doubleInitCert_isPolynomial : doubleInitCert.IsPolynomial :=
 def doubleConfig (x : ℕ) : ℕ := (x + x) + 6
 
 theorem doubleConfig_polyTime :
-    ComputableTidilyInPolyTime doubleConfig encNat encNat := by
+    ComputableInPolyTime doubleConfig encNat encNat := by
   have hid := of_eq (encIn := encNat) fun _ => rfl
   exact binary_add.comp ((binary_add.comp (hid.prod hid)).prod (const 6))
 
@@ -345,27 +345,27 @@ noncomputable def doubleTransportCert :
   FiniteState.transportCertificate encoding nativePrimitives doubleProgram
     doubleStepsCert doubleConfigCert doubleInitCert doubleProgram_executes
 
-/-- Whole-run explicit `ComputableTidilyInO` bound transported from `doubleProgram`. -/
+/-- Whole-run explicit `ComputableInO` bound transported from `doubleProgram`. -/
 theorem double_inO :
-    ComputableTidilyInO (fun x : ℕ => x + x) encNat encNat
+    ComputableInO (fun x : ℕ => x + x) encNat encNat
       doubleTransportCert.time doubleTransportCert.space :=
   FiniteState.transport_inO encoding nativePrimitives doubleProgram
     doubleStepsCert doubleConfigCert doubleInitCert doubleProgram_executes
 
-/-- Automatic `ComputableTidilyInPolyTime` transport for `doubleProgram` via
+/-- Automatic `ComputableInPolyTime` transport for `doubleProgram` via
 `FiniteState.transport_polyTime_of_le_const`. -/
 theorem double_polyTime :
-    ComputableTidilyInPolyTime (fun x : ℕ => x + x) encNat encNat :=
+    ComputableInPolyTime (fun x : ℕ => x + x) encNat encNat :=
   FiniteState.transport_polyTime_of_le_const encoding nativePrimitives doubleProgram
     doubleStepsCert doubleConfigCert doubleInitCert doubleProgram_executes
     nativePrimitives_isPolynomial
     doubleStepsCert_isPolynomial doubleConfigCert_isPolynomial doubleInitCert_isPolynomial
     6 (fun _ => le_rfl)
 
-/-- Automatic `ComputableTidilyInPolyTime` single-step simulation for `doubleProgram` via
+/-- Automatic `ComputableInPolyTime` single-step simulation for `doubleProgram` via
 `FiniteState.step_polyTime`. -/
 theorem double_step_polyTime :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun q : ℕ × FiniteState model 2 => FiniteState.step q.1 doubleProgram q.2)
       (FiniteState.inputEncoding encoding) (FiniteState.resultEncoding encoding) :=
   FiniteState.step_polyTime encoding nativePrimitives doubleProgram nativePrimitives_isPolynomial
@@ -395,13 +395,13 @@ noncomputable def wordDoubleInitCert :
     NativeCertificate wordDoubleInit encNat
       (FiniteState.encoding Cslib.WordRAM.Basis.standard.encoding) :=
   FiniteState.initConstCertificate (r := 2) Cslib.WordRAM.Basis.standard.encoding
-    (NativeCertificate.linear ComputableTidilyInDegree.id'.inO_one)
+    (NativeCertificate.linear ComputableInDegree.id'.inO_one)
     (NativeCertificate.const 0)
     (NativeCertificate.const ∅)
 
 theorem wordDoubleInitCert_isPolynomial : wordDoubleInitCert.IsPolynomial :=
   FiniteState.initConstCertificate_isPolynomial (r := 2) Cslib.WordRAM.Basis.standard.encoding _ _ _
-    (NativeCertificate.linear_isPolynomial ComputableTidilyInDegree.id'.inO_one)
+    (NativeCertificate.linear_isPolynomial ComputableInDegree.id'.inO_one)
     (NativeCertificate.const_isPolynomial 0)
     (NativeCertificate.const_isPolynomial ∅)
 
@@ -410,15 +410,15 @@ def wordDoubleWidth (x : ℕ) : ℕ := x.size + 2
 
 theorem wordDoubleWidth_polyTime :
     ComputableInPolyTime wordDoubleWidth encNat encUnary :=
-  .of_tidy <| ComputableTidilyInPolyTime.unary_add.comp
-    (ComputableInPolyTime.binary_size.tidy.prod (ComputableTidilyInPolyTime.const 2))
+  ComputableInPolyTime.unary_add.comp
+    (ComputableInPolyTime.binary_size.prod (ComputableInPolyTime.const 2))
 
 /-- Native certificate for `wordDoubleWidth`. -/
 noncomputable def wordDoubleWidthCert : NativeCertificate wordDoubleWidth encNat encUnary :=
-  .ofPolyTime wordDoubleWidth_polyTime.tidy
+  .ofPolyTime wordDoubleWidth_polyTime
 
 theorem wordDoubleWidthCert_isPolynomial : wordDoubleWidthCert.IsPolynomial :=
-  NativeCertificate.ofPolyTime_isPolynomial wordDoubleWidth_polyTime.tidy
+  NativeCertificate.ofPolyTime_isPolynomial wordDoubleWidth_polyTime
 
 /-- Constant step budget `5` for `wordDoubleProgram`. -/
 noncomputable def wordDoubleStepsCert : NativeCertificate (fun _ : ℕ => 5) encNat encNat :=
@@ -488,16 +488,16 @@ theorem wordDouble_polyTime :
     5 (fun _ => le_rfl)
 
 /--
-info: 'Turing.MultiTapeTM.ComputableTidilyInO.inl' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.ComputableInO.inl' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInO.inl
+#print axioms Turing.MultiTapeTM.ComputableInO.inl
 
 /--
-info: 'Turing.MultiTapeTM.ComputableTidilyInO.inr' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.ComputableInO.inr' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInO.inr
+#print axioms Turing.MultiTapeTM.ComputableInO.inr
 
 /--
 info: 'Cslib.GenericRAM.FiniteState.denote_step' depends on axioms: [propext, Classical.choice, Quot.sound]
