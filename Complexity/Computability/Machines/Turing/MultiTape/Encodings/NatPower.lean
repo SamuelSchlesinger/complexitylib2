@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 
 /-!
 # Powers of two in binary
@@ -56,7 +57,8 @@ theorem twoPowT_run (w : List Bool) :
 and space, for every encoding of the input. -/
 theorem ComputableTidilyInDegree.two_pow_length {α : Type*} (encIn : α ↪ List Bool) :
     ComputableTidilyInDegree (fun a => 2 ^ (encIn a).length) encIn encNat 1 1 :=
-  .of_linear (twoPowT.computableInLinearTimeAndSpace fun a => by
-    rw [encNat_two_pow, twoPowT_run])
+  Internal.normalizeDegree <| ComputableInDegree.of_linear
+    (twoPowT.computableInLinearTimeAndSpace fun a => by
+      rw [encNat_two_pow, twoPowT_run])
 
 end Turing.MultiTapeTM
