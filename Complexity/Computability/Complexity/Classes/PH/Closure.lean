@@ -25,6 +25,9 @@ The construction uses exact certificate lengths and polynomial-time bit-string s
 
 ## Main results
 
+* `alternation_splitAlternatingBlocks`: alternating-quantifier equivalence for paired blocks.
+* `computableInPolyTime_splitAlternatingBlocks`: plain polynomial-time certificate for splitting
+  paired blocks whose lengths are polynomials of a computed unary size.
 * `inter_mem_SigmaP`, `union_mem_SigmaP`: closure of each existential level.
 * `inter_mem_PiP`, `union_mem_PiP`: closure of each universal level.
 * `compl_mem_PH`, `inter_mem_PH`, `union_mem_PH`, `diff_mem_PH`: Boolean closure of the hierarchy.
@@ -102,8 +105,6 @@ theorem alternation_splitAlternatingBlocks (ns : List (ℕ × ℕ)) (q : Bool)
       · rintro ⟨⟨u, hu, hP⟩, ⟨v, hv, hQ⟩⟩
         exact ⟨u ++ v, by simp [hu, hv], (key u v hu hv false).2 ⟨hP, hQ⟩⟩
 
-/-- Splitting paired blocks is polynomial-time when their lengths are fixed polynomials of a
-computed unary size. -/
 private theorem computableTidilyInPolyTime_splitAlternatingBlocks {γ : Type}
     {encIn : γ ↪ List Bool} (ps : List (Polynomial ℕ × Polynomial ℕ)) {N : γ → ℕ}
     (hN : ComputableTidilyInPolyTime N encIn encUnary) {W : γ → List Bool}
@@ -120,6 +121,17 @@ private theorem computableTidilyInPolyTime_splitAlternatingBlocks {γ : Type}
       (hp.prod hq)))
     exact ((hW.bitsTakeWithInput hp).bitsAppend ht.fst').prod
       (((hW.bitsDropWithInput hp).bitsTakeWithInput hq).bitsAppend ht.snd')
+
+/-- Splitting paired blocks is polynomial-time when their lengths are fixed polynomials of a
+computed unary size. -/
+theorem computableInPolyTime_splitAlternatingBlocks {γ : Type}
+    {encIn : γ ↪ List Bool} (ps : List (Polynomial ℕ × Polynomial ℕ)) {N : γ → ℕ}
+    (hN : ComputableInPolyTime N encIn encUnary) {W : γ → List Bool}
+    (hW : ComputableInPolyTime W encIn encBits) :
+    ComputableInPolyTime
+      (fun x => splitAlternatingBlocks (ps.map fun pq => (pq.1.eval (N x), pq.2.eval (N x)))
+        (W x)) encIn (encPair encBits encBits) :=
+  .of_tidy (computableTidilyInPolyTime_splitAlternatingBlocks ps hN.tidy hW.tidy)
 
 variable {α : Type} {enc : α ↪ List Bool}
 
@@ -159,10 +171,10 @@ private theorem exists_inter_verifier {q : Bool} {k : ℕ} {A B : Set α}
     simpa only [List.map_snd_zip hlen.ge] using hB
   refine ⟨_, _, ?_, ?_, hA'.inter hB'⟩
   · simp [hp, hq]
-  · have hn : ComputableTidilyInPolyTime (fun x : α × List Bool => (enc x.1).length)
+  · have hn : ComputableInPolyTime (fun x : α × List Bool => (enc x.1).length)
         (encPair enc encBits) encUnary := by fun_prop
-    have hs := computableTidilyInPolyTime_splitAlternatingBlocks (ps.zip qs) hn
-      (ComputableTidilyInPolyTime.snd enc encBits)
+    have hs := (computableInPolyTime_splitAlternatingBlocks (ps.zip qs) hn
+      (.snd enc encBits)).tidy
     exact .of_tidy <|
       (hV.tidy.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod hs.fst')).bool_and'
         (hW.tidy.comp ((ComputableTidilyInPolyTime.fst enc encBits).prod hs.snd'))
