@@ -35,6 +35,13 @@ These are exact probability laws for one scheme and one forger, with no efficien
 oracle interface is the library's `OracleComp`; it is meant to be re-expressed in the shared
 interactive-protocol core of #643 once that core exists.
 
+This interface is separate from the computational `Cslib.Crypto.SignatureScheme`, which packages
+word encodings, strict PPT certificates and verification without an oracle. Here the key and
+signing coins are arbitrary typed laws, and signing and verification share the hash oracle. A
+computational statement about a scheme of this form needs encodings, an efficient realization of
+the oracle and resource certificates on top of the exact bound; the two notions are not competing
+computational interfaces.
+
 ## Main definitions
 
 * `Cslib.Crypto.Protocols.ROMSignature.Scheme`: key generation, signing and verification.
