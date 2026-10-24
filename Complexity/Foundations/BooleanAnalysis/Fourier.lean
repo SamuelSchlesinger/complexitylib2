@@ -58,7 +58,8 @@ coefficient on the circle, so the name is meant to be used qualified.
 
 ## Main results
 
-* `Cslib.BitString.expect_chi_mul_chi`: the characters are orthonormal.
+* `Cslib.BitString.expect_chi_mul_chi`, `Cslib.BitString.fourierCoeff_chi`: the characters are
+  orthonormal.
 * `Cslib.BitString.chi_add`, `Cslib.BitString.chi_mul_chi`: the characters are multiplicative,
   in the input and in the set.
 * `Cslib.BitString.sum_fourierCoeff_mul_chi`: the Fourier expansion.
@@ -281,12 +282,18 @@ theorem fourierCoeff_const (c : ℝ) (S : Finset ι) :
     fourierCoeff (fun _ => c) S = if S = ∅ then c else 0 := by
   simp only [fourierCoeff, ← mul_expect, expect_chi, mul_ite, mul_one, mul_zero]
 
+/-- The Fourier coefficients of a character are `1` at its own set and `0` elsewhere. -/
+@[simp]
+theorem fourierCoeff_chi (S T : Finset ι) :
+    fourierCoeff (chi ℝ S) T = if S = T then 1 else 0 :=
+  expect_chi_mul_chi S T
+
 /-- A parity, read as `±1`, is the character of its set, so all its weight is on that set. -/
 theorem fourierCoeff_signVal_parityOn (S U : Finset ι) :
     fourierCoeff (fun x => signVal (parityOn S x)) U = if U = S then 1 else 0 := by
-  have h : (fun x => signVal (parityOn S x)) = fun x => chi ℝ S x :=
+  have h : (fun x => signVal (parityOn S x)) = chi ℝ S :=
     funext fun x => (chi_eq_signVal_parityOn S x).symm
-  rw [h, fourierCoeff, expect_chi_mul_chi]
+  rw [h, fourierCoeff_chi]
   exact if_congr eq_comm rfl rfl
 
 /-- The coefficient on the empty set is the expectation. -/

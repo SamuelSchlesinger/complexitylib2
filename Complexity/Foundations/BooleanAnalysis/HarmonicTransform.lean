@@ -31,8 +31,8 @@ concave in the function, antitone in the selected set and at most the mean
 by the expected square root of its transform at a random set containing each coordinate with
 probability `1 / 4` [Korten, Lemma 12][Korten2026]
 (`expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform`), which gives the sampling estimate in the
-proof of Lemma 10 (`harmonicTransform_good_probability`). The sparse sampling conclusion of Lemma 10
-is `BitString.harmonicTransform_sparse_good_probability`.
+proof of Lemma 10 (`le_bernoulliAverage_le_harmonicTransform`). The sparse sampling conclusion of
+Lemma 10 is `BitString.le_bernoulliAverage_le_harmonicTransform_of_rpow`.
 
 ## Main definitions
 
@@ -46,7 +46,7 @@ is `BitString.harmonicTransform_sparse_good_probability`.
   antitone in the selected set, and at most the mean.
 * `Cslib.BitString.expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform`: Korten's
   inequality.
-* `Cslib.BitString.harmonicTransform_good_probability`: the sampling estimate of Lemma 10.
+* `Cslib.BitString.le_bernoulliAverage_le_harmonicTransform`: the sampling estimate of Lemma 10.
 
 ## References
 
@@ -177,15 +177,11 @@ end
 The proofs of the antitonicity of the transform and of Korten's Lemma 12 are inductions on the
 dimension, on the cube `Fin n → Bool`, which split off the first coordinate. -/
 
-private theorem expect_univ_fin_cons {n : ℕ} (f : (Fin (n + 1) → Bool) → ℝ) :
-    (𝔼 x, f x) = ((𝔼 x, f (Fin.cons false x)) + (𝔼 x, f (Fin.cons true x))) / 2 := by
-  rw [Fin.expect_univ_cons, Fintype.expect_bool]
-
 private theorem resample_cons {n : ℕ} (s y x : Fin n → Bool) (a b c : Bool) :
     resample (Fin.cons a s : Fin (n + 1) → Bool) (Fin.cons b y) (Fin.cons c x) =
       Fin.cons (if a then c else b) (resample s y x) := by
   funext i
-  refine Fin.cases ?_ (fun j => ?_) i <;> simp [resample]
+  refine Fin.cases ?_ (fun j => ?_) i <;> simp [resample, Set.piecewise]
 
 private theorem projectionAverage_cons_false {n : ℕ}
     (f : (Fin (n + 1) → Bool) → ℝ) (selected x : Fin n → Bool) (b : Bool) :
@@ -193,7 +189,7 @@ private theorem projectionAverage_cons_false {n : ℕ}
       projectionAverage (fun x => (f (Fin.cons false x) + f (Fin.cons true x)) / 2)
         selected x := by
   unfold projectionAverage
-  rw [expect_univ_fin_cons]
+  rw [Fin.expect_univ_cons_bool]
   simp only [resample_cons, Bool.false_eq_true, ite_false]
   rw [← expect_div, expect_add_distrib]
 
@@ -202,7 +198,7 @@ private theorem projectionAverage_cons_true {n : ℕ}
     projectionAverage f (Fin.cons true selected) (Fin.cons b x) =
       projectionAverage (fun x => f (Fin.cons b x)) selected x := by
   unfold projectionAverage
-  rw [expect_univ_fin_cons]
+  rw [Fin.expect_univ_cons_bool]
   simp only [resample_cons, ite_true]
   ring
 
@@ -237,24 +233,16 @@ private theorem harmonicTransform_cons_true {n : ℕ}
 
 private theorem two_mul_mul_div_add_le_add_div_two {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b) :
     2 * a * b / (a + b) ≤ (a + b) / 2 := by
-  by_cases hz : a + b = 0
-  · simp [hz]
-  have hp : 0 < a + b := (add_nonneg ha hb).lt_of_ne' hz
-  apply (div_le_iff₀ hp).mpr
-  nlinarith [sq_nonneg (a - b)]
+  have h := harmonicMean_le_expect (α := Bool) (f := fun x => if x then b else a)
+    fun x => by cases x <;> assumption
+  rwa [harmonicMean_bool ha hb, Fintype.expect_bool] at h
 
 private theorem two_mul_mul_div_add_mono {a b c d : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b)
     (hac : a ≤ c) (hbd : b ≤ d) : 2 * a * b / (a + b) ≤ 2 * c * d / (c + d) := by
-  have hc := ha.trans hac
-  have hd := hb.trans hbd
-  by_cases hz : a + b = 0
-  · rw [hz, div_zero]
-    positivity
-  have hp : 0 < a + b := (add_nonneg ha hb).lt_of_ne' hz
-  have hq : 0 < c + d := hp.trans_le (add_le_add hac hbd)
-  apply (div_le_div_iff₀ hp hq).mpr
-  nlinarith [mul_nonneg (mul_nonneg ha hc) (sub_nonneg.mpr hbd),
-    mul_nonneg (mul_nonneg hb hd) (sub_nonneg.mpr hac)]
+  have h := harmonicMean_mono (α := Bool) (f := fun x => if x then b else a)
+    (g := fun x => if x then d else c) (fun x => by cases x <;> assumption)
+    (fun x => by cases x <;> assumption)
+  rwa [harmonicMean_bool ha hb, harmonicMean_bool (ha.trans hac) (hb.trans hbd)] at h
 
 private theorem harmonicTransform_antitone_fin {n : ℕ} {f : (Fin n → Bool) → ℝ}
     (hf : ∀ x, 0 ≤ f x) : Antitone (harmonicTransform f) := by
@@ -359,7 +347,7 @@ private theorem expect_sqrt_le_bernoulliAverage_sqrt_harmonicTransform_fin {n : 
       rw [harmonicTransform_cons_true hf]
       dsimp [f0, f1] at hb hc ⊢
       linarith
-    rw [expect_univ_fin_cons]
+    rw [Fin.expect_univ_cons_bool]
     calc
       _ ≤ 1 / 2 * bernoulliAverage (1 / 4) (fun s => Real.sqrt (harmonicTransform f0 s)) +
           1 / 2 * bernoulliAverage (1 / 4) (fun s => Real.sqrt (harmonicTransform f1 s)) := by
@@ -409,7 +397,7 @@ coordinate set. We use a pointwise density bound `B` instead of writing it as `2
 by `B` has harmonic transform at least `1 / (4 * B)` with probability at least
 `1 / (2 * sqrt B)` under `1/4`-coordinate sampling. The `LightPatterns` module
 transfers this estimate to sparse sampling. -/
-theorem harmonicTransform_good_probability
+theorem le_bernoulliAverage_le_harmonicTransform
     {f : (ι → Bool) → ℝ} (hf : ∀ x, 0 ≤ f x) (hmean : (𝔼 x, f x) = 1)
     {B : ℝ} (hB : 1 ≤ B) (hbound : ∀ x, f x ≤ B) :
     1 / (2 * Real.sqrt B) ≤ bernoulliAverage (1 / 4)

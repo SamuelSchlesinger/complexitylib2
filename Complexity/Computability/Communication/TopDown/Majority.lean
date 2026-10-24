@@ -278,7 +278,7 @@ private theorem majority_layers_limits {n : ℕ} (hn : 16 ≤ n) :
     have hx' : weight x = n / 2 := (mem_filter.mp hx).2
     have hl := isDensityLimit_of_many_neighbors hn (weightLayer n (n / 2 + 1)) x
       (fun i => !x i) (by rw [weight_not, Fintype.card_fin, hx']; omega) ?_
-    · exact hl.mono_deficit (by positivity) hp (le_strictMajorityDeficitBound n)
+    · exact hl.mono_right (by positivity) hp (le_strictMajorityDeficitBound n)
     intro i hi
     have hi' : x i = false := by simpa using hi
     simp only [mem_weightLayer, hi', Bool.not_false]
@@ -287,7 +287,7 @@ private theorem majority_layers_limits {n : ℕ} (hn : 16 ≤ n) :
     have hy' : weight y = n / 2 + 1 := (mem_filter.mp hy).2
     have hl := isDensityLimit_of_many_neighbors hn (weightLayer n (n / 2)) y
       y (by rw [hy']; omega) ?_
-    · exact hl.mono_deficit (by positivity) hp (le_strictMajorityDeficitBound n)
+    · exact hl.mono_right (by positivity) hp (le_strictMajorityDeficitBound n)
     intro i hi
     have hc := weight_update_false hi
     simp only [mem_weightLayer, hi, Bool.not_true]

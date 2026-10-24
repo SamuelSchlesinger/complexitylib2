@@ -154,7 +154,7 @@ theorem not_solves_bilateral_density {d : ℕ} (P : KWRoundProtocol ι M (d + 1)
     have hnew : DensityRectangle X' Y p (m + k) := by
       refine ⟨hne, hY, by linarith, by linarith, p, hp, le_rfl, Or.inl ?_⟩
       intro x hx
-      exact (hleft x (Finset.mem_filter.mp hx).1).mono_deficit
+      exact (hleft x (Finset.mem_filter.mp hx).1).mono_right
         hp.le (by linarith) (by linarith)
     apply (next a).not_solves_bounded_density hM (k := m + k)
       (by linarith) (by linarith) hbudget hnew
@@ -167,7 +167,7 @@ theorem not_solves_bilateral_density {d : ℕ} (P : KWRoundProtocol ι M (d + 1)
     have hnew : DensityRectangle X Y' p (m + k) := by
       refine ⟨hX, hne, by linarith, by linarith, p, hp, le_rfl, Or.inr ?_⟩
       intro y hy
-      exact (hright y (Finset.mem_filter.mp hy).1).mono_deficit
+      exact (hright y (Finset.mem_filter.mp hy).1).mono_right
         hp.le (by linarith) (by linarith)
     apply (next a).not_solves_bounded_density hM (k := m + k)
       (by linarith) (by linarith) hbudget hnew
