@@ -38,6 +38,40 @@ theorem computableInPolyTime_xorCompress :
   unfold xorCompress padOrTake
   polytime
 
+-- Ordinary importing clients can use the plain `ComputableInPolyTime` certificates for
+-- `padOrTake`, `mdBlocks`, `merkleDamgard`, `extractMerkleDamgardCollision`,
+-- `validCompressionInput`, and `isCollision` directly:
+example : ComputableInPolyTime (fun p : ℕ × List Bool => padOrTake p.1 p.2)
+    (encPair encUnary encBits) encBits :=
+  computableInPolyTime_padOrTake
+
+example : ComputableInPolyTime (fun p : ℕ × List Bool => mdBlocks p.1 p.2)
+    (encPair encUnary encBits) (encList encBits) :=
+  computableInPolyTime_mdBlocks
+
+example : ComputableInPolyTime (fun p : ℕ × List Bool => validCompressionInput p.1 p.2)
+    (encPair encUnary encBits) encBool :=
+  computableInPolyTime_validCompressionInput
+
+example : ComputableInPolyTime
+    (fun p : ℕ × List Bool × List Bool × List Bool =>
+      isCollision xorCompress validCompressionInput p.1 p.2.1 p.2.2.1 p.2.2.2)
+    (encPair encUnary (encPair encBits (encPair encBits encBits))) encBool :=
+  computableInPolyTime_isCollision computableInPolyTime_xorCompress
+    computableInPolyTime_validCompressionInput
+
+example : ComputableInPolyTime (fun p : List Bool × List Bool => merkleDamgard xorCompress p.1 p.2)
+    (encPair encBits encBits) encBits :=
+  computableInPolyTime_merkleDamgard computableInPolyTime_xorCompress
+    (fun k x _ => length_xorCompress k x)
+
+example : ComputableInPolyTime
+    (fun p : List Bool × List Bool × List Bool =>
+      extractMerkleDamgardCollision xorCompress p.1 p.2.1 p.2.2)
+    (encPair encBits (encPair encBits encBits)) (encPair encBits encBits) :=
+  computableInPolyTime_extractMerkleDamgardCollision computableInPolyTime_xorCompress
+    (fun k x _ => length_xorCompress k x)
+
 -- Block encoding examples at security parameter n = 2:
 example : mdBlocks 2 [] = [[false, false]] := rfl
 

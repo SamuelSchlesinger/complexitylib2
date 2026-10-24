@@ -106,7 +106,7 @@ theorem isCollision_self (H : List Bool → List Bool → List Bool)
     isCollision H valid n k m m = false := by
   simp [isCollision]
 
-@[local fun_prop, program_certificate]
+@[local fun_prop]
 private theorem computableTidilyInPolyTime_isCollision
     {H : List Bool → List Bool → List Bool} {valid : ℕ → List Bool → Bool}
     (hH : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => H p.1 p.2)
@@ -314,7 +314,7 @@ theorem validCompressionInput_eq_true_iff {n : ℕ} {x : List Bool} :
     validCompressionInput n x = true ↔ x.length = 2 * n :=
   beq_iff_eq
 
-@[local fun_prop, program_certificate]
+@[local fun_prop]
 private theorem computableTidilyInPolyTime_validCompressionInput :
     ComputableTidilyInPolyTime
       (fun p : ℕ × List Bool => validCompressionInput p.1 p.2)

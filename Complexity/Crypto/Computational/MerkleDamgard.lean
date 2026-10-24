@@ -18,7 +18,7 @@ import Complexity.Tactic.PPT
 
 Given a keyed `2n → n` collision-resistant compression family
 `h : List Bool → List Bool → List Bool`, the Merkle–Damgård transform ([BonehShoup2023],
-Section 8.4, Construction 8.1 and Theorem 8.3) constructs a collision-resistant hash family on
+Section 8.4, Figure 8.5 and Theorem 8.3) constructs a collision-resistant hash family on
 arbitrary-length messages by iterating `h k` over a sequence of `n`-bit blocks starting from a
 fixed `n`-bit initialization vector `0^n`.
 
@@ -81,7 +81,7 @@ We formalize the transform and its collision-extraction reduction at two levels:
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023],
-  Section 8.4 (Construction 8.1 and Theorem 8.3).
+  Section 8.4 (Figure 8.5 and Theorem 8.3).
 * [J. Katz, Y. Lindell, *Introduction to Modern Cryptography*][KatzLindell2020], Section 5.2.
 -/
 
@@ -109,7 +109,7 @@ theorem padOrTake_eq_self {n : ℕ} {w : List Bool} (hw : w.length = n) :
   subst hw
   simp [padOrTake]
 
-@[local fun_prop, program_certificate]
+@[local fun_prop]
 private theorem computableTidilyInPolyTime_padOrTake
     {γ : Type} {encIn : γ ↪ List Bool} {n : γ → ℕ} {w : γ → List Bool}
     (hn : ComputableTidilyInPolyTime n encIn encUnary)
@@ -127,7 +127,7 @@ theorem computableInPolyTime_padOrTake :
 
 /-! ### Block-level Merkle–Damgård chain and collision extraction -/
 
-/-- Block-level Merkle–Damgård iterated compression ([BonehShoup2023], Construction 8.1):
+/-- Block-level Merkle–Damgård iterated compression ([BonehShoup2023], Section 8.4, Figure 8.5):
 starting from the initial chaining value `iv`, fold over `blocks` by feeding `acc ++ b` to
 `h k` at each step. -/
 def merkleDamgardChain (h : List Bool → List Bool → List Bool)
@@ -239,7 +239,7 @@ private theorem snd_chainTrace_concat_of_length {h : List Bool → List Bool →
   simp only [chainTraceStep, fst_chainTrace_eq_merkleDamgardChain hlen hiv hblocks,
     padOrTake_eq_self hchainLen, padOrTake_eq_self hb]
 
-@[local fun_prop, program_certificate]
+@[local fun_prop]
 private theorem computableTidilyInPolyTime_chainTrace
     {h : List Bool → List Bool → List Bool}
     (hh : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => h p.1 p.2)
@@ -319,7 +319,7 @@ def extractChainCollision (h : List Bool → List Bool → List Bool)
   (((chainTrace h k iv bs₁).2.zip (chainTrace h k iv bs₂).2).find?
     (fun p => p.1 != p.2)).getD ([], [])
 
-@[local fun_prop, program_certificate]
+@[local fun_prop]
 private theorem computableTidilyInPolyTime_extractChainCollision
     {h : List Bool → List Bool → List Bool}
     (hh : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => h p.1 p.2)
@@ -626,7 +626,7 @@ private theorem not_suffix_mdBlocks {n : ℕ} (hn : 2 ≤ n) {m₁ m₂ : List B
     ¬ (mdBlocks n m₁ <:+ mdBlocks n m₂) :=
   mt (mdBlocks_suffix_iff hn).mp hne
 
-@[local fun_prop, program_certificate]
+@[local fun_prop]
 private theorem computableTidilyInPolyTime_mdEndBlock
     {γ : Type} {encIn : γ ↪ List Bool} {n : γ → ℕ}
     (hn : ComputableTidilyInPolyTime n encIn encUnary) :
@@ -634,7 +634,7 @@ private theorem computableTidilyInPolyTime_mdEndBlock
   unfold mdEndBlock
   polytime
 
-@[local fun_prop, program_certificate]
+@[local fun_prop]
 private theorem computableTidilyInPolyTime_mdDataBlock
     {γ : Type} {encIn : γ ↪ List Bool} {n : γ → ℕ} {b : γ → Bool}
     (hn : ComputableTidilyInPolyTime n encIn encUnary)
@@ -643,7 +643,7 @@ private theorem computableTidilyInPolyTime_mdDataBlock
   unfold mdDataBlock
   polytime
 
-@[local fun_prop, program_certificate]
+@[local fun_prop]
 private theorem computableTidilyInPolyTime_mdBlocks
     {γ : Type} {encIn : γ ↪ List Bool} {n : γ → ℕ} {msg : γ → List Bool}
     (hn : ComputableTidilyInPolyTime n encIn encUnary)
@@ -693,7 +693,7 @@ private theorem merkleDamgard_eq_fst_chainTrace {h : List Bool → List Bool →
   (fst_chainTrace_eq_merkleDamgardChain hlen List.length_replicate
     (fun _ hb => length_of_mem_mdBlocks hb)).symm
 
-@[local fun_prop, program_certificate]
+@[local fun_prop]
 private theorem computableTidilyInPolyTime_merkleDamgard
     {h : List Bool → List Bool → List Bool}
     (hh : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => h p.1 p.2)
