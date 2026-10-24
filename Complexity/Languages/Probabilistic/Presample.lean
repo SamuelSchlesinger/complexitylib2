@@ -86,9 +86,9 @@ theorem IsQueryBounded.run_interpret_presample {program : ProbOracleComp spec α
   | liftBind q cont n _ ih =>
     cases q with
     | inl k =>
-      simp only [Sum.elim_inl, Nat.add_zero, interpret_bind, OracleComp.interpret_query,
-        StateT.run_bind, handler, StateT.run_lift, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure,
-        PMF.bind_bind, PMF.pure_bind, PMF.map_bind]
+      simp only [Sum.elim_inl, Nat.add_zero, run_interpret_bind, run_interpret_query, handler,
+        StateT.lift, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure, PMF.bind_bind,
+        PMF.pure_bind, PMF.map_bind]
       rw [PMF.bind_comm]
       exact congrArg ((ProbComp.unifOracle k).bind ·) (funext fun a => ih a s)
     | inr q =>

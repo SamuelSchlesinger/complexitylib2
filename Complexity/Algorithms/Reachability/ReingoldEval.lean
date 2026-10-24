@@ -247,6 +247,82 @@ section Correct
 
 variable {V : Type u} (G : RotationMap V B)
 
+/-- The evaluation of level `k + 1` from the rotations of level `k`. -/
+private theorem exists_iterate_zig₀_of_call (k : ℕ)
+    (hcall₀ : ∀ (y : ReingoldVertex V B k) (c a : B) (rest : List (ReingoldPc × B)),
+      ∃ N, (reingoldEvalStep H e G.rot)^[N]
+          ⟨(y.toList).1, c :: (y.toList).2, (.call₀, a) :: rest⟩ =
+        ⟨(((reingold H e G k).rot (y, c)).1.toList).1,
+          ((reingold H e G k).rot (y, c)).2 :: (((reingold H e G k).rot (y, c)).1.toList).2,
+          (.zag₀, a) :: rest⟩)
+    (hcall₁ : ∀ (y : ReingoldVertex V B k) (c a : B) (rest : List (ReingoldPc × B)),
+      ∃ N, (reingoldEvalStep H e G.rot)^[N]
+          ⟨(y.toList).1, c :: (y.toList).2, (.call₁, a) :: rest⟩ =
+        ⟨(((reingold H e G k).rot (y, c)).1.toList).1,
+          ((reingold H e G k).rot (y, c)).2 :: (((reingold H e G k).rot (y, c)).1.toList).2,
+          (.zag₁, a) :: rest⟩)
+    (x : ReingoldVertex V B (k + 1)) (a : B) (rest : List (ReingoldPc × B)) :
+    ∃ N, (reingoldEvalStep H e G.rot)^[N]
+        ⟨(x.toList).1, (x.toList).2, (.zig₀, a) :: rest⟩ =
+      ⟨(((reingold H e G (k + 1)).rot (x, a)).1.toList).1,
+        ((reingold H e G (k + 1)).rot (x, a)).2 ::
+          (((reingold H e G (k + 1)).rot (x, a)).1.toList).2, rest⟩ := by
+  obtain ⟨y, c⟩ := x
+  set s₁ := reingoldHStep H e .zig₀ (c, a)
+  set r₁ := (reingold H e G k).rot (y, s₁.1)
+  set s₂ := reingoldHStep H e .zag₀ (r₁.2, s₁.2)
+  set s₃ := reingoldHStep H e .zig₁ (s₂.1, s₂.2)
+  set r₂ := (reingold H e G k).rot (r₁.1, s₃.1)
+  set s₄ := reingoldHStep H e .zag₁ (r₂.2, s₃.2)
+  obtain ⟨N₁, hN₁⟩ := hcall₀ y s₁.1 s₁.2 rest
+  obtain ⟨N₂, hN₂⟩ := hcall₁ r₁.1 s₃.1 s₃.2 rest
+  have e₁ : reingoldEvalStep H e G.rot ⟨(y.toList).1, c :: (y.toList).2, (.zig₀, a) :: rest⟩ =
+      ⟨(y.toList).1, s₁.1 :: (y.toList).2, (.call₀, s₁.2) :: rest⟩ := rfl
+  have e₂ : reingoldEvalStep H e G.rot
+      ⟨(r₁.1.toList).1, r₁.2 :: (r₁.1.toList).2, (.zag₀, s₁.2) :: rest⟩ =
+      ⟨(r₁.1.toList).1, s₂.1 :: (r₁.1.toList).2, (.zig₁, s₂.2) :: rest⟩ := rfl
+  have e₃ : reingoldEvalStep H e G.rot
+      ⟨(r₁.1.toList).1, s₂.1 :: (r₁.1.toList).2, (.zig₁, s₂.2) :: rest⟩ =
+      ⟨(r₁.1.toList).1, s₃.1 :: (r₁.1.toList).2, (.call₁, s₃.2) :: rest⟩ := rfl
+  have e₄ : reingoldEvalStep H e G.rot
+      ⟨(r₂.1.toList).1, r₂.2 :: (r₂.1.toList).2, (.zag₁, s₃.2) :: rest⟩ =
+      ⟨(r₂.1.toList).1, s₄.1 :: (r₂.1.toList).2, (.finish, s₄.2) :: rest⟩ := rfl
+  have e₅ : reingoldEvalStep H e G.rot
+      ⟨(r₂.1.toList).1, s₄.1 :: (r₂.1.toList).2, (.finish, s₄.2) :: rest⟩ =
+      ⟨(r₂.1.toList).1, reingoldFinish e s₄.2 :: s₄.1 :: (r₂.1.toList).2, rest⟩ := rfl
+  have hrot : (reingold H e G (k + 1)).rot ((y, c), a) = ((r₂.1, s₄.1), reingoldFinish e s₄.2) :=
+    reingoldStep_rot H e (reingold H e G k) y c a
+  refine ⟨1 + 1 + N₂ + 1 + 1 + N₁ + 1, ?_⟩
+  simp only [Function.iterate_add_apply, Function.iterate_one, ReingoldVertex.toList_succ]
+  rw [e₁, hN₁, e₂, e₃, hN₂, e₄, e₅, hrot]
+  rfl
+
+/-- A rotation of level `k + 1` pushes a frame for level `k + 1` and evaluates that level. -/
+private theorem exists_iterate_call_succ (k : ℕ)
+    (heval : ∀ (x : ReingoldVertex V B (k + 1)) (a : B) (rest : List (ReingoldPc × B)),
+      ∃ N, (reingoldEvalStep H e G.rot)^[N]
+          ⟨(x.toList).1, (x.toList).2, (.zig₀, a) :: rest⟩ =
+        ⟨(((reingold H e G (k + 1)).rot (x, a)).1.toList).1,
+          ((reingold H e G (k + 1)).rot (x, a)).2 ::
+            (((reingold H e G (k + 1)).rot (x, a)).1.toList).2, rest⟩)
+    (pc next : ReingoldPc) (hpc : pc = .call₀ ∧ next = .zag₀ ∨ pc = .call₁ ∧ next = .zag₁)
+    (y : ReingoldVertex V B (k + 1)) (c a : B) (rest : List (ReingoldPc × B)) :
+    ∃ N, (reingoldEvalStep H e G.rot)^[N]
+        ⟨(y.toList).1, c :: (y.toList).2, (pc, a) :: rest⟩ =
+      ⟨(((reingold H e G (k + 1)).rot (y, c)).1.toList).1,
+        ((reingold H e G (k + 1)).rot (y, c)).2 ::
+          (((reingold H e G (k + 1)).rot (y, c)).1.toList).2, (next, a) :: rest⟩ := by
+  obtain ⟨N, hN⟩ := heval y c ((next, a) :: rest)
+  refine ⟨N + 1, ?_⟩
+  rw [Function.iterate_succ_apply]
+  have hne : (y.toList).2 ≠ [] := by
+    rw [ne_eq, ← List.length_eq_zero_iff, ReingoldVertex.length_toList]
+    exact Nat.succ_ne_zero k
+  have hpush : reingoldEvalStep H e G.rot ⟨(y.toList).1, c :: (y.toList).2, (pc, a) :: rest⟩ =
+      ⟨(y.toList).1, (y.toList).2, (.zig₀, c) :: (next, a) :: rest⟩ := by
+    rcases hpc with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;> simp [reingoldEvalStep, hne]
+  rw [hpush, hN]
+
 /-- **The rotations of the level below and the evaluation of a level.** For every `k`: a frame at
 a rotation of level `k` (program counter `call₀` or `call₁`), above the registers of a vertex `y` of
 `G_k` and the label `c`, reaches the registers of the rotation of `G_k` at `(y, c)`, with the frame
@@ -275,97 +351,13 @@ private theorem exists_iterate_call (k : ℕ) :
   induction k with
   | zero =>
     -- a rotation of level `0` is one step of `G`
-    have hcall₀ : ∀ (y : ReingoldVertex V B 0) (c a : B) (rest : List (ReingoldPc × B)),
-        ∃ N, (reingoldEvalStep H e G.rot)^[N]
-            ⟨(y.toList).1, c :: (y.toList).2, (.call₀, a) :: rest⟩ =
-          ⟨(((reingold H e G 0).rot (y, c)).1.toList).1,
-            ((reingold H e G 0).rot (y, c)).2 :: (((reingold H e G 0).rot (y, c)).1.toList).2,
-            (.zag₀, a) :: rest⟩ :=
-      fun y c a rest ↦ ⟨1, rfl⟩
-    have hcall₁ : ∀ (y : ReingoldVertex V B 0) (c a : B) (rest : List (ReingoldPc × B)),
-        ∃ N, (reingoldEvalStep H e G.rot)^[N]
-            ⟨(y.toList).1, c :: (y.toList).2, (.call₁, a) :: rest⟩ =
-          ⟨(((reingold H e G 0).rot (y, c)).1.toList).1,
-            ((reingold H e G 0).rot (y, c)).2 :: (((reingold H e G 0).rot (y, c)).1.toList).2,
-            (.zag₁, a) :: rest⟩ :=
-      fun y c a rest ↦ ⟨1, rfl⟩
-    refine ⟨hcall₀, hcall₁, fun x a rest ↦ ?_⟩
-    exact evalLevel 0 hcall₀ hcall₁ x a rest
+    refine ⟨fun _ _ _ _ ↦ ⟨1, rfl⟩, fun _ _ _ _ ↦ ⟨1, rfl⟩, ?_⟩
+    exact exists_iterate_zig₀_of_call H e G 0
+      (fun _ _ _ _ ↦ ⟨1, rfl⟩) (fun _ _ _ _ ↦ ⟨1, rfl⟩)
   | succ k ih =>
-    obtain ⟨-, -, heval⟩ := ih
-    -- a rotation of level `k + 1` pushes a frame and evaluates the level
-    have hcall (pc next : ReingoldPc)
-        (hpc : pc = .call₀ ∧ next = .zag₀ ∨ pc = .call₁ ∧ next = .zag₁)
-        (y : ReingoldVertex V B (k + 1)) (c a : B) (rest : List (ReingoldPc × B)) :
-        ∃ N, (reingoldEvalStep H e G.rot)^[N]
-            ⟨(y.toList).1, c :: (y.toList).2, (pc, a) :: rest⟩ =
-          ⟨(((reingold H e G (k + 1)).rot (y, c)).1.toList).1,
-            ((reingold H e G (k + 1)).rot (y, c)).2 ::
-              (((reingold H e G (k + 1)).rot (y, c)).1.toList).2, (next, a) :: rest⟩ := by
-      obtain ⟨N, hN⟩ := heval y c ((next, a) :: rest)
-      refine ⟨N + 1, ?_⟩
-      rw [Function.iterate_succ_apply]
-      have hne : (y.toList).2 ≠ [] := by
-        rw [ne_eq, ← List.length_eq_zero_iff, ReingoldVertex.length_toList]
-        exact Nat.succ_ne_zero k
-      have hpush : reingoldEvalStep H e G.rot ⟨(y.toList).1, c :: (y.toList).2, (pc, a) :: rest⟩ =
-          ⟨(y.toList).1, (y.toList).2, (.zig₀, c) :: (next, a) :: rest⟩ := by
-        rcases hpc with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ <;> simp [reingoldEvalStep, hne]
-      rw [hpush, hN]
-    refine ⟨hcall .call₀ .zag₀ (.inl ⟨rfl, rfl⟩), hcall .call₁ .zag₁ (.inr ⟨rfl, rfl⟩),
-      fun x a rest ↦ ?_⟩
-    exact evalLevel (k + 1) (hcall .call₀ .zag₀ (.inl ⟨rfl, rfl⟩))
-      (hcall .call₁ .zag₁ (.inr ⟨rfl, rfl⟩)) x a rest
-where
-  /-- The evaluation of level `k + 1` from the rotations of level `k`. -/
-  evalLevel (k : ℕ)
-      (hcall₀ : ∀ (y : ReingoldVertex V B k) (c a : B) (rest : List (ReingoldPc × B)),
-        ∃ N, (reingoldEvalStep H e G.rot)^[N]
-            ⟨(y.toList).1, c :: (y.toList).2, (.call₀, a) :: rest⟩ =
-          ⟨(((reingold H e G k).rot (y, c)).1.toList).1,
-            ((reingold H e G k).rot (y, c)).2 :: (((reingold H e G k).rot (y, c)).1.toList).2,
-            (.zag₀, a) :: rest⟩)
-      (hcall₁ : ∀ (y : ReingoldVertex V B k) (c a : B) (rest : List (ReingoldPc × B)),
-        ∃ N, (reingoldEvalStep H e G.rot)^[N]
-            ⟨(y.toList).1, c :: (y.toList).2, (.call₁, a) :: rest⟩ =
-          ⟨(((reingold H e G k).rot (y, c)).1.toList).1,
-            ((reingold H e G k).rot (y, c)).2 :: (((reingold H e G k).rot (y, c)).1.toList).2,
-            (.zag₁, a) :: rest⟩)
-      (x : ReingoldVertex V B (k + 1)) (a : B) (rest : List (ReingoldPc × B)) :
-      ∃ N, (reingoldEvalStep H e G.rot)^[N]
-          ⟨(x.toList).1, (x.toList).2, (.zig₀, a) :: rest⟩ =
-        ⟨(((reingold H e G (k + 1)).rot (x, a)).1.toList).1,
-          ((reingold H e G (k + 1)).rot (x, a)).2 ::
-            (((reingold H e G (k + 1)).rot (x, a)).1.toList).2, rest⟩ := by
-    obtain ⟨y, c⟩ := x
-    set s₁ := reingoldHStep H e .zig₀ (c, a)
-    set r₁ := (reingold H e G k).rot (y, s₁.1)
-    set s₂ := reingoldHStep H e .zag₀ (r₁.2, s₁.2)
-    set s₃ := reingoldHStep H e .zig₁ (s₂.1, s₂.2)
-    set r₂ := (reingold H e G k).rot (r₁.1, s₃.1)
-    set s₄ := reingoldHStep H e .zag₁ (r₂.2, s₃.2)
-    obtain ⟨N₁, hN₁⟩ := hcall₀ y s₁.1 s₁.2 rest
-    obtain ⟨N₂, hN₂⟩ := hcall₁ r₁.1 s₃.1 s₃.2 rest
-    have e₁ : reingoldEvalStep H e G.rot ⟨(y.toList).1, c :: (y.toList).2, (.zig₀, a) :: rest⟩ =
-        ⟨(y.toList).1, s₁.1 :: (y.toList).2, (.call₀, s₁.2) :: rest⟩ := rfl
-    have e₂ : reingoldEvalStep H e G.rot
-        ⟨(r₁.1.toList).1, r₁.2 :: (r₁.1.toList).2, (.zag₀, s₁.2) :: rest⟩ =
-        ⟨(r₁.1.toList).1, s₂.1 :: (r₁.1.toList).2, (.zig₁, s₂.2) :: rest⟩ := rfl
-    have e₃ : reingoldEvalStep H e G.rot
-        ⟨(r₁.1.toList).1, s₂.1 :: (r₁.1.toList).2, (.zig₁, s₂.2) :: rest⟩ =
-        ⟨(r₁.1.toList).1, s₃.1 :: (r₁.1.toList).2, (.call₁, s₃.2) :: rest⟩ := rfl
-    have e₄ : reingoldEvalStep H e G.rot
-        ⟨(r₂.1.toList).1, r₂.2 :: (r₂.1.toList).2, (.zag₁, s₃.2) :: rest⟩ =
-        ⟨(r₂.1.toList).1, s₄.1 :: (r₂.1.toList).2, (.finish, s₄.2) :: rest⟩ := rfl
-    have e₅ : reingoldEvalStep H e G.rot
-        ⟨(r₂.1.toList).1, s₄.1 :: (r₂.1.toList).2, (.finish, s₄.2) :: rest⟩ =
-        ⟨(r₂.1.toList).1, reingoldFinish e s₄.2 :: s₄.1 :: (r₂.1.toList).2, rest⟩ := rfl
-    have hrot : (reingold H e G (k + 1)).rot ((y, c), a) = ((r₂.1, s₄.1), reingoldFinish e s₄.2) :=
-      reingoldStep_rot H e (reingold H e G k) y c a
-    refine ⟨1 + 1 + N₂ + 1 + 1 + N₁ + 1, ?_⟩
-    simp only [Function.iterate_add_apply, Function.iterate_one, ReingoldVertex.toList_succ]
-    rw [e₁, hN₁, e₂, e₃, hN₂, e₄, e₅, hrot]
-    rfl
+    have hcall₀ := exists_iterate_call_succ H e G k ih.2.2 .call₀ .zag₀ (.inl ⟨rfl, rfl⟩)
+    have hcall₁ := exists_iterate_call_succ H e G k ih.2.2 .call₁ .zag₁ (.inr ⟨rfl, rfl⟩)
+    exact ⟨hcall₀, hcall₁, exists_iterate_zig₀_of_call H e G (k + 1) hcall₀ hcall₁⟩
 
 /-- **The evaluation computes the rotation map**, as in the proof of
 [Reingold, Lemma 3.4][Reingold2008]: from a frame for level `m ≥ 1`, freshly pushed with the label
