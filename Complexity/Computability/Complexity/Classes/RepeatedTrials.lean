@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 public import Mathlib.Algebra.Polynomial.Eval.Defs
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Foundations.Data.List.OfFn
 
@@ -76,11 +77,12 @@ The dimensions may depend on the complete input, and output uses the raw bit-lis
 @[fun_prop]
 theorem computableTidilyInPolyTime_repeatVotes {enc : α ↪ List Bool}
     {V : α × List Bool → Bool} {trials width : α × List Bool → ℕ}
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool)
-    (htrials : ComputableTidilyInPolyTime trials (encPair enc encBits) encUnary)
-    (hwidth : ComputableTidilyInPolyTime width (encPair enc encBits) encUnary) :
+    (hV : ComputableInPolyTime V (encPair enc encBits) encBool)
+    (htrials : ComputableInPolyTime trials (encPair enc encBits) encUnary)
+    (hwidth : ComputableInPolyTime width (encPair enc encBits) encUnary) :
     ComputableTidilyInPolyTime (fun input => repeatVotes (trials input) (width input) V input)
       (encPair enc encBits) encBits := by
+  apply ComputableInPolyTime.tidy
   unfold repeatVotes
   fun_prop
 
@@ -98,9 +100,10 @@ variable {enc : α ↪ List Bool}
 /-- Majority votes of a polynomial-time decider take polynomial time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_repeatMajority {V : α × List Bool → Bool}
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) (r p : Polynomial ℕ) :
+    (hV : ComputableInPolyTime V (encPair enc encBits) encBool) (r p : Polynomial ℕ) :
     ComputableTidilyInPolyTime (repeatMajority enc r p V) (encPair enc encBits) encBool := by
-  unfold repeatMajority
+  apply ComputableInPolyTime.tidy
+  unfold repeatMajority repeatVotes
   fun_prop
 
 /-- On a random string of `2 r(n)` rows of `p(n)` bits, the majority vote compares the number of
@@ -125,9 +128,10 @@ variable {enc : α ↪ List Bool}
 /-- Repeating a polynomial-time decider takes polynomial time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_repeatAny {V : α × List Bool → Bool}
-    (hV : ComputableTidilyInPolyTime V (encPair enc encBits) encBool) (q p : Polynomial ℕ) :
+    (hV : ComputableInPolyTime V (encPair enc encBits) encBool) (q p : Polynomial ℕ) :
     ComputableTidilyInPolyTime (repeatAny enc q p V) (encPair enc encBits) encBool := by
-  unfold repeatAny
+  apply ComputableInPolyTime.tidy
+  unfold repeatAny repeatVotes
   fun_prop
 
 /-- On a random string of `q(n)` rows of `p(n)` bits, the repetition accepts when some row is
