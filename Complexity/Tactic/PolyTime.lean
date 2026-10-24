@@ -46,28 +46,32 @@ open Turing.MultiTapeTM
 
 -- These plain rules keep the public search in its own predicate. Their machine proofs may use
 -- tidy witnesses, but the search never installs a transition between the two goal families.
-private theorem plainBitsAppend {α : Type} {encIn : α ↪ List Bool} {f g : α → List Bool}
-    (hf : ComputableInPolyTime f encIn encBits) (hg : ComputableInPolyTime g encIn encBits) :
-    ComputableInPolyTime (fun a => f a ++ g a) encIn encBits :=
-  .of_tidy (ComputableTidilyInPolyTime.bitsAppend hf.tidy hg.tidy)
+-- Runtime `applyConst` needs these kernel declarations under a normal tactic import.
+-- Keeping only private names makes source clients depend on unrelated producer proof imports.
+namespace Internal
 
-private theorem plainBitsCons {α : Type} {encIn : α ↪ List Bool}
+/-- Prepend a computed bit with both intermediate raw encodings fixed for the tactic. -/
+theorem plainBitsCons {α : Type} {encIn : α ↪ List Bool}
     {f : α → Bool} {g : α → List Bool}
     (hf : ComputableInPolyTime f encIn encBool) (hg : ComputableInPolyTime g encIn encBits) :
     ComputableInPolyTime (fun a => f a :: g a) encIn encBits :=
   .of_tidy (ComputableTidilyInPolyTime.bitsCons hf.tidy hg.tidy)
 
-private theorem plainListAppend {α β : Type} {encIn : α ↪ List Bool} {enc : β ↪ List Bool}
+/-- Append computed framed lists with their element encoding fixed for the tactic. -/
+theorem plainListAppend {α β : Type} {encIn : α ↪ List Bool} {enc : β ↪ List Bool}
     {f g : α → List β} (hf : ComputableInPolyTime f encIn (encList enc))
     (hg : ComputableInPolyTime g encIn (encList enc)) :
     ComputableInPolyTime (fun a => f a ++ g a) encIn (encList enc) :=
   .of_tidy (ComputableTidilyInPolyTime.listAppend' hf.tidy hg.tidy)
 
-private theorem plainListCons {α β : Type} {encIn : α ↪ List Bool} {enc : β ↪ List Bool}
+/-- Prepend a computed element to a framed list with its element encoding fixed. -/
+theorem plainListCons {α β : Type} {encIn : α ↪ List Bool} {enc : β ↪ List Bool}
     {f : α → β} {g : α → List β} (hf : ComputableInPolyTime f encIn enc)
     (hg : ComputableInPolyTime g encIn (encList enc)) :
     ComputableInPolyTime (fun a => f a :: g a) encIn (encList enc) :=
   .of_tidy (ComputableTidilyInPolyTime.cons' hf.tidy hg.tidy)
+
+end Internal
 
 @[aesop safe apply (rule_sets := [PolyTime])]
 private theorem plainBoolNot {α : Type} {encIn : α ↪ List Bool} {f : α → Bool}
@@ -201,11 +205,13 @@ private meta def polytimeConstruct (guard : TacticM Unit → TacticM Unit) : Tac
     let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
     let rule ← lambdaTelescope program fun _ body => do
       if body.isAppOf ``HAppend.hAppend || body.isAppOf ``List.append then
-        return if plain then (if rawBits then ``plainBitsAppend else ``plainListAppend)
+        return if plain then
+          (if rawBits then ``ComputableInPolyTime.bitsAppend else ``Internal.plainListAppend)
           else if rawBits then ``ComputableTidilyInPolyTime.bitsAppend
           else ``ComputableTidilyInPolyTime.listAppend'
       if body.isAppOf ``List.cons then
-        return if plain then (if rawBits then ``plainBitsCons else ``plainListCons)
+        return if plain then
+          (if rawBits then ``Internal.plainBitsCons else ``Internal.plainListCons)
           else if rawBits then ``ComputableTidilyInPolyTime.bitsCons
           else ``ComputableTidilyInPolyTime.cons'
       if body.isAppOf ``Prod.mk then return predicate ++ `prod
@@ -352,8 +358,10 @@ theorem foldl_list_rule {γ α β : Type} {encIn : γ ↪ List Bool}
     ComputableTidilyInPolyTime (fun x => (list x).foldl step (init x)) encIn encB :=
   ComputableTidilyInPolyTime.foldl_of_bounded_growth hlist hinit hstep hgrowth
 
+namespace Internal
+
 /-- Fix a raw bit list's encoding and expose the two growth cases before proof search. -/
-private theorem plain_foldl_bits_rule {γ β : Type} {encIn : γ ↪ List Bool} {encB : β ↪ List Bool}
+theorem plain_foldl_bits_rule {γ β : Type} {encIn : γ ↪ List Bool} {encB : β ↪ List Bool}
     {list : γ → List Bool} {init : γ → β} {step : β → Bool → β}
     (hlist : ComputableInPolyTime list encIn encBits)
     (hinit : ComputableInPolyTime init encIn encB)
@@ -366,7 +374,7 @@ private theorem plain_foldl_bits_rule {γ β : Type} {encIn : γ ↪ List Bool} 
     (fun state bit => by cases bit; exacts [(hgrowth state).1, (hgrowth state).2]))
 
 /-- Fix a framed list's encoding before proof search infers the element encoding. -/
-private theorem plain_foldl_list_rule {γ α β : Type} {encIn : γ ↪ List Bool}
+theorem plain_foldl_list_rule {γ α β : Type} {encIn : γ ↪ List Bool}
     {encA : α ↪ List Bool} {encB : β ↪ List Bool}
     {list : γ → List α} {init : γ → β} {step : β → α → β}
     (hlist : ComputableInPolyTime list encIn (encList encA))
@@ -377,6 +385,8 @@ private theorem plain_foldl_list_rule {γ α β : Type} {encIn : γ ↪ List Boo
     ComputableInPolyTime (fun x => (list x).foldl step (init x)) encIn encB :=
   .of_tidy (ComputableTidilyInPolyTime.foldl_of_bounded_growth
     hlist.tidy hinit.tidy hstep.tidy hgrowth)
+
+end Internal
 
 open Lean Meta Elab Tactic in
 /-- Resolve the traversed list's encoding before certifying the step. Try a nonincreasing state
@@ -390,7 +400,7 @@ private meta def polytimeFold (guard : TacticM Unit → TacticM Unit) : TacticM 
     unless isFold do throwError "expected a list fold"
     guard do
       let rules := if predicate == ``ComputableInPolyTime then
-        [``plain_foldl_bits_rule, ``plain_foldl_list_rule]
+        [``Internal.plain_foldl_bits_rule, ``Internal.plain_foldl_list_rule]
         else [``foldl_bits_rule, ``foldl_list_rule]
       for rule in rules do
         let saved ← saveState
@@ -409,8 +419,10 @@ private meta def polytimeFold (guard : TacticM Unit → TacticM Unit) : TacticM 
         catch _ => saved.restore
       throwError "no supported list encoding"
 
+namespace Internal
+
 /-- The plain iteration rule retains the same constant additive growth contract. -/
-private theorem plainIterate {α β : Type} {encIn : α ↪ List Bool} {encState : β ↪ List Bool}
+theorem plainIterate {α β : Type} {encIn : α ↪ List Bool} {encState : β ↪ List Bool}
     {count : α → ℕ} {init : α → β} {step : β → β}
     (hcount : ComputableInPolyTime count encIn encUnary)
     (hinit : ComputableInPolyTime init encIn encState)
@@ -420,6 +432,8 @@ private theorem plainIterate {α β : Type} {encIn : α ↪ List Bool} {encState
     ComputableInPolyTime (fun x => step^[count x] (init x)) encIn encState :=
   .of_tidy (ComputableTidilyInPolyTime.iterate_of_bounded_growth
     hcount.tidy hinit.tidy hstep.tidy hgrowth)
+
+end Internal
 
 open Lean Meta Elab Tactic in
 /-- Apply the bounded-growth iteration rule once the goal is seen to be an iteration. -/
@@ -431,7 +445,7 @@ private meta def polytimeIterate (guard : TacticM Unit → TacticM Unit) : Tacti
     let isIter ← lambdaTelescope program fun _ body => pure (body.isAppOf ``Nat.iterate)
     unless isIter do throwError "expected an iteration"
     guard <| liftMetaTactic fun goal =>
-      goal.applyConst (if predicate == ``ComputableInPolyTime then ``plainIterate
+      goal.applyConst (if predicate == ``ComputableInPolyTime then ``Internal.plainIterate
         else ``ComputableTidilyInPolyTime.iterate_of_bounded_growth)
 
 attribute [aesop safe apply (rule_sets := [PolyTime])] Nat.le_refl
