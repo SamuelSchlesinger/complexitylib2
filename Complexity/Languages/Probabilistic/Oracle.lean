@@ -31,8 +31,8 @@ is not automatically a strict PPT operation.
 * `Cslib.ProbOracleComp.handler`: the sum handler of sampling and external queries.
 
 The sampling and external interfaces form the sum `unifSpec ⊕ₒ spec` of
-`Languages/Probabilistic/Sum.lean`: `sample` is its left embedding (`sample_eq_liftLeft`) and
-`handler` its sum handler (`handler_eq_sumHandler`).
+`Complexity/Languages/Probabilistic/Sum.lean`: `sample` is its left embedding
+(`sample_eq_liftLeft`) and `handler` its sum handler (`handler_eq_sumHandler`).
 
 ## Main results
 
