@@ -62,13 +62,13 @@ efficiently computed number of reply bits. Building the request and reading the 
 charged; the remainder of an arbitrarily long reply is never read. -/
 @[fun_prop]
 theorem query_take [Finite Operation] (op : Operation) {request : α → List Bool}
-    {limit : α → ℕ} (hrequest : ComputableTidilyInPolyTime request input encBits)
-    (hlimit : ComputableTidilyInPolyTime limit input encUnary) :
+    {limit : α → ℕ} (hrequest : ComputableInPolyTime request input encBits)
+    (hlimit : ComputableInPolyTime limit input encUnary) :
     IsOraclePPTOn input encBits (fun a => List.take (limit a) <$>
       ProbOracleComp.query (spec := fun _ : Operation × List Bool => List Bool)
         (op, request a)) :=
   ((IsTidyOraclePPTOn.query_take op).preprocess
-    ((ComputableInPolyTime.of_tidy hrequest).prod (.of_tidy hlimit)).tidy).isOraclePPTOn
+    (hrequest.prod hlimit).tidy).isOraclePPTOn
 
 /-- Sequence two strict oracle PPT programs. The intermediate output length bounds the
 continuation's clock, and every effect of both phases on the shared oracle is retained. -/
@@ -84,15 +84,15 @@ theorem bind {first : α → WordOracleComp Operation β} {second : β → WordO
 @[fun_prop]
 theorem pair {program : α → WordOracleComp Operation γ} {f : α → β}
     (hprogram : IsOraclePPTOn input output program)
-    (hf : ComputableTidilyInPolyTime f input middle) :
+    (hf : ComputableInPolyTime f input middle) :
     IsOraclePPTOn input (encPair middle output) (fun a => (fun b => (f a, b)) <$> program a) :=
-  (hprogram.isTidyOraclePPTOn.pair hf).isOraclePPTOn
+  (hprogram.isTidyOraclePPTOn.pair hf.tidy).isOraclePPTOn
 
 /-- Keep the original argument available to a later computation, charging its encoded copy. -/
 theorem keep_input {program : α → WordOracleComp Operation β}
     (hprogram : IsOraclePPTOn input middle program) :
     IsOraclePPTOn input (encPair input middle) (fun a => (fun b => (a, b)) <$> program a) :=
-  hprogram.pair ComputableInPolyTime.id'.tidy
+  hprogram.pair ComputableInPolyTime.id'
 
 /-- A continuation may use both the caller's input and the first result. -/
 @[fun_prop]
@@ -109,51 +109,51 @@ theorem bind_with {first : α → WordOracleComp Operation β}
 @[fun_prop]
 theorem preprocess {program : β → WordOracleComp Operation γ} {prepare : α → β}
     (hprogram : IsOraclePPTOn middle output program)
-    (hprepare : ComputableTidilyInPolyTime prepare input middle) :
+    (hprepare : ComputableInPolyTime prepare input middle) :
     IsOraclePPTOn input output (fun a => program (prepare a)) :=
-  (hprogram.isTidyOraclePPTOn.preprocess hprepare).isOraclePPTOn
+  (hprogram.isTidyOraclePPTOn.preprocess hprepare.tidy).isOraclePPTOn
 
 /-- Efficient deterministic postprocessing of every result preserves strict oracle PPT. -/
 @[fun_prop]
 theorem map {program : α → WordOracleComp Operation β} {f : β → γ}
     (hprogram : IsOraclePPTOn input middle program)
-    (hf : ComputableTidilyInPolyTime f middle output) :
+    (hf : ComputableInPolyTime f middle output) :
     IsOraclePPTOn input output (fun a => f <$> program a) :=
-  (hprogram.isTidyOraclePPTOn.map hf).isOraclePPTOn
+  (hprogram.isTidyOraclePPTOn.map hf.tidy).isOraclePPTOn
 
 /-- A deterministic callback may capture the original argument. -/
 @[fun_prop]
 theorem map_with {program : α → WordOracleComp Operation β} {f : α → β → γ}
     (hprogram : IsOraclePPTOn input middle program)
-    (hf : ComputableTidilyInPolyTime (fun pair => f pair.1 pair.2) (encPair input middle) output) :
+    (hf : ComputableInPolyTime (fun pair => f pair.1 pair.2) (encPair input middle) output) :
     IsOraclePPTOn input output (fun a => f a <$> program a) :=
-  (hprogram.isTidyOraclePPTOn.map_with hf).isOraclePPTOn
+  (hprogram.isTidyOraclePPTOn.map_with hf.tidy).isOraclePPTOn
 
 /-- Select a branch with an efficient Boolean condition. Only the selected branch runs: the other
 branch makes no external call and cannot change the oracle state. -/
 @[fun_prop]
 theorem cond {condition : α → Bool} {yes no : α → WordOracleComp Operation γ}
-    (hcondition : ComputableTidilyInPolyTime condition input encBool)
+    (hcondition : ComputableInPolyTime condition input encBool)
     (hyes : IsOraclePPTOn input output yes) (hno : IsOraclePPTOn input output no) :
     IsOraclePPTOn input output (fun a => if condition a then yes a else no a) :=
-  (hyes.isTidyOraclePPTOn.cond hcondition hno.isTidyOraclePPTOn).isOraclePPTOn
+  (hyes.isTidyOraclePPTOn.cond hcondition.tidy hno.isTidyOraclePPTOn).isOraclePPTOn
 
 /-- Select a branch with an efficiently decidable condition, executing only that branch. -/
 @[fun_prop]
 theorem ite {condition : α → Prop} [∀ a, Decidable (condition a)]
     {yes no : α → WordOracleComp Operation γ}
-    (hcondition : ComputableTidilyInPolyTime (fun a => decide (condition a)) input encBool)
+    (hcondition : ComputableInPolyTime (fun a => decide (condition a)) input encBool)
     (hyes : IsOraclePPTOn input output yes) (hno : IsOraclePPTOn input output no) :
     IsOraclePPTOn input output (fun a => if condition a then yes a else no a) :=
-  (hyes.isTidyOraclePPTOn.ite hcondition hno.isTidyOraclePPTOn).isOraclePPTOn
+  (hyes.isTidyOraclePPTOn.ite hcondition.tidy hno.isTidyOraclePPTOn).isOraclePPTOn
 
 /-- A computed finite tag selects one certified branch, which alone is executed. -/
 theorem finite_cases {Tag : Type} [Finite Tag] {tagEncoding : Tag ↪ List Bool} {tag : α → Tag}
     {branch : Tag → α → WordOracleComp Operation γ} [Finite Operation]
-    (htag : ComputableTidilyInPolyTime tag input tagEncoding)
+    (htag : ComputableInPolyTime tag input tagEncoding)
     (hbranch : ∀ choice, IsOraclePPTOn input output (branch choice)) :
     IsOraclePPTOn input output (fun a => branch (tag a) a) :=
-  (IsTidyOraclePPTOn.finite_cases htag fun choice =>
+  (IsTidyOraclePPTOn.finite_cases htag.tidy fun choice =>
     (hbranch choice).isTidyOraclePPTOn).isOraclePPTOn
 
 /-- A bounded adaptive loop is strict oracle PPT when one invariant bounds every reachable
@@ -161,8 +161,8 @@ state. The invariant holds for every possible result under every stateful oracle
 established for the final state. Every iteration may query the shared oracle. -/
 theorem iterate_spec {initial : α → σ} {count : α → ℕ}
     {step : σ → WordOracleComp Operation σ}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (hstep : IsOraclePPTOn stateEncoding stateEncoding step)
     (invariant : α → ℕ → σ → Prop) (hbase : ∀ a, invariant a 0 (initial a))
     (hpreserve : ∀ a i state, i < count a → invariant a i state →
@@ -174,15 +174,15 @@ theorem iterate_spec {initial : α → σ} {count : α → ℕ}
         (fun a => OracleComp.iterate (count a) step (initial a)) ∧
       ∀ a, ∀ state ∈ ProbOracleComp.support (OracleComp.iterate (count a) step (initial a)),
         invariant a (count a) state :=
-  let h := IsTidyOraclePPTOn.iterate_spec hcount hinitial hstep.isTidyOraclePPTOn invariant hbase
-    hpreserve hsize hbound
+  let h := IsTidyOraclePPTOn.iterate_spec hcount.tidy hinitial.tidy hstep.isTidyOraclePPTOn
+    invariant hbase hpreserve hsize hbound
   ⟨h.1.isOraclePPTOn, h.2⟩
 
 /-- The loop body may capture the original input; the invariant describes the changing state. -/
 theorem iterateWith_spec {initial : α → σ} {count : α → ℕ}
     {step : α → σ → WordOracleComp Operation σ}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (hstep : IsOraclePPTOn (encPair input stateEncoding) stateEncoding
       (fun pair => step pair.1 pair.2))
     (invariant : α → ℕ → σ → Prop) (hbase : ∀ a, invariant a 0 (initial a))
@@ -195,16 +195,16 @@ theorem iterateWith_spec {initial : α → σ} {count : α → ℕ}
         (fun a => OracleComp.iterate (count a) (step a) (initial a)) ∧
       ∀ a, ∀ state ∈ ProbOracleComp.support (OracleComp.iterate (count a) (step a) (initial a)),
         invariant a (count a) state :=
-  let h := IsTidyOraclePPTOn.iterateWith_spec hcount hinitial hstep.isTidyOraclePPTOn invariant
-    hbase hpreserve hsize hbound
+  let h := IsTidyOraclePPTOn.iterateWith_spec hcount.tidy hinitial.tidy
+    hstep.isTidyOraclePPTOn invariant hbase hpreserve hsize hbound
   ⟨h.1.isOraclePPTOn, h.2⟩
 
 /-- Captured-input steps may grow by a polynomially bounded amount depending on that input, for
 every possible next state under every stateful oracle. -/
 theorem iterateWith_of_bounded_growth {initial : α → σ} {count : α → ℕ}
     {step : α → σ → WordOracleComp Operation σ}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (hstep : IsOraclePPTOn (encPair input stateEncoding) stateEncoding
       (fun pair => step pair.1 pair.2))
     {growth : α → ℕ} (hpoly : PolyBounded (fun a => (input a).length) growth)
@@ -212,20 +212,20 @@ theorem iterateWith_of_bounded_growth {initial : α → σ} {count : α → ℕ}
       (stateEncoding next).length ≤ (stateEncoding state).length + growth a) :
     IsOraclePPTOn input stateEncoding
       (fun a => OracleComp.iterate (count a) (step a) (initial a)) :=
-  (IsTidyOraclePPTOn.iterateWith_of_bounded_growth hcount hinitial hstep.isTidyOraclePPTOn hpoly
-    hgrowth).isOraclePPTOn
+  (IsTidyOraclePPTOn.iterateWith_of_bounded_growth hcount.tidy hinitial.tidy
+    hstep.isTidyOraclePPTOn hpoly hgrowth).isOraclePPTOn
 
 /-- A strict oracle PPT step with constant growth can be repeated a polynomial number of times. -/
 theorem iterate_of_bounded_growth {initial : α → σ} {count : α → ℕ}
     {step : σ → WordOracleComp Operation σ}
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (hstep : IsOraclePPTOn stateEncoding stateEncoding step)
     {growth : ℕ} (hgrowth : ∀ state, ∀ next ∈ ProbOracleComp.support (step state),
       (stateEncoding next).length ≤ (stateEncoding state).length + growth) :
     IsOraclePPTOn input stateEncoding (fun a => OracleComp.iterate (count a) step (initial a)) :=
   iterateWith_of_bounded_growth (step := fun _ => step) hcount hinitial
-    (hstep.preprocess (ComputableInPolyTime.snd input stateEncoding).tidy)
+    (hstep.preprocess (ComputableInPolyTime.snd input stateEncoding))
     (.const growth) (fun _ => hgrowth)
 
 end IsOraclePPTOn

@@ -69,8 +69,8 @@ private meta def pptFunProp : TacticM Unit :=
     evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 128 })))
 
 attribute [program_certificate]
-  Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn
-  Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleList
+  Turing.MultiTapeTM.ComputableInPolyTime.isPPTOn
+  Turing.MultiTapeTM.ComputableInPolyTime.sampleList
   isPPTOn_uniform_bool
   IsPPTOn.memoize
 

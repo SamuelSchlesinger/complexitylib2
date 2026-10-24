@@ -11,6 +11,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.D
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Uniform strict probabilistic polynomial time
 
@@ -43,7 +45,7 @@ control type, as the upstream tidy calculus does, instead of imposing a separate
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn`: deterministic certificates lift to PPT.
+* `Turing.MultiTapeTM.ComputableInPolyTime.isPPTOn`: deterministic certificates lift to PPT.
 * `Cslib.Probability.IsPPTOn.length_le`: every supported encoded output is polynomially bounded.
 -/
 
@@ -100,11 +102,11 @@ end Cslib.Probability
 
 /-- Reuse a tidy deterministic machine as a fair-coin machine that ignores its sampled bits. -/
 @[fun_prop]
-theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn {α β : Type}
+theorem Turing.MultiTapeTM.ComputableInPolyTime.isPPTOn {α β : Type}
     {input : α ↪ List Bool} {output : β ↪ List Bool} {f : α → β}
-    (h : ComputableTidilyInPolyTime f input output) :
+    (h : ComputableInPolyTime f input output) :
     Cslib.Probability.IsPPTOn input output (fun a => pure (f a)) := by
-  obtain ⟨t, s, ht, _, k, State, hfinite, machine, hmachine⟩ := h
+  obtain ⟨t, s, ht, _, k, State, hfinite, machine, hmachine⟩ := h.tidy
   obtain ⟨c, d, ht⟩ := ht.exists_le
   refine ⟨k, State, hfinite, Turing.MultiTapePTM.ofDeterministic machine, c, d, fun a => ?_⟩
   rw [Cslib.ProbComp.eval_pure, PMF.pure_map, Turing.MultiTapePTM.eval_runClosed_ofDeterministic]

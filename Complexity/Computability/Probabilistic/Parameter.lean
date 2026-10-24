@@ -72,7 +72,7 @@ theorem IsPPT.preprocess {α : Type} {input : α ↪ List Bool}
     (hparameter : ComputableTidilyInPolyTime parameter input encUnary)
     (hauxiliary : ComputableTidilyInPolyTime auxiliary input encBits) :
     IsPPTOn input output (fun a => program (parameter a) (auxiliary a)) :=
-  h.on.preprocess ((ComputableInPolyTime.of_tidy hparameter).prod (.of_tidy hauxiliary)).tidy
+  h.on.preprocess ((ComputableInPolyTime.of_tidy hparameter).prod (.of_tidy hauxiliary))
 
 end Cslib.Probability
 
@@ -83,4 +83,4 @@ theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPT {β : Type}
     (h : ComputableTidilyInPolyTime f encBits output) :
     Cslib.Probability.IsPPT output (fun _ input => pure (f input)) :=
   ((ComputableInPolyTime.of_tidy h).comp
-    (ComputableInPolyTime.snd encUnary encBits)).tidy.isPPTOn
+    (ComputableInPolyTime.snd encUnary encBits)).isPPTOn

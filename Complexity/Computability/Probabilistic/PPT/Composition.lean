@@ -11,6 +11,8 @@ public import Complexity.Computability.Probabilistic.PPT.Clock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Composition
 import Complexity.Computability.Probabilistic.Oracle.Composition
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Composing uniformly efficient probabilistic programs
 
@@ -42,7 +44,7 @@ calculus.
 
 namespace Cslib.Probability
 
-open Turing.MultiTapeTM (ComputableTidilyInPolyTime)
+open Turing.MultiTapeTM (ComputableInPolyTime)
 
 variable {α β γ : Type} {input : α ↪ List Bool} {middle : β ↪ List Bool}
   {output : γ ↪ List Bool}
@@ -64,14 +66,14 @@ theorem IsPPTOn.bind {first : α → ProbComp β} {second : β → ProbComp γ}
 @[fun_prop]
 theorem IsPPTOn.preprocess {program : β → ProbComp γ} {prepare : α → β}
     (hprogram : IsPPTOn middle output program)
-    (hprepare : ComputableTidilyInPolyTime prepare input middle) :
+    (hprepare : ComputableInPolyTime prepare input middle) :
     IsPPTOn input output (fun a => program (prepare a)) := by
   simpa only [pure_bind] using hprepare.isPPTOn.bind hprogram
 
 /-- Polynomial-time deterministic processing of each sampled result preserves PPT. -/
 @[fun_prop]
 theorem IsPPTOn.map {program : α → ProbComp β} {f : β → γ}
-    (hprogram : IsPPTOn input middle program) (hf : ComputableTidilyInPolyTime f middle output) :
+    (hprogram : IsPPTOn input middle program) (hf : ComputableInPolyTime f middle output) :
     IsPPTOn input output (fun a => f <$> program a) := by
   simpa only [bind_pure_comp] using hprogram.bind hf.isPPTOn
 

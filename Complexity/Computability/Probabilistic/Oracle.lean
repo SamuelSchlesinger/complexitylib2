@@ -11,6 +11,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Oracle
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Uniform strict PPT with external word oracles
 
@@ -37,7 +39,7 @@ realization with the same joint law, and `Oracle.Composition` composes certifica
 ## Main results
 
 * `Cslib.Probability.IsOraclePPTOn.length_le`: uniform bounds on supported encoded output lengths.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.isOraclePPTOn`: deterministic functional programs
+* `Turing.MultiTapeTM.ComputableInPolyTime.isOraclePPTOn`: deterministic functional programs
   reuse the existing tidy machine certificate.
 
 ## References
@@ -135,13 +137,13 @@ end Cslib.Probability
 
 /-- A tidy deterministic certificate also works in the presence of arbitrary external oracles. -/
 @[fun_prop]
-theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.isOraclePPTOn
+theorem Turing.MultiTapeTM.ComputableInPolyTime.isOraclePPTOn
     {Operation α β : Type} [DecidableEq Operation] [Finite Operation]
     {input : α ↪ List Bool} {output : β ↪ List Bool} {f : α → β}
-    (h : ComputableTidilyInPolyTime f input output) :
+    (h : ComputableInPolyTime f input output) :
     Cslib.Probability.IsOraclePPTOn (Operation := Operation) input output
       (fun a => pure (f a)) := by
-  obtain ⟨t, s, ht, _, k, State, hfinite, machine, hmachine⟩ := h
+  obtain ⟨t, s, ht, _, k, State, hfinite, machine, hmachine⟩ := h.tidy
   obtain ⟨c, d, ht⟩ := ht.exists_le
   refine ⟨inferInstance, k, State, hfinite,
     Turing.MultiTapePTM.ofDeterministic machine, c, d, fun a OracleState oracle state => ?_⟩

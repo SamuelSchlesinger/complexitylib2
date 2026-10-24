@@ -6,42 +6,27 @@ Authors: Samuel Schlesinger
 
 import Complexity.Tactic.PPT
 
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
-
 /-! Memoization composes through functional programs, with no default inhabitants. -/
 
 namespace ComplexityTests.MemoizePPT
 
 open Cslib Cslib.Probability Turing.MultiTapeTM
 
--- Legacy probabilistic callback contracts retain clean witnesses inside these checked proofs.
-attribute [local fun_prop] ComputableInPolyTime.tidy
-
 -- Neither key nor value types have an Inhabited instance in this generic client.
 example {α Key Value : Type} [BEq Key] [LawfulBEq Key] {input : α ↪ List Bool}
     {keyEncoding : Key ↪ List Bool} {valueEncoding : Value ↪ List Bool}
     {compute : α → Key → ProbComp Value} {query : α → Key} {cache : α → List (Key × Value)}
     (hcompute : IsPPTOn input valueEncoding (fun a => compute a (query a)))
-    (hquery : ComputableTidilyInPolyTime query input keyEncoding)
-    (hcache : ComputableTidilyInPolyTime cache input
+    (hquery : ComputableInPolyTime query input keyEncoding)
+    (hcache : ComputableInPolyTime cache input
       (encList (encPair keyEncoding valueEncoding))) :
     IsPPTOn input (encPair valueEncoding (encList (encPair keyEncoding valueEncoding)))
       (fun a => memoize (compute a) (query a) (cache a)) := by ppt
 
 -- Runtime word lengths and the whole initial cache are charged, including all framing.
-private theorem sampleMemoize_ppt :
-    IsPPTOn (encPair encBits (encList (encPair encBits encBits)))
-      (encPair encBits (encList (encPair encBits encBits)))
-      (fun p => memoize (fun key => BitString.sampleList key.length) p.1 p.2) := by
-  apply IsPPTOn.memoize
-  · exact isPPTOn_sampleList.preprocess
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
-  · exact (ComputableInPolyTime.fst _ _).tidy
-  · exact (ComputableInPolyTime.snd _ _).tidy
-
 example : IsPPTOn (encPair encBits (encList (encPair encBits encBits)))
     (encPair encBits (encList (encPair encBits encBits)))
-    (fun p => memoize (fun key => BitString.sampleList key.length) p.1 p.2) := sampleMemoize_ppt
+    (fun p => memoize (fun key => BitString.sampleList key.length) p.1 p.2) := by fun_prop
 
 private noncomputable def repeated (word : List Bool) :
     ProbComp ((List Bool × List Bool) × List (List Bool × List Bool)) := do
@@ -52,28 +37,8 @@ private noncomputable def repeated (word : List Bool) :
 -- Ordinary do notation threads the cache and retains the query across both calls.
 example : IsPPTOn encBits
     (encPair (encPair encBits encBits) (encList (encPair encBits encBits))) repeated := by
-  have hfirst : IsPPTOn encBits (encPair encBits (encList (encPair encBits encBits)))
-      (fun word => memoize (fun key => BitString.sampleList key.length) word []) :=
-    sampleMemoize_ppt.preprocess
-      (prepare := fun word : List Bool => (word, ([] : List (List Bool × List Bool))))
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
-  have hsecond : IsPPTOn (encPair encBits (encPair encBits (encList (encPair encBits encBits))))
-      (encPair encBits (encList (encPair encBits encBits)))
-      (fun p => memoize (fun key => BitString.sampleList key.length) p.1 p.2.2) :=
-    sampleMemoize_ppt.preprocess
-      (prepare := fun p : List Bool × (List Bool × List (List Bool × List Bool)) =>
-        (p.1, p.2.2))
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
-  have hpost := hsecond.map_with (right := encPair (encPair encBits encBits)
-      (encList (encPair encBits encBits)))
-    (f := fun p result => ((p.2.1, result.1), result.2))
-    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
-  refine (hfirst.bind_with
-    (second := fun word firstCache => (fun result => ((firstCache.1, result.1), result.2)) <$>
-      memoize (fun key => BitString.sampleList key.length) word firstCache.2) hpost).congr ?_
-  intro word
-  simp only [repeated, ProbComp.eval_bind, ProbComp.eval_map]
-  congr 1
+  unfold repeated
+  ppt
 
 -- The two replies agree in their full joint law; the second call does not resample.
 example (word : List Bool) : ProbComp.eval (repeated word) =
@@ -92,11 +57,8 @@ private noncomputable def fillCache (word : List Bool) (cache : Cache) : ProbCom
 private theorem fillCache_ppt :
     IsPPTOn (encPair encBits cacheEncoding) cacheEncoding
       (fun pair => fillCache pair.1 pair.2) := by
-  simpa only [fillCache, bind_pure_comp] using
-    (sampleMemoize_ppt.preprocess
-      (prepare := fun pair : List Bool × Cache => (pair.1.take pair.2.length, pair.2))
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)).map
-        (ComputableInPolyTime.snd _ _).tidy
+  unfold fillCache
+  ppt
 
 -- The next query depends on the cache. Growth includes key/value framing and holds for arbitrary
 -- initial entries, since the program retains the cache rather than the returned reply.
@@ -122,16 +84,13 @@ example : IsPPTOn (encPair (encPair encBits encUnary) cacheEncoding) cacheEncodi
   have hstep : IsPPTOn
       (encPair (encPair (encPair encBits encUnary) cacheEncoding) cacheEncoding) cacheEncoding
       (fun pair => fillCache pair.1.1.1 pair.2) := by
-    exact fillCache_ppt.preprocess
-      (prepare := fun pair : ((List Bool × ℕ) × Cache) × Cache => (pair.1.1.1, pair.2))
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+    have h := fillCache_ppt
+    ppt
   have hsize : PolyBounded
       (fun p => (encPair (encPair encBits encUnary) cacheEncoding p).length)
       (fun p => 6 * p.1.1.length + 3) := ComputableInPolyTime.polyBounded (by fun_prop)
-  exact IsPPTOn.iterateWith_of_bounded_growth
-    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
-    (ComputableInPolyTime.snd _ _).tidy hstep hsize
-    (fun p cache next h => fillCache_growth p.1.1 cache next h)
+  have hgrowth := fun (p : (List Bool × ℕ) × Cache) => fillCache_growth p.1.1
+  ppt
 
 -- Zero calls preserve all initial entries.
 example (word : List Bool) (cache : Cache) :
