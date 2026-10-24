@@ -9,8 +9,8 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Complexity.Foundations.BooleanAnalysis.LowDegree
+import Complexity.Foundations.LinearAlgebra.Interpolation
 import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.LinearAlgebra.Dimension.Finrank
 import Mathlib.Tactic.Ring
 
 /-!
@@ -26,7 +26,8 @@ function `P` of degree `D` agrees with parity, a character of more than `|ι| / 
 equals `1 - 2 P` times the character of the other coordinates, of degree at most `|ι| / 2 + D`.
 Every function on these inputs therefore agrees with one of degree at most `|ι| / 2 + D`
 (`BitString.exists_agree_of_parity`), and comparing dimensions bounds the number of inputs
-(`BitString.card_le_of_forall_exists_agree`).
+(`BitString.card_le_of_forall_exists_agree`, an instance of
+`LinearAlgebra.card_le_of_forall_exists_mem_span_eq`).
 
 ## Main definitions
 
@@ -136,22 +137,9 @@ theorem exists_agree_of_parity [Invertible (2 : F)] {D : ℕ} {Q : (ι → Bool)
 many points as there are sets of at most `H` coordinates. -/
 theorem card_le_of_forall_exists_agree {H : ℕ} (G : Finset (ι → Bool))
     (hG : ∀ f : (ι → Bool) → F, ∃ p ∈ lowDegree F ι H, ∀ x ∈ G, p x = f x) :
-    #G ≤ #{S : Finset ι | #S ≤ H} := by
-  classical
-  -- restricting to `G` is onto
-  let restrict : lowDegree F ι H →ₗ[F] (G → F) :=
-    { toFun := fun p x => p.1 x.1
-      map_add' := fun _ _ => rfl
-      map_smul' := fun _ _ => rfl }
-  have hsurj : Function.Surjective restrict := fun g => by
-    obtain ⟨p, hp, hpx⟩ := hG fun x => if hx : x ∈ G then g ⟨x, hx⟩ else 0
-    refine ⟨⟨p, hp⟩, funext fun x => ?_⟩
-    change p x.1 = g x
-    simpa using hpx x.1 x.2
-  have h := LinearMap.finrank_range_le restrict
-  rw [LinearMap.range_eq_top.2 hsurj, finrank_top, Module.finrank_fintype_fun_eq_card,
-    Fintype.card_coe] at h
-  exact h.trans (finrank_lowDegree_le H)
+    #G ≤ #{S : Finset ι | #S ≤ H} :=
+  LinearAlgebra.card_le_of_forall_exists_mem_span_eq G _ (monomial F) fun f => by
+    simpa only [lowDegree, coe_filter, mem_univ, true_and] using hG f
 
 /-- **Parity is far from low-degree functions.** A function of degree at most `D` agrees with the
 parity of all coordinates on at most as many inputs as there are sets of at most `|ι| / 2 + D`

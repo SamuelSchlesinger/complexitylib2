@@ -16,10 +16,10 @@ public import Mathlib.Data.ZMod.Defs
 public import Mathlib.Logic.Equiv.Fin.Basic
 import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Foundations.Combinatorics.CentralBinomial
+import Complexity.Foundations.LinearAlgebra.Interpolation
 import Mathlib.Algebra.CharP.Two
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.Algebra.Module.Equiv.Basic
-import Mathlib.LinearAlgebra.Dimension.Constructions
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
 
@@ -527,28 +527,6 @@ end Blocks
 
 /-! ### Counting dimensions -/
 
-/-- If every function agrees on `G` with a combination of the functions `v a` for `a ∈ s`, then `G`
-has at most `#s` points. -/
-private theorem card_le_of_forall_exists_mem_span_eq {α ι K : Type*} [Field K]
-    (G : Finset α) (s : Finset ι) (v : ι → α → K)
-    (h : ∀ f : α → K, ∃ g ∈ Submodule.span K (v '' s), ∀ x ∈ G, g x = f x) : #G ≤ #s := by
-  classical
-  rw [← coe_image] at h
-  -- restricting to `G` is onto
-  let restrict : Submodule.span K (s.image v : Set (α → K)) →ₗ[K] (G → K) :=
-    { toFun := fun g x => g.1 x.1
-      map_add' := fun _ _ => rfl
-      map_smul' := fun _ _ => rfl }
-  have hsurj : Function.Surjective restrict := fun g => by
-    obtain ⟨p, hp, hpx⟩ := h fun x => if hx : x ∈ G then g ⟨x, hx⟩ else 0
-    refine ⟨⟨p, hp⟩, funext fun x => ?_⟩
-    change p x.1 = g x
-    simpa using hpx x.1 x.2
-  have hle := LinearMap.finrank_range_le restrict
-  rw [LinearMap.range_eq_top.2 hsurj, finrank_top, Module.finrank_fintype_fun_eq_card,
-    Fintype.card_coe] at hle
-  exact hle.trans ((finrank_span_finset_le_card _).trans card_image_le)
-
 /-- **A function of low degree agrees with the exclusive or of majorities on few inputs**: if `P`
 has degree at most `d` over `ZMod 2` on `k` blocks of `2 m + 1` bits, twice the number of inputs on
 which `P` agrees with the exclusive or of the majorities of the blocks is at most
@@ -564,7 +542,7 @@ theorem two_mul_card_agree_xorMajority_le {k m d : ℕ}
   set T := {a ∈ Fintype.piFinset fun _ : Fin k => S ×ˢ (univ : Finset Bool) |
     FirstFlagUnset (fun A : Finset (Fin (2 * m + 1)) => #A + d ≤ m) a}
   set E := ({x | P x = bitVal (ZMod 2) (xorMajority k (2 * m + 1) x)} : Finset _)
-  have hE : #E ≤ #T := card_le_of_forall_exists_mem_span_eq E T gen fun f => by
+  have hE : #E ≤ #T := LinearAlgebra.card_le_of_forall_exists_mem_span_eq E T gen fun f => by
     obtain ⟨g, hg, hgx⟩ := exists_mem_span_firstFlagUnset_eq hP (E := E)
       (fun x hx => by rw [← bitVal_xorMajority]; exact (mem_filter.1 hx).2) f
     refine ⟨g, ?_, hgx⟩

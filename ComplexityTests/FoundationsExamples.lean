@@ -9,6 +9,7 @@ import Complexity.Foundations.Data.Code.LowDegreeExtension
 import Complexity.Foundations.GroupTheory.Perm.Fin
 import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 import Complexity.Foundations.GroupTheory.Perm.Last
+import Complexity.Foundations.LinearAlgebra.Interpolation
 import Complexity.Foundations.LinearAlgebra.KernelVector
 import Complexity.Foundations.LinearAlgebra.Matrix.Rank
 import Complexity.Foundations.LinearAlgebra.Rank
@@ -175,6 +176,36 @@ example : #{σ : Perm (Fin 3) | ∀ u ∈ ({0, 2} : Finset (Fin 3)), σ u ≤ σ
   convert Nat.eq_of_mul_eq_mul_left (by norm_num : 0 < 2) (h.trans (by norm_num : 6 = 2 * 3))
 
 end Perm
+
+/-! ### Interpolation -/
+
+section Interpolation
+
+open Cslib.LinearAlgebra
+
+/-- The constant `1` and the identity on `ℚ`, which span the lines `a + b x`. -/
+private def lineBasis : Fin 2 → ℚ → ℚ := ![1, id]
+
+/-- Every function agrees on `{0, 1}` with a line. -/
+private theorem lines_interpolate (f : ℚ → ℚ) :
+    ∃ g ∈ Submodule.span ℚ (lineBasis '' (univ : Finset (Fin 2))),
+      ∀ x ∈ ({0, 1} : Finset ℚ), g x = f x := by
+  refine ⟨f 0 • lineBasis 0 + (f 1 - f 0) • lineBasis 1,
+    Submodule.add_mem _ (Submodule.smul_mem _ _ (Submodule.subset_span ⟨0, by simp, rfl⟩))
+      (Submodule.smul_mem _ _ (Submodule.subset_span ⟨1, by simp, rfl⟩)), fun x hx => ?_⟩
+  simp only [mem_insert, mem_singleton] at hx
+  rcases hx with rfl | rfl <;> simp [lineBasis]
+
+/-- The interpolation bound is attained: lines interpolate on the two points `{0, 1}`. -/
+example : #({0, 1} : Finset ℚ) ≤ #(univ : Finset (Fin 2)) :=
+  card_le_of_forall_exists_mem_span_eq _ _ lineBasis lines_interpolate
+
+/-- Lines do not interpolate on three points. -/
+example : ¬∀ f : ℚ → ℚ, ∃ g ∈ Submodule.span ℚ (lineBasis '' (univ : Finset (Fin 2))),
+    ∀ x ∈ ({0, 1, 2} : Finset ℚ), g x = f x := fun h =>
+  absurd (card_le_of_forall_exists_mem_span_eq _ _ lineBasis h) (by simp)
+
+end Interpolation
 
 /-! ### Rank -/
 
