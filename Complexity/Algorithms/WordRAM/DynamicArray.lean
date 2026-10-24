@@ -663,7 +663,7 @@ theorem run_client {w : ℕ} (h1 : Fits w 1) {α : Type} (p : (spec w).Client α
           ((spec w).runClient vs p).2.2.length * 52 + potential vs x ∧
       (((spec w).runClient vs p).2.1 ≠ [] →
         y.regs frontier < 4 * ((spec w).runClient vs p).2.1.length) := by
-  obtain ⟨y, traces, he, hy, hb⟩ := (amortized_uniform h1).run_const p hr hv
+  obtain ⟨y, traces, he, hy, hb⟩ := (amortized_uniform h1).exists_executes_const p hr hv
   exact ⟨y, traces, he, hy, hb, fun hne => hy.rep.space hne⟩
 
 /-- Starting from arbitrary bounded machine data, run `initProgram` (15 instructions) followed
@@ -698,9 +698,9 @@ def appendAll {w : ℕ} : List ℕ → (spec w).Client Unit
 theorem runClient_appendAll (w : ℕ) (vs us : List ℕ) :
     (spec w).runClient vs (appendAll us) = ((), vs ++ us, us.map Op.append) := by
   induction us generalizing vs with
-  | nil => simp [appendAll]; rfl
+  | nil => simp [appendAll]
   | cons v us ih =>
-    simp [appendAll, Stateful.Spec.runClient, spec, ih, List.append_assoc]
+    simp [appendAll, spec, ih, List.append_assoc]
 
 /-- `appendAll us` is admissible from `vs` whenever every element of `us` fits `w` and
 `8 * (vs.length + us.length) + 4` fits `w`. -/
@@ -710,7 +710,7 @@ theorem validHistory_appendAll {w : ℕ} {vs us : List ℕ}
   induction us generalizing vs with
   | nil => trivial
   | cons v us ih =>
-    simp only [appendAll, Stateful.Spec.runClient, Stateful.Spec.ValidHistory, spec]
+    simp only [appendAll, Stateful.Spec.runClient_liftBind, Stateful.Spec.validHistory_cons, spec]
     refine ⟨⟨hvals v (List.mem_cons_self ..), hlen.of_le (by simp)⟩, ?_⟩
     exact ih (fun u hu => hvals u (List.mem_cons_of_mem v hu))
       (hlen.of_le (by simp only [List.length_append, List.length_cons, List.length_nil]; omega))

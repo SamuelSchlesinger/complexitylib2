@@ -111,10 +111,9 @@ theorem realized_client {β : Type} (p : (spec α).Client β)
       Rep ((spec α).runClient s p).2.1 t' ∧
       total id ns ≤ (spec α).totalCost (fun s _ => s.card) s
         ((spec α).runClient s p).2.2 := by
-  have hv := valid_history_of_total (spec α) (fun _ _ => trivial)
+  have hv := (spec α).validHistory_of_forall_valid (fun _ _ => trivial)
     s ((spec α).runClient s p).2.2
-  obtain ⟨t', ns, he, hr'⟩ := realization.run p hr hv
-  exact ⟨t', ns, he, hr', nodeVisitBound.client hr hv he⟩
+  exact nodeVisitBound.exists_executes p hr hv
 
 /-- Execute a client concretely, retaining one exact node-visit count per operation. -/
 def run {β : Type} (t : BinaryTree α) : (spec α).Client β →
@@ -139,7 +138,7 @@ theorem run_correct {β : Type} (p : (spec α).Client β)
       Rep ((spec α).runClient s p).2.1 (run t p).2.1 ∧
       total id (run t p).2.2 ≤ (spec α).totalCost (fun s _ => s.card) s
         ((spec α).runClient s p).2.2 := by
-  have hv := valid_history_of_total (spec α) (fun _ _ => trivial)
+  have hv := (spec α).validHistory_of_forall_valid (fun _ _ => trivial)
     s ((spec α).runClient s p).2.2
   have h := realization.correct_client hr hv (run_exec p t)
   exact ⟨h.1, h.2, nodeVisitBound.client hr hv (run_exec p t)⟩

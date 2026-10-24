@@ -119,7 +119,7 @@ theorem run_client {w base capacity : ℕ} (h1 : Fits w 1)
       QueueRep w base capacity ((spec w capacity).runClient q p).2.1 y ∧
       Stateful.total DynamicProgram.OperationTrace.instructions traces + potential y ≤
         ((spec w capacity).runClient q p).2.2.length * 14 + potential x :=
-  (amortized h1 hc).run_const p hr hv
+  (amortized h1 hc).exists_executes_const p hr hv
 
 /-- Starting with arbitrary bounded data, charge the six initialization instructions before
 summing the actual queue calls. Empty regions need no zeroing; controller computation and

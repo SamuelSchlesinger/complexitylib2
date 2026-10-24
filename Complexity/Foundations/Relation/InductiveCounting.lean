@@ -56,6 +56,8 @@ inductive counting algorithm relies on.
 
 ## References
 
+* [N. Immerman, *Nondeterministic Space Is Closed under Complementation*][Immerman1988]
+* [R. Szelepcsényi, *The Method of Forcing for Nondeterministic Automata*][Szelepcsenyi1987]
 * [M. Sipser, *Introduction to the Theory of Computation*, Section 8.6][Sipser2013]
 * [C. H. Papadimitriou, *Computational Complexity*, Section 7.3][Papadimitriou94]
 -/

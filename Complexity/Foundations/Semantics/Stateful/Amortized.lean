@@ -24,8 +24,12 @@ on the left of the bound, avoiding truncated subtraction.
 ## Main results
 
 * `Amortized.client`: every admissible adaptive execution satisfies the telescoping bound.
-* `Amortized.run`: existence, correctness and the potential bound for an admissible client.
-* `Amortized.of_bound`: derive potential certificates from independent worst-case bounds.
+* `Amortized.exists_executes`: existence, correctness and the potential bound for an admissible
+  client.
+* `Amortized.client_const`, `Amortized.exists_executes_const`: specialization to uniform constant
+  amortized charges.
+* `Amortized.of_bound`, `Amortized.of_worstCase`: derive potential certificates from independent
+  worst-case bounds.
 
 ## References
 
@@ -66,18 +70,18 @@ theorem client {p : D.Client α} {s : D.State} {c c' : C} {a : α} {traces : Lis
     have hs := A.step hr hv.1 he
     subst ha
     have ht := ih hr' hv.2
-    simp only [total, Spec.runClient, Spec.totalCost]
+    simp only [total_cons, Spec.runClient_liftBind, Spec.totalCost_cons]
     omega
 
 include A in
 /-- Existence and semantic correctness are inherited independently from the realization. -/
-theorem run (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
+theorem exists_executes (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
     (hv : D.ValidHistory s (D.runClient s p).2.2) :
     ∃ c' traces, Executes exec p c (D.runClient s p).1 c' traces ∧
       R.rep (D.runClient s p).2.1 c' ∧
       total weight traces + potential (D.runClient s p).2.1 c' ≤
         D.totalCost charge s (D.runClient s p).2.2 + potential s c := by
-  obtain ⟨c', traces, he, hr'⟩ := R.run p hr hv
+  obtain ⟨c', traces, he, hr'⟩ := R.exists_executes p hr hv
   exact ⟨c', traces, he, hr', A.client hr hv he⟩
 
 /-- Adaptive client potential bound for a uniform constant per-operation amortized charge. -/
@@ -87,17 +91,17 @@ theorem client_const {K : Nat} (A : Amortized R weight potential (fun _ _ => K))
     (he : Executes exec p c a c' traces) :
     total weight traces + potential (D.runClient s p).2.1 c' ≤
       (D.runClient s p).2.2.length * K + potential s c := by
-  simpa only [spec_total_const] using A.client hr hv he
+  simpa only [Spec.totalCost_const] using A.client hr hv he
 
 /-- Existence, correctness, and potential bound for a uniform constant amortized charge. -/
-theorem run_const {K : Nat} (A : Amortized R weight potential (fun _ _ => K))
+theorem exists_executes_const {K : Nat} (A : Amortized R weight potential (fun _ _ => K))
     (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
     (hv : D.ValidHistory s (D.runClient s p).2.2) :
     ∃ c' traces, Executes exec p c (D.runClient s p).1 c' traces ∧
       R.rep (D.runClient s p).2.1 c' ∧
       total weight traces + potential (D.runClient s p).2.1 c' ≤
         (D.runClient s p).2.2.length * K + potential s c := by
-  obtain ⟨c', traces, he, hr'⟩ := R.run p hr hv
+  obtain ⟨c', traces, he, hr'⟩ := R.exists_executes p hr hv
   exact ⟨c', traces, he, hr', A.client_const hr hv he⟩
 
 /-- Worst-case certificates give potential certificates whenever their charges satisfy the

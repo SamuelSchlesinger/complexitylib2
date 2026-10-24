@@ -30,11 +30,17 @@ assert that every execution of a nondeterministic backend terminates.
 
 ## Main results
 
-* `Spec.CostHoare.bind`: compose contracts using an intermediate postcondition.
-* `Module.ChargeBound.client`: transfer costs along an adaptive linked client.
-* `Module.ChargeBound.comp`: compose resource certificates through hidden representations.
+* `Spec.CostHoare.pure`, `Spec.CostHoare.call`, `Spec.CostHoare.bind`,
+  `Spec.CostHoare.consequence`: compositional contract rules.
+* `Module.ChargeBound.client`, `Module.ChargeBound.comp`, `Module.ChargeBound.realize`: transfer
+  and compose method resource bounds across linked clients and realizations.
 * `Spec.CostHoare.link`: transport a contract to a lower interface.
-* `Spec.CostHoare.realize`, `Spec.CostHoare.run`: native correctness, bounds and existence.
+* `Spec.CostHoare.realize`, `Spec.CostHoare.exists_executes`: native correctness, bounds and
+  existence.
+
+## References
+
+* [Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, Chapter 17][CLRS2009].
 -/
 
 @[expose] public section
@@ -105,13 +111,13 @@ theorem realize {C τ : Type x} {exec : Execution D C τ} {R : Realization D exe
   ⟨h.hoare.realize R hs hr he, (B.client hr (h.hoare s hs).1 he).trans (h.2 s hs)⟩
 
 /-- A represented initial state has a native execution meeting the contract and budget. -/
-theorem run {C τ : Type x} {exec : Execution D C τ} {R : Realization D exec}
+theorem exists_executes {C τ : Type x} {exec : Execution D C τ} {R : Realization D exec}
     {weight : τ → Nat} (B : Bound R weight charge)
     (h : CostHoare charge pre p post budget) {s : D.State} {c : C}
     (hs : pre s) (hr : R.rep s c) :
     ∃ a c' traces, Executes exec p c a c' traces ∧
       (∃ s', R.rep s' c' ∧ post a s') ∧ total weight traces ≤ budget s := by
-  obtain ⟨c', traces, he, _⟩ := R.run p hr (h.hoare s hs).1
+  obtain ⟨c', traces, he, _⟩ := R.exists_executes p hr (h.hoare s hs).1
   exact ⟨_, c', traces, he, h.realize B hs hr he⟩
 
 end Spec.CostHoare

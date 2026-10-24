@@ -78,7 +78,7 @@ theorem reverseStep_correct (c : ReverseStacks) (o : (stackPair Nat).Op) :
     (reverseStep c o).2 = ((stackPair Nat).step (decode c) o).2 ∧
       decode (reverseStep c o).1 = ((stackPair Nat).step (decode c) o).1 := by
   rcases o with o | o <;> cases o <;>
-    simp [reverseStep, reverseStackStep, decode, stackPair, product, stack]
+    simp [reverseStep, reverseStackStep, decode, stackPair, stack]
 
 /-- Reversed stacks realize precisely the same interface, with their own evidence type. -/
 def reversed : Realization (stackPair Nat) reverseExec where
@@ -125,8 +125,8 @@ theorem adaptiveClient_backend {C Trace : Type} {exec : Execution (stackPair Nat
     (hr : (implementation.realize R).rep [7, 11] c) :
     ∃ c' traces, Executes exec (link methods adaptiveClient) c (some 11) c' traces ∧
       (implementation.realize R).rep [5, 8] c' := by
-  obtain ⟨c', chunks, he, hr'⟩ := (implementation.realize R).run adaptiveClient hr
-    (valid_history_of_total (queue Nat) (by intro s o; trivial) _ _)
+  obtain ⟨c', chunks, he, hr'⟩ := (implementation.realize R).exists_executes adaptiveClient hr
+    ((queue Nat).validHistory_of_forall_valid (by intro s o; trivial) _ _)
   exact ⟨c', chunks.flatten, link_exec methods exec he, hr'⟩
 
 /-- Initially all contents are in the rear stack, so this run exercises transfer. -/
@@ -181,7 +181,7 @@ example {α : Type} (p : (queue Nat).Client α) :
     realized_client direct (fun _ => 1) 1 direct_calls p
       (q := []) (s := ([], [])) (c := ([], [])) rfl rfl
   refine ⟨c', traces, he, ⟨s', hr, hb⟩, ?_⟩
-  simp only [total_one, Nat.one_mul, List.length_nil, Nat.mul_zero, Nat.add_zero] at ht
+  simp [total_eq_sum_map] at ht
   omega
 
 /-- Changing the native representation and event type requires no new amortization proof. -/
@@ -194,7 +194,7 @@ example {α : Type} (p : (queue Nat).Client α) :
     realized_client reversed (fun _ => 1) 1 reversed_calls p
       (q := []) (s := ([], [])) (c := ⟨[], []⟩) rfl rfl
   refine ⟨c', traces, he, ⟨s', hr, hb⟩, ?_⟩
-  simp only [total_one, Nat.one_mul, List.length_nil, Nat.mul_zero, Nat.add_zero] at ht
+  simp [total_eq_sum_map] at ht
   omega
 
 /-- The universal queue bound applies to every direct-backend execution of any adaptive client. -/
@@ -205,7 +205,7 @@ example {α : Type} (p : (queue Nat).Client α) {a : α} {c'} {traces}
   obtain ⟨ha, s', hr, hb, ht⟩ := realized_client_bound direct (fun _ => 1) 1 direct_calls p
     (q := []) (s := ([], [])) (c := ⟨[], []⟩) rfl rfl he
   refine ⟨ha, ?_⟩
-  simp only [total_one, Nat.one_mul, List.length_nil, Nat.mul_zero, Nat.add_zero] at ht
+  simp [total_eq_sum_map] at ht
   omega
 
 /-- The universal statement also survives changing representation and native event type. -/
@@ -216,7 +216,7 @@ example {α : Type} (p : (queue Nat).Client α) {a : α} {c'} {traces}
   obtain ⟨ha, s', hr, hb, ht⟩ := realized_client_bound reversed (fun _ => 1) 1 reversed_calls p
     (q := []) (s := ([], [])) (c := ⟨[], []⟩) rfl rfl he
   refine ⟨ha, ?_⟩
-  simp only [total_one, Nat.one_mul, List.length_nil, Nat.mul_zero, Nat.add_zero] at ht
+  simp [total_eq_sum_map] at ht
   omega
 
 /-- A nonnumeric payload exercises the polymorphic interface. -/
@@ -225,10 +225,10 @@ example : ((queue String).runClient []
       some "first" := rfl
 
 /--
-info: 'Cslib.Stateful.Realization.run' does not depend on any axioms
+info: 'Cslib.Stateful.Realization.exists_executes' does not depend on any axioms
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Stateful.Realization.run
+#print axioms Cslib.Stateful.Realization.exists_executes
 /--
 info: 'Cslib.Stateful.Realization.correct_client' does not depend on any axioms
 -/

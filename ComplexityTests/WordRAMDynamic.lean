@@ -66,7 +66,7 @@ example (w : ℕ) {α : Type} (p : (exchangeSpec w).Client α)
     ∃ y ts, Stateful.Executes ((exchangeProgram w).ExecOp w) p
         ⟨fun _ => 0, fun _ => 0⟩ ((exchangeSpec w).runClient 0 p).1 y ts ∧
       (exchangeCertificate w).rep ((exchangeSpec w).runClient 0 p).2.1 y :=
-  (exchangeCertificate w).realization.run p (exchange_initial w) hv
+  (exchangeCertificate w).realization.exists_executes p (exchange_initial w) hv
 
 /-- Read-only array queries preserve the abstract array and return the selected entry. -/
 abbrev lookupSpec (n : ℕ) : Stateful.Spec where

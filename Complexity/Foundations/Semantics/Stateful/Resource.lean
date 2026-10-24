@@ -24,7 +24,12 @@ existential witnesses rather than silently exposed to the client.
 
 ## Main results
 
-* `Bound.client`: resource bounds compose along an adaptive client.
+* `total_eq_sum_map`, `total_flatten`: `total` agrees with `(ts.map weight).sum` and distributes
+  over flattened trace chunks.
+* `Bound.client`, `Bound.exists_executes`: resource bounds and existence compose along an adaptive
+  client.
+* `Bound.client_const`, `Bound.exists_executes_const`: specialization to uniform constant
+  per-operation bounds.
 * `Module.bound`: transport worst-case bounds through a semantic module.
 * `Module.amortized_client`: telescope hidden-state potential through arbitrary executions.
 
@@ -46,18 +51,25 @@ def total (weight : τ → Nat) : List τ → Nat
   | [] => 0
   | t :: ts => weight t + total weight ts
 
+/-- The empty native trace has zero total weight. -/
+@[simp] theorem total_nil (weight : τ → Nat) : total weight [] = 0 := rfl
+
+/-- Prepending a trace element adds its weight to the tail total. -/
+@[simp] theorem total_cons (weight : τ → Nat) (t : τ) (ts : List τ) :
+    total weight (t :: ts) = weight t + total weight ts := rfl
+
+/-- `total` is the sum of the mapped weights. -/
+theorem total_eq_sum_map (weight : τ → Nat) (ts : List τ) :
+    total weight ts = (ts.map weight).sum := by
+  induction ts with
+  | nil => rfl
+  | cons t ts ih => simp [ih]
+
 /-- A resource certificate is separate from the realization and can be supplied more than once. -/
 def Bound {exec : Execution D C τ} (R : Realization D exec)
     (weight : τ → Nat) (charge : D.State → D.Op → Nat) : Prop :=
   ∀ {s c o a c' trace}, R.rep s c → D.valid s o → exec c o a c' trace →
     weight trace ≤ charge s o
-
-/-- A constant charge `K` per operation totals `K` times the length of the history. -/
-theorem spec_total_const (D : Spec.{u, v, w}) (K : Nat) (s : D.State) (os : List D.Op) :
-    D.totalCost (fun _ _ => K) s os = os.length * K := by
-  induction os generalizing s with
-  | nil => simp [Spec.totalCost]
-  | cons o os ih => simp [Spec.totalCost, ih, Nat.add_mul, Nat.add_comm]
 
 /-- Under a resource certificate, every native execution of a client whose history is admissible,
 from related states, has total weight at most the total charge of the specified history. -/
@@ -76,14 +88,14 @@ theorem Bound.client {exec : Execution D C τ} {R : Realization D exec}
     exact Nat.add_le_add ht (ih hr' hv.2)
 
 /-- Existence and semantic correctness are inherited independently from the realization. -/
-theorem Bound.run {exec : Execution D C τ} {R : Realization D exec}
+theorem Bound.exists_executes {exec : Execution D C τ} {R : Realization D exec}
     {weight : τ → Nat} {charge : D.State → D.Op → Nat} (B : Bound R weight charge)
     (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
     (hv : D.ValidHistory s (D.runClient s p).2.2) :
     ∃ c' traces, Executes exec p c (D.runClient s p).1 c' traces ∧
       R.rep (D.runClient s p).2.1 c' ∧
       total weight traces ≤ D.totalCost charge s (D.runClient s p).2.2 := by
-  obtain ⟨c', traces, he, hr'⟩ := R.run p hr hv
+  obtain ⟨c', traces, he, hr'⟩ := R.exists_executes p hr hv
   exact ⟨c', traces, he, hr', B.client hr hv he⟩
 
 /-- Uniform constant per-operation bounds scale by the history length. -/
@@ -93,17 +105,17 @@ theorem Bound.client_const {exec : Execution D C τ} {R : Realization D exec}
     (hr : R.rep s c) (hv : D.ValidHistory s (D.runClient s p).2.2)
     (he : Executes exec p c a c' traces) :
     total weight traces ≤ (D.runClient s p).2.2.length * K := by
-  simpa only [spec_total_const] using B.client hr hv he
+  simpa only [Spec.totalCost_const] using B.client hr hv he
 
 /-- Existence, correctness, and total cost for a uniform constant per-operation bound. -/
-theorem Bound.run_const {exec : Execution D C τ} {R : Realization D exec}
+theorem Bound.exists_executes_const {exec : Execution D C τ} {R : Realization D exec}
     {weight : τ → Nat} {K : Nat} (B : Bound R weight (fun _ _ => K))
     (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
     (hv : D.ValidHistory s (D.runClient s p).2.2) :
     ∃ c' traces, Executes exec p c (D.runClient s p).1 c' traces ∧
       R.rep (D.runClient s p).2.1 c' ∧
       total weight traces ≤ (D.runClient s p).2.2.length * K := by
-  obtain ⟨c', traces, he, hr'⟩ := R.run p hr hv
+  obtain ⟨c', traces, he, hr'⟩ := R.exists_executes p hr hv
   exact ⟨c', traces, he, hr', B.client_const hr hv he⟩
 
 namespace Module
@@ -149,37 +161,18 @@ theorem amortized_client (R : Realization E exec) {weight : τ → Nat}
     subst heq
     obtain ⟨e', hMf, hRf, hbound⟩ := ih hM' hr' hv.2
     exact ⟨e', hMf, hRf, by
-      simp only [total, Spec.runClient, Spec.totalCost]
+      simp only [total_cons, Spec.runClient_liftBind, Spec.totalCost_cons]
       omega⟩
 
 end Module
-
-/-- Unit weights total the length of the trace. -/
-theorem total_one (ts : List τ) : total (fun _ => 1) ts = ts.length := by
-  induction ts with
-  | nil => rfl
-  | cons t ts ih => simp [total, ih, Nat.add_comm]
-
-/-- A unit charge per operation totals the length of the history. -/
-theorem spec_total_one (D : Spec.{u, v, w}) (s : D.State) (os : List D.Op) :
-    D.totalCost (fun _ _ => 1) s os = os.length := by
-  induction os generalizing s with
-  | nil => rfl
-  | cons o os ih => simp [Spec.totalCost, ih, Nat.add_comm]
-
-/-- The total of a concatenation is the sum of the totals. -/
-theorem total_append (weight : τ → Nat) (xs ys : List τ) :
-    total weight (xs ++ ys) = total weight xs + total weight ys := by
-  induction xs with
-  | nil => simp [total]
-  | cons x xs ih => simp [total, ih, Nat.add_assoc]
 
 /-- The total of a flattened list of chunks is the sum of the totals of the chunks. -/
 theorem total_flatten (weight : τ → Nat) (chunks : List (List τ)) :
     total weight chunks.flatten = total (total weight) chunks := by
   induction chunks with
   | nil => rfl
-  | cons chunk chunks ih => simp [List.flatten, total_append, ih, total]
-
+  | cons xs xss ih =>
+    rw [List.flatten_cons, total_cons, ← ih, total_eq_sum_map, total_eq_sum_map,
+      total_eq_sum_map, List.map_append, List.sum_append]
 
 end Cslib.Stateful

@@ -48,7 +48,7 @@ example : Executes counterExec (.pure (ULift.up 7 : ULift.{1} Nat)) 0
 example : ∃ c' traces,
     Executes counterExec (.pure (ULift.up 7 : ULift.{1} Nat)) 0 (ULift.up 7) c' traces ∧
     counterRealization.rep 0 c' :=
-  counterRealization.run (.pure (ULift.up 7 : ULift.{1} Nat)) rfl trivial
+  counterRealization.exists_executes (.pure (ULift.up 7 : ULift.{1} Nat)) rfl trivial
 
 /-- Nonzero concrete-state credit is retained across future calls. -/
 theorem counter_amortized :
@@ -78,8 +78,8 @@ example : counter.Hoare (fun s => s = 0) adaptive (fun a s => a = 2 ∧ s = 2) :
 /-- The endpoint credit theorem has a non-vacuous adaptive instance. -/
 example : ∃ c' traces, Executes counterExec adaptive 0 2 c' traces ∧
     c' = 2 ∧ total id traces + c' ≤ 4 := by
-  obtain ⟨c', traces, he, hr, ht⟩ := counter_amortized.run adaptive (s := 0) rfl
-    (valid_history_of_total counter (fun _ _ => trivial) _ _)
+  obtain ⟨c', traces, he, hr, ht⟩ := counter_amortized.exists_executes adaptive (s := 0) rfl
+    (counter.validHistory_of_forall_valid (fun _ _ => trivial) _ _)
   exact ⟨c', traces, he, hr.symm, ht⟩
 
 /-- Composition hides the intermediate state even for a dependent-answer interface. -/

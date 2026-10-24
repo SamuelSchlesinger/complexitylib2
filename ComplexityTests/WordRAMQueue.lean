@@ -61,7 +61,8 @@ example {w base capacity a b : ℕ} (h1 : Fits w 1)
     ⟨⟨by simpa using (show 0 < capacity by omega), ha⟩,
       ⟨⟨by simpa using (show 1 < capacity by omega), hb⟩,
       trivial, ⟨by simpa using (show 1 < capacity by omega), ha⟩, trivial, trivial⟩⟩
-  simpa only [cycle, Stateful.Spec.runClient, WordRAM.Queue.spec, queue,
+  simpa only [cycle, Stateful.Spec.runClient_liftBind, Stateful.Spec.runClient_pure,
+    WordRAM.Queue.spec, queue,
     List.nil_append, List.cons_append, List.tail_cons, List.head?_cons,
     Option.getD_some, List.length_cons, List.length_nil] using
     WordRAM.Queue.run_client h1 hc (cycle a b) hr hv

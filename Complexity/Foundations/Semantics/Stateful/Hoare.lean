@@ -22,8 +22,14 @@ realization transports their results to native execution. Resource obligations a
 
 ## Main results
 
-* `Spec.Hoare.pure`, `Spec.Hoare.call`, `Spec.Hoare.bind`: compositional verification rules.
+* `Spec.Hoare.pure`, `Spec.Hoare.call`, `Spec.Hoare.bind`, `Spec.Hoare.consequence`:
+  compositional verification rules.
 * `Spec.Hoare.realize`: a semantic client proof transports through any realization.
+* `Spec.Hoare.link`: transport a semantic client contract across an interface implementation.
+
+## References
+
+* [Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, Chapter 17][CLRS2009].
 -/
 
 @[expose] public section

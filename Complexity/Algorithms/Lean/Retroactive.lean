@@ -137,7 +137,7 @@ theorem replay_run (timeline os : List D.Op) (s : D.State) :
   induction os generalizing s with
   | nil => rfl
   | cons o os ih =>
-    simp [replay, Spec.runClient, backend, Spec.run, ih]
+    simp [replay, backend, ih]
 
 /-- Every admissible ordinary history is admissible when executed through the backend. -/
 theorem replay_valid (timeline os : List D.Op) (s : D.State)
@@ -166,7 +166,7 @@ def implementation : Module (spec D initial) (backend D initial) where
     obtain ⟨ht, hs⟩ := hr
     dsimp only at ht hs
     subst timeline
-    simp only [methods, Spec.runClient, backend]
+    simp only [methods, Spec.runClient_liftBind, backend]
     rw [replay_run]
     exact ⟨trivial, rfl, rfl⟩
 
@@ -187,7 +187,7 @@ theorem replay_charge (editCharge : List D.Op → TimelineEdit D.Op → Nat)
   induction os generalizing s with
   | nil => rfl
   | cons o os ih =>
-    simp only [List.map_cons, Spec.totalCost, primitiveCharge, backend, ih]
+    simp only [List.map_cons, Spec.totalCost_cons, primitiveCharge, backend, ih]
 
 /-- The full operation charge retains both editing and resetting overhead. -/
 theorem operation_charge (editCharge : List D.Op → TimelineEdit D.Op → Nat)
@@ -198,7 +198,7 @@ theorem operation_charge (editCharge : List D.Op → TimelineEdit D.Op → Nat)
       ((backend D initial).runClient (timeline, state) (methods D initial e)).2.2 =
       editCharge timeline e + resetCharge +
         D.totalCost ordinaryCharge initial (e.apply timeline) := by
-  simp only [methods, Spec.runClient, backend]
+  simp only [methods, Spec.runClient_liftBind, backend]
   rw [replay_run]
   change editCharge timeline e + (resetCharge +
     (backend D initial).totalCost
