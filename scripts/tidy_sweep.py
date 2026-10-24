@@ -1828,7 +1828,7 @@ class Planner:
         for old in renamed:
             by_last[old.rsplit(".", 1)[-1]].append(old)
         full = re.compile(r"(?<![\w.])(" + "|".join(
-            re.escape(n) for n in sorted(renamed, key=len, reverse=True)) + r")(?![\w'])")
+            re.escape(n) for n in sorted(renamed, key=len, reverse=True)) + r")(?!\w)")
         lasts = re.compile("|".join(re.escape(last) for last in by_last))
         known_by_last: dict[str, list[str]] = defaultdict(list)
         for name in self.known:
@@ -1853,6 +1853,12 @@ class Planner:
                             fe.replaces.append(Replace(a, a + len(token), new))
                             done.append((a, a + len(token)))
                 for m in full.finditer(src.text, lo, hi):
+                    # `'Old.name' depends on axioms` quotes the name; `Old.name'` may also be a
+                    # different, primed constant.
+                    quoted = m.start() > 0 and src.text[m.start() - 1] == "'"
+                    if src.text.startswith("'", m.end()) and not quoted \
+                            and m[1] + "'" in self.known:
+                        continue
                     if not any(s <= m.start() < e for s, e in done):
                         fe.replaces.append(Replace(m.start(), m.end(), renamed[m[1]]))
 

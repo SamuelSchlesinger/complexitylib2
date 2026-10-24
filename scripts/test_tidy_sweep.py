@@ -752,6 +752,31 @@ class PartialBuildTests(unittest.TestCase):
         self.assertIn("--partial is only for report", err.getvalue())
 
 
+class CommentTests(unittest.TestCase):
+    def test_full_names_in_comments(self) -> None:
+        """`#guard_msgs` text quotes renamed names; primed constants are other names."""
+        text = ("/--\ninfo: 'A.computableTidilyInPolyTime_x' depends on axioms: [propext]\n-/\n"
+                "-- see A.computableTidilyInPolyTime_x' and `A.computableTidilyInPolyTime_x`\n")
+        p, src = fake_planner(text, {}, known={"A.computableTidilyInPolyTime_x'"})
+        p.renames = {"A.computableTidilyInPolyTime_x": "A.computableInPolyTime_x"}
+        p.model.lib = SimpleNamespace(ileans={"M": {}})
+        original = t.qr.source_path
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "M.lean"
+            path.write_text(text)
+            src.path = path
+            p.sources = {path: src}
+            t.qr.source_path = lambda module: path
+            try:
+                p.plan_comments()
+            finally:
+                t.qr.source_path = original
+        fe = p.files[path]
+        self.assertEqual(t.render(text, fe.replaces, fe.wraps, 0, len(text)), text.replace(
+            "info: 'A.computableTidilyInPolyTime_x'", "info: 'A.computableInPolyTime_x'").replace(
+            "`A.computableTidilyInPolyTime_x`", "`A.computableInPolyTime_x`"))
+
+
 class SummaryTests(unittest.TestCase):
     def test_counts_by_area_and_case(self) -> None:
         entries = [t.Entry("a", "M", "p", "Logics", "theorem", "2"),
