@@ -46,7 +46,7 @@ example : (0 : ℕ) ∉ (PromiseProblem.gapMin (fun _ => (7 : ℝ)) (fun n : ℕ
 
 /-- A single vertex is an independent set. -/
 example : 1 ≤ Graph.indepNum ([0], []) :=
-  Graph.le_indepNum_iff.2 ⟨{0}, by simp, ⟨by simp, rfl⟩⟩
+  Graph.le_indepNum_iff.2 ⟨{⟨0, by simp⟩}, by simp, rfl⟩
 
 /-- A graph without declared vertices has independence number `0` and vertex cover number `0`. -/
 example : Graph.indepNum ([], []) = 0 ∧ Graph.vertexCoverNum ([], []) = 0 := by

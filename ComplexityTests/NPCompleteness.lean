@@ -60,7 +60,7 @@ example : complementInstance (([0, 1], []), 0) = (([0, 1], [(0, 1), (1, 0)]), 0)
 
 -- The empty graph has a zero-size clique, but no clique of size one.
 example : ((([], []) : Graph), 0) ∈ Clique :=
-  ⟨∅, by simp, ⟨by simp, rfl⟩⟩
+  ⟨∅, by simp, rfl⟩
 
 example : ((([], []) : Graph), 1) ∉ Clique := by
   intro h

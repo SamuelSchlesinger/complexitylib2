@@ -19,10 +19,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 
 `VertexCover` is the set of graphs, given by a list of vertices and a list of edges, together with
 a number `k`, such that `k` of the declared vertices meet every edge between declared vertices
-[Karp1972]. Graphs are read through `Cslib.Complexity.Graph.toSimpleGraph` restricted to the
-declared vertices (`SimpleGraph.induce`), and covers through `SimpleGraph.IsVertexCover`. Edges
-with an undeclared endpoint and self-loops are therefore ignored, and repeated vertex entries
-count once.
+[Karp1972]. Graphs are read on their declared vertices through `Cslib.Complexity.Graph.induced`,
+and covers through `SimpleGraph.IsVertexCover`. Edges with an undeclared endpoint and self-loops
+are therefore ignored, and repeated vertex entries count once.
 
 The cover has exactly `k` distinct vertices, matching `IndependentSet`. Since a set of declared
 vertices containing a cover is a cover, this agrees with the textbook formulation "a cover of at
@@ -80,16 +79,26 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
 /-- The graphs with a vertex cover of `k` of their vertices: `k` declared vertices meeting every
 edge between two declared vertices [Karp1972]. -/
 def VertexCover : Set (Graph × ℕ) :=
-  {x | ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ x.1.1) ∧
-    (x.1.toSimpleGraph.induce {v | v ∈ x.1.1}).IsVertexCover {v | ↑v ∈ S} ∧ S.card = x.2}
+  {x | ∃ S : Finset {v // v ∈ x.1.1}, x.1.induced.IsVertexCover S ∧ S.card = x.2}
 
 /-- Membership in `VertexCover` as a finite set of `k` declared vertices meeting every edge between
 declared vertices. -/
 theorem mem_VertexCover_iff {G : Graph} {k : ℕ} :
     (G, k) ∈ VertexCover ↔ ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ G.1) ∧
       (∀ u ∈ G.1, ∀ v ∈ G.1, G.toSimpleGraph.Adj u v → u ∈ S ∨ v ∈ S) ∧ S.card = k := by
-  refine exists_congr fun S => and_congr_right fun _ => and_congr_left fun _ => ?_
-  exact ⟨fun h u hu v hv huv => @h ⟨u, hu⟩ ⟨v, hv⟩ huv, fun h u v huv => h u u.2 v v.2 huv⟩
+  constructor
+  · rintro ⟨S, hS, hcard⟩
+    refine ⟨S.map (.subtype _),
+      fun v hv => by obtain ⟨u, _, rfl⟩ := Finset.mem_map.1 hv; exact u.2,
+      fun u hu v hv huv =>
+        (@hS ⟨u, hu⟩ ⟨v, hv⟩ huv).imp (Finset.mem_map_of_mem _) (Finset.mem_map_of_mem _),
+      (Finset.card_map _).trans hcard⟩
+  · rintro ⟨S, hSV, hS, rfl⟩
+    have hmap : (S.subtype (· ∈ G.1)).map (.subtype _) = S :=
+      (Finset.subtype_map _).trans (Finset.filter_eq_self.mpr hSV)
+    refine ⟨S.subtype (· ∈ G.1), fun u v huv => ?_,
+      by rw [← Finset.card_map (.subtype _), hmap]⟩
+    simpa [Finset.mem_subtype] using hS u.1 u.2 v.1 v.2 huv
 
 /-- `VertexCover` through covers of at most `k` vertices: `(G, k) ∈ VertexCover` exactly when `k`
 is at most the number of distinct declared vertices and some cover has at most `k` vertices. -/
@@ -121,7 +130,7 @@ theorem toVertexCover_mem_iff (x : Graph × ℕ) :
     toVertexCover x ∈ VertexCover ↔ x ∈ IndependentSet := by
   classical
   obtain ⟨G, m⟩ := x
-  simp only [toVertexCover, mem_VertexCover_iff]
+  simp only [toVertexCover, mem_VertexCover_iff, mem_IndependentSet_iff]
   have hsub : ∀ {S : Finset ℕ}, (∀ v ∈ S, v ∈ G.1) → S ⊆ G.1.toFinset :=
     fun hS v hv => List.mem_toFinset.2 (hS v hv)
   split_ifs with hm
@@ -202,7 +211,11 @@ theorem isVerifier :
       (∀ u ∈ x.1.1, ∀ v ∈ x.1.1, x.1.toSimpleGraph.Adj u v → u ∈ S ∨ v ∈ S) ∧ S.card = x.2} :=
     Set.ext fun _ => mem_VertexCover_iff
   rw [hset]
-  refine isVerifier_subsetVerifier (fun x => by simpa using Graph.length_vertices_le x)
+  refine isVerifier_subsetVerifier
+    (fun x => by
+      have := x.1.length_vertices_le_encGraph
+      simp only [Polynomial.eval_X, length_encPair]
+      omega)
     fun x l hl _ => ?_
   simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, Bool.not_eq_true',
     Bool.and_eq_false_iff, Bool.not_eq_false', List.any_eq_true, exists_eq_right,
@@ -263,7 +276,23 @@ namespace Graph
 
 /-- The **vertex cover number** of a graph: the least number of declared vertices meeting every
 edge between declared vertices. -/
-noncomputable def vertexCoverNum (G : Graph) : ℕ := sInf {k | (G, k) ∈ VertexCover}
+noncomputable def vertexCoverNum (G : Graph) : ℕ := G.induced.vertexCoverNum.toNat
+
+/-- The vertex cover number is the size of a vertex cover. -/
+theorem vertexCoverNum_mem_VertexCover (G : Graph) : (G, G.vertexCoverNum) ∈ VertexCover := by
+  classical
+  obtain ⟨s, hs_card, hs⟩ := G.induced.vertexCoverNum_exists
+  refine ⟨s.toFinset, by simpa using hs, ?_⟩
+  rw [← Set.coe_toFinset s, Set.encard_coe_eq_coe_finsetCard] at hs_card
+  exact (ENat.toNat_natCast _).symm.trans (congrArg ENat.toNat hs_card)
+
+/-- Every vertex cover has at least `G.vertexCoverNum` vertices. -/
+theorem vertexCoverNum_le_of_mem_VertexCover {G : Graph} {k : ℕ} (h : (G, k) ∈ VertexCover) :
+    G.vertexCoverNum ≤ k := by
+  obtain ⟨S, hS, hcard : S.card = k⟩ := h
+  have hle := hS.vertexCoverNum_le
+  rw [Set.encard_coe_eq_coe_finsetCard, hcard] at hle
+  exact ENat.toNat_le_of_le_natCast hle
 
 /-- **A vertex cover is the complement of an independent set**: the vertex cover number is the
 number of distinct declared vertices minus the independence number. -/
@@ -274,9 +303,8 @@ theorem vertexCoverNum_eq_card_sub_indepNum (G : Graph) :
   have hvc : (G, G.1.toFinset.card - G.indepNum) ∈ VertexCover := by
     have := (IndependentSet.toVertexCover_mem_iff (G, G.indepNum)).2 hα
     rwa [IndependentSet.toVertexCover, ite_eq_left hαn] at this
-  refine le_antisymm (Nat.sInf_le hvc) ?_
-  have hτ : (G, G.vertexCoverNum) ∈ VertexCover :=
-    Nat.sInf_mem (s := {k | (G, k) ∈ VertexCover}) ⟨_, hvc⟩
+  refine le_antisymm (vertexCoverNum_le_of_mem_VertexCover hvc) ?_
+  have hτ : (G, G.vertexCoverNum) ∈ VertexCover := vertexCoverNum_mem_VertexCover G
   have hτn : G.vertexCoverNum ≤ G.1.toFinset.card := (mem_VertexCover_iff_exists_card_le.1 hτ).1
   have hIS : (G, G.1.toFinset.card - G.vertexCoverNum) ∈ IndependentSet := by
     refine (IndependentSet.toVertexCover_mem_iff _).1 ?_

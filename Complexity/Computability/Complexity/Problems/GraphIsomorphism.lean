@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.Graph
-public import Mathlib.Combinatorics.SimpleGraph.Maps
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -16,14 +15,15 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 # Graph isomorphism
 
 `GraphIsomorphism` is the set of pairs of graphs, in the encoding of `IndependentSet`, that are
-isomorphic: the simple graphs induced on their declared vertices are isomorphic in the sense of
-Mathlib's `SimpleGraph.Iso`. Repeated vertex entries are ignored, and so are edges with an
-endpoint outside the declared vertices. `GraphNonIsomorphism` is its complement
-[Arora and Barak, Section 8.1.3][AroraBarak09].
+isomorphic: the simple graphs induced on their declared vertices (`Cslib.Complexity.Graph.induced`)
+are isomorphic in the sense of Mathlib's `SimpleGraph.Iso`. Repeated vertex entries are ignored,
+and so are edges with an endpoint outside the declared vertices. `GraphNonIsomorphism` is its
+complement [Arora and Barak, Section 8.1.3][AroraBarak09].
 
 Positions in the list `Graph.distinctVertices` of declared vertices without repetitions enumerate
-the vertices, and `Graph.adjIndex` reads adjacency through positions. Two graphs are isomorphic
-exactly when a bijection of positions preserves `adjIndex` (`mem_GraphIsomorphism_iff`).
+the vertices (`Cslib.Complexity.Graph.vertexEquiv`), and `Graph.adjIndex` reads adjacency through
+positions. Two graphs are isomorphic exactly when a bijection of positions preserves `adjIndex`
+(`mem_GraphIsomorphism_iff`).
 
 `GraphIsomorphism ∈ NP`: a certificate lists, for each position `i` of the first graph, a block of
 bits whose first set bit selects a position of the second graph, and the verifier checks that the
@@ -32,7 +32,7 @@ vertices.
 
 ## Main definitions
 
-* `Cslib.Complexity.Graph.induced`, `Cslib.Complexity.Graph.adjIndex`.
+* `Cslib.Complexity.Graph.adjIndex`.
 * `Cslib.Complexity.GraphIsomorphism`, `Cslib.Complexity.GraphNonIsomorphism`.
 * `Cslib.Complexity.GraphIsomorphism.verifier`.
 
@@ -58,27 +58,13 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
 
 namespace Graph
 
-/-- The simple graph induced by `G` on its declared vertices. -/
-def induced (G : Graph) : SimpleGraph {v // v ∈ G.1} :=
-  G.toSimpleGraph.induce {v | v ∈ G.1}
-
 /-- Adjacency of the vertices at positions `i` and `j` of `G.distinctVertices`. -/
 def adjIndex (G : Graph) (i j : ℕ) : Bool :=
   G.adjBool (G.distinctVertices.getD i 0) (G.distinctVertices.getD j 0)
 
-/-- Positions in `G.distinctVertices` enumerate the declared vertices. -/
-def vertexEquiv (G : Graph) : Fin G.distinctVertices.length ≃ {v // v ∈ G.1} :=
-  (G.nodup_distinctVertices.getEquiv _).trans
-    (Equiv.subtypeEquivRight fun _ => mem_distinctVertices)
-
-theorem vertexEquiv_apply (G : Graph) (i : Fin G.distinctVertices.length) :
-    (G.vertexEquiv i : ℕ) = G.distinctVertices.getD i 0 := by
-  simp [vertexEquiv, List.Nodup.getEquiv, List.getD_eq_getElem?_getD]
-
 private theorem induced_adj_vertexEquiv (G : Graph) (i j : Fin G.distinctVertices.length) :
     G.induced.Adj (G.vertexEquiv i) (G.vertexEquiv j) ↔ G.adjIndex i j = true := by
-  rw [induced, SimpleGraph.induce_adj, adjIndex, adjBool_eq_true_iff, vertexEquiv_apply,
-    vertexEquiv_apply]
+  rw [induced_adj, adjIndex, adjBool_eq_true_iff, vertexEquiv_apply, vertexEquiv_apply]
 
 /-- Adjacency of computed positions in a computed graph is polynomial-time. -/
 @[fun_prop]

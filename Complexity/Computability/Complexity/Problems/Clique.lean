@@ -30,12 +30,14 @@ first-order interpretations.
 ## Main definitions
 
 * `Cslib.Complexity.Clique`, `Cslib.Complexity.Graph.compl`.
-* `Cslib.Complexity.Graph.cliqueNum`: the clique number.
+* `Cslib.Complexity.Graph.cliqueNum`: the clique number (`G.induced.cliqueNum`).
 * `Cslib.Complexity.Clique.verifier`.
 
 ## Main results
 
-* `Cslib.Complexity.Graph.compl_mem_Clique_iff`: `(G.compl, m) ∈ Clique ↔ (G, m) ∈ IndependentSet`.
+* `Cslib.Complexity.mem_Clique_iff`: cliques as subsets of `ℕ` contained in the declared vertices.
+* `Cslib.Complexity.Graph.induced_compl`, `Cslib.Complexity.Graph.compl_mem_Clique_iff`:
+  `G.compl.induced = G.inducedᶜ` and `(G.compl, m) ∈ Clique ↔ (G, m) ∈ IndependentSet`.
 * `Cslib.Complexity.Graph.le_cliqueNum_iff`, `Cslib.Complexity.Graph.cliqueNum_compl`: the clique
   number is the largest target of `Clique`, and that of the complement is the independence number.
 * `Cslib.Complexity.Graph.computableTidilyInPolyTime_compl`: complementing a graph on its declared
@@ -60,7 +62,15 @@ open Turing.MultiTapeTM Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 /-- The graphs with a clique of `m` of their vertices. -/
 def Clique : Set (Graph × ℕ) :=
-  {x | ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ x.1.1) ∧ x.1.toSimpleGraph.IsNClique x.2 S}
+  {x | ∃ S : Finset {v // v ∈ x.1.1}, x.1.induced.IsNClique x.2 S}
+
+/-- Membership in `Clique` as a finite set of `m` declared vertices that is a clique in
+`G.toSimpleGraph`. -/
+theorem mem_Clique_iff {G : Graph} {m : ℕ} :
+    (G, m) ∈ Clique ↔
+      ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ G.1) ∧ G.toSimpleGraph.IsNClique m S := by
+  simp only [Clique, Set.mem_ofPred_eq, SimpleGraph.isNClique_iff, SimpleGraph.IsClique]
+  exact Graph.exists_subtype_pairwise_iff (P := G.toSimpleGraph.Adj)
 
 namespace Graph
 
@@ -91,17 +101,19 @@ theorem compl_adj_iff {G : Graph} {u v : ℕ} (hu : u ∈ G.1) (hv : v ∈ G.1) 
   · rintro ⟨huv, h⟩
     refine ⟨huv, Or.inl ⟨hu, hv, huv, fun h₁ => h ⟨huv, Or.inl h₁⟩, fun h₂ => h ⟨huv, Or.inr h₂⟩⟩⟩
 
+/-- The induced graph of the complement is the complement of the induced graph. -/
+@[simp]
+theorem induced_compl (G : Graph) :
+    (G.compl.induced : SimpleGraph {v // v ∈ G.1}) = G.inducedᶜ := by
+  ext u v
+  exact (compl_adj_iff (G := G) u.2 v.2).trans
+    ((and_congr_left' Subtype.ext_iff.not.symm).trans (G.induced.compl_adj u v).symm)
+
 /-- **Independent sets are cliques of the complement.** -/
 theorem compl_mem_Clique_iff (G : Graph) (m : ℕ) :
     (G.compl, m) ∈ Clique ↔ (G, m) ∈ IndependentSet := by
-  refine exists_congr fun S => ?_
-  simp only [compl]
-  refine and_congr_right fun hS => ?_
-  have hpair : (↑S : Set ℕ).Pairwise G.compl.toSimpleGraph.Adj ↔
-      (↑S : Set ℕ).Pairwise fun u v => ¬G.toSimpleGraph.Adj u v := by
-    refine ⟨fun h u hu v hv huv => ((compl_adj_iff (hS u hu) (hS v hv)).1 (h hu hv huv)).2,
-      fun h u hu v hv huv => (compl_adj_iff (hS u hu) (hS v hv)).2 ⟨huv, h hu hv huv⟩⟩
-  exact ⟨fun ⟨h₁, h₂⟩ => ⟨hpair.1 h₁, h₂⟩, fun ⟨h₁, h₂⟩ => ⟨hpair.2 h₁, h₂⟩⟩
+  simp_rw [IndependentSet, Set.mem_ofPred_eq, ← SimpleGraph.isNClique_compl, ← induced_compl]
+  rfl
 
 /-- Complementing a graph on its declared vertices is polynomial-time. -/
 @[fun_prop]
@@ -126,8 +138,8 @@ theorem isVerifier :
     (P := fun G u v => G.toSimpleGraph.Adj u v)
     (fun G u v _ => by rw [Graph.adjBool_eq_true_iff])
   intro x
-  simpa only [Clique, Set.mem_ofPred_eq, SimpleGraph.isNClique_iff, SimpleGraph.IsClique,
-    verifier] using h x
+  simp only [Clique, Set.mem_ofPred_eq, SimpleGraph.isNClique_iff, SimpleGraph.IsClique, verifier]
+  exact h x
 
 /-- The `Clique` verifier is polynomial-time. -/
 @[fun_prop]
@@ -162,35 +174,30 @@ namespace Graph
 
 /-- The **clique number** of a graph: the largest number of declared vertices that are pairwise
 adjacent. -/
-noncomputable def cliqueNum (G : Graph) : ℕ := sSup {k | (G, k) ∈ Clique}
+noncomputable def cliqueNum (G : Graph) : ℕ := G.induced.cliqueNum
 
 variable {G : Graph} {k k' : ℕ}
 
 /-- Fewer vertices of a clique form a clique. -/
 theorem mem_Clique_of_le (h : (G, k) ∈ Clique) (hk : k' ≤ k) : (G, k') ∈ Clique := by
-  obtain ⟨S, hSV, hS⟩ := h
-  have hc : S.card = k := hS.card_eq
-  obtain ⟨T, hTS, hT⟩ := Finset.exists_subset_card_eq (hc ▸ hk)
-  exact ⟨T, fun v hv => hSV v (hTS hv), ⟨hS.isClique.subset (Finset.coe_subset.2 hTS), hT⟩⟩
-
-/-- A clique has at most as many vertices as the distinct declared vertices. -/
-theorem le_card_of_mem_Clique (h : (G, k) ∈ Clique) : k ≤ G.1.toFinset.card := by
-  obtain ⟨S, hSV, hS⟩ := h
-  have hc : S.card = k := hS.card_eq
-  rw [← hc]
-  exact Finset.card_le_card fun v hv => List.mem_toFinset.2 (hSV v hv)
+  obtain ⟨S, hS, hcard : S.card = k⟩ := h
+  obtain ⟨T, hTS, hT⟩ := Finset.exists_subset_card_eq (hcard ▸ hk)
+  exact ⟨T, hS.subset (Finset.coe_subset.2 hTS), hT⟩
 
 /-- **The clique number is the largest target of `Clique`.** -/
-theorem le_cliqueNum_iff : k ≤ G.cliqueNum ↔ (G, k) ∈ Clique := by
-  have hbdd : BddAbove {k | (G, k) ∈ Clique} := ⟨_, fun _ => le_card_of_mem_Clique⟩
-  have h0 : (G, 0) ∈ Clique := ⟨∅, by simp, ⟨by simp, rfl⟩⟩
-  exact ⟨fun hk => mem_Clique_of_le (Nat.sSup_mem ⟨0, h0⟩ hbdd) hk,
-    fun hk => le_csSup hbdd hk⟩
+theorem le_cliqueNum_iff : k ≤ G.cliqueNum ↔ (G, k) ∈ Clique :=
+  ⟨mem_Clique_of_le G.induced.exists_isNClique_cliqueNum,
+    fun ⟨_, hS, (hcard : _ = k)⟩ => hcard ▸ hS.card_le_cliqueNum⟩
+
+/-- A clique has at most as many vertices as the distinct declared vertices. -/
+theorem le_card_of_mem_Clique (h : (G, k) ∈ Clique) : k ≤ G.1.toFinset.card :=
+  (le_cliqueNum_iff.2 h).trans (G.natCard_vertexSubtype ▸ G.induced.cliqueNum_le_natCard)
 
 /-- **Cliques of the complement are independent sets**: the clique number of the complement on
 the declared vertices is the independence number. -/
 theorem cliqueNum_compl (G : Graph) : G.compl.cliqueNum = G.indepNum := by
-  simp only [cliqueNum, indepNum, compl_mem_Clique_iff]
+  rw [indepNum, ← G.induced.cliqueNum_compl, ← induced_compl]
+  rfl
 
 end Graph
 

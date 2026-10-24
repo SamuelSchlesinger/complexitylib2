@@ -212,7 +212,7 @@ private theorem block_occurrenceVertex (i j : ℕ) : block (occurrenceVertex i j
 private theorem satisfiable_of_mem (h : toSparseIndependentSet φ ∈ IndependentSet) :
     φ.Satisfiable := by
   classical
-  obtain ⟨S, hSV, hS⟩ := h
+  obtain ⟨S, hSV, hS⟩ := mem_IndependentSet_iff.1 h
   set n := (ThreeSAT.distinctVars φ).length
   have hSV' : ∀ v ∈ S, v ∈ vertices φ := hSV
   have hind : ∀ u ∈ S, ∀ v ∈ S, u ≠ v → (u, v) ∉ edges φ := fun u hu v hv huv he =>
@@ -256,7 +256,6 @@ private theorem satisfiable_of_mem (h : toSparseIndependentSet φ ∈ Independen
       exact hblock v hv
     · rw [Finset.card_image_of_injOn hinj, hS.card_eq, Finset.card_disjSum, Finset.card_range,
         Finset.card_range]
-      exact le_rfl
   have hhit : ∀ b ∈ B, ∃ v ∈ S, block v = b := fun b hb => by
     rw [← himage] at hb
     exact Finset.mem_image.1 hb
@@ -321,6 +320,7 @@ private theorem mem_of_satisfiable (h : φ.Satisfiable) :
     intro v
     simp only [O, Finset.mem_image, Finset.mem_univ, true_and]
     exact ⟨fun ⟨i, he⟩ => ⟨i, he.symm⟩, fun ⟨i, he⟩ => ⟨i, he.symm⟩⟩
+  rw [mem_IndependentSet_iff]
   refine ⟨L ∪ O, fun v hv => ?_, ⟨fun u hu v hv huv hadj => ?_, ?_⟩⟩
   · change v ∈ vertices φ
     rcases Finset.mem_union.1 hv with hv | hv

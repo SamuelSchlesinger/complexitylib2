@@ -138,7 +138,7 @@
  "Complexity/Computability/Complexity/Problems/Coloring.lean": 4,
  "Complexity/Computability/Complexity/Problems/CountingSAT.lean": 1,
  "Complexity/Computability/Complexity/Problems/ExactThreeSAT.lean": 3,
- "Complexity/Computability/Complexity/Problems/Graph.lean": 4,
+ "Complexity/Computability/Complexity/Problems/Graph.lean": 3,
  "Complexity/Computability/Complexity/Problems/GraphIsomorphism.lean": 4,
  "Complexity/Computability/Complexity/Problems/Hamiltonian.lean": 10,
  "Complexity/Computability/Complexity/Problems/Hamiltonian/Diamond.lean": 5,

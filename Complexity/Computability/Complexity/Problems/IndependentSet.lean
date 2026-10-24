@@ -20,9 +20,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 # Independent sets
 
 `IndependentSet` is the set of graphs, given by a list of vertices and a list of edges, together
-with a number `m`, such that the graph has an independent set of `m` vertices [Arora and Barak,
-Section 2.4][AroraBarak09]. Graphs are read through Mathlib's `SimpleGraph.fromRel`, and independent
-sets through `SimpleGraph.IsNIndepSet`.
+with a number `m`, such that the graph has an independent set of `m` declared vertices [Arora and
+Barak, Section 2.4][AroraBarak09]. Graphs are read on their declared vertices through
+`Cslib.Complexity.Graph.induced`, and independent sets through `SimpleGraph.IsNIndepSet`.
 
 The reduction `SAT.toIndependentSet` from `SAT` is Karp's: one vertex for each occurrence of a
 literal, edges between occurrences in the same clause and between complementary occurrences, and
@@ -45,10 +45,12 @@ first-order interpretations.
 * `Cslib.Complexity.IndependentSet`.
 * `Cslib.Complexity.IndependentSet.verifier`.
 * `Cslib.Complexity.SAT.toIndependentSet`.
-* `Cslib.Complexity.Graph.indepNum`: the independence number.
+* `Cslib.Complexity.Graph.indepNum`: the independence number (`G.induced.indepNum`).
 
 ## Main results
 
+* `Cslib.Complexity.mem_IndependentSet_iff`: independent sets as subsets of `ℕ` contained in the
+  declared vertices.
 * `Cslib.Complexity.SAT.toIndependentSet_mem_iff`: `toIndependentSet φ ∈ IndependentSet ↔ φ ∈ SAT`.
 * `Cslib.Complexity.SAT.exists_card_add_countUnsat_le`: an independent set of Karp's graph gives an
   assignment satisfying as many clauses.
@@ -77,7 +79,16 @@ open Cslib.Logic.PL Turing.MultiTapeTM ComputableTidilyInPolyTime
 /-- The graphs with an independent set of `m` of their vertices
 [Arora and Barak, Section 2.4][AroraBarak09]. -/
 def IndependentSet : Set (Graph × ℕ) :=
-  {x | ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ x.1.1) ∧ x.1.toSimpleGraph.IsNIndepSet x.2 S}
+  {x | ∃ S : Finset {v // v ∈ x.1.1}, x.1.induced.IsNIndepSet x.2 S}
+
+/-- Membership in `IndependentSet` as a finite set of `m` declared vertices that is independent in
+`G.toSimpleGraph`. -/
+theorem mem_IndependentSet_iff {G : Graph} {m : ℕ} :
+    (G, m) ∈ IndependentSet ↔
+      ∃ S : Finset ℕ, (∀ v ∈ S, v ∈ G.1) ∧ G.toSimpleGraph.IsNIndepSet m S := by
+  simpa only [IndependentSet, Set.mem_ofPred_eq, SimpleGraph.isNIndepSet_iff,
+    SimpleGraph.IsIndepSet, Graph.induced_adj] using
+    Graph.exists_subtype_pairwise_iff (P := fun u v => ¬G.toSimpleGraph.Adj u v)
 
 namespace SAT
 
@@ -259,6 +270,7 @@ theorem exists_card_add_countUnsat_le {φ : CNF ℕ} {S : Finset ℕ}
 /-- **Correctness of Karp's reduction.** A formula is satisfiable exactly when its graph has an
 independent set with as many vertices as the formula has clauses. -/
 theorem toIndependentSet_mem_iff (φ : CNF ℕ) : toIndependentSet φ ∈ IndependentSet ↔ φ ∈ SAT := by
+  rw [mem_IndependentSet_iff]
   constructor
   · rintro ⟨S, hSV, hS⟩
     obtain ⟨σ, hσ⟩ := exists_card_add_countUnsat_le hSV hS.isIndepSet
@@ -351,7 +363,7 @@ theorem isVerifier :
     (fun G u v _ => by rw [Bool.not_eq_true', Graph.adjBool_eq_false_iff])
   intro x
   simpa only [IndependentSet, Set.mem_ofPred_eq, SimpleGraph.isNIndepSet_iff,
-    SimpleGraph.IsIndepSet, verifier] using h x
+    SimpleGraph.IsIndepSet, Graph.induced_adj, verifier] using h x
 
 /-- The `IndependentSet` verifier is polynomial-time. -/
 @[fun_prop]
@@ -386,41 +398,35 @@ namespace Graph
 
 /-- The **independence number** of a graph: the largest number of declared vertices that are
 pairwise non-adjacent. -/
-noncomputable def indepNum (G : Graph) : ℕ := sSup {k | (G, k) ∈ IndependentSet}
+noncomputable def indepNum (G : Graph) : ℕ := G.induced.indepNum
 
 variable {G : Graph} {k k' : ℕ}
 
 /-- Fewer vertices of an independent set are independent. -/
 theorem mem_IndependentSet_of_le (h : (G, k) ∈ IndependentSet) (hk : k' ≤ k) :
     (G, k') ∈ IndependentSet := by
-  obtain ⟨S, hSV, hS⟩ := h
-  have hc : S.card = k := hS.card_eq
-  obtain ⟨T, hTS, hT⟩ := Finset.exists_subset_card_eq (hc ▸ hk)
-  exact ⟨T, fun v hv => hSV v (hTS hv), ⟨hS.isIndepSet.mono (Finset.coe_subset.2 hTS), hT⟩⟩
-
-/-- An independent set has at most as many vertices as the distinct declared vertices. -/
-theorem le_card_of_mem_IndependentSet (h : (G, k) ∈ IndependentSet) :
-    k ≤ G.1.toFinset.card := by
-  obtain ⟨S, hSV, hS⟩ := h
-  have hc : S.card = k := hS.card_eq
-  rw [← hc]
-  exact Finset.card_le_card fun v hv => List.mem_toFinset.2 (hSV v hv)
-
-/-- **The independence number is the largest target of `IndependentSet`.** -/
-theorem le_indepNum_iff : k ≤ G.indepNum ↔ (G, k) ∈ IndependentSet := by
-  have hbdd : BddAbove {k | (G, k) ∈ IndependentSet} :=
-    ⟨_, fun _ => le_card_of_mem_IndependentSet⟩
-  have h0 : (G, 0) ∈ IndependentSet := ⟨∅, by simp, ⟨by simp, rfl⟩⟩
-  exact ⟨fun hk => mem_IndependentSet_of_le (Nat.sSup_mem ⟨0, h0⟩ hbdd) hk,
-    fun hk => le_csSup hbdd hk⟩
+  obtain ⟨S, hS, hcard : S.card = k⟩ := h
+  obtain ⟨T, hTS, hT⟩ := Finset.exists_subset_card_eq (hcard ▸ hk)
+  exact ⟨T, hS.mono (Finset.coe_subset.2 hTS), hT⟩
 
 /-- The independence number is the size of an independent set. -/
 theorem indepNum_mem_IndependentSet (G : Graph) : (G, G.indepNum) ∈ IndependentSet :=
-  le_indepNum_iff.1 le_rfl
+  G.induced.exists_isNIndepSet_indepNum
+
+/-- **The independence number is the largest target of `IndependentSet`.** -/
+theorem le_indepNum_iff : k ≤ G.indepNum ↔ (G, k) ∈ IndependentSet :=
+  ⟨mem_IndependentSet_of_le G.indepNum_mem_IndependentSet,
+    fun ⟨_, hS, (hcard : _ = k)⟩ => hcard ▸ hS.card_le_indepNum⟩
 
 /-- The independence number is at most the number of distinct declared vertices. -/
-theorem indepNum_le_card (G : Graph) : G.indepNum ≤ G.1.toFinset.card :=
-  le_card_of_mem_IndependentSet (indepNum_mem_IndependentSet G)
+theorem indepNum_le_card (G : Graph) : G.indepNum ≤ G.1.toFinset.card := by
+  rw [indepNum, ← G.induced.cliqueNum_compl, ← G.natCard_vertexSubtype]
+  exact G.inducedᶜ.cliqueNum_le_natCard
+
+/-- An independent set has at most as many vertices as the distinct declared vertices. -/
+theorem le_card_of_mem_IndependentSet (h : (G, k) ∈ IndependentSet) :
+    k ≤ G.1.toFinset.card :=
+  (le_indepNum_iff.2 h).trans G.indepNum_le_card
 
 end Graph
 
