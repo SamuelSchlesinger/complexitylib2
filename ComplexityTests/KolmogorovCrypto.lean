@@ -9,14 +9,60 @@ import Complexity.Crypto.Computational.PRGToOneWay
 import Complexity.Foundations.Data.BitString.ShortWords
 
 /-!
-Regression clients for the growth and uncomputability of plain Kolmogorov complexity, the binary
-words of bounded length, and one-way functions from pseudorandom generators.
+Regression clients for concrete Kolmogorov complexity examples, the growth and uncomputability of
+plain Kolmogorov complexity, the binary words of bounded length, and one-way functions from
+pseudorandom generators.
 -/
 
 namespace ComplexityTests.KolmogorovCrypto
 
 open Cslib Cslib.Kolmogorov Cslib.Kolmogorov.DescriptionMethod Cslib.Crypto Filter Finset
 open scoped NNReal
+
+/-! ### Concrete Kolmogorov complexity examples -/
+
+-- Exact values for the literal description method on a three-bit word.
+example : literal.Produces [true, false, true] [true, false, true] := literal_produces.2 rfl
+
+example : ¬ literal.Produces [true, false] [true, false, true] := by simp [literal_produces]
+
+example : literal.ecomplexity [true, false, true] = 3 := by simp
+
+example : literal.complexity [true, false, true] = 3 := by simp [DescriptionMethod.complexity]
+
+example : literal.etimeBoundedComplexity 3 [true, false, true] = 3 := by
+  rw [etimeBoundedComplexity_literal (by decide)]
+  rfl
+
+example : literal.etimeBoundedComplexity 2 [true, false, true] = ⊤ :=
+  etimeBoundedComplexity_literal_eq_top (by decide)
+
+-- Mapping a description method by an involution preserves exact complexity.
+example : (literal.map List.reverse).ecomplexity [true, false, false] = 3 := by
+  have h : [true, false, false] = ([false, false, true] : List Bool).reverse := rfl
+  rw [h, ecomplexity_map_eq_of_injective List.reverse_injective]
+  simp
+
+-- Mapping by `List.length` witnesses that `3` has description length at most `3`.
+example : (literal.map List.length).ecomplexity 3 ≤ 3 := by
+  have h : (3 : ℕ) = ([true, false, true] : List Bool).length := rfl
+  rw [h]
+  exact (ecomplexity_map_le List.length literal [true, false, true]).trans_eq (by simp)
+
+-- Concrete finiteness, optimality, and time-bounded attainment for `universal`.
+example : universal.ecomplexity 0 ≠ ⊤ := ecomplexity_universal_ne_top 0
+
+example : universal.ecomplexity 42 ≠ ⊤ := ecomplexity_universal_ne_top 42
+
+example : (universal.complexity 42 : ℕ∞) = universal.ecomplexity 42 :=
+  natCast_complexity_universal 42
+
+example : ∃ p : List Bool,
+    universal.Produces p 42 ∧ (p.length : ℕ∞) = universal.ecomplexity 42 :=
+  universal.exists_length_eq_ecomplexity (ecomplexity_universal_ne_top 42)
+
+example : ∃ t, universal.etimeBoundedComplexity t 42 = universal.ecomplexity 42 :=
+  universal.exists_etimeBoundedComplexity_eq_ecomplexity 42
 
 /-! ### Growth and uncomputability of plain Kolmogorov complexity -/
 
