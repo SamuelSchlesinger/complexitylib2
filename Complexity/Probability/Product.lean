@@ -27,7 +27,8 @@ Replacing one coordinate of a uniform tuple by a fresh uniform sample preserves 
 
 ## Main results
 
-* `Cslib.Probability.PMF.toMeasure_pi`, `.iIndepFun_pi`: product-measure and independence laws.
+* `Cslib.Probability.PMF.toMeasure_pi`, `.toMeasure_bind_pair`, `.iIndepFun_pi`: product-measure
+  and independence laws.
 * `Cslib.Probability.PMF.pi_bind_update_pair`: reveal a coordinate and retain the entire tuple.
 * `Cslib.Probability.PMF.pi_map`, `.pi_bind`: coordinatewise mapping and sampling laws.
 * `Cslib.Probability.PMF.conditionalSnd_pi_joint`: coordinatewise conditioning.
@@ -43,6 +44,21 @@ Adapted from Probability/Product.lean on the cslib `crypto` branch at
 namespace Cslib.Probability.PMF
 
 open MeasureTheory ProbabilityTheory
+
+/-- Independent PMF samples induce the product of their measures. -/
+theorem toMeasure_bind_pair {α β : Type*}
+    [MeasurableSpace α] [MeasurableSpace β]
+    [MeasurableSingletonClass α] [MeasurableSingletonClass β]
+    [Countable α] [Countable β] (p : PMF α) (q : PMF β) :
+    (p.bind (fun a => q.map (fun b => (a, b)))).toMeasure =
+      p.toMeasure.prod q.toMeasure := by
+  apply Measure.ext_of_singleton
+  rintro ⟨a, b⟩
+  rw [PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _),
+    ← Set.singleton_prod_singleton, Measure.prod_prod,
+    PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _),
+    PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _),
+    bind_map_prodMk_apply]
 
 variable {ι : Type*} [Fintype ι] {α β : ι → Type*} [∀ i, Finite (α i)]
 
@@ -186,10 +202,7 @@ theorem pi_fin_succ {γ : Type*} [Finite γ] (count : ℕ) (p : PMF γ) :
   calc
     _ = (p.bind (fun first => (pi (fun _ : Fin count => p)).map (first, ·))).map e := by
       ext outcome
-      rw [map_equiv_apply]
-      dsimp only [e, Fin.consEquiv]
-      simp only [Equiv.coe_fn_symm_mk, PMF.map, Function.comp_def]
-      rw [bind_pair_apply]
+      rw [map_equiv_apply, bind_map_prodMk_apply]
       exact Fin.prod_univ_succ (fun i => p (outcome i))
     _ = _ := by
       simp [PMF.map_bind, PMF.map_comp, Function.comp_def, e, Fin.consEquiv]

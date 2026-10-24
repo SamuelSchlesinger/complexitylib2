@@ -64,7 +64,7 @@ example : #Sunflower.twoTriangles = 6 ∧ ¬ ContainsSunflower 3 Sunflower.twoTr
 -- In three dimensions: `|A| ^ 2` is at most the product of the sizes of the three projections.
 example (A : Finset (Fin 3 → Bool)) :
     #A ^ 2 ≤ ∏ i, #(A.image (univ.erase i).restrict) := by
-  have h := Probability.PMF.card_pow_le_prod_card_image_restrict_erase (α := fun _ => Bool)
+  have h := Cslib.Finset.card_pow_le_prod_card_image_restrict_erase (α := fun _ => Bool)
     (by simp) A
   rwa [Fintype.card_fin] at h
 

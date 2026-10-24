@@ -106,16 +106,15 @@ theorem mem_support_conditionalSnd_iff (joint : PMF (α × β)) (a : α)
 theorem bind_conditionalSnd (joint : PMF (α × β)) :
     (joint.map Prod.fst).bind (fun a => (conditionalSnd joint a).map (a, ·)) = joint := by
   ext ⟨a, b⟩
-  exact (bind_pair_apply _ _ a b).trans (marginal_mul_conditionalSnd joint a b)
+  rw [bind_map_prodMk_apply, marginal_mul_conditionalSnd]
 
 /-- Conditioning a joint sampler on a possible first component recovers its conditional kernel. -/
 theorem conditionalSnd_bind_pair (p : PMF α) (kernel : α → PMF β)
     (a : α) (ha : a ∈ p.support) :
     conditionalSnd (p.bind (fun a => (kernel a).map (a, ·))) a = kernel a := by
   ext b
-  rw [conditionalSnd_apply _ a (by simpa using ha), map_fst_bind_pair]
-  simp only [PMF.map, Function.comp_def, bind_pair_apply]
-  rw [mul_comm, mul_div_assoc, ENNReal.div_self ha (PMF.apply_ne_top _ _), mul_one]
+  rw [conditionalSnd_apply _ a (by simpa using ha), map_fst_bind_pair, bind_map_prodMk_apply,
+    mul_comm, mul_div_assoc, ENNReal.div_self ha (PMF.apply_ne_top _ _), mul_one]
 
 /-- A score can be averaged by first revealing a deterministic observation and then resampling
 the input conditionally. The score may depend on both the observation and the hidden input. -/

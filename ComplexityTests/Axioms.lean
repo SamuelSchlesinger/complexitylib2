@@ -10233,8 +10233,8 @@ info: 'Cslib.exists_card_eq_pow_not_containsSunflower' depends on axioms:
 #print axioms Cslib.exists_card_eq_pow_not_containsSunflower
 
 /--
-info: 'Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase' depends on axioms:
+info: 'Cslib.Finset.card_pow_le_prod_card_image_restrict_erase' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase
+#print axioms Cslib.Finset.card_pow_le_prod_card_image_restrict_erase

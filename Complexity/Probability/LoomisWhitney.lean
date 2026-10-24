@@ -22,8 +22,8 @@ Han's inequality is Shearer's lemma for entropy for it.
 
 ## Main results
 
-* `Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict_erase`: the discrete
-  Loomis–Whitney inequality.
+* `Cslib.Finset.card_pow_le_prod_card_image_restrict_erase`: the discrete Loomis–Whitney
+  inequality.
 
 ## References
 
@@ -35,9 +35,9 @@ Han's inequality is Shearer's lemma for entropy for it.
 
 @[expose] public section
 
-namespace Cslib.Probability.PMF
-
 open Finset
+
+namespace Cslib.Finset
 
 variable {ι : Type*} {α : ι → Type*} [∀ i, Finite (α i)]
 
@@ -50,4 +50,4 @@ theorem card_pow_le_prod_card_image_restrict_erase [Fintype ι] [DecidableEq ι]
   rw [show (univ.filter fun i => j ∈ univ.erase i) = univ.erase j by ext; simp [eq_comm],
     card_erase_of_mem (mem_univ _), card_univ]
 
-end Cslib.Probability.PMF
+end Cslib.Finset

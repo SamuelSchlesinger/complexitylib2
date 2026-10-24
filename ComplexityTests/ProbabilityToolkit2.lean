@@ -118,7 +118,7 @@ example : ∏ j : Fin 3, #((univ : Finset (Fin 3 → Bool)).image (univ.erase j)
 
 example : #(univ : Finset (Fin 3 → Bool)) ^ 2 ≤
     ∏ j, #((univ : Finset (Fin 3 → Bool)).image (univ.erase j).restrict) :=
-  PMF.card_pow_le_prod_card_image_restrict (α := fun _ => Bool) (k := 2) univ
+  Cslib.Finset.card_pow_le_prod_card_image_restrict (α := fun _ => Bool) (k := 2) univ
     (fun j => univ.erase j) (by norm_num) two_le_card_erase
 
 example : #(univ : Finset (Fin 3 → Bool)) ^ 2 = 64 := by simp
@@ -210,11 +210,11 @@ info: 'Cslib.Probability.PMF.entropy_le_sum_entropy_map_eval' depends on axioms:
 #print axioms Cslib.Probability.PMF.entropy_le_sum_entropy_map_eval
 
 /--
-info: 'Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict' depends on axioms:
+info: 'Cslib.Finset.card_pow_le_prod_card_image_restrict' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict
+#print axioms Cslib.Finset.card_pow_le_prod_card_image_restrict
 
 /--
 info: 'Cslib.Probability.PMF.klDiv_toMeasure_ne_top_iff' depends on axioms:

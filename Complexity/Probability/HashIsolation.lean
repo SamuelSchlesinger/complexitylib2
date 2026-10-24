@@ -11,6 +11,7 @@ public import Complexity.Probability.Entropy
 public import Complexity.Probability.UniversalHash
 import Mathlib.Analysis.SpecificLimits.Basic
 import Complexity.Probability.PMF.Expect
+import Complexity.Probability.PMF.Map
 
 /-!
 # Hashing isolates preimages
@@ -133,7 +134,7 @@ theorem IsTwoUniversal.conditionalEntropy_hash_le {seed : PMF Seed}
       exact ⟨(s, y), fun heq => hy (congrArg Prod.snd heq), by simp [observe, hf, hh]⟩
   have hmass (s : Seed) (x : Input) : (pair (s, x)).toReal =
       (seed s).toReal * (source x).toReal := by
-    simp only [pair, PMF.map, Function.comp_def, bind_pair_apply, ENNReal.toReal_mul]
+    simp only [pair, bind_map_prodMk_apply, ENNReal.toReal_mul]
   have h := conditionalEntropy_map_le_collision pair observe (fun p => predicate p.1 p.2)
   simp only [Fintype.sum_prod_type, hmass, hcollision, Fintype.card_bool,
     Nat.cast_ofNat, Real.logb_self_eq_one (by norm_num : (1 : ℝ) < 2)] at h

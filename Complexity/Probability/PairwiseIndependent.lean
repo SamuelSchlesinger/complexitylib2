@@ -9,6 +9,7 @@ module
 
 public import Complexity.Probability.PMF
 public import Mathlib.Probability.Moments.Variance
+import Complexity.Probability.Product
 
 /-!
 # Majority from pairwise independence
@@ -39,21 +40,6 @@ namespace Cslib.Probability
 open MeasureTheory ProbabilityTheory
 
 namespace PMF
-
-/-- Independent PMF samples induce the product of their measures. -/
-theorem toMeasure_bind_pair {α β : Type*}
-    [MeasurableSpace α] [MeasurableSpace β]
-    [MeasurableSingletonClass α] [MeasurableSingletonClass β]
-    [Countable α] [Countable β] (p : PMF α) (q : PMF β) :
-    (p.bind (fun a => q.map (fun b => (a, b)))).toMeasure =
-      p.toMeasure.prod q.toMeasure := by
-  apply Measure.ext_of_singleton
-  rintro ⟨a, b⟩
-  rw [PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _),
-    ← Set.singleton_prod_singleton, Measure.prod_prod]
-  rw [PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _),
-    PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _)]
-  exact bind_pair_apply p (fun _ => q) a b
 
 /-- A factorization of the joint PMF establishes Mathlib's measure-theoretic independence. -/
 theorem indepFun_of_map_pair {Ω α β : Type*}

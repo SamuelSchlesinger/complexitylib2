@@ -37,7 +37,7 @@ is the original statement of Chung, Graham, Frankl and Shearer about families of
 * `Cslib.Probability.PMF.sub_one_mul_entropy_le_sum_entropy_map_restrict_erase`: Han's
   inequality.
 * `Cslib.Probability.PMF.entropy_le_sum_entropy_map_eval`: subadditivity of entropy.
-* `Cslib.Probability.PMF.card_pow_le_prod_card_image_restrict`: Shearer's lemma for counting.
+* `Cslib.Finset.card_pow_le_prod_card_image_restrict`: Shearer's lemma for counting.
 
 ## References
 
@@ -50,9 +50,9 @@ is the original statement of Chung, Graham, Frankl and Shearer about families of
 
 @[expose] public section
 
-namespace Cslib.Probability.PMF
-
 open Finset
+
+namespace Cslib.Probability.PMF
 
 variable {ι : Type*} {α : ι → Type*} [∀ i, Finite (α i)]
 
@@ -197,6 +197,14 @@ theorem entropy_le_sum_entropy_map_eval [Fintype ι] (P : PMF (∀ i, α i)) :
     rw [hmap, entropy_map_of_injective _ hinj]
   simpa only [Nat.cast_one, one_mul, heval] using h
 
+end Cslib.Probability.PMF
+
+namespace Cslib.Finset
+
+open Cslib.Probability.PMF
+
+variable {ι : Type*} {α : ι → Type*} [∀ i, Finite (α i)]
+
 /-- **Shearer's lemma for counting**: if every coordinate lies in at least `k ≥ 1` of the sets
 `S j`, the `k`-th power of the size of a finite set of tuples is at most the product of the sizes
 of its restrictions to the sets `S j`. For Boolean coordinates this bounds a family of sets by
@@ -225,4 +233,4 @@ theorem card_pow_le_prod_card_image_restrict [Finite ι] [DecidableEq ι]
   have := (Real.logb_le_logb (b := 2) (by norm_num) hpos hprod).mp h
   exact_mod_cast this
 
-end Cslib.Probability.PMF
+end Cslib.Finset

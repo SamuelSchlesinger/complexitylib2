@@ -19,6 +19,7 @@ import Complexity.Probability.PMF.Bind
 * `Cslib.Probability.PMF.map_congr_on_support`: only supported inputs need equal outputs.
 * `Cslib.Probability.PMF.map_apply_toReal`: finite fiber sums.
 * `Cslib.Probability.PMF.uniformOfFintype_map_apply`: uniform image masses from fiber sizes.
+* `Cslib.Probability.PMF.bind_map_prodMk_apply`: point masses of a pairing bind.
 * `Cslib.Probability.PMF.map_injective`: injective encodings preserve equality of distributions.
 
 ## References
@@ -69,6 +70,13 @@ theorem uniformOfFintype_map_apply [Fintype α] [Nonempty α] (f : α → β) (b
   simp only [PMF.map_apply, uniformOfFintype_apply, tsum_fintype,
     ← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, div_eq_mul_inv,
     Nat.card_eq_fintype_card, Fintype.card_subtype, eq_comm]
+
+/-- Evaluating the pairing bind `p.bind fun a => (f a).map (a, ·)` at `pair` gives
+`p pair.1 * f pair.1 pair.2`. -/
+theorem bind_map_prodMk_apply (p : PMF α) (f : α → PMF β) (pair : α × β) :
+    (p.bind (fun a => (f a).map (a, ·))) pair = p pair.1 * f pair.1 pair.2 := by
+  simp only [PMF.map, Function.comp_def]
+  exact bind_pair_apply p f pair.1 pair.2
 
 /-- Marginalizing over a freshly sampled second component recovers the first distribution. -/
 @[simp] theorem map_fst_bind_pair (p : PMF α) (f : α → PMF β) :
