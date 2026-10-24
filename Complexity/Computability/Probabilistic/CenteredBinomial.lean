@@ -24,7 +24,7 @@ charges both blocks of independent trials, their counts, and signed subtraction.
 ## Main results
 
 * `isPPTOn_sampleCenteredBinomial`: the unary-input, binary-output sampler certificate.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleCenteredBinomial`: composition with an
+* `Turing.MultiTapeTM.ComputableInPolyTime.sampleCenteredBinomial`: composition with an
   efficiently computed unary parameter.
 
 ## References
@@ -46,16 +46,16 @@ theorem isPPTOn_sampleCenteredBinomial :
   have hcount : IsPPTOn encUnary encUnary
       (fun η => OracleComp.countTrue η (ProbComp.uniform Bool)) :=
     (isPPTOn_uniform_bool encUnary).countTrue .id'
-  have hcast : ComputableTidilyInPolyTime (fun n : ℕ => (n : ℤ)) encUnary encIntBin :=
-    ComputableTidilyInPolyTime.intBin_natCast.comp
-      ComputableTidilyInPolyTime.unary_to_binary
-  have hsub : ComputableTidilyInPolyTime (fun p : (ℕ × ℕ) × ℕ => (p.1.2 : ℤ) - p.2)
+  have hcast : ComputableInPolyTime (fun n : ℕ => (n : ℤ)) encUnary encIntBin :=
+    ComputableInPolyTime.intBin_natCast.comp
+      ComputableInPolyTime.unary_to_binary
+  have hsub : ComputableInPolyTime (fun p : (ℕ × ℕ) × ℕ => (p.1.2 : ℤ) - p.2)
       (encPair (encPair encUnary encUnary) encUnary) encIntBin :=
-    ComputableTidilyInPolyTime.intBin_sub.comp
-      ((hcast.comp ((ComputableTidilyInPolyTime.fst _ _).snd')).prod
-        (hcast.comp (ComputableTidilyInPolyTime.snd _ _)))
+    ComputableInPolyTime.intBin_sub.comp
+      ((hcast.comp ((ComputableInPolyTime.fst _ _).snd')).prod
+        (hcast.comp (ComputableInPolyTime.snd _ _)))
   have hsecond := (hcount.preprocess
-    (ComputableTidilyInPolyTime.fst encUnary encUnary)).map_with
+    (ComputableInPolyTime.fst encUnary encUnary)).map_with
       (f := fun (p : ℕ × ℕ) (negative : ℕ) => (p.2 : ℤ) - negative) hsub
   unfold sampleCenteredBinomial
   apply hcount.bind_with
@@ -65,9 +65,9 @@ end Cslib.Probability
 
 /-- Sample a centered-binomial integer using an efficiently computed unary parameter. -/
 @[fun_prop]
-theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleCenteredBinomial {α : Type}
+theorem Turing.MultiTapeTM.ComputableInPolyTime.sampleCenteredBinomial {α : Type}
     {input : α ↪ List Bool} {parameter : α → ℕ}
-    (hparameter : ComputableTidilyInPolyTime parameter input encUnary) :
+    (hparameter : ComputableInPolyTime parameter input encUnary) :
     Cslib.Probability.IsPPTOn input encIntBin
       (fun a => Cslib.Probability.sampleCenteredBinomial (parameter a)) :=
   Cslib.Probability.isPPTOn_sampleCenteredBinomial.preprocess hparameter
