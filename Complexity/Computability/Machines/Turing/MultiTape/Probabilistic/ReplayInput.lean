@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.PreparePair
@@ -255,6 +256,7 @@ theorem computableInLinearTimeAndSpace_runClosedCoins [Finite State]
     ComputableTidilyInPolyTime
       (fun p : List Bool × List Bool => machine.runClosedCoins p.1 p.2)
       (encPair encBits encBits) encBits :=
-  .of_linear (computableInLinearTimeAndSpace_runClosedCoins machine)
+  (ComputableInPolyTime.of_linear
+    (computableInLinearTimeAndSpace_runClosedCoins machine)).tidy
 
 end Turing.MultiTapePTM

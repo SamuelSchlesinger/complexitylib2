@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.TransformsTapes
@@ -51,10 +52,10 @@ def budget (coefficient degree : ℕ) (input : List Bool) : List Bool :=
 /-- Generate the budget using the existing functional polynomial-time calculus. -/
 @[fun_prop] theorem computableTidilyInPolyTime_budget (coefficient degree : ℕ) :
     ComputableTidilyInPolyTime (budget coefficient degree) encBits encBits := by
-  have h : ComputableTidilyInPolyTime
+  have h : ComputableInPolyTime
       (fun input : List Bool => coefficient * (input.length + 1) ^ degree)
       encBits encUnary := by fun_prop
-  exact h.of_enc_eq (fun _ => rfl)
+  exact (h.of_enc_eq (fun _ => rfl)).tidy
 
 /-- Prepare and rewind a budget from blank tapes, restoring every scratch tape and emitting
 nothing. The finite machine and its polynomial bound are uniform over all input words. -/
