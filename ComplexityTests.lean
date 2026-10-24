@@ -323,6 +323,7 @@ import ComplexityTests.PlainProjection
 import ComplexityTests.PlainProviderCutover
 import ComplexityTests.PlainResourceBridge
 import ComplexityTests.PlainSpaceProviderCutover
+import ComplexityTests.PlainTranslatorCutover
 import ComplexityTests.PlainUnarySearchMembershipCutover
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts
