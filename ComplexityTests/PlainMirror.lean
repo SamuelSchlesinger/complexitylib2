@@ -103,3 +103,9 @@ example {α β : Type} (left : α ↪ List Bool) (right : β ↪ List Bool) :
     ComputableInO (Sum.getLeft? : α ⊕ β → Option α) (encSum left right) (encOption left)
       (fun s => ((encSum left right) s).length)
       (fun s => ((encSum left right) s).length) := by fun_prop
+
+set_option maxHeartbeats 2000 in
+-- Preserving source registration order reduces this former 20,000-heartbeat timeout to 32.
+/-- Primitive registration sanity; independent synthesis is checked by the inventory holdouts. -/
+example : ComputableInPolyTime (fun p : List Bool × ℕ => p.1.take p.2)
+    (encPair encBits encUnary) encBits := by fun_prop

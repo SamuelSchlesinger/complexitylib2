@@ -95,7 +95,22 @@ private def globalEntries {α σ : Type} (ext : SimpleScopedEnvExtension α σ) 
     | .global value => some value
     | .scoped _ _ => none
   return (state.importedEntries.foldl (fun es entries => es ++ collect entries) #[]) ++
-    collect state.state.newEntries.toArray
+    collect state.state.newEntries.toArray.reverse
+
+private def registrationOrder (names : Array Name) : CoreM (Array Name) := do
+  let functions ← globalEntries Mathlib.Meta.FunProp.functionTheoremsExt
+  let lambdas ← globalEntries Mathlib.Meta.FunProp.lambdaTheoremsExt
+  let morphisms ← globalEntries Mathlib.Meta.FunProp.morTheoremsExt
+  let transitions ← globalEntries Mathlib.Meta.FunProp.transitionTheoremsExt
+  let sequence := functions.map (·.thmOrigin.name) ++ lambdas.map (·.thmName) ++
+    morphisms.map (·.thmName) ++ transitions.map (·.thmName)
+  let mut ranks : Std.HashMap Name Nat := {}
+  for index in [:sequence.size] do
+    if !ranks.contains sequence[index]! then ranks := ranks.insert sequence[index]! index
+  return names.qsort fun a b =>
+    let ra := ranks.getD a sequence.size
+    let rb := ranks.getD b sequence.size
+    if ra == rb then Name.lt a b else ra < rb
 
 private def registerSupportedProperties : MetaM Unit := do
   let entries ← globalEntries Mathlib.Meta.FunProp.funPropDeclsExt
@@ -227,7 +242,7 @@ private def mirrorModules (modules : Array Name) : MetaM Unit := do
   if candidates.isEmpty then
     throwError "plain mirror source selection contains no supported statements"
   let mut count : Nat := 0
-  for source in candidates.toArray.qsort Name.lt do
+  for source in ← registrationOrder candidates.toArray do
     let saved ← saveState
     try
       mirrorDeclaration source (mirrorName source)
@@ -277,5 +292,7 @@ syntax (name := plainMirrorRegistrations) "plain_mirror_registrations" : command
 
 elab_rules : command
   | `(plain_mirror_registrations) => Command.liftTermElabM do
-    for (source, target, _) in ← Cslib.Tactic.PlainMirror.mirrorPairs do
-      Cslib.Tactic.PlainMirror.registerRules source target .global
+    let pairs ← Cslib.Tactic.PlainMirror.mirrorPairs
+    for source in ← Cslib.Tactic.PlainMirror.registrationOrder (pairs.map (·.1)) do
+      if let some target ← Cslib.Tactic.PlainMirror.getMirror? source then
+        Cslib.Tactic.PlainMirror.registerRules source target .global
