@@ -69,6 +69,9 @@ many states, and one polynomially bounded time bound, for all instances. Like
   halt runs within one step.
 * `Turing.MultiTapeNTM.DecidesInSpace.recognizesInSpace`: a decider is a recognizer.
 * `Turing.MultiTapeNTM.DecidesInSpace.exists_runsInTime`: every branch of a decider halts.
+* `Turing.MultiTapeNTM.RunsInTime.runsInSpace`: space is at most time.
+* `Turing.MultiTapeNTM.DecidesInTime.decidesInSpace`: a time-bounded decider is a space-bounded
+  one.
 * `Turing.MultiTapeTM.ComputesFunInTimeAndSpace.decidesInSpace`,
   `Turing.MultiTapeTM.ComputableInTimeAndSpace.exists_decidesInSpace`: a deterministic decider
   within space `s` is a nondeterministic one with one computation path.
@@ -246,6 +249,42 @@ theorem DecidesInSpace.mono {ntm : MultiTapeNTM k Bool State} {enc : α ↪ List
     {s s' : α → ℕ} (h : ntm.DecidesInSpace enc A s) (hs : ∀ a, s a ≤ s' a) :
     ntm.DecidesInSpace enc A s' :=
   ⟨h.recognizesInSpace.mono hs, h.exists_runsInTime⟩
+
+/-- **Space is at most time.** Under a time bound `t`, every computation path visits at most
+`k * (t + 1)` work-tape cells: within `t` steps each head visits at most `t + 1` cells, and from
+step `t` on the path stays at a halted configuration. -/
+theorem RunsInTime.runsInSpace {t : ℕ} (h : ntm.RunsInTime input t) :
+    ntm.RunsInSpace input (k * (t + 1)) := by
+  intro p
+  rcases le_or_gt p.time t with hle | hlt
+  · exact (RunPath.space_le_mul_time_add_one p.toRunPath).trans
+      (Nat.mul_le_mul_left k (Nat.add_le_add_right hle 1))
+  -- the first `t` steps have halted, and the path stays there
+  have ht : t < p.length + 1 := by unfold ComputationPath.time RunPath.time at hlt; omega
+  let q : ntm.ComputationPath input :=
+    ⟨p.toRunPath.take ⟨t, ht⟩, by rw [RelSeries.head_take]; exact p.head_eq⟩
+  have hq : q.time = t := rfl
+  have hhalt : (p.toRunPath ⟨t, ht⟩).Halted := by
+    have hlast : q.last = p.toRunPath ⟨t, ht⟩ := RelSeries.last_take _ _
+    exact hlast ▸ h q hq.ge
+  have hsub : ∀ c ∈ p.toRunPath, c ∈ q.toRunPath := by
+    rintro _ ⟨j, rfl⟩
+    rcases le_or_gt j.val t with hj | hj
+    · exact ⟨⟨j, Nat.lt_succ_of_le hj⟩, rfl⟩
+    · refine ⟨Fin.last _, ?_⟩
+      have hj' := RunPath.last_eq_of_halted (p.toRunPath.take j) ⟨t, Nat.lt_succ_of_lt hj⟩ hhalt
+      rw [RelSeries.last_take] at hj'
+      change p.toRunPath ⟨t, ht⟩ = p.toRunPath j
+      exact hj'.symm
+  exact (RunPath.space_le_of_subset hsub).trans
+    ((RunPath.space_le_mul_time_add_one q.toRunPath).trans_eq (by rw [← hq]; rfl))
+
+/-- A decider within time `t` decides within the space it visits in that time, `k * (t a + 1)`, and
+every branch halts within `t a` steps. -/
+theorem DecidesInTime.decidesInSpace {ntm : MultiTapeNTM k Bool State}
+    {enc : α ↪ List Bool} {A : Set α} {t : α → ℕ} (h : ntm.DecidesInTime enc A t) :
+    ntm.DecidesInSpace enc A fun a => k * (t a + 1) :=
+  ⟨fun a => ⟨(h a).1.runsInSpace, (h a).2⟩, fun a => ⟨t a, (h a).1⟩⟩
 
 /-- **A deterministic decider is a nondeterministic decider** with one computation path: a machine
 computing a Boolean function `f` within time `t` and space `s` decides, as a nondeterministic
