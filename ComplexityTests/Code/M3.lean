@@ -149,20 +149,20 @@ example : #{x : Fin 4 → Bool | hammingNorm x ≤ 1} = 5 := by
   simp only [← BitString.weight_eq_hammingNorm, BitString.card_filter_weight_le]
   decide
 
-/-- **Justesen codes are asymptotically good, non-vacuously.** For every `s ≥ 1`, the Galois field
-with `2 ^ (16 * s)` elements is written as `16 * s` bits, and its Justesen code of outer dimension
-`2 ^ (16 * s - 1)` has rate at least `1 / 4` and relative distance at least `1 / 128`. -/
-example {s : ℕ} (hs : 1 ≤ s) :
-    ∃ (_ : Fintype (GaloisField 2 (16 * s))) (_ : DecidableEq (GaloisField 2 (16 * s)))
-      (φ : GaloisField 2 (16 * s) ≃+ BitString (16 * s)),
-      ((32 * s * (2 ^ (16 * s) - 1) : ℕ) : ℕ∞) ≤
-        128 * minDist (justesenCode φ (2 ^ (16 * s - 1))) := by
+/-- **Justesen codes are asymptotically good, non-vacuously.** For every `s`, the Galois field
+with `2 ^ (16 * (s + 1))` elements is written as `16 * (s + 1)` bits, and the resulting family of
+Justesen codes of outer dimension `2 ^ (16 * (s + 1) - 1)` is asymptotically good. -/
+example :
+    ∃ (_ : ∀ s, Fintype (GaloisField 2 (16 * (s + 1))))
+      (_ : ∀ s, DecidableEq (GaloisField 2 (16 * (s + 1))))
+      (φ : ∀ s, GaloisField 2 (16 * (s + 1)) ≃+ BitString (16 * (s + 1))),
+      IsAsymptoticallyGood fun s => justesenCode (φ s) (2 ^ (16 * (s + 1) - 1)) := by
   classical
-  let _ : Fintype (GaloisField 2 (16 * s)) := Fintype.ofFinite _
-  have hcard : Fintype.card (GaloisField 2 (16 * s)) = 2 ^ (16 * s) := by
+  let _ (s : ℕ) : Fintype (GaloisField 2 (16 * (s + 1))) := Fintype.ofFinite _
+  have hcard (s : ℕ) : Fintype.card (GaloisField 2 (16 * (s + 1))) = 2 ^ (16 * (s + 1)) := by
     rw [Fintype.card_eq_nat_card, GaloisField.card 2 _ (by omega)]
-  obtain ⟨φ⟩ := nonempty_addEquiv_bitString hcard
-  exact ⟨inferInstance, inferInstance, φ, (justesenCode_asymptoticallyGood hs φ).2.2.2⟩
+  exact ⟨inferInstance, inferInstance, fun s => (nonempty_addEquiv_bitString (hcard s)).some,
+    justesenCode_asymptoticallyGood _⟩
 
 /-! ### Axioms of the headline theorems -/
 
