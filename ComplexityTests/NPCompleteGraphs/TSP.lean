@@ -171,7 +171,7 @@ example : p4 ∉ HamCycle := fun h => not_mem_TSP (by decide) ((HamCycle.toTSP_m
 -- need not be contiguous, and self-loops are ignored.
 private def triangle : Graph := ([10, 20, 10, 30], [(10, 20), (20, 30), (30, 10), (10, 10)])
 
-example : HamCycle.cities triangle = [10, 20, 30] := by decide
+example : triangle.distinctVertices = [10, 20, 30] := by decide
 example : HamCycle.toTSP triangle = ([[2, 1, 1], [1, 2, 1], [1, 1, 2]], 3) := by decide
 example : triangle ∈ HamCycle :=
   (HamCycle.toTSP_mem_iff triangle).1 ⟨[0, 1, 2], by decide, by decide⟩

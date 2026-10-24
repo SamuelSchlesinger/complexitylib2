@@ -188,7 +188,7 @@ theorem adj_toIndependentSet_iff {φ : CNF ℕ} {o o' : Occurrence} (ho : o ∈ 
       rwa [← vertex_injOn hq hp h₁, ← vertex_injOn hq' hp' h₂]
     · intro hc
       exact ⟨p, hp, p', ⟨hp', hc⟩, rfl, rfl⟩
-  simp only [Graph.toSimpleGraph, SimpleGraph.fromRel_adj, ne_eq, hedge ho ho', hedge ho' ho]
+  simp only [Graph.toSimpleGraph_adj, ne_eq, hedge ho ho', hedge ho' ho]
   constructor
   · rintro ⟨-, h | h⟩
     · exact h

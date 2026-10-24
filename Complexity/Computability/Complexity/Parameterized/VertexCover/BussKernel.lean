@@ -261,7 +261,7 @@ private theorem mem_edges {i j : ℕ} : (i, j) ∈ edges x ↔ i < (active x).le
 
 private theorem graph_adj {i j : ℕ} : (graph x).toSimpleGraph.Adj i j ↔ i ≠ j ∧
     ((i, j) ∈ edges x ∨ (j, i) ∈ edges x) := by
-  simp [graph, Graph.toSimpleGraph, SimpleGraph.fromRel_adj]
+  simp [graph, Graph.toSimpleGraph_adj]
 
 /-- **Correctness of the reduction rules**: once the high vertices fit in the target, the reduced
 graph has a cover of the reduced target exactly when the original graph has one of the original
@@ -460,12 +460,6 @@ namespace VertexCover.Buss
 /-! ### Running time -/
 
 open ComputableTidilyInPolyTime
-
-/-- Listing the distinct declared vertices of an instance is polynomial-time. -/
-theorem computableTidilyInPolyTime_distinctVertices :
-    ComputableTidilyInPolyTime (fun x : Graph × ℕ => x.1.distinctVertices)
-      (encPair encGraph encNat) (encList encNat) :=
-  Graph.computableTidilyInPolyTime_distinctVertices.comp (fst _ _)
 
 /-- Testing adjacency between computed vertices of a computed graph is polynomial-time. This is
 `Cslib.Complexity.Graph.computableTidilyInPolyTime_adjBool` in the compositional form that
