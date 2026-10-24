@@ -600,9 +600,10 @@ noncomputable def lamportInverter (f : List Bool → List Bool)
     return []
 
 theorem isPPT_lamportInverter {f : List Bool → List Bool}
-    (hf : ComputableTidilyInPolyTime f encBits encBits) {adversary : Forger}
+    (hf : ComputableInPolyTime f encBits encBits) {adversary : Forger}
     (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
     IsPPT encBits (lamportInverter f (.of_tidy hf) adversary) := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hf
   have hrun_base := (lamportScheme f (.of_tidy hf)).isPPTOn_run_oneTimeSigningOracle hadversary
   have hj : IsPPTOn (encPair encUnary encBits) encUnary
       (fun p : ℕ × List Bool => sampleDyadicIndex (2 * p.1)) :=

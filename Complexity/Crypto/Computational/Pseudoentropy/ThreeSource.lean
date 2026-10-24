@@ -162,25 +162,25 @@ section Lengths
 
 variable {α : Type} {input : α ↪ List Bool}
   {count seedBits bound observationBits labelBits remainingBits : α → ℕ}
-  (hcount : ComputableTidilyInPolyTime count input encUnary)
-  (hseed : ComputableTidilyInPolyTime seedBits input encUnary)
-  (hbound : ComputableTidilyInPolyTime bound input encUnary)
-  (hobservation : ComputableTidilyInPolyTime observationBits input encUnary)
-  (hlabel : ComputableTidilyInPolyTime labelBits input encUnary)
-  (hremaining : ComputableTidilyInPolyTime remainingBits input encUnary)
+  (hcount : ComputableInPolyTime count input encUnary)
+  (hseed : ComputableInPolyTime seedBits input encUnary)
+  (hbound : ComputableInPolyTime bound input encUnary)
+  (hobservation : ComputableInPolyTime observationBits input encUnary)
+  (hlabel : ComputableInPolyTime labelBits input encUnary)
+  (hremaining : ComputableInPolyTime remainingBits input encUnary)
 
 include hcount hseed hbound hobservation hlabel hremaining
 
 /-- The exact seed ledger can be computed in unary from efficient dimensions. -/
 theorem isPolyTime_seedLength :
-    ComputableTidilyInPolyTime (fun a => seedLength (count a) (seedBits a) (bound a)
+    ComputableInPolyTime (fun a => seedLength (count a) (seedBits a) (bound a)
       (observationBits a) (labelBits a) (remainingBits a)) input encUnary := by
   unfold seedLength
   polytime
 
 /-- The exact output ledger can be computed in unary from efficient dimensions. -/
 theorem isPolyTime_outputLength :
-    ComputableTidilyInPolyTime (fun a => outputLength (count a) (seedBits a) (bound a)
+    ComputableInPolyTime (fun a => outputLength (count a) (seedBits a) (bound a)
       (observationBits a) (labelBits a) (remainingBits a)) input encUnary := by
   unfold outputLength
   polytime
@@ -356,7 +356,8 @@ theorem replace_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ} (hpair
   let count := fun n => ExtractionSchedule.count n (saved.length n) (inverseSlack n)
   have hlength := saved.length_isPolyTime.tidy
   have hcount : ComputableTidilyInPolyTime count encUnary encUnary :=
-    (ExtractionSchedule.isPolyTime_count (.of_tidy (by fun_prop)) (.of_tidy hlength) (.of_tidy hslack)).tidy
+    (ExtractionSchedule.isPolyTime_count (.of_tidy (by fun_prop)) (.of_tidy hlength) (.of_tidy
+      hslack)).tidy
   let test (n i : ℕ) (middle : List (List Bool) × List Bool × List Bool) : ProbComp Bool := do
     let front ← finish (bound n) (observationBits n i) middle
     let suffix ← BitString.sampleList
@@ -369,7 +370,8 @@ theorem replace_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ} (hpair
     apply IsPPTOn.bind_with (left := encBits) (by fun_prop)
     apply IsPPTOn.bind_with (left := encBits) (by fun_prop)
     ppt
-  have h := hpair.extract_indexed_word_labels saved choose (.of_tidy hcandidates) (.of_tidy hlabel) (.of_tidy hslack) (.of_tidy hnumerator)
+  have h := hpair.extract_indexed_word_labels saved choose (.of_tidy hcandidates) (.of_tidy
+    hlabel) (.of_tidy hslack) (.of_tidy hnumerator)
     (.of_tidy hdensity) hchoose hvalid hbudget test htest
   have hideal (n i : ℕ) :
       ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> pair.sample n) (count n)

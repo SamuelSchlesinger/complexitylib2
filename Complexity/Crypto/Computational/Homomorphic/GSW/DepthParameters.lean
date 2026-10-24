@@ -240,7 +240,8 @@ theorem polynomiallyBounded_parameters :
 theorem negligible_statistical_error :
     Negligible (fun security => (rows security : ℝ≥0) *
       NNReal.sqrt ((2 : ℝ≥0) ^ rows security / 2 ^ samples security)) :=
-  negligible_mul_sqrt_pow_two_div_pow_two DepthParameters.computableInPolyTime_rows.tidy.polynomiallyBounded
+  negligible_mul_sqrt_pow_two_div_pow_two
+    DepthParameters.computableInPolyTime_rows.tidy.polynomiallyBounded
     (Filter.Eventually.of_forall entropy_margin)
 
 end Cslib.Crypto.Homomorphic.GSW.DepthParameters

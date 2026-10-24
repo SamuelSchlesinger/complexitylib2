@@ -134,7 +134,8 @@ theorem HasGap.eventually_exists_indexed_mask {pair : SamplablePair} {gap : ℕ 
     unfold Parameters.predictionInverseTolerance Parameters.inverseRate Parameters.denominator
     dsimp only [params, SequenceLearner.parameters]
     fun_prop
-  have hhard := hpair.eventually_indexed_error_ge adversary hadversary (.of_tidy hcandidates) (.of_tidy htolerance)
+  have hhard := hpair.eventually_indexed_error_ge adversary hadversary (.of_tidy hcandidates)
+    (.of_tidy htolerance)
     (fun n => Nat.mul_pos (by decide) (params n 0).predictionInverseTolerance_pos)
   have hsmall := SequenceLearner.failureBound_eventually_le (params := fun n => params n 0)
     (inverseGap := inverseGap) (by change PolynomiallyBounded id; exact .id)

@@ -292,9 +292,12 @@ theorem native_algorithms :
     refine ⟨fun p => Crypto.Homomorphic.GSW.encryptSerialized (dimension p.1)
       (sampleCount p.1) (digitWidth p.1) p.2.1 p.2.2, ?_, ?_⟩
     · exact Crypto.Homomorphic.GSW.isPPTOn_encryptSerialized
-        (.of_tidy (Crypto.Homomorphic.GSW.Parameters.computableInPolyTime_dimension.tidy.comp (by fun_prop)))
-        (.of_tidy (Crypto.Homomorphic.GSW.Parameters.computableInPolyTime_samples.tidy.comp (by fun_prop)))
-        (.of_tidy (Crypto.Homomorphic.GSW.Parameters.computableInPolyTime_width.tidy.comp (by fun_prop)))
+        (.of_tidy (Crypto.Homomorphic.GSW.Parameters.computableInPolyTime_dimension.tidy.comp (by
+          fun_prop)))
+        (.of_tidy (Crypto.Homomorphic.GSW.Parameters.computableInPolyTime_samples.tidy.comp (by
+          fun_prop)))
+        (.of_tidy (Crypto.Homomorphic.GSW.Parameters.computableInPolyTime_width.tidy.comp (by
+          fun_prop)))
         (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
     · exact fun p => (encryption_eq p.1 p.2.1 p.2.2).symm
 

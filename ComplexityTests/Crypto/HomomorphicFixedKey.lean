@@ -171,7 +171,7 @@ example : ComputableTidilyInPolyTime
     (fun p : ℕ × List Bool × List Bool =>
       (FixedKey.scheme decryptionCircuits).decrypt p.1 p.2.1 p.2.2)
     (encPair encUnary (encPair encBits encBits)) encBool :=
-  FixedKey.computableTidilyInPolyTime_scheme_decrypt decryptionCircuits circuits_poly
+  FixedKey.computableInPolyTime_scheme_decrypt decryptionCircuits circuits_poly
 
 example : IsPPTOn
     (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits)))) encBits

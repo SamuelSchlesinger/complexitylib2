@@ -67,7 +67,8 @@ theorem isPolyTime_amplifiedGenerate {pair : SamplablePair} (saved : pair.SeedRe
   have hcommon := hcommon.tidy
   refine .of_tidy ?_
   have hlength := saved.length_isPolyTime.tidy
-  have hgenerate := (isPolyTime_paddedGenerate saved (.of_tidy hobservation) (.of_tidy hdensity) (.of_tidy hcommon)).tidy
+  have hgenerate := (isPolyTime_paddedGenerate saved (.of_tidy hobservation) (.of_tidy hdensity)
+    (.of_tidy hcommon)).tidy
   unfold amplifiedGenerate
   apply PRGStretch.polyTime_iterate
   · apply hgenerate.comp (g := fun input : ((ℕ × ℕ) × List Bool) × List Bool =>
@@ -129,7 +130,8 @@ theorem exists_secure_amplified_choice {pair : SamplablePair} {gap : ℕ → ℝ
       (densityBound n) (common n) index (saved.evaluate n))
     (count := fun n => size (saved.length n) (densityBound n) * common n + 1 - common n)
     (choose := choose)
-    (isPolyTime_paddedGenerate saved (.of_tidy hobservation) (.of_tidy hdensity) (.of_tidy hcommon)).tidy
+    (isPolyTime_paddedGenerate saved (.of_tidy hobservation) (.of_tidy hdensity) (.of_tidy
+      hcommon)).tidy
     hcommon hcount hsecure
   refine ⟨choose, hchoose, fun test htest => ?_⟩
   unfold amplifiedGenerate

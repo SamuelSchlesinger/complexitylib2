@@ -208,7 +208,9 @@ theorem polyTime_wordCandidates {α : Type} {input : α ↪ List Bool}
   have hguesses := hguesses.tidy
   refine .of_tidy ?_
   unfold wordCandidates
-  fun_prop
+  apply ComputableTidilyInPolyTime.mapWithInput hguesses
+  apply ComputableInPolyTime.tidy
+  apply polyTime_wordCandidate <;> exact .of_tidy (by fun_prop)
 
 /-- Candidate generation preserves the finite decoder's order and duplicates. -/
 theorem wordCandidates_eq_map {n k : ℕ} (predictor : List Bool → Bool)

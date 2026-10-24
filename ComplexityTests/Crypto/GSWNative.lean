@@ -139,12 +139,14 @@ example (n m w : ℕ) (word : List Bool) (message : Bool) (coinLists : Serialize
 -- Every dimension grows. Key generation includes all sampled errors, matrix arithmetic and words.
 example : IsPPTOn encUnary (encPair encBits encBits)
     (fun size => keyGenSerialized size size (size + 1) size) :=
-  isPPTOn_keyGenSerialized (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+  isPPTOn_keyGenSerialized (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by
+    fun_prop)) (.of_tidy (by fun_prop))
 
 -- Arbitrary public words are charged in full; there is no canonical-word or length premise.
 example : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
     (fun p => encryptSerialized p.1 p.1 (p.1 + 1) p.2.1 p.2.2) :=
-  isPPTOn_encryptSerialized (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+  isPPTOn_encryptSerialized (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by
+    fun_prop))
     (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
 
 -- Arbitrary malformed coins are also part of the deterministic input encoding.
@@ -153,7 +155,8 @@ example : ComputableTidilyInPolyTime
       encryptWithCoinsSerialized p.1 p.1 (p.1 + 1) p.2.1 p.2.2.1 p.2.2.2)
     (encPair encUnary (encPair encBits (encPair encBool encSerializedCoins))) encBits :=
   (computableInPolyTime_encryptWithCoinsSerialized
-    (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))).tidy
+    (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by
+      fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))).tidy
 
 -- The joint client preserves the sampled keys while encrypting under the generated public key.
 example : IsPPTOn (encPair encUnary encBool) (encPair (encPair encBits encBits) encBits)

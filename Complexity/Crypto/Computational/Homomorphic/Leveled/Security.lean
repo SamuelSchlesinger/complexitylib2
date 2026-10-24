@@ -53,7 +53,7 @@ variable {E : Scheme}
     (fun p => E.encrypt p.1 p.2.1 p.2.2))
   {width budget : ℕ → ℕ}
   (hwidth : ∀ n keys, keys ∈ (ProbComp.eval (E.keyGen n)).support → keys.2.length = width n)
-  (hbudget : ComputableTidilyInPolyTime budget encUnary encUnary)
+  (hbudget : ComputableInPolyTime budget encUnary encUnary)
 
 include hsecure hkeyGen hencrypt hwidth hbudget
 
@@ -69,6 +69,7 @@ theorem publicKey_indistinguishable_zero :
       (fun p => adversary p.1 (encPublicKey p.2)) :=
     hadversary.preprocess (by fun_prop) hpublic
   have hdepth : ComputableTidilyInPolyTime (fun n => 2 * budget n) encUnary encUnary := by
+    have hbudget := hbudget.tidy
     fun_prop
   have h := Scheme.negligible_publicKeyChainHybrid hsecure hkeyGen hencrypt hwidth (.of_tidy hdepth)
     (test := fun n artifact => adversary n (encPublicKey artifact)) htest
@@ -83,6 +84,7 @@ theorem indCPA_keyGen :
   let depth := fun n => 2 * budget n
   have hdepth : ComputableTidilyInPolyTime depth encUnary encUnary := by
     dsimp only [depth]
+    have hbudget := hbudget.tidy
     fun_prop
   let zero (bit : Bool) (adversary : Encryption.Adversary) (n : ℕ) : Game :=
     ProbComp.eval (do
