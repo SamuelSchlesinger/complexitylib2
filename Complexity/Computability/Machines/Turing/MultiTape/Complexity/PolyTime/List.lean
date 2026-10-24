@@ -18,6 +18,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 import Complexity.Foundations.Data.BitString.List.Binary
 import Mathlib.Data.List.GetD
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Polynomial-time list operations
 
@@ -124,7 +126,7 @@ theorem tail {encL : List α ↪ List Bool} [ListEncoding encA encL] :
 @[fun_prop]
 theorem listIsEmpty {encL : List α ↪ List Bool} [ListEncoding encA encL] :
     ComputableTidilyInPolyTime (List.isEmpty (α := α)) encL encBool :=
-  of_linear (ListEncoding.isEmpty (enc₁ := encA) (enc := encL))
+  of_linear ((ListEncoding.isEmpty (enc₁ := encA) (enc := encL)))
 
 /-- Test a framed list's emptiness, determining its element encoding for automation. -/
 @[fun_prop]
@@ -653,7 +655,8 @@ theorem dropUnary {encL : List α ↪ List Bool} [ListEncoding encA encL]
     (list := fun p : List α × ℕ => List.replicate p.2 true) (step := fun acc _ => acc.tail)
     ((of_eq (encIn := encUnary) (encMid := encBits) fun _ => rfl).comp (snd encL encUnary))
     (fst encL encUnary)
-    ((of_linear (ListEncoding.tail (enc₁ := encA))).comp (fst encL encBool))
+    ((of_linear ((ListEncoding.tail (enc₁ := encA)))).comp
+      (fst encL encBool))
     (B := fun p => (encPair encL encUnary p).length) .self (fun p i _ => by
       rw [List.take_replicate, heq]
       have := SizedListEncoding.length_drop_le (encA := encA) (encL := encL) p.1 (min i p.2)
@@ -730,7 +733,7 @@ theorem listGetD {encL : List α ↪ List Bool} [ListEncoding encA encL]
       (encPair encL encUnary) encA := by
   simpa only [Function.comp_def, List.headD_eq_head?_getD, List.head?_drop,
     List.getD_eq_getElem?_getD] using
-    (of_linear (ListEncoding.headD (enc₁ := encA) (enc := encL) d)).comp
+    (of_linear ((ListEncoding.headD (enc₁ := encA) (enc := encL) d))).comp
       (dropUnary (encA := encA))
 
 /-- Read a bit at a unary index with a fixed fallback. Fixing the raw encoding avoids

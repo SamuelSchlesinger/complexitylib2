@@ -14,6 +14,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Multi
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 import Mathlib.Data.List.GetD
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Machines with random access to their input, in logarithmic space
 
@@ -254,7 +256,8 @@ theorem passNext_inSpace
   have hsome : ComputableTidilyInSpace (fun p : PassState σ' × Bool => some p.2)
       (encPair (encPass encS') encBool) (encOption encBool)
       fun p => (encPair (encPass encS') encBool p).length :=
-    budget_comp_lin (of_inO (.of_linear OptionEncoding.some)) (.refl _) hb
+    budget_comp_lin
+      (of_inO (.of_linear OptionEncoding.some)) (.refl _) hb
   exact budget_prod hs (budget_prod hsucc (budget_ite heq hsome hfd))
 
 section EndOfPass

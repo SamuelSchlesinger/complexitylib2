@@ -11,6 +11,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSp
 public import Mathlib.Data.Nat.Bitwise
 import Mathlib.Data.List.GetD
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Binary digit access in linear work space
 
@@ -45,7 +47,7 @@ theorem natTestBit :
       fun q => 8 * ((encPair encNat encNat q).length + 1) :=
     ((fst encNat encNat).weaken hl).of_enc_eq fun _ => rfl
   have htail : ComputableTidilyInSpace List.tail encBits encBits fun l => (encBits l).length :=
-    of_inO (.of_linear (ListEncoding.tail encBool))
+    of_inO (.of_linear ((ListEncoding.tail encBool)))
   have hlen (q : ℕ × ℕ) (i : ℕ) :
       (encBits (List.tail^[i] q.1.bits)).length ≤ (encNat q.1).length := by
     induction i with
@@ -58,7 +60,8 @@ theorem natTestBit :
     (Q := fun q => (encNat q.1).length) (B := fun q => (encNat q.1).length)
     (fun q k _ => hlen q k) (fun q k _ => hlen q k)
   have hhead : ComputableTidilyInSpace (fun l : List Bool => l.headD false) encBits encBool
-      fun l => (encBits l).length := of_inO (.of_linear (ListEncoding.headD false))
+      fun l => (encBits l).length :=
+    of_inO (.of_linear ((ListEncoding.headD false)))
   refine (budget_comp_linear hhead h).mono_le (fun q => ?_) |>.of_enc_eq fun q => ?_
   · simp only [length_encPair]; omega
   · rw [List.tail_iterate, Nat.testBit_eq_inth]

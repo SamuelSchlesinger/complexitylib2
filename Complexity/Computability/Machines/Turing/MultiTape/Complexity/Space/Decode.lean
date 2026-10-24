@@ -268,7 +268,7 @@ variable {α : Type} {input : α ↪ List Bool}
 /-- Emitting the bits of the framed cells is linear-time. -/
 theorem cellsTransducer_run : ComputableTidilyInPolyTime
     (cellsTransducer.run cellsTransducer.q₀) encBits encBits :=
-  of_linear (cellsTransducer.computableTidilyInLinearTimeAndSpace fun _ => rfl)
+  of_linear (cellsTransducer.computableInLinearTimeAndSpace fun _ => rfl)
 
 private theorem stackStep_eq (state : Option Bool × StackTape Bool) (bit : Bool) :
     stackStep state bit = (match state.1, bit with
