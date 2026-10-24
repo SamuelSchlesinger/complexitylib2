@@ -9,19 +9,16 @@ module
 
 public import Complexity.Computability.Complexity.Classes.IP.CoinFixing
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
+public import Complexity.Computability.Complexity.Classes.SharpP.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
-import Complexity.Computability.Complexity.Classes.SharpP.Space
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
-import Mathlib.Data.Nat.Size
 
 /-!
 # Counting the accepting coins in polynomial space
@@ -36,8 +33,9 @@ history, and in exponential time.
   (`Cslib.Complexity.Interaction.computableTidilyInPolyTime_accepts`): it folds one instruction per
   coin over the configuration of the machine, whose storage grows by a bounded amount per
   instruction.
-* The coin values are enumerated by the binary counter `Cslib.BitString.increment`, and the
-  accepting ones are counted with a binary accumulator (`Cslib.Complexity.Interaction.countAccepts`,
+* The coin values are enumerated by the binary counter of the shared streaming count
+  `Cslib.Complexity.streamAcceptCount`, and the accepting ones are counted with a binary accumulator
+  (`Cslib.Complexity.Interaction.countAccepts`,
   `Cslib.Complexity.Interaction.countAccepts_eq_accepted`), within polynomial space
   (`Turing.MultiTapeTM.ComputableTidilyInPolySpace`,
   `Cslib.Complexity.Interaction.computableTidilyInPolySpace_countAccepts`).
@@ -66,8 +64,6 @@ namespace Cslib.Complexity
 open _root_.Turing _root_.Turing.MultiTapeTM
 
 namespace Interaction
-
-open Cslib.BitString (increment lsbValue)
 
 /-! ### A live replay -/
 
@@ -341,84 +337,23 @@ section Count
 
 variable {α : Type} (enc : α ↪ List Bool) (fuel : α → ℕ)
 
-/-- One round of the count: test the coins, add the verdict, and move on to the next coins. -/
-def countStep (s : (α × History) × List Bool × ℕ) : (α × History) × List Bool × ℕ :=
-  (s.1, increment s.2.1, s.2.2 + if accepts M (enc s.1.1) s.2.1 s.1.2 then 1 else 0)
-
 /-- The number of accepting values of `fuel a` coins after the history `h`, counted by trying the
-coins one after another with a binary counter. -/
+coins one after another with a binary counter (`Cslib.Complexity.streamAcceptCount`). -/
 def countAccepts (q : α × History) : ℕ :=
-  ((countStep M enc)^[2 ^ fuel q.1] (q, List.replicate (fuel q.1) false, 0)).2.2
+  streamAcceptCount (fun p : (α × History) × List Bool => accepts M (enc p.1.1) p.2 p.1.2) q
+    (fuel q.1)
 
-open Classical in
-/-- After `j` rounds the count has tried the first `j` values of the counter. -/
-private theorem iterate_countStep (q : α × History) (m j : ℕ) :
-    (countStep M enc)^[j] (q, List.replicate m false, 0) =
-      (q, increment^[j] (List.replicate m false),
-        ((Finset.range j).filter fun i =>
-          accepts M (enc q.1) (increment^[i] (List.replicate m false)) q.2).card) := by
-  induction j with
-  | zero => simp
-  | succ j ih =>
-    rw [Function.iterate_succ_apply', ih]
-    simp only [countStep, Function.iterate_succ_apply', Prod.mk.injEq, true_and]
-    rw [Finset.range_add_one, Finset.filter_insert]
-    split_ifs with hacc
-    · rw [Finset.card_insert_of_notMem (by simp)]
-    · rfl
-
-open Classical in
 /-- **The count of accepting coins**: `countAccepts` is the number of coin values of `fuel a` coins
 whose programs accept after the history. -/
 theorem countAccepts_eq_accepted (q : α × History) :
     countAccepts M enc fuel q = accepted (coinFamily M (fuel q.1) (enc q.1)) q.2 := by
-  rw [countAccepts, iterate_countStep, accepted]
-  simp only
-  set t := fuel q.1
-  refine Finset.card_bij'
-    (fun i _ j => (increment^[i] (List.replicate t false)).getD j false)
-    (fun f _ => lsbValue (List.ofFn f)) ?_ ?_ ?_ ?_
-  · intro i hi
-    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_univ, true_and] at hi ⊢
-    obtain ⟨_, hl⟩ := BitString.iterate_increment t i hi.1
-    have hofFn : List.ofFn (fun j : Fin t =>
-        (increment^[i] (List.replicate t false)).getD j false) =
-        increment^[i] (List.replicate t false) := by
-      refine List.ext_getElem (by simp [hl]) fun j h₁ h₂ => ?_
-      simp
-    rw [coinFamily, hofFn]
-    exact (accepts_eq_true_iff_of_length M hl _).mp hi.2
-  · intro f hf
-    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_univ, true_and] at hf ⊢
-    have hlt := BitString.lsbValue_lt (List.ofFn f)
-    rw [List.length_ofFn] at hlt
-    refine ⟨hlt, ?_⟩
-    have := BitString.iterate_increment_lsbValue (List.ofFn f)
-    rw [List.length_ofFn] at this
-    rw [this]
-    exact (accepts_eq_true_iff_of_length M (List.length_ofFn (f := f)) _).mpr hf
-  · intro i hi
-    simp only [Finset.mem_filter, Finset.mem_range] at hi
-    obtain ⟨hv, hl⟩ := BitString.iterate_increment t i hi.1
-    have hofFn : List.ofFn (fun j : Fin t =>
-        (increment^[i] (List.replicate t false)).getD j false) =
-        increment^[i] (List.replicate t false) := by
-      refine List.ext_getElem (by simp [hl]) fun j h₁ h₂ => ?_
-      simp
-    rw [hofFn, hv]
-  · intro f _
-    funext j
-    have := BitString.iterate_increment_lsbValue (List.ofFn f)
-    rw [List.length_ofFn] at this
-    rw [this]
-    simp
+  rw [countAccepts, streamAcceptCount_eq_acceptCount, acceptCount, accepted]
+  exact congrArg Finset.card (Finset.filter_congr fun r _ =>
+    accepts_eq_true_iff_of_length M (List.length_ofFn (f := r)) q.2)
 
 /-- **The count of accepting coins within polynomial space**, in the input and the history, for a
 number of coins computed in polynomial time. -/
--- Retain the original `Inhabited α` argument for API compatibility; the generic counter does
--- not need it.
-@[nolint unusedArguments]
-theorem computableTidilyInPolySpace_countAccepts [Finite Control] [Inhabited α]
+theorem computableTidilyInPolySpace_countAccepts [Finite Control]
     (hfuel : ComputableTidilyInPolyTime fuel enc encUnary) :
     ComputableTidilyInPolySpace (countAccepts M enc fuel) (encPair enc encHistory) encNat := by
   have hfuel' : ComputableTidilyInPolyTime (fun q : α × History => fuel q.1)
@@ -427,13 +362,8 @@ theorem computableTidilyInPolySpace_countAccepts [Finite Control] [Inhabited α]
   have hverify : ComputableTidilyInPolyTime
       (fun p : (α × History) × List Bool => accepts M (enc p.1.1) p.2 p.1.2)
       (encPair (encPair enc encHistory) encBits) encBool := by fun_prop
-  refine (computableTidilyInPolySpace_acceptCount hverify hfuel').congr fun q => ?_
-  rw [countAccepts_eq_accepted]
-  unfold acceptCount accepted
-  apply congrArg Finset.card
-  apply Finset.filter_congr
-  intro r _
-  exact accepts_eq_true_iff_of_length M (List.length_ofFn (f := r)) q.2
+  exact (computableTidilyInPolySpace_acceptCount hverify hfuel').congr fun q =>
+    (streamAcceptCount_eq_acceptCount _ q _).symm
 
 end Count
 

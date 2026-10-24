@@ -33,6 +33,12 @@ example : acceptCount firstBit [] 4 = 8 := by decide
 
 example : acceptCount (fun _ : List Bool × List Bool => true) [] 0 = 1 := by decide
 
+-- The streaming counter runs through all `2 ^ 4` certificates and agrees with `acceptCount`.
+example : streamAcceptCount firstBit [] 4 = 8 := by decide
+
+example : streamAcceptCount firstBit [] 4 = acceptCount firstBit [] 4 :=
+  streamAcceptCount_eq_acceptCount firstBit [] 4
+
 example : ComputableTidilyInPolySpace
     (fun w : List Bool => acceptCount firstBit w (w.length + 1)) encBits encNat :=
   computableTidilyInPolySpace_acceptCount firstBit_polyTime (by fun_prop)

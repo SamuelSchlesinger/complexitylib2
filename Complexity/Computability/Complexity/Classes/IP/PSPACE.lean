@@ -456,7 +456,7 @@ private theorem computableTidilyInPolyTime_pushStep :
   fun_prop
 
 /-- **The leaf value within polynomial space**: the count of accepting coins, capped. -/
-private theorem computableTidilyInPolySpace_leaf [Finite Control] [Inhabited α] :
+private theorem computableTidilyInPolySpace_leaf [Finite Control] :
     ComputableTidilyInPolySpace (fun s : EvalState α => min (2 ^ fuel s.1)
       (leafValue (coinFamily M (fuel s.1) (enc s.1)) (GameTree.history s.2.1)))
       (encEvalState enc) encNat := by
@@ -477,7 +477,7 @@ private theorem computableTidilyInPolySpace_leaf [Finite Control] [Inhabited α]
   simp only [leafValue, countAccepts_eq_accepted]
 
 /-- **A step of the evaluation within polynomial space.** -/
-private theorem computableTidilyInPolySpace_evalStep [Finite Control] [Inhabited α] :
+private theorem computableTidilyInPolySpace_evalStep [Finite Control] :
     ComputableTidilyInPolySpace (evalStep enc M fuel) (encEvalState enc) (encEvalState enc) := by
   have hcond : ComputableTidilyInPolyTime (fun s : EvalState α => s.2.2.isSome)
       (encEvalState enc) encBool := by fun_prop
