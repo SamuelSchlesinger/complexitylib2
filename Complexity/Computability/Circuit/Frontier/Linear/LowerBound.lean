@@ -370,8 +370,7 @@ theorem eventually_lt_mul_innerSize_of_isTotallyRegular_finite (hr : 2 ≤ r) {A
   exact hN F σ I M c hM hfan hc (c.linearCapacity_of_finite I)
 
 /-- **The frontier lower bound for linear maps over the affine basis**, over every field. -/
-private theorem eventually_lt_mul_innerSize_of_isTotallyRegular_affine (hr : 2 ≤ r) {A : ℝ}
-    (hA : 0 < A)
+theorem eventually_lt_mul_innerSize_of_isTotallyRegular_affine (hr : 2 ≤ r) {A : ℝ} (hA : 0 < A)
     (hlayout : LayoutBound (r + 1) A) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ N in atTop, ∀ (F : Type u) [Field F] (M : Matrix (Fin N) (Fin N) F)
       (c : Circuit (affineSignature F) N N), M.IsTotallyRegular → c.FanInAtMost r →

@@ -135,7 +135,7 @@ theorem depthWith_binaryCost_yablonskiiFormula (k r o : ℕ) (hr : r ≤ 2 ^ k)
     split_ifs <;> omega
 
 /-- For `r = 0`, Yablonskii's formula is the balanced formula `parityFormula`. -/
-private theorem yablonskiiFormula_zero (k o : ℕ) (h : o + (2 ^ k + 0) ≤ n) :
+theorem yablonskiiFormula_zero (k o : ℕ) (h : o + (2 ^ k + 0) ≤ n) :
     yablonskiiFormula k 0 o (Nat.zero_le _) h = parityFormula k o h := by
   induction k generalizing o with
   | zero => rfl

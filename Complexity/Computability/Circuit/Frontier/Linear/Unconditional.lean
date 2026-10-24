@@ -67,8 +67,7 @@ theorem eventually_two_sub_mul_lt_mul_innerSize_of_isTotallyRegular {r : ℕ} (h
 
 /-- **The unconditional frontier lower bound for linear maps over finite fields**, for every
 basis: `(r - 1) s > (2 - ε) N` for fan-in at most `r`. -/
-private theorem eventually_two_sub_mul_lt_mul_innerSize_of_isTotallyRegular_finite {r : ℕ}
-    (hr : 2 ≤ r)
+theorem eventually_two_sub_mul_lt_mul_innerSize_of_isTotallyRegular_finite {r : ℕ} (hr : 2 ≤ r)
     {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ N in atTop, ∀ (F : Type u) [Field F] [Finite F] (σ : Signature.{v})
       (I : Interpretation σ F) (M : Matrix (Fin N) (Fin N) F) (c : Circuit σ N N),
@@ -79,7 +78,7 @@ private theorem eventually_two_sub_mul_lt_mul_innerSize_of_isTotallyRegular_fini
 
 /-- **The unconditional frontier lower bound for linear maps over infinite fields**, for every
 basis of polynomial operations: `(r - 1) s > (2 - ε) N` for fan-in at most `r`. -/
-private theorem eventually_two_sub_mul_lt_mul_innerSize_of_isTotallyRegular_isPolynomial {r : ℕ}
+theorem eventually_two_sub_mul_lt_mul_innerSize_of_isTotallyRegular_isPolynomial {r : ℕ}
     (hr : 2 ≤ r) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ N in atTop, ∀ (F : Type u) [Field F] [Infinite F] (σ : Signature.{v})
       (I : Interpretation σ F), I.IsPolynomial → ∀ (M : Matrix (Fin N) (Fin N) F)

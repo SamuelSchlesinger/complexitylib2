@@ -60,8 +60,7 @@ variable {k : ℕ} {State : Type} (tm : MultiTapeTM k Bool State) {n : ℕ}
 noncomputable def cfgAt (t : ℕ) (x : Fin n → Bool) : Cfg k Bool State (List.ofFn x) :=
   tm.runFrom (tm.initCfg (List.ofFn x)) t
 
-private theorem cfgAt_succ (t : ℕ) (x : Fin n → Bool) :
-    cfgAt tm (t + 1) x = tm.step (cfgAt tm t x) :=
+theorem cfgAt_succ (t : ℕ) (x : Fin n → Bool) : cfgAt tm (t + 1) x = tm.step (cfgAt tm t x) :=
   runFrom_succ _ _
 
 /-- A work head is within `t` cells of the origin after `t` steps. -/

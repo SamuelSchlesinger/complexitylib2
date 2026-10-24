@@ -102,7 +102,7 @@ theorem mem_componentInputs {c : (supportGraph p).ConnectedComponent} {u : Fin n
   classical
   simp [componentInputs]
 
-private theorem coe_componentInputs (c : (supportGraph p).ConnectedComponent) :
+theorem coe_componentInputs (c : (supportGraph p).ConnectedComponent) :
     (componentInputs p c : Set (Fin n)) = c.supp := by
   ext u
   simp [mem_componentInputs, SimpleGraph.ConnectedComponent.mem_supp_iff]

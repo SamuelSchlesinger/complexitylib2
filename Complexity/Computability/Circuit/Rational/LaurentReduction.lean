@@ -72,7 +72,7 @@ def reduce {ι : Type*} (x : ι → F K) : ι → K := fun i => reduction (x i)
 lemma integral_iff (x : F K) : Integral x ↔ Valued.v x ≤ 1 :=
   (LaurentSeries.val_le_one_iff_eq_coe K x).symm
 
-private lemma integral_zero : Integral (0 : F K) := zero_mem _
+lemma integral_zero : Integral (0 : F K) := zero_mem _
 
 lemma integral_one : Integral (1 : F K) := one_mem _
 
