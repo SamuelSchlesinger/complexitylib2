@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Data.BitString.Basic
-public import Mathlib.Logic.Equiv.Fin.Basic
+public import Complexity.Foundations.Data.BitString.Block
 
 /-!
 # Selecting and packing bit-string records
@@ -75,12 +75,11 @@ theorem equivFin_recordKey_keyedMinFn_le_right (r s : BitString (k + p)) :
 /-- `m` records of `r` bits packed one after the other: bit `j` of record `i` is input
 `finProdFinEquiv (i, j)`, that is `i r + j`. -/
 def packRecords {r : ℕ} (records : Fin m → BitString r) : BitString (m * r) :=
-  fun t => records (finProdFinEquiv.symm t).1 (finProdFinEquiv.symm t).2
+  blocksEquiv.symm records
 
 /-- Reading block `i` of the packed records recovers record `i`. -/
 theorem packRecords_comp {r : ℕ} (records : Fin m → BitString r) (i : Fin m) :
-    packRecords records ∘ (fun j => finProdFinEquiv (i, j)) = records i := by
-  funext j
-  simp [packRecords]
+    packRecords records ∘ (fun j => finProdFinEquiv (i, j)) = records i :=
+  congrFun (block_blocksEquiv_symm records) i
 
 end Cslib.BitString

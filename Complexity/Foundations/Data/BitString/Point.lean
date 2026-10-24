@@ -8,12 +8,11 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Cslib.Foundations.Data.BitString
+public import Complexity.Foundations.Data.BitString.Block
 public import Mathlib.Algebra.Group.Equiv.Defs
 public import Mathlib.Algebra.Group.Pi.Basic
 public import Mathlib.Algebra.Module.Pi
 public import Mathlib.Algebra.Ring.BooleanRing
-public import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
 # Bit encodings of points and lines
@@ -49,33 +48,22 @@ variable {K : Type*} {ℓ b s t : ℕ}
 
 /-- The bits of a point: block `i` holds the bits of coordinate `i`. -/
 def pointBits [Add K] (bits : K ≃+ BitString b) (u : Fin ℓ → K) : BitString (ℓ * b) :=
-  fun x => bits (u (finProdFinEquiv.symm x).1) (finProdFinEquiv.symm x).2
+  blocksEquiv.symm (bits ∘ u)
 
 /-- Point bits add coordinatewise. -/
 theorem pointBits_add [Add K] (bits : K ≃+ BitString b) (u v : Fin ℓ → K) :
     pointBits bits (u + v) = pointBits bits u + pointBits bits v := by
   funext x
-  simp only [pointBits, Pi.add_apply, map_add]
+  simp only [pointBits, blocksEquiv_symm_apply, Function.comp_apply, Pi.add_apply, map_add]
 
 /-- Distinct points have distinct bits. -/
 theorem pointBits_injective [Add K] (bits : K ≃+ BitString b) :
-    Function.Injective (pointBits (ℓ := ℓ) bits) := by
-  intro u v h
-  funext i
-  apply bits.injective
-  funext β
-  simpa only [pointBits, Equiv.symm_apply_apply] using congrFun h (finProdFinEquiv (i, β))
+    Function.Injective (pointBits (ℓ := ℓ) bits) :=
+  blocksEquiv.symm.injective.comp (bits.injective.comp_left)
 
 /-- Points of `K ^ ℓ` are their bits. -/
-def pointEquiv [Add K] (bits : K ≃+ BitString b) : (Fin ℓ → K) ≃ BitString (ℓ * b) where
-  toFun := pointBits bits
-  invFun y i := bits.symm fun r => y (finProdFinEquiv (i, r))
-  left_inv u := by
-    funext i
-    simp only [pointBits, Equiv.symm_apply_apply, AddEquiv.symm_apply_apply]
-  right_inv y := by
-    funext x
-    simp only [pointBits, AddEquiv.apply_symm_apply, Prod.mk.eta, Equiv.apply_symm_apply]
+def pointEquiv [Add K] (bits : K ≃+ BitString b) : (Fin ℓ → K) ≃ BitString (ℓ * b) :=
+  (Equiv.arrowCongr (Equiv.refl (Fin ℓ)) bits.toEquiv).trans blocksEquiv.symm
 
 /-- `pointEquiv bits` sends a point to its bits `pointBits bits`. -/
 @[simp] theorem pointEquiv_apply [Add K] (bits : K ≃+ BitString b) (u : Fin ℓ → K) :
@@ -85,15 +73,13 @@ def pointEquiv [Add K] (bits : K ≃+ BitString b) : (Fin ℓ → K) ≃ BitStri
 /-- The bits of a batch of points: block `i` holds the bits of point `i`. -/
 def targetBits [Add K] (bits : K ≃+ BitString b) (targets : Fin t → Fin ℓ → K) :
     BitString (t * (ℓ * b)) :=
-  fun x => pointBits bits (targets (finProdFinEquiv.symm x).1) (finProdFinEquiv.symm x).2
+  blocksEquiv.symm (pointBits bits ∘ targets)
 
 /-- The listed points of a batch of lines: block `i` lists, for each scalar index `j`, the bits of
 `targets i + scalar j • directions i`. -/
 def lineBits [Semiring K] (bits : K ≃+ BitString b) (scalar : Fin s → K)
     (targets directions : Fin t → Fin ℓ → K) : BitString (t * (s * (ℓ * b))) :=
-  fun x =>
-    let ix := finProdFinEquiv.symm x
-    let jy := finProdFinEquiv.symm ix.2
-    pointBits bits (targets ix.1 + scalar jy.1 • directions ix.1) jy.2
+  blocksEquiv.symm fun i => blocksEquiv.symm fun j =>
+    pointBits bits (targets i + scalar j • directions i)
 
 end Cslib.BitString

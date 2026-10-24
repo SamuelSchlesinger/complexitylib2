@@ -231,8 +231,8 @@ theorem append_comp_keyBits (r s : BitString (k + p)) :
     Fin.append r s ∘ keyBits k p = Fin.append (recordKey r) (recordKey s) := by
   funext j
   refine Fin.addCases (fun i => ?_) (fun i => ?_) j
-  · simp only [Function.comp_apply, keyBits, Fin.append_left, recordKey, BitString.fstBits]
-  · simp only [Function.comp_apply, keyBits, Fin.append_right, recordKey, BitString.fstBits]
+  · simp only [Function.comp_apply, keyBits, Fin.append_left]; rfl
+  · simp only [Function.comp_apply, keyBits, Fin.append_right]; rfl
 
 /-- The *keyed minimum*: reading two records of a key of `k` bits followed by a payload of `p`
 bits, it outputs the one with the smaller key, the first on ties. -/

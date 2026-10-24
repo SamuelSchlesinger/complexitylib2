@@ -116,11 +116,8 @@ def sumPairs (n w : ℕ) (cs : List (Circuit signature n (w + w))) : Circuit sig
 theorem val_eval_carryLookaheadAdd_pair (p : BitString (w + w)) :
     (BitString.equivFin w ((carryLookaheadAdd w).eval interpretation p) : ℕ) =
       pairVal p % 2 ^ w := by
-  have hp : Fin.append (fstBits p) (sndBits p) = p := by
-    ext i
-    induction i using Fin.addCases <;>
-      simp only [fstBits, sndBits, Fin.append_left, Fin.append_right, Function.comp_apply]
-  simpa only [hp, pairVal] using val_eval_carryLookaheadAdd (fstBits p) (sndBits p)
+  simpa only [append_fstBits_sndBits, pairVal] using
+    val_eval_carryLookaheadAdd (fstBits p) (sndBits p)
 
 /-- The final word equals the complete pair sum, reduced only modulo the word width. -/
 theorem val_eval_sumPairs (cs : List (Circuit signature n (w + w))) (x : BitString n) :

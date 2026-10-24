@@ -120,7 +120,7 @@ private theorem append_comp_productInputs (x : BitString (inputWidth n w)) (hw :
     x ∘ productInputs n w hw = Fin.append (fstBits x) (rowTail x hw) := by
   funext i
   refine Fin.addCases (fun j => ?_) (fun j => ?_) i
-  · simp only [Function.comp_apply, productInputs, Fin.append_left, fstBits]
+  · simp only [Function.comp_apply, productInputs, Fin.append_left]; rfl
   · simp only [Function.comp_apply, productInputs, Fin.append_right, rowTail]
     exact (inputCiphertext_apply x 0 (finProdFinEquiv.symm j).1.succ
       ⟨w - 1, by omega⟩ (finProdFinEquiv.symm j).2).symm
