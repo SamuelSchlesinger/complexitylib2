@@ -840,6 +840,14 @@ end Turing.MultiTapeTM.ComputableTidilyInPolyTime
 
 namespace Turing.MultiTapeTM.ComputableInPolyTime
 
+/-- Test a fixed list using certificates only for its members, without encoding its index type. -/
+@[fun_prop]
+theorem allConst {γ : Type} {input : γ ↪ List Bool} {ι : Type*} (l : List ι)
+    {test : γ → ι → Bool}
+    (htest : ∀ i ∈ l, ComputableInPolyTime (fun x => test x i) input encBool) :
+    ComputableInPolyTime (fun x => l.all (test x)) input encBool :=
+  .of_tidy (ComputableTidilyInPolyTime.allConst l fun i hi => (htest i hi).tidy)
+
 /-- Enumerate the naturals below a unary bound, keeping the elements unary. -/
 @[fun_prop]
 theorem range : ComputableInPolyTime List.range encUnary (encList encUnary) :=

@@ -45,3 +45,21 @@ example (_test : ℕ → ℕ → Bool) : True := by
   trivial
 
 example : (List.range 0).all (fun _ => false) = true := by decide
+
+example {α : Type} {input : α ↪ List Bool} {ι : Type*} (l : List ι)
+    {test : α → ι → Bool}
+    (htest : ∀ i ∈ l, ComputableInPolyTime (fun a => test a i) input encBool) :
+    ComputableInPolyTime (fun a => l.all (test a)) input encBool := by
+  exact ComputableInPolyTime.allConst l htest
+
+-- An absent index needs no callback certificate or encoding.
+example {ι : Type*} (test : List Bool → ι → Bool) :
+    ComputableInPolyTime (fun word => ([] : List ι).all (test word)) encBits encBool := by
+  apply ComputableInPolyTime.allConst
+  simp
+
+example (_test : List Bool → ℕ → Bool) : True := by
+  fail_if_success
+    have : ComputableInPolyTime (fun word => [0].all (_test word)) encBits encBool := by
+      fun_prop
+  trivial
