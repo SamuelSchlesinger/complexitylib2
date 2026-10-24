@@ -69,10 +69,9 @@ abbrev QueriesSatisfy (p : Query → Prop) (program : ProbOracleComp spec α) : 
 /-- A closed sampler makes no external query. -/
 theorem isCostBounded_sample (cost : Query → ℕ) (program : ProbComp α) :
     IsCostBounded (Sum.elim (fun _ => 0) cost) (sample (spec := spec) program) 0 := by
-  induction program with
+  induction program using OracleComp.induction with
   | pure a => exact .pure a 0
-  | liftBind n cont ih =>
-    change IsCostBounded _ (sample (spec := spec) (OracleComp.query n >>= cont)) 0
+  | query_bind n cont ih =>
     have hquery : sample (spec := spec) (OracleComp.query n) = OracleComp.query (Sum.inl n) :=
       OracleComp.interpret_query _ _
     rw [sample_bind, hquery]
@@ -145,14 +144,11 @@ theorem transcript_cost_le {cost : Query → ℕ} {program : ProbOracleComp spec
     (transcript.map fun entry => cost entry.1).sum ≤ n := by
   induction h generalizing s s' result transcript with
   | pure a n =>
-    change (result, s', transcript) ∈ (PMF.pure (a, s, [])).support at hmem
-    rw [PMF.mem_support_pure_iff] at hmem
+    simp only [run_interpret_pure, Probability.PMF.monad_pure_eq_pure,
+      PMF.mem_support_pure_iff] at hmem
     cases hmem
     simp
   | liftBind q cont n _ ih =>
-    change (result, s', transcript) ∈ ((OracleComp.interpret
-      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (withTranscript oracle))
-        (OracleComp.query q >>= cont)).run (s, [])).support at hmem
     simp only [interpret_bind, OracleComp.interpret_query, StateT.run_bind,
       Probability.PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff] at hmem
     obtain ⟨⟨a, middle, seen⟩, hfirst, hrest⟩ := hmem

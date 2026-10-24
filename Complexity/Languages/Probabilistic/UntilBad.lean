@@ -76,16 +76,16 @@ theorem bad_of_mem_support_run {handler : (q : ι) → StateT σ PMF (spec q)} {
     (habsorb : ∀ q s, bad s → ∀ x ∈ (handler q s).support, bad x.2)
     (program : OracleComp spec α) {s : σ} (hs : bad s) :
     ∀ x ∈ ((interpret handler program).run s).support, bad x.2 := by
-  induction program generalizing s with
+  induction program using OracleComp.induction generalizing s with
   | pure a =>
     intro x hx
-    rw [show (interpret handler (PFunctor.FreeM.pure a)).run s = PMF.pure (a, s) from rfl,
+    simp only [run_interpret_pure, Probability.PMF.monad_pure_eq_pure,
       PMF.mem_support_pure_iff] at hx
     exact hx ▸ hs
-  | liftBind q cont ih =>
+  | query_bind q cont ih =>
     intro x hx
-    change x ∈ ((handler q s).bind fun y => (interpret handler (cont y.1)).run y.2).support at hx
-    rw [PMF.mem_support_bind_iff] at hx
+    simp only [run_interpret_bind, run_interpret_query,
+      Probability.PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff] at hx
     obtain ⟨y, hy, hxy⟩ := hx
     exact ih y.1 (habsorb q s hs y hy) x hxy
 
@@ -98,12 +98,11 @@ state is good. -/
 theorem run_apply (h : IdenticalUntilBad first second bad) (program : OracleComp spec α)
     (s : σ) (a : α) (s' : σ) (hs' : ¬bad s') :
     (interpret first program).run s (a, s') = (interpret second program).run s (a, s') := by
-  induction program generalizing s with
+  induction program using OracleComp.induction generalizing s with
   | pure b => rfl
-  | liftBind q cont ih =>
-    change ((first q s).bind fun y => (interpret first (cont y.1)).run y.2) (a, s') =
-      ((second q s).bind fun y => (interpret second (cont y.1)).run y.2) (a, s')
-    rw [PMF.bind_apply, PMF.bind_apply]
+  | query_bind q cont ih =>
+    simp only [run_interpret_bind, run_interpret_query,
+      Probability.PMF.monad_bind_eq_bind, PMF.bind_apply]
     refine tsum_congr fun y => ?_
     by_cases hy : bad y.2
     · have hzero (handler : (q : ι) → StateT σ PMF (spec q))
@@ -217,15 +216,14 @@ theorem toOuterMeasure_bad_le {handler : (q : ι) → StateT σ PMF (spec q)} {b
       k * (budget s + n * δ) := by
   induction hn generalizing s k with
   | pure a n =>
-    rw [show (interpret handler (PFunctor.FreeM.pure a)).run s = PMF.pure (a, s) from rfl,
+    simp only [run_interpret_pure, Probability.PMF.monad_pure_eq_pure,
       PMF.toOuterMeasure_pure_apply, ite_eq_right (show (a, s) ∉ {x : α × σ | bad x.2} from hs)]
     exact zero_le
   | liftBind q cont n _ ih =>
     classical
     obtain ⟨hle, hcont⟩ := IsCostBounded.liftBind_iff.mp hk
-    change ((handler q s).bind fun y => (interpret handler (cont y.1)).run y.2).toOuterMeasure
-      {x | bad x.2} ≤ _
-    rw [PMF.toOuterMeasure_bind_apply]
+    simp only [run_interpret_bind, run_interpret_query,
+      Probability.PMF.monad_bind_eq_bind, PMF.toOuterMeasure_bind_apply]
     set K : ℝ≥0∞ := (k - cost q : ℕ) * (budget s + δ + n * δ)
     have hterm (y : spec q × σ) : (handler q s) y *
         ((interpret handler (cont y.1)).run y.2).toOuterMeasure {x | bad x.2} ≤

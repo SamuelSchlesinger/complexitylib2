@@ -106,11 +106,9 @@ theorem mem_support_map {program : ProbOracleComp spec α} {f : α → β} {resu
 /-- Private samples range over the support of the closed program. -/
 @[simp] theorem support_sample (program : ProbComp α) :
     support (sample (spec := spec) program) = (ProbComp.eval program).support := by
-  induction program with
+  induction program using OracleComp.induction with
   | pure a => simp [ProbComp.eval]
-  | liftBind n cont ih =>
-    change support (sample (spec := spec) (OracleComp.query n >>= cont)) =
-      (ProbComp.eval (OracleComp.query n >>= cont)).support
+  | query_bind n cont ih =>
     have hquery : sample (spec := spec) (OracleComp.query n) = OracleComp.query (Sum.inl n) :=
       OracleComp.interpret_query _ _
     have hsample : support (OracleComp.query (spec := probOracleSpec spec) (Sum.inl n)) =
@@ -136,14 +134,12 @@ theorem mem_support_of_mem {program : ProbOracleComp spec α} {State : Type}
     (h : (result, s') ∈ ((OracleComp.interpret
       (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle) program).run s).support) :
     result ∈ support program := by
-  induction program generalizing s s' with
+  induction program using OracleComp.induction generalizing s s' with
   | pure a =>
-    change (result, s') ∈ (PMF.pure (a, s)).support at h
-    exact (Prod.mk.inj ((PMF.mem_support_pure_iff _ _).mp h)).1
-  | liftBind q cont ih =>
-    change (result, s') ∈ ((OracleComp.interpret
-      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) oracle)
-        (OracleComp.query q >>= cont)).run s).support at h
+    simp only [run_interpret_pure, Probability.PMF.monad_pure_eq_pure,
+      PMF.mem_support_pure_iff, Prod.mk.injEq] at h
+    exact h.1
+  | query_bind q cont ih =>
     simp only [interpret_bind, OracleComp.interpret_query, StateT.run_bind,
       Probability.PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff] at h
     obtain ⟨⟨a, middle⟩, -, h⟩ := h

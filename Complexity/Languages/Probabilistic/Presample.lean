@@ -82,39 +82,20 @@ theorem IsQueryBounded.run_interpret_presample {program : ProbOracleComp spec α
         (fun q state => source.bind fun value => oracle value q state)) program).run s := by
   induction h generalizing s with
   | pure a n =>
-    change ((PMF.iid source n).map List.ofFn).bind (fun values =>
-      (PMF.pure (a, s, values)).map fun result => (result.1, result.2.1)) = PMF.pure (a, s)
-    simp only [PMF.pure_map, PMF.bind_const]
+    simp only [run_interpret_pure, PMF.monad_pure_eq_pure, PMF.pure_map, PMF.bind_const]
   | liftBind q cont n _ ih =>
     cases q with
     | inl k =>
-      change ((PMF.iid source (n + 0)).map List.ofFn).bind (fun values =>
-        (((StateT.lift (ProbComp.unifOracle k) : StateT (State × List Value) PMF _).run
-          (s, values)).bind fun result => (interpret (handler
-            (fun k => StateT.lift (ProbComp.unifOracle k)) (withSampleList fallback oracle))
-              (cont result.1)).run result.2).map fun result => (result.1, result.2.1)) =
-        ((StateT.lift (ProbComp.unifOracle k) : StateT State PMF _).run s).bind fun result =>
-          (interpret (handler (fun k => StateT.lift (ProbComp.unifOracle k))
-            (fun q state => source.bind fun value => oracle value q state))
-              (cont result.1)).run result.2
-      simp only [Nat.add_zero, StateT.run_lift, PMF.monad_bind_eq_bind,
-        PMF.monad_pure_eq_pure, PMF.bind_bind, PMF.pure_bind, PMF.map_bind]
+      simp only [Sum.elim_inl, Nat.add_zero, interpret_bind, OracleComp.interpret_query,
+        StateT.run_bind, handler, StateT.run_lift, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure,
+        PMF.bind_bind, PMF.pure_bind, PMF.map_bind]
       rw [PMF.bind_comm]
       exact congrArg ((ProbComp.unifOracle k).bind ·) (funext fun a => ih a s)
     | inr q =>
-      change ((PMF.iid source (n + 1)).map List.ofFn).bind (fun values =>
-        (((withSampleList fallback oracle q) (s, values)).bind fun result =>
-          (interpret (handler (fun k => StateT.lift (ProbComp.unifOracle k))
-            (withSampleList fallback oracle)) (cont result.1)).run result.2).map
-              fun result => (result.1, result.2.1)) =
-        (source.bind fun value => oracle value q s).bind fun result =>
-          (interpret (handler (fun k => StateT.lift (ProbComp.unifOracle k))
-            (fun q state => source.bind fun value => oracle value q state))
-              (cont result.1)).run result.2
-      simp only [PMF.iid, withSampleList, PMF.monad_bind_eq_bind,
-        PMF.monad_map_eq_map, PMF.map_bind, PMF.bind_bind, PMF.bind_map, PMF.map_comp,
-        Function.comp_def, List.ofFn_succ, Fin.cons_zero, Fin.cons_succ, List.headD_cons,
-        List.tail_cons]
+      simp only [Sum.elim_inr, run_interpret_bind, run_interpret_query, handler, PMF.iid,
+        withSampleList, PMF.monad_bind_eq_bind, PMF.monad_map_eq_map, PMF.map_bind, PMF.bind_bind,
+        PMF.bind_map, PMF.map_comp, Function.comp_def, List.ofFn_succ, Fin.cons_zero,
+        Fin.cons_succ, List.headD_cons, List.tail_cons]
       refine congrArg (source.bind ·) (funext fun value => ?_)
       rw [PMF.bind_comm]
       refine congrArg ((oracle value q s).bind ·) (funext fun result => ?_)

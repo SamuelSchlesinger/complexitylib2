@@ -8,7 +8,6 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.Oracle
-import Complexity.Languages.Probabilistic.Simulation
 
 /-!
 # Stateful simulation with private randomness

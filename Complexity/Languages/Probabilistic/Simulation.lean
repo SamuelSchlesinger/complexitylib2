@@ -25,6 +25,11 @@ There is one oracle specification and one interpreter; stateful execution uses `
 
 ## Main results
 
+* `Cslib.OracleComp.induction`: structural induction with the step case
+  `OracleComp.query q >>= cont`.
+* `Cslib.OracleComp.run_interpret_pure`, `Cslib.OracleComp.run_interpret_bind`,
+  `Cslib.OracleComp.run_interpret_map`, `Cslib.OracleComp.run_interpret_query`: stateful
+  interpretation of `pure`, `>>=`, `<$>`, and `query`.
 * `Cslib.OracleComp.run_interpret_invariant`: invariants of each call hold after execution.
 * `Cslib.OracleComp.run_interpret_simulation_of_invariant`: probabilistic state simulation.
 * `Cslib.OracleComp.run_interpret_map_state_of_invariant`: deterministic state representation.
@@ -33,6 +38,13 @@ There is one oracle specification and one interpreter; stateful execution uses `
 * `Cslib.OracleComp.run_interpret_lift`: lifted effects preserve the complete private state.
 * `Cslib.OracleComp.run_interpret_run_interpret`: a stateful handler whose effects are oracle
   calls, followed by a stateful oracle for those calls, is one handler on the joint state.
+* `Cslib.ProbComp.isMonadHom_eval`: `ProbComp.eval` is a monad morphism into `PMF`.
+* `Cslib.ProbComp.eval_interpret`: evaluating an interpreted oracle program interprets each call
+  by its evaluated sampler.
+* `Cslib.ProbComp.mem_support_eval_pure_iff`, `Cslib.ProbComp.mem_support_eval_bind_iff`,
+  `Cslib.ProbComp.mem_support_eval_map_iff`, `Cslib.ProbComp.mem_support_eval_uniform`,
+  `Cslib.ProbComp.mem_support_eval_uniform_iff`: support of evaluated closed probabilistic
+  programs.
 -/
 
 @[expose] public section
@@ -42,6 +54,51 @@ namespace Cslib.OracleComp
 universe u v w
 
 variable {ι : Type u} {spec : OracleSpec.{u, v} ι} {α State State' : Type v}
+
+/-- Structural induction on an oracle program, presenting the step case as
+`OracleComp.query q >>= cont`. -/
+@[elab_as_elim] theorem induction {motive : OracleComp spec α → Prop}
+    (pure : ∀ a, motive (pure a))
+    (query_bind : ∀ q (cont : spec q → OracleComp spec α),
+      (∀ a, motive (cont a)) → motive (query q >>= cont))
+    (program : OracleComp spec α) : motive program := by
+  induction program with
+  | pure a => exact pure a
+  | liftBind q cont ih => exact query_bind q cont ih
+
+section RunInterpret
+
+variable {β : Type v} {m : Type v → Type w} [Monad m]
+
+/-- A pure program returns its value and leaves the state unchanged. -/
+@[simp] theorem run_interpret_pure (oracle : (q : ι) → StateT State m (spec q)) (a : α)
+    (s : State) : (interpret oracle (pure a)).run s = pure (a, s) := rfl
+
+variable [LawfulMonad m]
+
+/-- Running `program >>= next` runs `program`, then runs `next` at its result from the state it
+reached. -/
+theorem run_interpret_bind (oracle : (q : ι) → StateT State m (spec q))
+    (program : OracleComp spec α) (next : α → OracleComp spec β) (s : State) :
+    (interpret oracle (program >>= next)).run s =
+      (interpret oracle program).run s >>= fun x => (interpret oracle (next x.1)).run x.2 := by
+  rw [interpret_bind, StateT.run_bind]
+
+/-- Mapping `f` over a program maps it over the result and keeps the final state. -/
+theorem run_interpret_map (oracle : (q : ι) → StateT State m (spec q)) (f : α → β)
+    (program : OracleComp spec α) (s : State) :
+    (interpret oracle (f <$> program)).run s =
+      Prod.map f id <$> (interpret oracle program).run s := by
+  simp only [interpret_map, StateT.run_map]
+  rfl
+
+/-- A single call is answered by the stateful oracle from the current state. -/
+theorem run_interpret_query (oracle : (q : ι) → StateT State m (spec q)) (q : ι)
+    (s : State) : (interpret oracle (query q)).run s = oracle q s := by
+  simp only [interpret_query]
+  rfl
+
+end RunInterpret
 
 /-- Lifting every oracle action into state retains the original state beside its result. -/
 theorem run_interpret_lift {m : Type v → Type*} [Monad m] [LawfulMonad m]
@@ -61,13 +118,12 @@ theorem run_interpret_invariant
     (program : OracleComp spec α) (s : State) (hs : invariant s)
     (result : α) (s' : State)
     (h : (result, s') ∈ ((interpret oracle program).run s).support) : invariant s' := by
-  induction program using PFunctor.FreeM.induction generalizing s with
+  induction program using OracleComp.induction generalizing s with
   | pure a =>
-    change (result, s') ∈ (PMF.pure (a, s)).support at h
-    simp only [PMF.mem_support_pure_iff, Prod.mk.injEq] at h
+    simp only [interpret_pure, StateT.run_pure, Probability.PMF.monad_pure_eq_pure,
+      PMF.mem_support_pure_iff, Prod.mk.injEq] at h
     rwa [h.2]
-  | lift_bind q cont ih =>
-    change (result, s') ∈ ((interpret oracle (query q >>= cont)).run s).support at h
+  | query_bind q cont ih =>
     simp only [interpret_bind, interpret_query, StateT.run_bind,
       Probability.PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff] at h
     obtain ⟨⟨a, next⟩, ha, h⟩ := h
@@ -87,11 +143,9 @@ theorem run_interpret_simulation_of_invariant
     (program : OracleComp spec α) (s : State) (hs : invariant s) :
     ((interpret oracle program).run s).bind (fun (a, s') => (relate s').map (a, ·)) =
       (relate s).bind (fun t => (interpret oracle' program).run t) := by
-  induction program using PFunctor.FreeM.induction generalizing s with
+  induction program using OracleComp.induction generalizing s with
   | pure a => simp [PMF.map, Function.comp_def]
-  | lift_bind q cont ih =>
-    change ((interpret oracle (query q >>= cont)).run s).bind _ =
-      (relate s).bind (fun t => (interpret oracle' (query q >>= cont)).run t)
+  | query_bind q cont ih =>
     simp only [interpret_bind, interpret_query, StateT.run_bind,
       Probability.PMF.monad_bind_eq_bind, PMF.bind_bind]
     calc
@@ -190,15 +244,63 @@ theorem run_interpret_run_interpret {κ : Type w} {target : OracleSpec.{w, v} κ
           (fun result => (result.1.1, result.1.2, result.2)) <$>
             (interpret oracle ((handler q).run state.1)).run state.2) program).run
           (hidden, external) := by
-  induction program using PFunctor.FreeM.induction generalizing hidden external with
+  induction program using OracleComp.induction generalizing hidden external with
   | pure a => simp
-  | lift_bind q cont ih =>
-    change (interpret oracle ((interpret handler (query q >>= cont)).run hidden)).run external =
-      _ <$> (interpret (m := StateT (Hidden × External) m) _ (query q >>= cont)).run
-        (hidden, external)
+  | query_bind q cont ih =>
     simp only [interpret_bind, interpret_query, StateT.run_bind, map_bind]
     simp only [StateT.run, bind_map_left]
     exact bind_congr fun (result : (spec q × Hidden) × External) =>
       ih result.1.1 result.1.2 result.2
 
-end Cslib.OracleComp
+end OracleComp
+
+namespace ProbComp
+
+open Probability
+
+variable {α β : Type}
+
+/-- Evaluating a closed probabilistic program is a monad morphism into `PMF`. -/
+theorem isMonadHom_eval : IsMonadHom ProbComp PMF (@eval) :=
+  PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) unifOracle
+
+/-- Evaluating an interpreted oracle program is interpreting each call by its evaluated
+sampler. -/
+theorem eval_interpret {ι : Type} {spec : ι → Type}
+    (handler : (q : ι) → ProbComp (spec q)) (program : OracleComp spec α) :
+    eval (OracleComp.interpret handler program) =
+      OracleComp.interpret (fun q => eval (handler q)) program :=
+  OracleComp.interpret_interpret handler unifOracle program
+
+/-- A returned value is the only supported outcome of `pure a`. -/
+theorem mem_support_eval_pure_iff {a x : α} :
+    x ∈ (eval (pure a)).support ↔ x = a := by
+  simp
+
+/-- An outcome is supported by `program >>= next` iff it is supported by `next a` for some
+supported outcome `a` of `program`. -/
+theorem mem_support_eval_bind_iff {program : ProbComp α}
+    {next : α → ProbComp β} {b : β} :
+    b ∈ (eval (program >>= next)).support ↔
+      ∃ a ∈ (eval program).support, b ∈ (eval (next a)).support := by
+  simp
+
+/-- An outcome is supported by `f <$> program` iff it is the image under `f` of a supported
+outcome of `program`. -/
+theorem mem_support_eval_map_iff {f : α → β} {program : ProbComp α} {b : β} :
+    b ∈ (eval (f <$> program)).support ↔ ∃ a ∈ (eval program).support, f a = b := by
+  simp
+
+/-- Every element of a nonempty finite type is in the support of `uniform α`. -/
+theorem mem_support_eval_uniform [Fintype α] [Nonempty α] (a : α) :
+    a ∈ (eval (uniform α)).support := by
+  simp
+
+/-- Membership in the support of `uniform α` is unconditionally true. -/
+theorem mem_support_eval_uniform_iff [Fintype α] [Nonempty α] {a : α} :
+    a ∈ (eval (uniform α)).support ↔ True := by
+  simp
+
+end ProbComp
+
+end Cslib
