@@ -41,7 +41,8 @@ statements; the tidy notion is a proof device. Proofs switch between them with
 The canonical closure and Boolean rules live in their original `PolyTime` and
 `PolyTime.Basic`
 providers as ordinary plain declarations. This module re-exports the core provider and retains
-the transitional construction bridges while the remaining topics are being converted. Ordinary topic rules remain in their original provider modules; this integration adds no
+the transitional construction bridges while the internal boundary is reconciled.
+Ordinary topic rules remain in their original provider modules; this integration adds no
 parallel calculus or sidecar definitions.
 The transition from tidy to plain also accepts existing internal certificates as proof inputs.
 

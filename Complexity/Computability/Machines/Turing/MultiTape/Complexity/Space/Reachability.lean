@@ -19,7 +19,7 @@ import Mathlib.Tactic.Ring
 
 Savitch's algorithm (`Cslib.Reachability.savitch`) runs the midpoint recursion on an explicit
 stack, for `Cslib.Reachability.Savitch.steps w d` steps. This file bounds its time and space in the
-quantitative calculus of tidy computability (`Turing.MultiTapeTM.ComputableTidilyInO`), charging
+quantitative calculus of tidy computability (`Turing.MultiTapeTM.ComputableInO`), charging
 every stored frame, counter, returned value and copy.
 
 The states are encoded by framed pairs, options and lists, with the levels in unary
@@ -27,11 +27,11 @@ The states are encoded by framed pairs, options and lists, with the levels in un
 the iteration keeps in its state together with the width of the midpoints
 (`Cslib.Reachability.Savitch.roundStep`). A round takes time quadratic and space linear in its
 encoded state, plus the cost of the edge test on the endpoints of a call at level `0`
-(`Cslib.Reachability.Savitch.computableTidilyInO_roundStep`). Every state of a run from a call at
+(`Cslib.Reachability.Savitch.computableInO_roundStep`). Every state of a run from a call at
 level `d` holds at most `d` frames of size `O(d + w)`, so iterating the rounds with a binary
 counter takes space `O((d + 1) * (d + w + 1))`, plus the parameter and the space of the edge test
 on the worst endpoints (`Cslib.Reachability.edgeMax`), and exponential time
-(`Cslib.Reachability.computableTidilyInO_savitch`). With an edge test and inputs computable in
+(`Cslib.Reachability.computableInO_savitch`). With an edge test and inputs computable in
 polynomial time, the space is polynomial (`Cslib.Reachability.exists_polyBounded_space_savitch`).
 
 ## Main definitions
@@ -45,8 +45,8 @@ polynomial time, the space is polynomial (`Cslib.Reachability.exists_polyBounded
 
 ## Main results
 
-* `Cslib.Reachability.Savitch.computableTidilyInO_roundStep`: the time and space of a round.
-* `Cslib.Reachability.computableTidilyInO_savitch`: the time and space of Savitch's algorithm.
+* `Cslib.Reachability.Savitch.computableInO_roundStep`: the time and space of a round.
+* `Cslib.Reachability.computableInO_savitch`: the time and space of Savitch's algorithm.
 * `Cslib.Reachability.exists_polyBounded_space_savitch`: Savitch's algorithm in polynomial space.
 
 ## References
@@ -125,7 +125,7 @@ def encState : State ↪ List Bool :=
 
 section Certificates
 
-open ComputableTidilyInDegree
+open ComputableInDegree
 
 /-- The counter overflows on the word of all ones, and otherwise increments. -/
 private theorem next_eq (u : List Bool) :
@@ -168,107 +168,107 @@ private theorem zeroT_run (u : List Bool) : zeroT.run () u = List.replicate u.le
   | nil => rfl
   | cons b u ih => simp [zeroT_step, ih, List.replicate_succ]
 
-attribute [local fun_prop] ComputableTidilyInDegree.increment
+attribute [local fun_prop] ComputableInDegree.increment
 
 /-- The test for the word of all ones, in linear time. -/
 @[local fun_prop] private lemma all_deg :
-    ComputableTidilyInDegree (fun u : List Bool => u.all id) encBits encBool 1 1 :=
+    ComputableInDegree (fun u : List Bool => u.all id) encBits encBool 1 1 :=
   of_linear (allT.computableInLinearTimeAndSpace fun u => by simp [allT_run])
 
 /-- The word of all zeros of width `w`, from `w` in unary, in linear time. -/
 @[local fun_prop] private lemma replicate_deg :
-    ComputableTidilyInDegree (fun n => List.replicate n false) encUnary encBits 1 1 :=
+    ComputableInDegree (fun n => List.replicate n false) encUnary encBits 1 1 :=
   of_linear (zeroT.computableInLinearTimeAndSpace fun n => by simp [zeroT_run])
 
 /-- Conjunction. -/
 @[local fun_prop] private lemma and_deg :
-    ComputableTidilyInDegree (fun p : Bool × Bool => p.1 && p.2) (encPair encBool encBool) encBool
+    ComputableInDegree (fun p : Bool × Bool => p.1 && p.2) (encPair encBool encBool) encBool
       1 0 :=
   of_finite _
 
 /-- Disjunction. -/
 @[local fun_prop] private lemma or_deg :
-    ComputableTidilyInDegree (fun p : Bool × Bool => p.1 || p.2) (encPair encBool encBool) encBool
+    ComputableInDegree (fun p : Bool × Bool => p.1 || p.2) (encPair encBool encBool) encBool
       1 0 :=
   of_finite _
 
 /-- Negation. -/
 @[local fun_prop] private lemma not_deg :
-    ComputableTidilyInDegree (fun b : Bool => !b) encBool encBool 1 0 :=
+    ComputableInDegree (fun b : Bool => !b) encBool encBool 1 0 :=
   of_finite _
 
 /-- The predecessor in unary. -/
 @[local fun_prop] private lemma pred_deg :
-    ComputableTidilyInDegree (fun n : ℕ => n - 1) encUnary encUnary 1 1 :=
+    ComputableInDegree (fun n : ℕ => n - 1) encUnary encUnary 1 1 :=
   unary_pred
 
 /-- Whether a call is pending. -/
 @[local fun_prop] private lemma isSome_deg :
-    ComputableTidilyInDegree (fun o : Option (ℕ × List Bool × List Bool) => o.isSome)
+    ComputableInDegree (fun o : Option (ℕ × List Bool × List Bool) => o.isSome)
       (encOption encCall) encBool 1 0 :=
   isSome encCall
 
 /-- The stack of a state. -/
 @[local fun_prop] private lemma stack_deg :
-    ComputableTidilyInDegree State.stack encState (encList encFrame) 1 1 :=
+    ComputableInDegree State.stack encState (encList encFrame) 1 1 :=
   of_linear (.of_unframe fun s => by simp [encState])
 
 /-- The register of a state. -/
-@[local fun_prop] private lemma reg_deg : ComputableTidilyInDegree State.reg encState encReg 1 1 :=
+@[local fun_prop] private lemma reg_deg : ComputableInDegree State.reg encState encReg 1 1 :=
   of_linear (.of_dropFrame fun s => by simp [encState])
 
 /-- The register as a pair, the identity on encoded values. -/
 @[local fun_prop] private lemma toPair_deg :
-    ComputableTidilyInDegree Reg.toPair encReg (encPair (encOption encCall) encBool) 1 1 :=
+    ComputableInDegree Reg.toPair encReg (encPair (encOption encCall) encBool) 1 1 :=
   of_eq fun _ => rfl
 
 /-- The fields of a frame, the identity on encoded values. -/
-private lemma fields_deg : ComputableTidilyInDegree Frame.fields encFrame encFrameFields 1 1 :=
+private lemma fields_deg : ComputableInDegree Frame.fields encFrame encFrameFields 1 1 :=
   of_eq fun _ => rfl
 
 /-- The level of a frame. -/
 @[local fun_prop] private lemma level_deg :
-    ComputableTidilyInDegree Frame.level encFrame encUnary 1 1 :=
+    ComputableInDegree Frame.level encFrame encUnary 1 1 :=
   fields_deg.fst'
 
 /-- The source of a frame. -/
-@[local fun_prop] private lemma src_deg : ComputableTidilyInDegree Frame.src encFrame encBits 1 1 :=
+@[local fun_prop] private lemma src_deg : ComputableInDegree Frame.src encFrame encBits 1 1 :=
   fields_deg.snd'.fst'.mono
 
 /-- The target of a frame. -/
-@[local fun_prop] private lemma dst_deg : ComputableTidilyInDegree Frame.dst encFrame encBits 1 1 :=
+@[local fun_prop] private lemma dst_deg : ComputableInDegree Frame.dst encFrame encBits 1 1 :=
   fields_deg.snd'.snd'.fst'.mono
 
 /-- The midpoint of a frame. -/
-@[local fun_prop] private lemma mid_deg : ComputableTidilyInDegree Frame.mid encFrame encBits 1 1 :=
+@[local fun_prop] private lemma mid_deg : ComputableInDegree Frame.mid encFrame encBits 1 1 :=
   fields_deg.snd'.snd'.snd'.fst'.mono
 
 /-- The phase of a frame. -/
 @[local fun_prop] private lemma phase_deg :
-    ComputableTidilyInDegree Frame.phase encFrame encBool 1 1 :=
+    ComputableInDegree Frame.phase encFrame encBool 1 1 :=
   fields_deg.snd'.snd'.snd'.snd'.mono
 
 /-- A state from its stack and register, the identity on encoded values. -/
 @[local fun_prop] private lemma stateMk_deg :
-    ComputableTidilyInDegree (fun p : List Frame × Reg => State.mk p.1 p.2)
+    ComputableInDegree (fun p : List Frame × Reg => State.mk p.1 p.2)
       (encPair (encList encFrame) encReg) encState 1 1 :=
   of_eq fun _ => rfl
 
 /-- A frame from its fields, the identity on encoded values. -/
 @[local fun_prop] private lemma frameMk_deg :
-    ComputableTidilyInDegree
+    ComputableInDegree
       (fun p : ℕ × List Bool × List Bool × List Bool × Bool =>
         Frame.mk p.1 p.2.1 p.2.2.1 p.2.2.2.1 p.2.2.2.2) encFrameFields encFrame 1 1 :=
   of_eq fun _ => rfl
 
 /-- A pending call from its arguments. -/
 @[local fun_prop] private lemma call_deg :
-    ComputableTidilyInDegree (fun c : ℕ × List Bool × List Bool => Reg.call c.1 c.2.1 c.2.2)
+    ComputableInDegree (fun c : ℕ × List Bool × List Bool => Reg.call c.1 c.2.1 c.2.2)
       encCall encReg 1 1 :=
   (((optionSome (enc₁ := encCall)).prod (const false)).mono).of_enc_eq fun _ => rfl
 
 /-- A returned value. -/
-@[local fun_prop] private lemma ret_deg : ComputableTidilyInDegree Reg.ret encBool encReg 1 1 :=
+@[local fun_prop] private lemma ret_deg : ComputableInDegree Reg.ret encBool encReg 1 1 :=
   (((const (encMid := encOption encCall) none).prod (of_eq fun _ => rfl)).mono).of_enc_eq
     fun _ => rfl
 
@@ -280,13 +280,13 @@ private def State.top (s : State) : Frame := s.stack.headD default
 
 /-- The arguments of the pending call. -/
 @[local fun_prop] private lemma args_deg :
-    ComputableTidilyInDegree State.args encState encCall 1 1 := by
+    ComputableInDegree State.args encState encCall 1 1 := by
   unfold State.args
   fun_prop (disch := first | apply le_refl | lia)
 
 /-- The top frame. -/
 @[local fun_prop] private lemma top_deg :
-    ComputableTidilyInDegree State.top encState encFrame 1 1 := by
+    ComputableInDegree State.top encState encFrame 1 1 := by
   unfold State.top
   fun_prop (disch := first | apply le_refl | lia)
 
@@ -325,18 +325,18 @@ private theorem step_eq (edge : List Bool → List Bool → Bool) (w : ℕ) (s :
 
 /-- The step on the states other than calls at level `0`, in linear time. -/
 @[local fun_prop] private lemma restStep_deg :
-    ComputableTidilyInDegree (fun r : ℕ × State => restStep r.1 r.2) (encPair encUnary encState)
+    ComputableInDegree (fun r : ℕ × State => restStep r.1 r.2) (encPair encUnary encState)
       encState 1 1 := by
   unfold restStep
   fun_prop (disch := first | apply le_refl | lia)
 
 /-- The test for a call at level `0`, in linear time. -/
 @[local fun_prop] private lemma isBase_deg :
-    ComputableTidilyInDegree State.isBase encState encBool 1 1 := by
-  have h₁ : ComputableTidilyInDegree (fun s : State => s.reg.toPair.1.isSome) encState encBool
+    ComputableInDegree State.isBase encState encBool 1 1 := by
+  have h₁ : ComputableInDegree (fun s : State => s.reg.toPair.1.isSome) encState encBool
       1 1 := by
     fun_prop (disch := first | apply le_refl | lia)
-  have h₂ : ComputableTidilyInDegree (fun s : State => s.args.1) encState encUnary 1 1 := by
+  have h₂ : ComputableInDegree (fun s : State => s.args.1) encState encUnary 1 1 := by
     fun_prop (disch := first | apply le_refl | lia)
   exact (and_deg.comp (h₁.prod (unary_isZero.comp h₂))).mono
 
@@ -401,35 +401,35 @@ private theorem eq_call_of_isBase {s : State} (h : s.isBase = true) :
 /-- **A round within the time and space of the edge test, plus quadratic time and linear
 space.** A call at level `0` compares its endpoints, in quadratic time, and runs the edge test on
 them; the other cases copy and rearrange the encoded state, in linear time. -/
-theorem computableTidilyInO_roundStep {edge : π → List Bool → List Bool → Bool}
+theorem computableInO_roundStep {edge : π → List Bool → List Bool → Bool}
     {Te Se : π × List Bool × List Bool → ℕ}
-    (hedge : ComputableTidilyInO (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
+    (hedge : ComputableInO (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
       (encPair encP (encPair encBits encBits)) encBool Te Se) :
-    ComputableTidilyInO (roundStep edge) (encRound encP) (encRound encP)
+    ComputableInO (roundStep edge) (encRound encP) (encRound encP)
       (fun q => ((encRound encP q).length + 1) ^ 2 + q.2.reg.edgeCost Te q.1.1)
       (fun q => (encRound encP q).length + q.2.reg.edgeCost Se q.1.1) := by
-  have hc : ComputableTidilyInDegree (fun q : (π × ℕ) × State => q.2.isBase) (encRound encP)
+  have hc : ComputableInDegree (fun q : (π × ℕ) × State => q.2.isBase) (encRound encP)
       encBool 1 1 := by
     fun_prop (disch := first | apply le_refl | lia)
-  have hrest : ComputableTidilyInDegree (fun q : (π × ℕ) × State => (q.1, restStep q.1.2 q.2))
+  have hrest : ComputableInDegree (fun q : (π × ℕ) × State => (q.1, restStep q.1.2 q.2))
       (encRound encP) (encRound encP) 1 1 := by
     fun_prop (disch := first | apply le_refl | lia)
-  have hargs : ComputableTidilyInDegree
+  have hargs : ComputableInDegree
       (fun q : (π × ℕ) × State => (q.1.1, q.2.args.2.1, q.2.args.2.2)) (encRound encP)
       (encPair encP (encPair encBits encBits)) 1 1 := by
     fun_prop (disch := first | apply le_refl | lia)
-  have hends : ComputableTidilyInDegree
+  have hends : ComputableInDegree
       (fun q : (π × ℕ) × State => (q.2.args.2.1, q.2.args.2.2)) (encRound encP)
       (encPair encBits encBits) 1 1 := by
     fun_prop (disch := first | apply le_refl | lia)
-  have hkeep : ComputableTidilyInDegree (fun q : (π × ℕ) × State => q.1) (encRound encP)
+  have hkeep : ComputableInDegree (fun q : (π × ℕ) × State => q.1) (encRound encP)
       (encPair encP encUnary) 1 1 := by
     fun_prop (disch := first | apply le_refl | lia)
-  have hstack : ComputableTidilyInDegree (fun q : (π × ℕ) × State => q.2.stack) (encRound encP)
+  have hstack : ComputableInDegree (fun q : (π × ℕ) × State => q.2.stack) (encRound encP)
       (encList encFrame) 1 1 := by
     fun_prop (disch := first | apply le_refl | lia)
   have hval := or_deg.inO_one.comp_linear
-    ((ComputableTidilyInO.eqWords.comp hends.inO_one).prod (hedge.comp hargs.inO_one))
+    ((ComputableInO.eqWords.comp hends.inO_one).prod (hedge.comp hargs.inO_one))
   have hbase := hkeep.inO_one.prod (stateMk_deg.inO_one.comp_linear
     (hstack.inO_one.prod (ret_deg.inO_one.comp_linear hval)))
   refine ((hc.inO_one.ite hbase hrest.inO_one).mono 8 (fun q => ?_) fun q => ?_).of_enc_eq
@@ -614,15 +614,15 @@ private theorem foldl_countStep (p n : ℕ) (acc : List Bool) :
 
 /-- The number of rounds, `(w + 2) * (d + 1)` ones in binary, from `w` and `d` in unary. -/
 private theorem steps_inO :
-    ComputableTidilyInO (fun t : ℕ × ℕ => steps t.1 t.2) (encPair encUnary encUnary)
+    ComputableInO (fun t : ℕ × ℕ => steps t.1 t.2) (encPair encUnary encUnary)
       encNat (fun t => (t.2 + 2) * ((t.1 + 2) * (t.2 + 1))) fun t => (t.1 + 2) * (t.2 + 1) := by
-  have hpar : ComputableTidilyInDegree (fun t : ℕ × ℕ => t.1 + 2) (encPair encUnary encUnary)
+  have hpar : ComputableInDegree (fun t : ℕ × ℕ => t.1 + 2) (encPair encUnary encUnary)
       encUnary 1 1 :=
     (unary_succ.comp (unary_succ.comp (fst encUnary encUnary))).mono
-  have hlist : ComputableTidilyInDegree (fun t : ℕ × ℕ => List.replicate (t.2 + 1) true)
+  have hlist : ComputableInDegree (fun t : ℕ × ℕ => List.replicate (t.2 + 1) true)
       (encPair encUnary encUnary) encBits 1 1 :=
     ((unary_succ.comp (snd encUnary encUnary)).mono).of_enc_eq fun _ => rfl
-  have hstep : ComputableTidilyInDegree
+  have hstep : ComputableInDegree
       (fun r : (ℕ × List Bool) × Bool => countStep r.1.1 r.1.2 r.2)
       (encPair (encPair encUnary encBits) encBool) encBits 1 1 :=
     (((snd encUnary encBits).comp (fst (encPair encUnary encBits) encBool)).append
@@ -633,8 +633,8 @@ private theorem steps_inO :
     rw [List.take_replicate, foldl_countStep, List.nil_append, List.length_replicate]
     rw [Nat.mul_comm]
     exact Nat.mul_le_mul_left _ (min_le_right _ _)
-  have hfold := ComputableTidilyInO.foldlWith (encL := encBits) (encB := encBits) hpar.inO_one
-    hlist.inO_one (ComputableTidilyInO.const []) hstep.inO_one
+  have hfold := ComputableInO.foldlWith (encL := encBits) (encB := encBits) hpar.inO_one
+    hlist.inO_one (ComputableInO.const []) hstep.inO_one
     (R := fun t => 6 * ((t.1 + 2) * (t.2 + 1)) + 4)
     (Q := fun t => 6 * ((t.1 + 2) * (t.2 + 1)) + 4)
     (B := fun t => (t.1 + 2) * (t.2 + 1))
@@ -663,20 +663,20 @@ private theorem steps_inO :
 /-! ### The first round and the answer -/
 
 /-- The first round, from the arguments, in linear time. -/
-private lemma init_deg : ComputableTidilyInDegree
+private lemma init_deg : ComputableInDegree
     (fun t : π × ℕ × ℕ × List Bool × List Bool =>
       ((t.1, t.2.1), State.mk [] (.call t.2.2.1 t.2.2.2.1 t.2.2.2.2)))
     (encArgs encP) (encRound encP) 1 1 := by
   fun_prop (disch := first | apply le_refl | lia)
 
 /-- The width and the depth, from the arguments, in linear time. -/
-private lemma widthDepth_deg : ComputableTidilyInDegree
+private lemma widthDepth_deg : ComputableInDegree
     (fun t : π × ℕ × ℕ × List Bool × List Bool => (t.2.1, t.2.2.1)) (encArgs encP)
     (encPair encUnary encUnary) 1 1 := by
   fun_prop (disch := first | apply le_refl | lia)
 
 /-- The answer, from a round, in linear time. -/
-private lemma answer_deg : ComputableTidilyInDegree
+private lemma answer_deg : ComputableInDegree
     (fun q : (π × ℕ) × State => q.2.reg.toPair.2) (encRound encP) encBool 1 1 := by
   fun_prop (disch := first | apply le_refl | lia)
 
@@ -694,7 +694,7 @@ private theorem length_encNat_steps (w d : ℕ) :
     (encNat (steps w d)).length = (w + 2) * (d + 1) := by
   rw [encNat_steps, List.length_replicate]
 
-/-- The arithmetic of the bounds of `computableTidilyInO_savitch`, where `S₀ = (d + 1) *
+/-- The arithmetic of the bounds of `computableInO_savitch`, where `S₀ = (d + 1) *
 (d + w + 1) + P` bounds the stack and the parameter. -/
 private theorem savitch_bounds (P w d : ℕ) :
     stateBound P w d + 1 ≤ 27 * ((d + 1) * (d + w + 1) + P + 1) ∧
@@ -720,15 +720,15 @@ computable within time `O(Te)` and space `O(Se)`, and let the parameter, the wid
 level and three words, the register, the parameter, the width, and the counter of the rounds; the
 time charges every round, which copies the state [Sipser, Theorem 8.5][Sipser2013]
 [Arora and Barak, Section 4.2][AroraBarak09]. -/
-theorem computableTidilyInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
+theorem computableInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
     {edge : π → List Bool → List Bool → Bool} {Te Se : π × List Bool × List Bool → ℕ}
-    (hedge : ComputableTidilyInO (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
+    (hedge : ComputableInO (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
       (encPair encP (encPair encBits encBits)) encBool Te Se)
     {par : γ → π} {width depth : γ → ℕ} {src dst : γ → List Bool} {Tin Sin : γ → ℕ}
-    (hin : ComputableTidilyInO (fun x => (par x, width x, depth x, src x, dst x)) encIn
+    (hin : ComputableInO (fun x => (par x, width x, depth x, src x, dst x)) encIn
       (encArgs encP) Tin Sin)
     (hsrc : ∀ x, (src x).length = width x) (hdst : ∀ x, (dst x).length = width x) :
-    ComputableTidilyInO (fun x => savitch (edge (par x)) (width x) (depth x) (src x) (dst x))
+    ComputableInO (fun x => savitch (edge (par x)) (width x) (depth x) (src x) (dst x))
       encIn encBool
       (fun x => Tin x + 2 ^ ((width x + 2) * (depth x + 1)) *
         (((depth x + 1) * (depth x + width x + 1) + (encP (par x)).length + 1) ^ 2 +
@@ -736,7 +736,7 @@ theorem computableTidilyInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
       fun x => Sin x + (depth x + 1) * (depth x + width x + 1) + (encP (par x)).length +
         edgeMax Se (par x) (width x) := by
   rcases isEmpty_or_nonempty γ with hγ | ⟨⟨x₀⟩⟩
-  · exact ((ComputableTidilyInO.const (encMid := encBool) false).mono 0 (fun x => isEmptyElim x)
+  · exact ((ComputableInO.const (encMid := encBool) false).mono 0 (fun x => isEmptyElim x)
       fun x => isEmptyElim x).of_enc_eq fun x => isEmptyElim x
   have : Inhabited π := ⟨par x₀⟩
   have hn := steps_inO.comp (widthDepth_deg.inO_one.comp_linear hin)
@@ -748,7 +748,7 @@ theorem computableTidilyInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
       (s := ⟨[], .call (depth x) (src x) (dst x)⟩) _ ⟨trivial, fun i u v h => by
         obtain ⟨rfl, rfl, rfl⟩ := Reg.call.inj h
         exact ⟨by simp, hsrc x, hdst x⟩⟩ k
-  have hiter := ComputableTidilyInO.iterate hn hinit (computableTidilyInO_roundStep hedge)
+  have hiter := ComputableInO.iterate hn hinit (computableInO_roundStep hedge)
     (R := fun x => (stateBound (encP (par x)).length (width x) (depth x) + 1) ^ 2 +
       edgeMax Te (par x) (width x))
     (Q := fun x => stateBound (encP (par x)).length (width x) (depth x) +
@@ -793,14 +793,14 @@ theorem computableTidilyInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
 polynomial time, and the parameter, the width and depth in unary, and endpoints of width `w` are
 computable from `x` in polynomial time, then Savitch's algorithm is tidily computable within
 space polynomial in the length of the encoded input; the time is exponential, see
-`Cslib.Reachability.computableTidilyInO_savitch`. The width and the depth are polynomial since they
+`Cslib.Reachability.computableInO_savitch`. The width and the depth are polynomial since they
 are computed in unary [Sipser, Theorem 8.5][Sipser2013]. -/
 theorem exists_polyBounded_space_savitch {γ : Type} {encIn : γ ↪ List Bool}
     {edge : π → List Bool → List Bool → Bool}
-    (hedge : ComputableTidilyInPolyTime (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
+    (hedge : ComputableInPolyTime (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
       (encPair encP (encPair encBits encBits)) encBool)
     {par : γ → π} {width depth : γ → ℕ} {src dst : γ → List Bool}
-    (hin : ComputableTidilyInPolyTime (fun x => (par x, width x, depth x, src x, dst x)) encIn
+    (hin : ComputableInPolyTime (fun x => (par x, width x, depth x, src x, dst x)) encIn
       (encArgs encP))
     (hsrc : ∀ x, (src x).length = width x) (hdst : ∀ x, (dst x).length = width x) :
     ∃ t s, PolyBounded (fun x => (encIn x).length) s ∧
@@ -808,17 +808,28 @@ theorem exists_polyBounded_space_savitch {γ : Type} {encIn : γ ↪ List Bool}
         (fun x => savitch (edge (par x)) (width x) (depth x) (src x) (dst x)) encIn encBool t
         s := by
   have hlen := hin.polyBounded_length
-  obtain ⟨te, se, -, hse, he⟩ := hedge
-  obtain ⟨ti, si, hti, hsi, hi⟩ := hin
+  obtain ⟨teLen, seLen, -, hse, he⟩ := hedge
+  let edgeEnc := encPair encP (encPair encBits encBits)
+  let te := fun q : π × List Bool × List Bool => teLen (edgeEnc q).length
+  let se := fun q : π × List Bool × List Bool => seLen (edgeEnc q).length
+  have hse : PolyBounded (fun q => (edgeEnc q).length) se :=
+    PolyBounded.of_polynomiallyBounded _ hse
+  obtain ⟨tiLen, siLen, hti, hsi, hi⟩ := hin
+  let ti := fun x => tiLen (encIn x).length
+  let si := fun x => siLen (encIn x).length
+  have hti : PolyBounded (fun x => (encIn x).length) ti :=
+    PolyBounded.of_polynomiallyBounded _ hti
+  have hsi : PolyBounded (fun x => (encIn x).length) si :=
+    PolyBounded.of_polynomiallyBounded _ hsi
   obtain ⟨cs, ds, hcs⟩ := hse.exists_le
-  have hedgeO : ComputableTidilyInO _ _ encBool te se :=
-    ⟨1, he.mono (fun _ => by omega) fun _ => by omega, fun _ => by simp⟩
-  have hinO : ComputableTidilyInO _ encIn (encArgs encP) ti fun x => ti x + si x :=
-    ⟨1, hi.mono (fun _ => by omega) fun _ => by dsimp only; omega, fun x => by
-      have := hi.length_le x
-      dsimp only
-      omega⟩
-  obtain ⟨c, h, -⟩ := computableTidilyInO_savitch hedgeO hinO hsrc hdst
+  have hedgeO : ComputableInO _ _ encBool te se :=
+    ⟨1, he.mono (fun _ => by dsimp [te, edgeEnc]; omega)
+      (fun _ => by dsimp [se, edgeEnc]; omega), fun _ => by simp⟩
+  have hinO : ComputableInO _ encIn (encArgs encP) ti fun x => ti x + si x :=
+    ⟨1, hi.mono (fun _ => by dsimp [ti]; omega)
+      (fun _ => by dsimp [ti, si]; omega), fun x => by
+      exact (hi.length_le x).trans (by dsimp [ti, si]; omega)⟩
+  obtain ⟨c, h, -⟩ := Internal.normalizeO (computableInO_savitch hedgeO hinO hsrc hdst)
   refine ⟨_, _, ?_, h⟩
   -- the stack, the parameter and the edge test are polynomial in the encoded arguments
   set L := fun x => (encArgs encP (par x, width x, depth x, src x, dst x)).length
@@ -829,7 +840,7 @@ theorem exists_polyBounded_space_savitch {γ : Type} {encIn : γ ↪ List Bool}
     listMax_le fun u hu => listMax_le fun v hv => by
       refine (hcs _).trans (Nat.mul_le_mul_left cs (Nat.pow_le_pow_left ?_ ds))
       have := hL x
-      simp only [length_encPair, encBits_apply, mem_enumList.mp hu, mem_enumList.mp hv]
+      simp only [edgeEnc, length_encPair, encBits_apply, mem_enumList.mp hu, mem_enumList.mp hv]
       omega
   have hpoly : Cslib.PolynomiallyBounded
       fun n => (n + 1) * (2 * n + 1) + n + cs * (5 * n + 3) ^ ds + 1 := by
