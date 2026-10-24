@@ -5,6 +5,9 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Pi
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Sum
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Option
 
 /-! Ordinary charged-bound providers retain independent time and workspace and output accounting. -/
 
@@ -57,3 +60,35 @@ run_cmd do
     let plainName := Lean.Name.str `Turing.MultiTapeTM.ComputableInO suffix
     if env.contains oldName then throwError "retired bound provider remains public: {oldName}"
     unless env.contains plainName do throwError "canonical bound provider missing: {plainName}"
+
+-- The table has a fixed index type but stores values whose encoded width grows with the input.
+example : ∃ T S, ComputableInO (fun n : ℕ => fun b : Bool => if b then n else 0)
+    encUnary (encPi encUnary) T S := by
+  have h : ∀ b : Bool, ComputableInDegree (fun n : ℕ => if b then n else 0)
+      encUnary encUnary 1 1 := by
+    intro b
+    cases b
+    · exact (ComputableInDegree.const (encIn := encUnary) (encMid := encUnary) 0).mono
+    · exact .of_eq (fun _ => rfl)
+  exact ⟨_, _, ComputableInO.pi (fun b => (h b).inO_one)⟩
+
+example : ∃ T S, ComputableInO (fun n : ℕ => some n) encUnary (encOption encUnary) T S := by
+  have h := (ComputableInO.getLeft? encUnary encBool).comp
+    (ComputableInO.inl encUnary encBool)
+  exact ⟨_, _, by simpa [Function.comp_def] using h⟩
+
+example : ∃ T S, ComputableInO (fun o : Option ℕ => o.elim 0 id)
+    (encOption encUnary) encUnary T S := by
+  have hv := (ComputableInDegree.id' (enc := encOption encUnary)).inO_one
+  have hf := ComputableInO.const (encIn := encOption encUnary) (encMid := encUnary) 0
+  have hb := ComputableInO.snd (encOption encUnary) encUnary
+  exact ⟨_, _, ComputableInO.optionElimWithInput hv hf hb⟩
+
+run_cmd do
+  let env ← Lean.getEnv
+  for suffix in ["ofFn", "pi", "pi_apply", "pi_gather", "pi_update", "inl", "inr",
+      "getLeft?", "getRight?", "optionElimWithInput"] do
+    let oldName := Lean.Name.str `Turing.MultiTapeTM.ComputableTidilyInO suffix
+    let plainName := Lean.Name.str `Turing.MultiTapeTM.ComputableInO suffix
+    if env.contains oldName then throwError "retired provider remains public: {oldName}"
+    unless env.contains plainName do throwError "plain provider missing: {plainName}"
