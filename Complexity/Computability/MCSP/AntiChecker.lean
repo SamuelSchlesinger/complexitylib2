@@ -9,7 +9,6 @@ module
 
 public import Complexity.Computability.MCSP.Succinct
 public import Complexity.Foundations.Data.BitString.Threshold
-import Complexity.Computability.Circuit.Complexity
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Data.Nat.Choose.Bounds
 
@@ -230,16 +229,17 @@ exactly when `f` needs more than `s` gates on `S`. -/
 theorem isAntiChecker_computableFunctions_iff {f : BooleanFunction n} {S : Set (BitString n)} :
     IsAntiChecker (computableFunctions n s) f S ↔ s < complexityOn interpretation S (single f) := by
   rw [← not_le, complexityOn_le_iff]
+  simp only [Circuit.computesOn_single_iff]
   constructor
   · rintro hS ⟨c, hc, hsize⟩
     obtain ⟨x, hx, hne⟩ := hS (fun y => c.eval interpretation y 0)
       (Boolean.mem_computableFunctions.mpr
-        ⟨c, fun y => funext fun i => by rw [Subsingleton.elim i 0]; rfl, hsize⟩)
-    exact hne (congrFun (hc hx) 0)
+        ⟨c, Circuit.computes_single_iff.mpr fun _ => rfl, hsize⟩)
+    exact hne (hc x hx)
   · intro h g hg
     obtain ⟨c, hcg, hsize⟩ := Boolean.mem_computableFunctions.mp hg
     by_contra! hgS
-    exact h ⟨c, fun x hx => funext fun i => (congrFun (hcg x) i).trans (hgS x hx), hsize⟩
+    exact h ⟨c, fun x hx => (Circuit.computes_single_iff.mp hcg x).trans (hgS x hx), hsize⟩
 
 /-- Against the functions computable with at most `s` gates, `S` is an anti-checker for `f`
 exactly when the Succinct MCSP instance of the values of `f` on `S`, with threshold `s`, is a
@@ -276,7 +276,7 @@ theorem exists_lt_complexityOn {m b : ℕ} (hm : 0 < m) (hnm : n ≤ m) {f : Boo
     have hle := complexity_strictMajority_le g
     rw [heq] at hle
     have hsum : ∑ i, complexity interpretation (single (g i)) ≤ ∑ _i : Fin m, s :=
-      sum_le_sum fun i _ => mk_truthTable_mem_iff.mp (mk_truthTable_mem_iff_mem.mpr (hg i))
+      sum_le_sum fun i _ => mem_computableFunctions_iff_complexity_le.mp (hg i)
     simp only [sum_const, card_univ, Fintype.card_fin, smul_eq_mul] at hsum
     omega
   obtain ⟨S, hS, hanti⟩ := exists_isAntiChecker hm hα _ hmaj hb

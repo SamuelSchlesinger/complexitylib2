@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.Hierarchy
 import Complexity.Computability.Complexity.Classes.PH.Kannan
+import Complexity.Computability.MCSP.Basic
 
 /-!
 # Tests for Kannan's theorem
@@ -33,9 +34,13 @@ example : Kannan.certBound 0 0 = 16 := rfl
 /-! ### Truth tables -/
 
 -- Truth tables are indexed by the input read least significant bit first.
-example : Kannan.tableFunction 2 [false, true, true, false] ![true, false] = true := by decide
-example : Kannan.tableFunction 2 [false, true, true, false] ![true, true] = false := by decide
+example : MCSP.tableFunction 2 [false, true, true, false] ![true, false] = true := by decide
+example : MCSP.tableFunction 2 [false, true, true, false] ![true, true] = false := by decide
 example : Kannan.table 0 0 (List.replicate 10 true) = List.replicate 8 true := by decide
+
+-- GapMCSP bundles `GapMCSP.yes`, `GapMCSP.no`, and `GapMCSP.disjoint_yes_no` as a `PromiseProblem`.
+example (s : ℕ → ℕ) (n : ℕ) :
+    GapMCSP s s n le_rfl = PromiseProblem.ofSet (GapMCSP.yes s n) := by simp
 
 example : BitString.binaryValue [true, false, true] = 5 := by decide
 example {u v : List Bool} (hlen : u.length = v.length)
@@ -123,6 +128,24 @@ info: 'Cslib.MCSP.computableTidilyInPolyTime_tableVerifier' depends on axioms: [
 -/
 #guard_msgs in
 #print axioms Cslib.MCSP.computableTidilyInPolyTime_tableVerifier
+
+/--
+info: 'Cslib.MCSP.complexity_le_of_tableVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.MCSP.complexity_le_of_tableVerifier
+
+/--
+info: 'Cslib.MCSP.exists_tableVerifier_append' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.MCSP.exists_tableVerifier_append
+
+/--
+info: 'Cslib.GapMCSP' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.GapMCSP
 
 /--
 info: 'Cslib.Complexity.Kannan.language_notMem_SIZE' depends on axioms: [propext, Classical.choice, Quot.sound]

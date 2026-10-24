@@ -24,6 +24,8 @@ to each other.
 
 ## Main results
 
+* `Cslib.Circuits.Circuit.computesOn_single_iff`, `Cslib.Circuits.Circuit.computes_single_iff`:
+  a one-output circuit computes `single f` when its output `0` agrees with `f`.
 * `Cslib.Circuits.complexity_single_proj`, `Cslib.Circuits.one_le_complexity_single`: exactly the
   projections are computed without gates.
 * `Cslib.Circuits.complexity_single_unary_le`, `Cslib.Circuits.complexity_single_binary_le`:
@@ -47,6 +49,20 @@ variable {σ : Signature} {U : Type*} {I : Interpretation σ U} {n : ℕ}
 
 section Single
 
+/-- A one-output circuit computes `single f` on `S` exactly when its output `0` agrees with `f`
+on `S`. -/
+theorem Circuit.computesOn_single_iff {c : Circuit σ n 1} {S : Set (Fin n → U)}
+    {f : (Fin n → U) → U} :
+    c.ComputesOn I S (single f) ↔ ∀ x ∈ S, c.eval I x 0 = f x :=
+  ⟨fun h _ hx => congrFun (h hx) 0, fun h _ hx => funext fun i =>
+    Subsingleton.elim i 0 ▸ h _ hx⟩
+
+/-- A one-output circuit computes `single f` exactly when its output `0` agrees with `f` on
+every input. -/
+theorem Circuit.computes_single_iff {c : Circuit σ n 1} {f : (Fin n → U) → U} :
+    c.Computes I (single f) ↔ ∀ x, c.eval I x 0 = f x :=
+  ⟨fun h x => congrFun (h x) 0, fun h x => funext fun i => Subsingleton.elim i 0 ▸ h x⟩
+
 variable [I.IsComplete]
 
 /-- The coordinate projections cost no gates. -/
@@ -63,8 +79,8 @@ theorem one_le_complexity_single {f : (Fin n → U) → U} (hf : ∀ i, f ≠ fu
   cases hw : c.outputs 0 with
   | input i =>
     refine hf i (funext fun x => ?_)
-    have := congrFun (hc x) 0
-    simp only [Circuit.eval, Function.comp_apply, hw, Program.trace_input, single_apply] at this
+    have := Circuit.computes_single_iff.mp hc x
+    simp only [Circuit.eval, Function.comp_apply, hw, Program.trace_input] at this
     exact this.symm
   | gate j => exact absurd j.isLt (by omega)
 
