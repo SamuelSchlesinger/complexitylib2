@@ -133,7 +133,8 @@ theorem mem_BPP_iff_forall_decidesWithErrorExponent {A : Set α} :
         DecidesWithErrorExponent enc q p V A := by
   rw [mem_BPP_iff_tidy]
   refine ⟨fun ⟨p, V, hV, h⟩ q => ⟨12 * q * p, _,
-    computableTidilyInPolyTime_repeatMajority hV _ _, h.repeatMajority q⟩, fun h => ?_⟩
+    computableTidilyInPolyTime_repeatMajority (ComputableInPolyTime.of_tidy hV) _ _,
+    h.repeatMajority q⟩, fun h => ?_⟩
   obtain ⟨p, V, hV, h⟩ := h 2
   exact ⟨p, V, hV, h.decidesWithBoundedError fun _ => by simp⟩
 
