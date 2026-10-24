@@ -31,7 +31,8 @@ independently with probability `p` gives it the weight `bernoulliWeight p select
 `bernoulliAverage p f` is the expectation of `f` over the random mask, a finite sum. The coordinates
 of the random mask are independent (`bernoulliAverage_prod`), the union of independent masks of
 rates `p` and `q` has rate `p + q - p q` (`bernoulliAverage_union`), and increasing the rate
-decreases the expectation of an antitone function (`Antitone.bernoulliAverage_antitoneOn`).
+decreases the expectation of an antitone function
+(`bernoulliAverage_le_bernoulliAverage_of_antitone`).
 
 The union of `h` independent masks of rate `p` lies in a lower set `A` only if each of them does.
 So when `h p ≤ q`, the probability of `A` at rate `q` is at most its probability at rate `p` to the
@@ -61,8 +62,8 @@ power `h` (`bernoulliAverage_lowerSet_pow_le`). This transference principle appe
 * `Cslib.BitString.bernoulliAverage_bernoulliAverage_eq_sum`: the law of a coordinatewise
   image of two independent masks.
 * `Cslib.BitString.bernoulliAverage_union`: unions of independent masks.
-* `Antitone.bernoulliAverage_antitoneOn`: antitone functions have smaller
-  expectations at larger rates.
+* `Cslib.BitString.bernoulliAverage_le_bernoulliAverage_of_antitone`: antitone functions have
+  smaller expectations at larger rates.
 * `Cslib.BitString.bernoulliAverage_lowerSet_union`,
   `Cslib.BitString.bernoulliAverage_lowerSet_pow_le`: transference for lower sets.
 
@@ -404,7 +405,7 @@ theorem bernoulliAverage_union (p q : ℝ) (f : (ι → Bool) → ℝ) :
     mul_zero, add_zero, zero_add] <;> ring
 
 /-- Increasing the sampling rate decreases the expectation of an antitone function. -/
-theorem _root_.Antitone.bernoulliAverage_antitoneOn {f : (ι → Bool) → ℝ} (hf : Antitone f)
+theorem bernoulliAverage_le_bernoulliAverage_of_antitone {f : (ι → Bool) → ℝ} (hf : Antitone f)
     {p q : ℝ} (hp : 0 ≤ p) (hpq : p ≤ q) (hq : q ≤ 1) :
     bernoulliAverage q f ≤ bernoulliAverage p f := by
   rcases (hpq.trans hq).eq_or_lt with rfl | hp1
@@ -483,7 +484,7 @@ theorem bernoulliAverage_lowerSet_pow_le {A : Set (ι → Bool)} (hA : IsLowerSe
       rw [hs, pow_succ']
       exact (bernoulliAverage_lowerSet_union hA hp hp' (hu j).1 (hu j).2).trans
         (mul_le_mul_of_nonneg_left ih (bernoulliAverage_indicator_mem_Icc A hp hp').1)
-  exact (hA.antitone_indicator_one.bernoulliAverage_antitoneOn
+  exact (bernoulliAverage_le_bernoulliAverage_of_antitone hA.antitone_indicator_one
     (hu h).1 ((hb h).trans hh) hq).trans (hi h)
 
 end
