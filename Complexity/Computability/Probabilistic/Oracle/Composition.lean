@@ -160,8 +160,8 @@ state. The invariant holds for every possible result under every stateful oracle
 established for the final state. Every iteration may query the shared oracle. -/
 theorem iterate_spec {initial : α → σ} {count : α → ℕ}
     {step : σ → WordOracleComp Operation σ}
-    (hcount : ComputableInPolyTime count input encUnary)
-    (hinitial : ComputableInPolyTime initial input stateEncoding)
+    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
     (hstep : IsOraclePPTOn stateEncoding stateEncoding step)
     (invariant : α → ℕ → σ → Prop) (hbase : ∀ a, invariant a 0 (initial a))
     (hpreserve : ∀ a i state, i < count a → invariant a i state →
@@ -173,15 +173,15 @@ theorem iterate_spec {initial : α → σ} {count : α → ℕ}
         (fun a => OracleComp.iterate (count a) step (initial a)) ∧
       ∀ a, ∀ state ∈ OracleComp.support (OracleComp.iterate (count a) step (initial a)),
         invariant a (count a) state :=
-  let h := IsTidyOraclePPTOn.iterate_spec hcount hinitial hstep.isTidyOraclePPTOn invariant hbase
-    hpreserve hsize hbound
+  let h := IsTidyOraclePPTOn.iterate_spec (.of_tidy hcount) (.of_tidy hinitial)
+    hstep.isTidyOraclePPTOn invariant hbase hpreserve hsize hbound
   ⟨h.1.isOraclePPTOn, h.2⟩
 
 /-- The loop body may capture the original input; the invariant describes the changing state. -/
 theorem iterateWith_spec {initial : α → σ} {count : α → ℕ}
     {step : α → σ → WordOracleComp Operation σ}
-    (hcount : ComputableInPolyTime count input encUnary)
-    (hinitial : ComputableInPolyTime initial input stateEncoding)
+    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
     (hstep : IsOraclePPTOn (encPair input stateEncoding) stateEncoding
       (fun pair => step pair.1 pair.2))
     (invariant : α → ℕ → σ → Prop) (hbase : ∀ a, invariant a 0 (initial a))
@@ -194,16 +194,16 @@ theorem iterateWith_spec {initial : α → σ} {count : α → ℕ}
         (fun a => OracleComp.iterate (count a) (step a) (initial a)) ∧
       ∀ a, ∀ state ∈ OracleComp.support (OracleComp.iterate (count a) (step a) (initial a)),
         invariant a (count a) state :=
-  let h := IsTidyOraclePPTOn.iterateWith_spec hcount hinitial hstep.isTidyOraclePPTOn invariant
-    hbase hpreserve hsize hbound
+  let h := IsTidyOraclePPTOn.iterateWith_spec (.of_tidy hcount) (.of_tidy hinitial)
+    hstep.isTidyOraclePPTOn invariant hbase hpreserve hsize hbound
   ⟨h.1.isOraclePPTOn, h.2⟩
 
 /-- Captured-input steps may grow by a polynomially bounded amount depending on that input, for
 every possible next state under every stateful oracle. -/
 theorem iterateWith_of_bounded_growth {initial : α → σ} {count : α → ℕ}
     {step : α → σ → WordOracleComp Operation σ}
-    (hcount : ComputableInPolyTime count input encUnary)
-    (hinitial : ComputableInPolyTime initial input stateEncoding)
+    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
     (hstep : IsOraclePPTOn (encPair input stateEncoding) stateEncoding
       (fun pair => step pair.1 pair.2))
     {growth : α → ℕ} (hpoly : PolyBounded (fun a => (input a).length) growth)
@@ -211,14 +211,14 @@ theorem iterateWith_of_bounded_growth {initial : α → σ} {count : α → ℕ}
       (stateEncoding next).length ≤ (stateEncoding state).length + growth a) :
     IsOraclePPTOn input stateEncoding
       (fun a => OracleComp.iterate (count a) (step a) (initial a)) :=
-  (IsTidyOraclePPTOn.iterateWith_of_bounded_growth hcount hinitial hstep.isTidyOraclePPTOn hpoly
-    hgrowth).isOraclePPTOn
+  (IsTidyOraclePPTOn.iterateWith_of_bounded_growth (.of_tidy hcount) (.of_tidy hinitial)
+    hstep.isTidyOraclePPTOn hpoly hgrowth).isOraclePPTOn
 
 /-- A strict oracle PPT step with constant growth can be repeated a polynomial number of times. -/
 theorem iterate_of_bounded_growth {initial : α → σ} {count : α → ℕ}
     {step : σ → WordOracleComp Operation σ}
-    (hcount : ComputableInPolyTime count input encUnary)
-    (hinitial : ComputableInPolyTime initial input stateEncoding)
+    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
     (hstep : IsOraclePPTOn stateEncoding stateEncoding step)
     {growth : ℕ} (hgrowth : ∀ state, ∀ next ∈ OracleComp.support (step state),
       (stateEncoding next).length ≤ (stateEncoding state).length + growth) :

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -117,7 +118,7 @@ theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
       | .query channel next => do
         let (answer, state) ← handler pair.1 (channel, (pair.2.1.channels channel).1) pair.2.2
         return (pair.2.1.receive channel next answer, state))
-  · fun_prop
+  · exact .of_tidy (by fun_prop)
   · intro control
     cases control with
     | none => fun_prop
@@ -138,13 +139,16 @@ theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
             let (answer, state) ←
               handler pair.1.1 (channel, (pair.1.2.1.channels channel).1) pair.1.2.2
             return (pair.1.2.1.receive channel next answer, state))
-      · fun_prop
+      · exact .of_tidy (by fun_prop)
       · rintro ⟨inputSymbol, workSymbols, answerSymbols, coin⟩
         cases machine.tr control inputSymbol workSymbols answerSymbols coin with
         | step action symbol move => fun_prop
         | query channel next =>
           apply IsOraclePPTOn.bind_with (middle := encPair encBits stateEncoding)
-          · fun_prop
+          · exact hhandler.preprocess
+              (prepare := fun pair : (α × (FiniteConfig k Bool Control Operation × State)) × Bool =>
+                (pair.1.1, (channel, (pair.1.2.1.channels channel).1), pair.1.2.2))
+              (.of_tidy (by fun_prop))
           · fun_prop
 
 /-- A bounded native run with an open stateful handler is strict oracle PPT. A local invariant,
@@ -234,7 +238,7 @@ theorem isOraclePPTOn_run [Finite Operation] {input : α ↪ List Bool}
       (fun pair : FiniteConfig k Bool Control Operation × State =>
         (pair.1.tapes.output, pair.2))
       (encPair encFiniteConfig stateEncoding) (encPair encBits stateEncoding) := by fun_prop
-  refine (hloop.map hproject).congr fun a _ _ _ => ?_
+  refine (hloop.map (.of_tidy hproject)).congr fun a _ _ _ => ?_
   congr 2
   rw [MultiTapePTM.runOracle]
   change _ = (OracleComp.interpret (m := StateT State (WordOracleComp External)) _

@@ -238,9 +238,8 @@ theorem NP_subset_RPWithPromiseOracle_PromiseUSAT (enc : α ↪ List Bool) :
     (BitString.listRows (11 * (c * ((enc x.1).length + 1) ^ d + 3))
       ((c * ((enc x.1).length + 1) ^ d + 2) ^ 2) x.2).map
         fun b => encCNF (reduce (g x.1, b))
-  have hqueries : ComputableTidilyInPolyTime queries (encPair enc encBits) (encList encBits) := by
-    have hreduce := computableInPolyTime_reduce.tidy
-    have hg := hg.tidy
+  have hqueries : ComputableInPolyTime queries (encPair enc encBits) (encList encBits) := by
+    have hreduce := computableInPolyTime_reduce
     fun_prop
   refine ⟨Polynomial.C 11 * (Polynomial.C c * (Polynomial.X + 1) ^ d + 3) *
       (Polynomial.C c * (Polynomial.X + 1) ^ d + 2) ^ 2,

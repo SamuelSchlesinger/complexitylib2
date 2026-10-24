@@ -48,11 +48,10 @@ theorem IsPPTOn.prefix {α : Type} {input : α ↪ List Bool} {pre : α → List
     (hprefix : ComputableTidilyInPolyTime pre input encBits) :
     IsPPTOn input encBits (fun a => (pre a ++ ·) <$> program a) := by
   apply IsOraclePPTOn.isPPTOn
-  have happend := ComputableTidilyInPolyTime.bitsAppend
-    (ComputableTidilyInPolyTime.fst encBits encBits)
-    (ComputableTidilyInPolyTime.snd encBits encBits)
+  have happend := ComputableInPolyTime.bitsAppend
+    (ComputableInPolyTime.fst encBits encBits) (ComputableInPolyTime.snd encBits encBits)
   simpa only [ProbOracleComp.sample_map, Functor.map_map, Function.comp_def] using
-    ((hprogram.isOraclePPTOn (Operation := Empty)).pair hprefix).map happend
+    ((hprogram.isOraclePPTOn (Operation := Empty)).pair (.of_tidy hprefix)).map happend
 
 variable {α β γ : Type} {input : α ↪ List Bool} {left : β ↪ List Bool}
   {right : γ ↪ List Bool}
@@ -64,7 +63,7 @@ theorem IsPPTOn.pair {program : α → ProbComp γ} {f : α → β}
     IsPPTOn input (encPair left right) (fun a => (fun b => (f a, b)) <$> program a) := by
   apply IsOraclePPTOn.isPPTOn
   simpa only [ProbOracleComp.sample_map] using
-    (hprogram.isOraclePPTOn (Operation := Empty)).pair hf
+    (hprogram.isOraclePPTOn (Operation := Empty)).pair (.of_tidy hf)
 
 /-- Keep the original argument available to a later computation, charging its encoded copy. -/
 theorem IsPPTOn.keep_input {program : α → ProbComp β}
@@ -99,7 +98,7 @@ theorem IsPPTOn.cond {condition : α → Bool} {yes no : α → ProbComp β}
     (hyes : IsPPTOn input left yes) (hno : IsPPTOn input left no) :
     IsPPTOn input left (fun a => if condition a then yes a else no a) := by
   apply IsOraclePPTOn.isPPTOn
-  simpa only [apply_ite] using IsOraclePPTOn.cond hcondition
+  simpa only [apply_ite] using IsOraclePPTOn.cond (.of_tidy hcondition)
     (hyes.isOraclePPTOn (Operation := Empty)) (hno.isOraclePPTOn (Operation := Empty))
 
 /-- Select a closed probabilistic branch with an efficiently decidable condition. -/

@@ -66,10 +66,9 @@ namespace ComputableInPolyTimeWithOracle
 /-- Polynomial-time preprocessing of the argument. -/
 theorem preprocess {f : β → γ} {g : α → β} (hf : ComputableInPolyTimeWithOracle A f middle output)
     (hg : Turing.MultiTapeTM.ComputableInPolyTime g input middle) :
-    ComputableInPolyTimeWithOracle A (fun a => f (g a)) input output := by
-  have hg := hg.tidy
-  exact let ⟨program, hprogram, heq⟩ := hf
-    ⟨fun a => program (g a), hprogram.preprocess hg, fun a => heq (g a)⟩
+    ComputableInPolyTimeWithOracle A (fun a => f (g a)) input output :=
+  let ⟨program, hprogram, heq⟩ := hf
+  ⟨fun a => program (g a), hprogram.preprocess hg, fun a => heq (g a)⟩
 
 /-- Polynomial-time postprocessing of the result, which may also use the argument. -/
 theorem map_with {f : α → β} {g : α → β → γ}
@@ -77,7 +76,6 @@ theorem map_with {f : α → β} {g : α → β → γ}
     (hg : Turing.MultiTapeTM.ComputableInPolyTime (fun pair => g pair.1 pair.2)
       (encPair input middle) output) :
     ComputableInPolyTimeWithOracle A (fun a => g a (f a)) input output := by
-  have hg := hg.tidy
   obtain ⟨program, hprogram, heq⟩ := hf
   refine ⟨fun a => g a <$> program a, ?_, fun a => ?_⟩
   · simpa only [OracleComp.interpret_map] using hprogram.map_with hg
@@ -88,7 +86,6 @@ theorem map_with {f : α → β} {g : α → β → γ}
 theorem map {f : α → β} {g : β → γ} (hf : ComputableInPolyTimeWithOracle A f input middle)
     (hg : Turing.MultiTapeTM.ComputableInPolyTime g middle output) :
     ComputableInPolyTimeWithOracle A (fun a => g (f a)) input output := by
-  have hg := hg.tidy
   obtain ⟨program, hprogram, heq⟩ := hf
   refine ⟨fun a => g <$> program a, ?_, fun a => ?_⟩
   · simpa only [OracleComp.interpret_map] using hprogram.map hg
@@ -107,7 +104,7 @@ theorem prod {f : α → β} {g : α → γ}
     (fun c => (b, c)) <$> second a, ?_, fun a => ?_⟩
   · simp only [OracleComp.interpret_bind, OracleComp.interpret_map]
     exact hfirst.bind_with ((hsecond.preprocess
-      (ComputableTidilyInPolyTime.fst input middle)).map_with (by fun_prop))
+      (ComputableInPolyTime.fst input middle)).map_with (by fun_prop))
   · simp only [OracleComp.interpret_bind, OracleComp.interpret_map, hfirst_eq, hsecond_eq]
     rfl
 
@@ -124,7 +121,7 @@ theorem PolyTimeOracleProgram.of_query {req : α → List Bool} {input : α ↪ 
   refine ⟨fun a => (fun reply => decide (reply = [true])) <$>
     (List.take 1 <$> OracleComp.query ((), req a)), ?_, fun A hA => ?_⟩
   · simp only [OracleComp.interpret_map, OracleComp.interpret_query]
-    exact (IsOraclePPTOn.query_take () hreq.tidy (limit := fun _ => 1) (by fun_prop)).map
+    exact (IsOraclePPTOn.query_take () hreq (limit := fun _ => 1) (by fun_prop)).map
       (by fun_prop)
   · convert hSpec A hA using 1
     funext a

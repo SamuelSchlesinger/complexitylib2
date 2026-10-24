@@ -49,6 +49,6 @@ theorem PolyTimeReducible.mem_IP {encA : α ↪ List Bool} {encB : β ↪ List B
     {B : Set β} (hAB : PolyTimeReducible encA encB A B) (hB : B ∈ IP encB) : A ∈ IP encA := by
   obtain ⟨f, hf, hfA⟩ := hAB
   obtain ⟨verifier, hV, hproof⟩ := hB
-  exact ⟨fun a => verifier (f a), hV.preprocess hf.tidy, hproof.comp hfA⟩
+  exact ⟨fun a => verifier (f a), hV.preprocess hf, hproof.comp hfA⟩
 
 end Cslib.Complexity

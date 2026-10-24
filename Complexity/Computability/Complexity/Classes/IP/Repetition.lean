@@ -113,8 +113,8 @@ theorem isOraclePPTOn_sequentialRepeat [DecidableEq Operation] [Finite Operation
   induction k with
   | zero => exact (ComputableTidilyInPolyTime.const true).isOraclePPTOn
   | succ k ih =>
-    exact h.bind_with (IsOraclePPTOn.cond (ComputableTidilyInPolyTime.snd input encBool)
-      (ih.preprocess (ComputableTidilyInPolyTime.fst input encBool))
+    exact h.bind_with (IsOraclePPTOn.cond (ComputableInPolyTime.snd input encBool)
+      (ih.preprocess (ComputableInPolyTime.fst input encBool))
       (ComputableTidilyInPolyTime.const false).isOraclePPTOn)
 
 end Cslib.Complexity
