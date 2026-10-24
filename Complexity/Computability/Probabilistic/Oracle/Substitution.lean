@@ -13,6 +13,8 @@ import Complexity.Languages.Probabilistic.Oracle.Simulation
 import Complexity.Languages.Probabilistic.Simulation
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Open stateful oracle substitution
 
@@ -78,7 +80,8 @@ theorem IsOraclePPTOn.run_interpret_preprocess_open
         (ProbOracleComp.handler
           (fun n => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin n))) (handler a))
           (program (prepare a))).run (initial a)) := by
-  obtain ⟨resourceCoeff, resourceDegree, hbound⟩ := hresources.polyBounded_length.exists_le
+  obtain ⟨resourceCoeff, resourceDegree, hbound⟩ :=
+    (ComputableInPolyTime.of_tidy hresources).polyBounded_length.exists_le
   let allowance := fun size => resourceCoeff * (2 * size + 2) ^ resourceDegree
   have hallowance : PolynomiallyBounded allowance := by unfold allowance; fun_prop
   have hbound' (a : Caller) (query : List Bool) :
@@ -89,14 +92,15 @@ theorem IsOraclePPTOn.run_interpret_preprocess_open
       (Nat.pow_le_pow_left (by lia) resourceDegree))
   obtain ⟨_, k, Control, hfinite, machine, c, d, hrealize⟩ := hprogram
   let _ := hfinite
-  have hword : ComputableTidilyInPolyTime (fun a => source (prepare a)) input encBits :=
-    hprepare.of_enc_eq (fun _ => rfl)
-  have hcount : ComputableTidilyInPolyTime
+  have hword : ComputableInPolyTime (fun a => source (prepare a)) input encBits :=
+    (ComputableInPolyTime.of_tidy hprepare).of_enc_eq (fun _ => rfl)
+  have hcount : ComputableInPolyTime
       (fun a => c * ((source (prepare a)).length + 1) ^ d) input encUnary := by
-    have hclock : ComputableTidilyInPolyTime (fun n => c * (n + 1) ^ d) encUnary encUnary := by
+    have hclock : ComputableInPolyTime (fun n => c * (n + 1) ^ d) encUnary encUnary := by
       fun_prop
-    exact hclock.comp (ComputableTidilyInPolyTime.length_bits.comp hword)
-  have hrun := OpenOracleSimulation.isOraclePPTOn_run machine hword hcount hhandler hinitial
+    exact hclock.comp (ComputableInPolyTime.length_bits.comp hword)
+  have hrun := OpenOracleSimulation.isOraclePPTOn_run machine
+    hword.tidy hcount.tidy hhandler hinitial
     invariant hinit hallowance (fun a request state hstate result hresult => by
       obtain ⟨hstate', hreply, hgrowth⟩ := hpreserve a request state hstate result hresult
       exact ⟨hstate', hreply.trans (hbound' a request.2),
@@ -137,19 +141,21 @@ theorem IsOraclePPTOn.interpret_bitQueries
         (fun r => (r, ())) <$> (List.take 1 <$> ProbOracleComp.query
           (spec := fun _ : Unit × List Bool => List Bool) ((), request pair.2.1.2))) :=
     (IsOraclePPTOn.query_take () (request := fun pair : α × (Unit × List Bool) × Unit =>
-      request pair.2.1.2) (limit := fun _ => 1) (hrequest.comp (by fun_prop))
-      (by fun_prop)).map (by fun_prop)
+      request pair.2.1.2) (limit := fun _ => 1)
+      ((ComputableInPolyTime.of_tidy hrequest).comp (by fun_prop)).tidy
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)).map
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
   have hsub := hprogram.run_interpret_preprocess_open (State := Unit)
     (handler := fun _ q _ => (fun r => (r, ())) <$> (List.take 1 <$> ProbOracleComp.query
       (spec := fun _ : Unit × List Bool => List Bool) ((), request q.2)))
     (prepare := id) (initial := fun _ => ()) (resources := fun _ _ => 1)
-    ComputableTidilyInPolyTime.id' hhandler (ComputableTidilyInPolyTime.const ())
-    (fun _ _ => True) (fun _ => trivial) (ComputableTidilyInPolyTime.const 1)
+    ComputableInPolyTime.id'.tidy hhandler (ComputableInPolyTime.const ()).tidy
+    (fun _ _ => True) (fun _ => trivial) (ComputableInPolyTime.const 1).tidy
     (fun a query state _ result hresult => by
       obtain ⟨r, hr, rfl⟩ := ProbOracleComp.mem_support_map hresult
       obtain ⟨r', -, rfl⟩ := ProbOracleComp.mem_support_map hr
       exact ⟨trivial, List.length_take_le _ _, Nat.le_add_right _ _⟩)
-  refine (hsub.map (ComputableTidilyInPolyTime.fst output (encFinite Unit))).congr
+  refine (hsub.map (ComputableInPolyTime.fst output (encFinite Unit)).tidy).congr
     fun a State oracle s => ?_
   congr 2
   rw [OracleComp.interpret_interpret, OracleComp.interpret_interpret]

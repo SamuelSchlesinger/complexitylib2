@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Probabilistic.Oracle.Normalization
 public import Complexity.Computability.Probabilistic.PPT
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Composing strict oracle PPT programs
@@ -66,7 +67,8 @@ theorem query_take [Finite Operation] (op : Operation) {request : α → List Bo
     IsOraclePPTOn input encBits (fun a => List.take (limit a) <$>
       ProbOracleComp.query (spec := fun _ : Operation × List Bool => List Bool)
         (op, request a)) :=
-  ((IsTidyOraclePPTOn.query_take op).preprocess (hrequest.prod hlimit)).isOraclePPTOn
+  ((IsTidyOraclePPTOn.query_take op).preprocess
+    ((ComputableInPolyTime.of_tidy hrequest).prod (.of_tidy hlimit)).tidy).isOraclePPTOn
 
 /-- Sequence two strict oracle PPT programs. The intermediate output length bounds the
 continuation's clock, and every effect of both phases on the shared oracle is retained. -/
@@ -90,7 +92,7 @@ theorem pair {program : α → WordOracleComp Operation γ} {f : α → β}
 theorem keep_input {program : α → WordOracleComp Operation β}
     (hprogram : IsOraclePPTOn input middle program) :
     IsOraclePPTOn input (encPair input middle) (fun a => (fun b => (a, b)) <$> program a) :=
-  hprogram.pair ComputableTidilyInPolyTime.id'
+  hprogram.pair ComputableInPolyTime.id'.tidy
 
 /-- A continuation may use both the caller's input and the first result. -/
 @[fun_prop]
@@ -223,7 +225,7 @@ theorem iterate_of_bounded_growth {initial : α → σ} {count : α → ℕ}
       (stateEncoding next).length ≤ (stateEncoding state).length + growth) :
     IsOraclePPTOn input stateEncoding (fun a => OracleComp.iterate (count a) step (initial a)) :=
   iterateWith_of_bounded_growth (step := fun _ => step) hcount hinitial
-    (hstep.preprocess (ComputableTidilyInPolyTime.snd input stateEncoding))
+    (hstep.preprocess (ComputableInPolyTime.snd input stateEncoding).tidy)
     (.const growth) (fun _ => hgrowth)
 
 end IsOraclePPTOn

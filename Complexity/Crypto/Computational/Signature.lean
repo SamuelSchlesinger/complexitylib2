@@ -11,6 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Probabilistic.Oracle.Parameter
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 import Complexity.Computability.Probabilistic.Oracle.Composition
@@ -128,7 +129,8 @@ theorem isPPTOn_sign_comp (S : SignatureScheme) {γ : Type} {encIn : γ ↪ List
     (hsk : ComputableTidilyInPolyTime sk encIn encBits)
     (hmsg : ComputableTidilyInPolyTime msg encIn encBits) :
     IsPPTOn encIn encBits (fun a => S.sign (sk a) (msg a)) :=
-  S.sign_ppt.preprocess (hsk.prod hmsg)
+  S.sign_ppt.preprocess
+    ((ComputableInPolyTime.of_tidy hsk).prod (.of_tidy hmsg)).tidy
 
 @[program_certificate, fun_prop]
 theorem computableTidilyInPolyTime_verify_comp (S : SignatureScheme)
@@ -137,7 +139,8 @@ theorem computableTidilyInPolyTime_verify_comp (S : SignatureScheme)
     (hmsg : ComputableTidilyInPolyTime msg encIn encBits)
     (hsig : ComputableTidilyInPolyTime sig encIn encBits) :
     ComputableTidilyInPolyTime (fun a => S.verify (pk a) (msg a) (sig a)) encIn encBool :=
-  S.verify_polyTime.tidy.comp (hpk.prod (hmsg.prod hsig))
+  (S.verify_polyTime.comp ((ComputableInPolyTime.of_tidy hpk).prod
+    ((ComputableInPolyTime.of_tidy hmsg).prod (.of_tidy hsig)))).tidy
 
 @[fun_prop]
 private theorem computableTidilyInPolyTime_contains {γ : Type} {encIn : γ ↪ List Bool}
@@ -152,7 +155,9 @@ private theorem computableTidilyInPolyTime_contains {γ : Type} {encIn : γ ↪ 
     simp only [beq_iff_eq]
     exact ⟨fun h => ⟨elem a, h, rfl⟩, fun ⟨_, h, heq⟩ => heq ▸ h⟩
   rw [heq]
-  exact ComputableTidilyInPolyTime.anyWithInput (test := fun a x => elem a == x) hlist (by polytime)
+  have helemPlain := ComputableInPolyTime.of_tidy helem
+  exact (ComputableInPolyTime.anyWithInput (test := fun a x => elem a == x)
+    (.of_tidy hlist) (by fun_prop)).tidy
 
 /-! ### Full adaptive chosen-message security (`EUFCMA`) -/
 
@@ -176,6 +181,7 @@ def eufCmaGame (S : SignatureScheme) (adversary : Forger) (n : ℕ) :
   return (out.1.1.length == n) && !out.2.contains out.1.1 &&
     S.verify keys.1 out.1.1 out.1.2
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Run the complete EUF-CMA experiment on its unary security parameter for any oracle-PPT
 forger. -/
 @[program_certificate]
@@ -202,8 +208,10 @@ theorem isPPTOn_eufCmaGame (S : SignatureScheme) {adversary : Forger}
       (initial := fun _ => ([] : List (List Bool)))
       (resources := fun caller query =>
         c * (2 * caller.2.2.length + query.length + 2) ^ d + 2 * query.length + 2)
-      (by fun_prop) hhandler (by fun_prop)
-      (fun _ _ => True) (fun _ => trivial) (by fun_prop)
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy) hhandler
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+      (fun _ _ => True) (fun _ => trivial)
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
     intro caller request queried _ result hresult
     simp only [signingOracle, ProbComp.eval_bind, ProbComp.eval_pure,
       PMF.mem_support_bind_iff, PMF.mem_support_pure_iff] at hresult
@@ -213,13 +221,21 @@ theorem isPPTOn_eufCmaGame (S : SignatureScheme) {adversary : Forger}
     refine ⟨trivial, by lia, ?_⟩
     simp only [encList_cons, List.length_append, length_frame, encBits_apply]
     lia
+  have hcontains : ComputableInPolyTime
+      (fun pair : (ℕ × (List Bool × List Bool)) × ((List Bool × List Bool) × List (List Bool)) =>
+        pair.2.2.contains pair.2.1.1)
+      (encPair (encPair encUnary (encPair encBits encBits))
+        (encPair (encPair encBits encBits) (encList encBits))) encBool :=
+    .of_tidy (computableTidilyInPolyTime_contains
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy))
   have hpost : ComputableTidilyInPolyTime
       (fun pair : (ℕ × (List Bool × List Bool)) × ((List Bool × List Bool) × List (List Bool)) =>
         (pair.2.1.1.length == pair.1.1) && !pair.2.2.contains pair.2.1.1 &&
           S.verify pair.1.2.1 pair.2.1.1 pair.2.1.2)
       (encPair (encPair encUnary (encPair encBits encBits))
         (encPair (encPair encBits encBits) (encList encBits))) encBool := by
-    polytime
+    exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
   exact S.keyGen_ppt.bind_with (hrun.bind_with hpost.isPPTOn)
 
 /-- The EUF-CMA experiment is uniformly strict PPT, independently of unused auxiliary input. -/
@@ -227,7 +243,7 @@ theorem isPPTOn_eufCmaGame (S : SignatureScheme) {adversary : Forger}
 theorem isPPT_eufCmaGame (S : SignatureScheme) {adversary : Forger}
     (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
     IsPPT encBool (fun n _ => S.eufCmaGame adversary n) :=
-  ((S.isPPTOn_eufCmaGame hadversary).preprocess (ComputableTidilyInPolyTime.fst _ _)).isPPT
+  ((S.isPPTOn_eufCmaGame hadversary).preprocess (ComputableInPolyTime.fst _ _).tidy).isPPT
 
 /-- Existential unforgeability under adaptive chosen-message attack (EUF-CMA) against uniform
 strict oracle-PPT adversaries. -/
@@ -277,6 +293,7 @@ def eufOneTimeGame (S : SignatureScheme) (adversary : Forger) (n : ℕ) :
   return (out.1.1.length == n) && !out.2.contains out.1.1 &&
     S.verify keys.1 out.1.1 out.1.2
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Running an oracle-PPT forger against `oneTimeSigningOracle` is uniformly strict PPT in the
 unary security parameter, public key, and secret key. -/
 @[program_certificate]
@@ -296,14 +313,19 @@ theorem isPPTOn_run_oneTimeSigningOracle (S : SignatureScheme) {adversary : Forg
       (fun pair : (ℕ × (List Bool × List Bool)) × ((Unit × List Bool) × List (List Bool)) =>
         S.oneTimeSigningOracle pair.1.2.2 pair.2.1 pair.2.2) := by
     unfold oneTimeSigningOracle
-    ppt
+    apply IsPPTOn.ite
+    · exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
+    · ppt
+    · exact (by fun_prop : ComputableInPolyTime _ _ _).tidy.isPPTOn
   apply hadversary.run_interpret_preprocess
     (prepare := fun caller : ℕ × (List Bool × List Bool) => (caller.1, caller.2.1))
     (initial := fun _ => ([] : List (List Bool)))
     (resources := fun caller query =>
       c * (2 * caller.2.2.length + query.length + 2) ^ d + 2 * query.length + 2)
-    (by fun_prop) hhandler (by fun_prop)
-    (fun _ _ => True) (fun _ => trivial) (by fun_prop)
+    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy) hhandler
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+    (fun _ _ => True) (fun _ => trivial)
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
   intro caller request queried _ result hresult
   unfold oneTimeSigningOracle at hresult
   split_ifs at hresult with hempty
@@ -321,6 +343,7 @@ theorem isPPTOn_run_oneTimeSigningOracle (S : SignatureScheme) {adversary : Forg
     subst result
     exact ⟨trivial, by simp, by lia⟩
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Run the complete one-time EUF-CMA experiment on its unary security parameter for any oracle-PPT
 forger. -/
 @[program_certificate]
@@ -328,13 +351,21 @@ theorem isPPTOn_eufOneTimeGame (S : SignatureScheme) {adversary : Forger}
     (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
     IsPPTOn encUnary encBool (S.eufOneTimeGame adversary) := by
   have hrun := S.isPPTOn_run_oneTimeSigningOracle hadversary
+  have hcontains : ComputableInPolyTime
+      (fun pair : (ℕ × (List Bool × List Bool)) × ((List Bool × List Bool) × List (List Bool)) =>
+        pair.2.2.contains pair.2.1.1)
+      (encPair (encPair encUnary (encPair encBits encBits))
+        (encPair (encPair encBits encBits) (encList encBits))) encBool :=
+    .of_tidy (computableTidilyInPolyTime_contains
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy))
   have hpost : ComputableTidilyInPolyTime
       (fun pair : (ℕ × (List Bool × List Bool)) × ((List Bool × List Bool) × List (List Bool)) =>
         (pair.2.1.1.length == pair.1.1) && !pair.2.2.contains pair.2.1.1 &&
           S.verify pair.1.2.1 pair.2.1.1 pair.2.1.2)
       (encPair (encPair encUnary (encPair encBits encBits))
         (encPair (encPair encBits encBits) (encList encBits))) encBool := by
-    polytime
+    exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
   exact S.keyGen_ppt.bind_with (hrun.bind_with hpost.isPPTOn)
 
 /-- The one-time EUF-CMA experiment is uniformly strict PPT, independently of unused auxiliary
@@ -343,7 +374,7 @@ input. -/
 theorem isPPT_eufOneTimeGame (S : SignatureScheme) {adversary : Forger}
     (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
     IsPPT encBool (fun n _ => S.eufOneTimeGame adversary n) :=
-  ((S.isPPTOn_eufOneTimeGame hadversary).preprocess (ComputableTidilyInPolyTime.fst _ _)).isPPT
+  ((S.isPPTOn_eufOneTimeGame hadversary).preprocess (ComputableInPolyTime.fst _ _).tidy).isPPT
 
 /-- Existential unforgeability under one-time adaptive chosen-message attack against uniform strict
 oracle-PPT adversaries. -/
@@ -489,6 +520,7 @@ def oneTimeFilterHandler (bound : ℕ → ℕ → ℕ) (caller : ℕ × List Boo
       (fun sig => (sig, true)) <$> (List.take (bound caller.1 request.2.length) <$>
         ProbOracleComp.query ((), request.2))
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Wrap an adaptive forger so that it issues at most one external signing query. -/
 def limitToOneQuery (bound : ℕ → ℕ → ℕ) (adversary : Forger) : Forger :=
   fun n pk =>
@@ -515,30 +547,30 @@ theorem isOraclePPT_limitToOneQuery {bound : ℕ → ℕ → ℕ}
         (encPair (encPair encUnary encBits)
           (encPair (encPair (encFinite Unit) encBits) encBool))
         (encPair encUnary encUnary) := by
-      polytime
-    have hbound' := hbound.comp hprep1
+      exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
+    have hbound' := ((ComputableInPolyTime.of_tidy hbound).comp (.of_tidy hprep1)).tidy
     have hq : IsOraclePPTOn
         (encPair (encPair encUnary encBits)
           (encPair (encPair (encFinite Unit) encBits) encBool))
         encBits
         (fun p : (ℕ × List Bool) × ((Unit × List Bool) × Bool) =>
           List.take (bound p.1.1 p.2.1.2.length) <$> ProbOracleComp.query ((), p.2.1.2)) :=
-      IsOraclePPTOn.query_take () (by polytime) hbound'
+      IsOraclePPTOn.query_take () (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy) hbound'
     have hpair : ComputableTidilyInPolyTime (fun sig : List Bool => (sig, true))
         encBits (encPair encBits encBool) := by
-      polytime
+      exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
     have hyes : IsOraclePPTOn
         (encPair (encPair encUnary encBits)
           (encPair (encPair (encFinite Unit) encBits) encBool))
         (encPair encBits encBool)
         (fun _ => pure ([], true)) :=
-      (ComputableTidilyInPolyTime.const ([], true)).isOraclePPTOn (Operation := Unit)
+      (ComputableInPolyTime.const ([], true)).tidy.isOraclePPTOn (Operation := Unit)
     have hcond : ComputableTidilyInPolyTime
         (fun p : (ℕ × List Bool) × ((Unit × List Bool) × Bool) => p.2.2)
         (encPair (encPair encUnary encBits)
           (encPair (encPair (encFinite Unit) encBits) encBool))
         encBool := by
-      polytime
+      exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
     exact IsOraclePPTOn.cond hcond hyes (hq.map hpair)
   have hrun : IsOraclePPTOn (encPair encUnary encBits)
       (encPair (encPair encBits encBits) encBool)
@@ -552,16 +584,17 @@ theorem isOraclePPT_limitToOneQuery {bound : ℕ → ℕ → ℕ}
       (prepare := id)
       (initial := fun _ => false)
       (resources := fun caller query => bound caller.1 query.length + 1)
-      (by fun_prop) hhandler (by fun_prop)
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy) hhandler
+      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
       (fun _ _ => True) (fun _ => trivial)
       (by
         have hprep2 : ComputableTidilyInPolyTime
             (fun pair : (ℕ × List Bool) × List Bool => (pair.1.1, pair.2.length))
             (encPair (encPair encUnary encBits) encBits)
             (encPair encUnary encUnary) := by
-          polytime
-        have hb := hbound.comp hprep2
-        polytime)
+          exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
+        have hb := ((ComputableInPolyTime.of_tidy hbound).comp (.of_tidy hprep2)).tidy
+        exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
     intro caller request state _ result hresult
     unfold oneTimeFilterHandler at hresult
     split_ifs at hresult with hstate
@@ -574,7 +607,7 @@ theorem isOraclePPT_limitToOneQuery {bound : ℕ → ℕ → ℕ}
       · exact (List.length_take_le _ _).trans (by lia)
       · simp [encBool_apply]
   unfold limitToOneQuery
-  exact (hrun.map (ComputableTidilyInPolyTime.fst _ _)).isOraclePPT
+  exact (hrun.map (ComputableInPolyTime.fst _ _).tidy).isOraclePPT
 
 private theorem run_limitToOneQuery_eq_oneTimeSigningOracle (S : SignatureScheme)
     (bound : ℕ → ℕ → ℕ) (n : ℕ) (pk sk : List Bool)
@@ -673,6 +706,7 @@ private theorem run_limitToOneQuery_eq_oneTimeSigningOracle (S : SignatureScheme
     prog (false, []) rfl
   exact hsim
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Full EUF-CMA security implies one-time EUF-CMA security. -/
 theorem EUFCMA.oneTimeEUFCMA {S : SignatureScheme} (h : S.EUFCMA) : S.OneTimeEUFCMA := by
   obtain ⟨ck, dk, hlenk⟩ := S.keyGen_ppt.length_le
@@ -682,7 +716,7 @@ theorem EUFCMA.oneTimeEUFCMA {S : SignatureScheme} (h : S.EUFCMA) : S.OneTimeEUF
   have hbound_poly : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => bound p.1 p.2)
       (encPair encUnary encUnary) encUnary := by
     dsimp [bound, skBound]
-    polytime
+    exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
   apply OneTimeEUFCMA.of_negligible
   intro adversary hadversary
   have hred := h.negligible (limitToOneQuery bound adversary)
