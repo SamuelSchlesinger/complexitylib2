@@ -12,6 +12,7 @@ public import Complexity.Computability.Complexity.Classes.Hierarchy
 public import Complexity.Computability.Complexity.Classes.Hierarchy.ShortDesc
 public import Complexity.Computability.Complexity.Classes.Time
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Constructible
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 

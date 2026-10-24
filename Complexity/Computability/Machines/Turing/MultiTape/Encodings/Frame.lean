@@ -17,6 +17,11 @@ import Mathlib.Data.List.GetD
 (`Turing.MultiTapeTM.frame`). Its bits are therefore constants or bits of `w`
 (`Turing.MultiTapeTM.getElem_frame`), which is what makes framed inputs easy to feed to circuits.
 
+A frame followed by a word, as written on a work tape, splits at each framed bit into the pairs
+before it, the pair `true, c` of the bit `c`, and the frame of the rest
+(`Turing.MultiTapeTM.frame_append_cons`), so a machine can locate the tag and the bit of each pair
+and overwrite the bit in place (`Turing.MultiTapeTM.set_frame_append_cons`).
+
 ## Main results
 
 * `Turing.MultiTapeTM.getElem_frame`: the bit at each position of `frame w`.
@@ -32,6 +37,14 @@ import Mathlib.Data.List.GetD
 * `Turing.MultiTapeTM.length_flatMap_frame`: the length of a list of framed words.
 * `Turing.MultiTapeTM.length_unframe_le`: the word framed at the start of a word is no longer than
   the word.
+* `Turing.MultiTapeTM.frame_append_cons`: a frame split at a framed bit.
+* `Turing.MultiTapeTM.getElem?_frame_append_length`,
+  `Turing.MultiTapeTM.getElem?_frame_append_cons`: the terminator and the tags of a frame followed
+  by a word.
+* `Turing.MultiTapeTM.lt_length_frame_append_cons`,
+  `Turing.MultiTapeTM.two_mul_length_le_length_frame_append`: positions within a frame followed by
+  a word.
+* `Turing.MultiTapeTM.set_frame_append_cons`: overwriting a framed bit in place.
 -/
 
 @[expose] public section
@@ -202,5 +215,53 @@ theorem length_unframe_le : ∀ w : List Bool, (unframe w).length ≤ w.length
     have := length_unframe_le v
     omega
   | [] | [true] | false :: _ => by simp [unframe]
+
+/-! ### Frames followed by a word -/
+
+private theorem length_flatMap_pair (w : List Bool) :
+    (w.flatMap fun b => [true, b]).length = 2 * w.length := by
+  induction w with
+  | nil => rfl
+  | cons b w ih =>
+    simp only [List.flatMap_cons, List.length_append, ih, List.length_cons, List.length_nil]
+    omega
+
+/-- A frame split at a symbol. -/
+theorem frame_append_cons (w v : List Bool) (c : Bool) :
+    frame (w ++ c :: v) = (w.flatMap fun b => [true, b]) ++ true :: c :: frame v := by
+  simp [frame]
+
+/-- After the pairs of a frame comes its terminator `false`. -/
+theorem getElem?_frame_append_length (w x : List Bool) :
+    (frame w ++ x)[2 * w.length]? = some false := by
+  rw [frame, List.append_assoc, List.getElem?_append_right (by rw [length_flatMap_pair]),
+    length_flatMap_pair]
+  simp
+
+/-- Each pair of a frame starts with the tag `true`. -/
+theorem getElem?_frame_append_cons (w v x : List Bool) (c : Bool) :
+    (frame (w ++ c :: v) ++ x)[2 * w.length]? = some true := by
+  rw [frame_append_cons, List.append_assoc,
+    List.getElem?_append_right (by rw [length_flatMap_pair]), length_flatMap_pair]
+  simp
+
+/-- The second cell of a pair of a frame lies within the word. -/
+theorem lt_length_frame_append_cons (w v x : List Bool) (c : Bool) :
+    2 * w.length + 1 < (frame (w ++ c :: v) ++ x).length := by
+  simp only [List.length_append, length_frame, List.length_cons]
+  omega
+
+/-- Setting the second cell of a pair of a frame replaces the framed symbol. -/
+theorem set_frame_append_cons (w v x : List Bool) (c b : Bool) :
+    (frame (w ++ c :: v) ++ x).set (2 * w.length + 1) b = frame (w ++ b :: v) ++ x := by
+  rw [frame_append_cons, frame_append_cons, List.append_assoc, List.append_assoc,
+    List.set_append_right _ _ (by rw [length_flatMap_pair]; omega), length_flatMap_pair]
+  simp
+
+/-- The pairs of a frame fit in the word. -/
+theorem two_mul_length_le_length_frame_append (w x : List Bool) :
+    2 * w.length ≤ (frame w ++ x).length := by
+  simp only [List.length_append, length_frame]
+  omega
 
 end Turing.MultiTapeTM

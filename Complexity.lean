@@ -560,7 +560,6 @@ public import Complexity.Computability.Complexity.Classes.FewP.Machine
 public import Complexity.Computability.Complexity.Classes.Hierarchy
 public import Complexity.Computability.Complexity.Classes.Hierarchy.ShortDesc
 public import Complexity.Computability.Complexity.Classes.Hierarchy.Space
-public import Complexity.Computability.Complexity.Classes.Hierarchy.SpaceUniversal
 public import Complexity.Computability.Complexity.Classes.Hierarchy.Time
 public import Complexity.Computability.Complexity.Classes.IP
 public import Complexity.Computability.Complexity.Classes.IP.CoinFixing
@@ -852,6 +851,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Tid
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Transducer
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Constructible
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
@@ -1080,6 +1080,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Machi
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.ResourceBound
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Space
+public import Complexity.Computability.Machines.Turing.MultiTape.Universal.SpaceBudget
 public import Complexity.Computability.Machines.Turing.SingleTape.Partrec
 public import Complexity.Computability.Machines.Turing.SingleTape.PostTuringMachine
 public import Complexity.Computability.Machines.Turing.TM2.ConfigBound
