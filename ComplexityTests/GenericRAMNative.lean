@@ -24,7 +24,7 @@ composition and automation, and distinct fault paths in checked scalar/instructi
 namespace ComplexityTests.GenericRAMNative
 
 open Cslib.GenericRAM Turing.MultiTapeTM
-open Turing.MultiTapeTM.ComputableTidilyInPolyTime
+open Turing.MultiTapeTM.ComputableInPolyTime
 open BoundedNat
 
 -- The bundle exists for an infinite runtime input domain, with every field polynomial.
@@ -71,9 +71,9 @@ example : IsComputable (fun p => (model.address p.1 p.2).isSome)
 
 -- Named certificates are reused without unfolding their implementations (via both `polytime` and
 -- `fun_prop`).
-example : ComputableTidilyInPolyTime (model.checkedOp ())
+example : ComputableInPolyTime (model.checkedOp ())
     (encPair encNat (encPi encNat)) (encOption encNat) := by polytime
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun k => (model.checkedConstant 7 k).getD 0) encNat encNat := by polytime
 example : ComputableInPolyTime
     (Cslib.WordRAM.Basis.standard.genericModel.checkedOp (.bin .add))
@@ -209,7 +209,7 @@ example : exactWord.checkedOp (.bin .mod) (2, ![3, 2]) = some 1 := by decide
 
 -- Complete native primitive bundles for standard, additive, arithmetic, and exact bases.
 example : Cslib.WordRAM.checkedAddCertificate.IsPolynomial :=
-  NativeCertificate.ofPolyTime_isPolynomial Cslib.WordRAM.checkedAdd_polyTime.tidy
+  NativeCertificate.ofPolyTime_isPolynomial Cslib.WordRAM.checkedAdd_polyTime
 example : Cslib.WordRAM.Basis.standard.nativePrimitives.IsPolynomial :=
   Cslib.WordRAM.Basis.standard.nativePrimitives_isPolynomial
 example : Cslib.WordRAM.Basis.additive.nativePrimitives.IsPolynomial :=
