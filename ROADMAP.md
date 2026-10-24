@@ -42,20 +42,27 @@ existing developments, source credit and saved branches remain available for a f
      3-copy masked-3SAT truth-table commitment zero-knowledge proof system for `ThreeSAT` and every
      `A ∈ NP` (`ZeroKnowledgeProof`, `zeroKnowledgeProofThreeSAT`,
      `OneWay.exists_zeroKnowledgeProof_of_mem_NP`) from any uniform one-way function via HILL and
-     Cook–Levin, with uniform zero knowledge over deterministic polynomial-time-generable
+     Cook–Levin, with uniform zero knowledge (`GenerableZeroKnowledge`,
+     `ZeroKnowledgeProof.generableZeroKnowledge`) over deterministic polynomial-time-generable
      instance/witness/auxiliary-input families `(x n, w n, z n)` (and fixed-instance security via
      `zero_knowledge_const`) at soundness error `1 / 3` (the proof bounds it by `1 / 8 + 2^{-(n+8)}`). Because the
      auxiliary input is a deterministic polynomial-time function of `1^n`, this does not reach the
-     auxiliary-input statement above.
-   - *Pointwise reduction milestone (#427):*
+     general auxiliary-input statement above.
+   - *Pointwise reduction and auxiliary-input interface milestones (#427, #698):*
      `GMW.gmwView_advantage_le` bounds every valid instance/witness/auxiliary tuple by
      `(7/8)^(n+1)` plus `dyadicSize(n+1) * dyadicSize(totalLen(f a))` times one concrete
      PRG-challenge advantage at seed size `n+7`. The final test receives `(n,a,z,view)`;
      `isPPTOn_gmwViewReduction` charges the complete encoded tuple and challenge, including
-     adaptive queries and retained verifier randomness/state. The old uniform-family security
-     theorem is a corollary. `gmwView_negligible_of_advice_prg` covers arbitrary families with
-     separate polynomial length bounds only under an explicit stronger advice-PRG premise.
-     No implication from current uniform one-wayness/HILL to that premise is proved. The direct
+     adaptive queries and retained verifier randomness/state. `AuxiliaryInputZeroKnowledge`
+     (`ZeroKnowledgeProof.AuxiliaryInputZeroKnowledge`) states the general auxiliary-input notion
+     for arbitrary polynomially bounded valid families against full-input uniform strict PPT
+     distinguishers, with the stronger-to-restricted bridge
+     `AuxiliaryInputZeroKnowledge.generableZeroKnowledge`. Under the explicit advice-PRG premise
+     `GMW.AdvicePRG` (`gmwView_negligible_of_advice_prg`), the GMW proof systems satisfy
+     `ZeroKnowledgeProof.AuxiliaryInputZeroKnowledge`
+     (`PseudorandomGenerator.auxiliaryInputZeroKnowledge_zeroKnowledgeProofOfReduction`,
+     `PseudorandomGenerator.exists_auxiliaryInputZeroKnowledge_of_mem_NP`).
+     No implication from current uniform one-wayness/HILL to `GMW.AdvicePRG` is proved. The direct
      pad-replacement proof does not require the separate Naor commitment-hiding theorem.
    - *Open (this priority):* zero knowledge in Goldreich's sense (Def. 4.3.10), for every
      `x ∈ L` with arbitrary auxiliary input `z` against probabilistic polynomial-time verifiers;

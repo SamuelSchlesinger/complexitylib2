@@ -53,6 +53,8 @@ The proof uses four distribution transformations:
 * `Cslib.Crypto.GMW.gmwRealWithPads`: a guessed-challenge attempt with supplied unopened pads.
 * `Cslib.Crypto.GMW.gmwRealPRGPads`, `Cslib.Crypto.GMW.gmwRealUniformPads`: its two pad sources.
 * `Cslib.Crypto.GMW.gmwViewReduction`: the single-challenge pointwise reduction.
+* `Cslib.Crypto.GMW.AdvicePRG`: explicit advice-supplied PRG premise at seed size `n + 7` for
+  arbitrary polynomially bounded instance, witness, and auxiliary-input families.
 
 ## Main results
 
@@ -1018,6 +1020,60 @@ theorem gmwView_negligible_of_advice_prg {α : Type} {enc : α ↪ List Bool}
   intro n
   simpa only [Nat.cast_mul] using
     gmwView_advantage_le generator length f Vstar adversary n (a n) (w n) (z n) (hw_sat n)
+
+/-- Explicit advice-PRG premise at GMW seed size `n + 7` for an instance encoding `enc`:
+`generator` has output length `length`, is computable in polynomial time, and its output at seed
+length `n + 7` is indistinguishable from uniform strings of length `length (n + 7)` against every
+full-input uniform strict PPT test supplied with arbitrary polynomially bounded instance, witness,
+and auxiliary-input families `(a, w, z)`.
+
+This stronger advice-supplied premise is **not** derived here from uniform `PseudorandomGenerator`
+security or uniform `OneWay` security. -/
+def AdvicePRG {α : Type} (enc : α ↪ List Bool) (generator : List Bool → List Bool)
+    (length : ℕ → ℕ) : Prop :=
+  ComputableInPolyTime generator encBits encBits ∧
+  (∀ s, (generator s).length = length s.length) ∧
+  ∀ test : (ℕ × (α × (List Bool × List Bool))) × List Bool → ProbComp Bool,
+    IsPPTOn
+      (encPair (encPair encUnary (encPair enc (encPair encBits encBits))) encBits)
+      encBool test →
+    ∀ (a : ℕ → α) (w z : ℕ → List Bool),
+      PolynomiallyBounded (fun n => (enc (a n)).length) →
+      PolynomiallyBounded (fun n => (w n).length) →
+      PolynomiallyBounded (fun n => (z n).length) →
+      Negligible (fun n => Game.advantage
+        (ProbComp.eval ((generator <$> BitString.sampleList (n + 7)) >>=
+          fun challenge => test ((n, a n, w n, z n), challenge)))
+        (ProbComp.eval (BitString.sampleList (length (n + 7)) >>=
+          fun challenge => test ((n, a n, w n, z n), challenge))))
+
+/-- Under `AdvicePRG enc generator length`, the real GMW interaction view and `gmwSimulator`
+have negligible distinguishing advantage against every full-input uniform strict PPT distinguisher
+across all polynomially bounded valid instance, witness, and auxiliary-input families. -/
+theorem AdvicePRG.gmwView_negligible {α : Type} {enc : α ↪ List Bool}
+    {generator : List Bool → List Bool} {length : ℕ → ℕ} {f : α → CNF ℕ}
+    {Vstar : ℕ → α → List Bool → WordOracleComp Unit (List Bool)}
+    {adversary : ℕ → α → List Bool → List Bool → ProbComp Bool}
+    (hAdv : AdvicePRG enc generator length)
+    (hf : ComputableInPolyTime f enc encCNF)
+    (hV : IsOraclePPTOn (encPair encUnary (encPair enc encBits)) encBits
+      (fun p => Vstar p.1 p.2.1 p.2.2))
+    (hadv : IsPPTOn (encPair (encPair encUnary (encPair enc encBits)) encBits) encBool
+      (fun p => adversary p.1.1 p.1.2.1 p.1.2.2 p.2))
+    {a : ℕ → α} {w z : ℕ → List Bool}
+    (ha : PolynomiallyBounded (fun n => (enc (a n)).length))
+    (hw : PolynomiallyBounded (fun n => (w n).length))
+    (hz : PolynomiallyBounded (fun n => (z n).length))
+    (hw_sat : ∀ n, ThreeSAT.verifier (f (a n), w n) = true) :
+    Negligible (fun n => Game.advantage
+      (distinguishingGame
+        (((gmwProver generator (n + 7) (length (n + 7)) (f (a n)) (w n)).run
+          (Vstar n (a n) (z n))
+          (gmwProver generator (n + 7) (length (n + 7)) (f (a n)) (w n)).init).map Prod.fst)
+        (adversary n (a n) (z n)))
+      (distinguishingGame (ProbComp.eval (gmwSimulator generator length f Vstar n (a n) (z n)))
+        (adversary n (a n) (z n)))) :=
+  gmwView_negligible_of_advice_prg hAdv.1.tidy hAdv.2.1 hf.tidy hV hadv hAdv.2.2 ha hw hz hw_sat
 
 /-- **Zero-knowledge simulation of the 3-copy GMW protocol.** For any uniform strict oracle PPT
 malicious verifier `Vstar` and any deterministic polynomial-time families of instances `a`, valid
