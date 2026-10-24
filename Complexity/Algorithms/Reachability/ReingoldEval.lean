@@ -17,7 +17,7 @@ a constant number of labels of extra memory per level, as in the proof of
 [Reingold, Lemma 3.4][Reingold2008]. Reingold's step takes the eighth power of `G ⓩ H` and keeps
 sixteen labels of `H` in a label of `G_ℓ`; the step here takes the square and keeps four. A
 vertex of `G_m` is a vertex `v` of `G` followed by `m` labels `r₀, …, r_{m-1}`
-(`Cslib.RotationMap.ReingoldVertex.toList`), and its rotation along a label `a` changes these
+(`Cslib.IteratedProd.toList`), and its rotation along a label `a` changes these
 registers in place: a step of `G_m = ((G_{m-1} ⓩ H) ^ 2).relabel e.symm` is a step of `H` from the
 label `r_{m-1}`, a recursive rotation of `G_{m-1}`, and a step of `H`, twice, and the four labels of
 `H` it uses and produces are stored in `a` itself, which a fixed permutation of these four labels
@@ -34,7 +34,7 @@ at the far end, the frame popped (`exists_iterate_reingoldEvalStep`).
 
 ## Main definitions
 
-* `Cslib.RotationMap.ReingoldVertex.toList`: the vertex of `G` and the labels of a vertex of
+* `Cslib.IteratedProd.toList`: the vertex of `G` and the labels of a vertex of
   `G_m`.
 * `Cslib.RotationMap.reingoldHStep`, `Cslib.RotationMap.reingoldFinish`: the steps of `H` and
   the final permutation of a step of the transformation, on the labels.
@@ -254,19 +254,19 @@ moved to the next step; and a frame for level `k + 1`, freshly pushed with the l
 registers of a vertex `x`, reaches the registers of the rotation of `G_{k+1}` at `(x, a)` with the
 label at the far end below the frames, the frame popped. -/
 private theorem exists_iterate_call (k : ℕ) :
-    (∀ (y : ReingoldVertex V B k) (c a : B) (rest : List (ReingoldPc × B)),
+    (∀ (y : IteratedProd V B k) (c a : B) (rest : List (ReingoldPc × B)),
       ∃ N, (reingoldEvalStep H e G.rot)^[N]
           ⟨(y.toList).1, c :: (y.toList).2, (.call₀, a) :: rest⟩ =
         ⟨(((reingold H e G k).rot (y, c)).1.toList).1,
           ((reingold H e G k).rot (y, c)).2 :: (((reingold H e G k).rot (y, c)).1.toList).2,
           (.zag₀, a) :: rest⟩) ∧
-    (∀ (y : ReingoldVertex V B k) (c a : B) (rest : List (ReingoldPc × B)),
+    (∀ (y : IteratedProd V B k) (c a : B) (rest : List (ReingoldPc × B)),
       ∃ N, (reingoldEvalStep H e G.rot)^[N]
           ⟨(y.toList).1, c :: (y.toList).2, (.call₁, a) :: rest⟩ =
         ⟨(((reingold H e G k).rot (y, c)).1.toList).1,
           ((reingold H e G k).rot (y, c)).2 :: (((reingold H e G k).rot (y, c)).1.toList).2,
           (.zag₁, a) :: rest⟩) ∧
-    (∀ (x : ReingoldVertex V B (k + 1)) (a : B) (rest : List (ReingoldPc × B)),
+    (∀ (x : IteratedProd V B (k + 1)) (a : B) (rest : List (ReingoldPc × B)),
       ∃ N, (reingoldEvalStep H e G.rot)^[N]
           ⟨(x.toList).1, (x.toList).2, (.zig₀, a) :: rest⟩ =
         ⟨(((reingold H e G (k + 1)).rot (x, a)).1.toList).1,
@@ -275,14 +275,14 @@ private theorem exists_iterate_call (k : ℕ) :
   induction k with
   | zero =>
     -- a rotation of level `0` is one step of `G`
-    have hcall₀ : ∀ (y : ReingoldVertex V B 0) (c a : B) (rest : List (ReingoldPc × B)),
+    have hcall₀ : ∀ (y : IteratedProd V B 0) (c a : B) (rest : List (ReingoldPc × B)),
         ∃ N, (reingoldEvalStep H e G.rot)^[N]
             ⟨(y.toList).1, c :: (y.toList).2, (.call₀, a) :: rest⟩ =
           ⟨(((reingold H e G 0).rot (y, c)).1.toList).1,
             ((reingold H e G 0).rot (y, c)).2 :: (((reingold H e G 0).rot (y, c)).1.toList).2,
             (.zag₀, a) :: rest⟩ :=
       fun y c a rest ↦ ⟨1, rfl⟩
-    have hcall₁ : ∀ (y : ReingoldVertex V B 0) (c a : B) (rest : List (ReingoldPc × B)),
+    have hcall₁ : ∀ (y : IteratedProd V B 0) (c a : B) (rest : List (ReingoldPc × B)),
         ∃ N, (reingoldEvalStep H e G.rot)^[N]
             ⟨(y.toList).1, c :: (y.toList).2, (.call₁, a) :: rest⟩ =
           ⟨(((reingold H e G 0).rot (y, c)).1.toList).1,
@@ -296,7 +296,7 @@ private theorem exists_iterate_call (k : ℕ) :
     -- a rotation of level `k + 1` pushes a frame and evaluates the level
     have hcall (pc next : ReingoldPc)
         (hpc : pc = .call₀ ∧ next = .zag₀ ∨ pc = .call₁ ∧ next = .zag₁)
-        (y : ReingoldVertex V B (k + 1)) (c a : B) (rest : List (ReingoldPc × B)) :
+        (y : IteratedProd V B (k + 1)) (c a : B) (rest : List (ReingoldPc × B)) :
         ∃ N, (reingoldEvalStep H e G.rot)^[N]
             ⟨(y.toList).1, c :: (y.toList).2, (pc, a) :: rest⟩ =
           ⟨(((reingold H e G (k + 1)).rot (y, c)).1.toList).1,
@@ -306,7 +306,7 @@ private theorem exists_iterate_call (k : ℕ) :
       refine ⟨N + 1, ?_⟩
       rw [Function.iterate_succ_apply]
       have hne : (y.toList).2 ≠ [] := by
-        rw [ne_eq, ← List.length_eq_zero_iff, ReingoldVertex.length_toList]
+        rw [ne_eq, ← List.length_eq_zero_iff, IteratedProd.length_toList]
         exact Nat.succ_ne_zero k
       have hpush : reingoldEvalStep H e G.rot ⟨(y.toList).1, c :: (y.toList).2, (pc, a) :: rest⟩ =
           ⟨(y.toList).1, (y.toList).2, (.zig₀, c) :: (next, a) :: rest⟩ := by
@@ -319,19 +319,19 @@ private theorem exists_iterate_call (k : ℕ) :
 where
   /-- The evaluation of level `k + 1` from the rotations of level `k`. -/
   evalLevel (k : ℕ)
-      (hcall₀ : ∀ (y : ReingoldVertex V B k) (c a : B) (rest : List (ReingoldPc × B)),
+      (hcall₀ : ∀ (y : IteratedProd V B k) (c a : B) (rest : List (ReingoldPc × B)),
         ∃ N, (reingoldEvalStep H e G.rot)^[N]
             ⟨(y.toList).1, c :: (y.toList).2, (.call₀, a) :: rest⟩ =
           ⟨(((reingold H e G k).rot (y, c)).1.toList).1,
             ((reingold H e G k).rot (y, c)).2 :: (((reingold H e G k).rot (y, c)).1.toList).2,
             (.zag₀, a) :: rest⟩)
-      (hcall₁ : ∀ (y : ReingoldVertex V B k) (c a : B) (rest : List (ReingoldPc × B)),
+      (hcall₁ : ∀ (y : IteratedProd V B k) (c a : B) (rest : List (ReingoldPc × B)),
         ∃ N, (reingoldEvalStep H e G.rot)^[N]
             ⟨(y.toList).1, c :: (y.toList).2, (.call₁, a) :: rest⟩ =
           ⟨(((reingold H e G k).rot (y, c)).1.toList).1,
             ((reingold H e G k).rot (y, c)).2 :: (((reingold H e G k).rot (y, c)).1.toList).2,
             (.zag₁, a) :: rest⟩)
-      (x : ReingoldVertex V B (k + 1)) (a : B) (rest : List (ReingoldPc × B)) :
+      (x : IteratedProd V B (k + 1)) (a : B) (rest : List (ReingoldPc × B)) :
       ∃ N, (reingoldEvalStep H e G.rot)^[N]
           ⟨(x.toList).1, (x.toList).2, (.zig₀, a) :: rest⟩ =
         ⟨(((reingold H e G (k + 1)).rot (x, a)).1.toList).1,
@@ -363,7 +363,7 @@ where
     have hrot : (reingold H e G (k + 1)).rot ((y, c), a) = ((r₂.1, s₄.1), reingoldFinish e s₄.2) :=
       reingoldStep_rot H e (reingold H e G k) y c a
     refine ⟨1 + 1 + N₂ + 1 + 1 + N₁ + 1, ?_⟩
-    simp only [Function.iterate_add_apply, Function.iterate_one, ReingoldVertex.toList_succ]
+    simp only [Function.iterate_add_apply, Function.iterate_one, IteratedProd.toList_succ]
     rw [e₁, hN₁, e₂, e₃, hN₂, e₄, e₅, hrot]
     rfl
 
@@ -372,7 +372,7 @@ where
 `a` above the registers of a vertex `x` of `G_m`, the evaluation reaches the registers of the
 rotation `(x', a')` of `G_m` at `(x, a)`, with the label `a'` at the far end below the frames, and
 the frame popped. -/
-theorem exists_iterate_reingoldEvalStep {m : ℕ} (hm : m ≠ 0) (x : ReingoldVertex V B m) (a : B)
+theorem exists_iterate_reingoldEvalStep {m : ℕ} (hm : m ≠ 0) (x : IteratedProd V B m) (a : B)
     (rest : List (ReingoldPc × B)) :
     ∃ N, (reingoldEvalStep H e G.rot)^[N] ⟨(x.toList).1, (x.toList).2, (.zig₀, a) :: rest⟩ =
       ⟨(((reingold H e G m).rot (x, a)).1.toList).1,
