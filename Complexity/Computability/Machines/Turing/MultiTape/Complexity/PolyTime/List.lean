@@ -994,4 +994,11 @@ theorem bitsDropWithInput {α : Type} {input : α ↪ List Bool}
     ComputableInPolyTime (fun a => (list a).drop (count a)) input encBits :=
   .of_tidy (ComputableTidilyInPolyTime.bitsDropWithInput hlist.tidy hcount.tidy)
 
+/-- Length of a computed raw word, fixing the intermediate encoding for proof search. -/
+@[fun_prop]
+theorem length_bits_comp {α : Type} {input : α ↪ List Bool} {word : α → List Bool}
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => (word a).length) input encUnary :=
+  length_bits.comp hword
+
 end Turing.MultiTapeTM.ComputableInPolyTime
