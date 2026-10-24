@@ -554,13 +554,13 @@ def initCertificate (enc : M.Encoding)
       (ei a).length + (regs.space a + (default.space a + memory.space a)) := rfl
 
 /-- Construct a constant-register tuple `fun _ : Fin r => initReg a` via
-`ComputableTidilyInO.pi`. -/
+`ComputableInO.pi`. -/
 def constRegsCertificate (enc : M.Encoding) {initRegFn : α → M.Value}
     (initReg : NativeCertificate initRegFn ei enc.value) :
     NativeCertificate (fun a : α => fun _ : Fin r => initRegFn a) ei (encPi enc.value) where
   time a := (ei a).length + ∑ _i : Fin r, initReg.time a
   space a := (ei a).length + ∑ _i : Fin r, initReg.space a
-  computes := ComputableTidilyInO.pi (fun _ => initReg.computes)
+  computes := ComputableInO.pi (fun _ => initReg.computes)
 
 /-- Construct an initial finite configuration at `pc = 0` with constant registers `initReg`. -/
 def initConstCertificate (enc : M.Encoding)
@@ -575,7 +575,7 @@ def initConstCertificate (enc : M.Encoding)
 
 /-- Top-level native certificate for `init` on `(regs, default, memory)`. -/
 theorem init_inO (enc : M.Encoding) :
-    ComputableTidilyInO
+    ComputableInO
       (fun q : (Fin r → M.Value) × M.Value × SparseMemory M.Address M.Value =>
         init q.1 q.2.1 q.2.2)
       (initEncoding (r := r) enc) (encoding enc)
@@ -585,7 +585,7 @@ theorem init_inO (enc : M.Encoding) :
       (id : (Fin r → M.Value) × M.Value × SparseMemory M.Address M.Value →
         (Fin r → M.Value) × M.Value × SparseMemory M.Address M.Value)
       (initEncoding (r := r) enc) (initEncoding (r := r) enc) :=
-    linear ComputableTidilyInDegree.id'.inO_one
+    linear ComputableInDegree.id'.inO_one
   have h := (initCertificate enc (fst idInit) (fst (snd idInit)) (snd (snd idInit))).computes
   exact h.mono_le (fun _ => by simp [idInit, initCertificate_time]; omega)
     (fun _ => by simp [idInit, initCertificate_space]; omega)
@@ -598,13 +598,13 @@ def continuingCertificate (enc : M.Encoding) :
       (resultEncoding enc) (encOption (encoding enc)) := by
   let hid : NativeCertificate (id : Result M r → Result M r)
       (resultEncoding enc) (resultEncoding enc) :=
-    linear ComputableTidilyInDegree.id'.inO_one
+    linear ComputableInDegree.id'.inO_one
   let hleft : NativeCertificate
       (fun p : Result M r × (FiniteState M r ⊕ M.Value) => Sum.getLeft? p.2)
       (encPair (resultEncoding enc) (encSum (encoding enc) enc.value))
       (encOption (encoding enc)) :=
     post (payload (resultEncoding enc) (encSum (encoding enc) enc.value))
-      (ComputableTidilyInO.getLeft? (encoding enc) enc.value)
+      (ComputableInO.getLeft? (encoding enc) enc.value)
   let hopt := option hid (const none) hleft
   refine ⟨fun res => (resultEncoding enc res).length,
     fun res => (resultEncoding enc res).length, ?_⟩
@@ -625,13 +625,13 @@ def outputCertificate (enc : M.Encoding) :
       (resultEncoding enc) (encOption enc.value) := by
   let hid : NativeCertificate (id : Result M r → Result M r)
       (resultEncoding enc) (resultEncoding enc) :=
-    linear ComputableTidilyInDegree.id'.inO_one
+    linear ComputableInDegree.id'.inO_one
   let hright : NativeCertificate
       (fun p : Result M r × (FiniteState M r ⊕ M.Value) => Sum.getRight? p.2)
       (encPair (resultEncoding enc) (encSum (encoding enc) enc.value))
       (encOption enc.value) :=
     post (payload (resultEncoding enc) (encSum (encoding enc) enc.value))
-      (ComputableTidilyInO.getRight? (encoding enc) enc.value)
+      (ComputableInO.getRight? (encoding enc) enc.value)
   let hopt := option hid (const none) hright
   refine ⟨fun res => (resultEncoding enc res).length,
     fun res => (resultEncoding enc res).length, ?_⟩
@@ -677,9 +677,9 @@ theorem iterate_round_inl (p : Program M r) (n : ℕ) (k : M.Config) (s : Finite
 def stepResultCertificate (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Program M r) :
     NativeCertificate (fun q : M.Config × Result M r => stepResult q.1 p q.2)
       (loopEncoding enc) (resultEncoding enc) :=
-  let idLoop := linear (ei := loopEncoding enc) ComputableTidilyInDegree.id'.inO_one
+  let idLoop := linear (ei := loopEncoding enc) ComputableInDegree.id'.inO_one
   let idBody := linear
-    (ei := encPair (loopEncoding enc) (encoding enc)) ComputableTidilyInDegree.id'.inO_one
+    (ei := encPair (loopEncoding enc) (encoding enc)) ComputableInDegree.id'.inO_one
   congr
     (option ((continuingCertificate enc).comp (snd idLoop))
       (snd idLoop)
@@ -689,7 +689,7 @@ def stepResultCertificate (enc : M.Encoding) (N : M.NativePrimitives enc) (p : P
 /-- Native certificate for one clocked simulation round on `M.Config × Result M r`. -/
 def roundCertificate (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Program M r) :
     NativeCertificate (round p) (loopEncoding enc) (loopEncoding enc) :=
-  let idLoop := linear (ei := loopEncoding enc) ComputableTidilyInDegree.id'.inO_one
+  let idLoop := linear (ei := loopEncoding enc) ComputableInDegree.id'.inO_one
   prod (fst idLoop) (stepResultCertificate enc N p)
 
 /-- Prepare the initial loop state `(k, some (.inl s))` from `(n, (k, s))`. -/
@@ -698,14 +698,14 @@ def initLoopCertificate (enc : M.Encoding) :
       (fun q : ℕ × (M.Config × FiniteState M r) =>
         (q.2.1, (Option.some (.inl q.2.2) : Result M r)))
       (runInputEncoding enc) (loopEncoding enc) :=
-  let idIn := linear (ei := runInputEncoding enc) ComputableTidilyInDegree.id'.inO_one
+  let idIn := linear (ei := runInputEncoding enc) ComputableInDegree.id'.inO_one
   prod (fst (snd idIn)) (some (inl (snd (snd idIn)) enc.value))
 
 /-- Native certificate for clocked multi-step execution `run q.2.1 p q.1 q.2.2`. -/
 def runCertificate (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Program M r) :
     NativeCertificate (fun q : ℕ × (M.Config × FiniteState M r) => run q.2.1 p q.1 q.2.2)
       (runInputEncoding enc) (resultEncoding enc) :=
-  let idIn := linear (ei := runInputEncoding enc) ComputableTidilyInDegree.id'.inO_one
+  let idIn := linear (ei := runInputEncoding enc) ComputableInDegree.id'.inO_one
   congr
     (snd (iterate (fst idIn) (initLoopCertificate enc) (roundCertificate enc N p)))
     (fun q => by simp [iterate_round_inl])
@@ -723,7 +723,7 @@ def runSpace (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Program M r) :
 /-- One finite native machine implements clocked multi-step execution uniformly across step
 budgets, runtime configurations, and finite states. -/
 theorem run_inO (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Program M r) :
-    ComputableTidilyInO (fun q : ℕ × (M.Config × FiniteState M r) => run q.2.1 p q.1 q.2.2)
+    ComputableInO (fun q : ℕ × (M.Config × FiniteState M r) => run q.2.1 p q.1 q.2.2)
       (runInputEncoding enc) (resultEncoding enc)
       (runTime enc N p) (runSpace enc N p) :=
   (runCertificate enc N p).computes
@@ -740,9 +740,9 @@ def evalCertificate (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Program
 @[simp] theorem evalCertificate_space (enc : M.Encoding) (N : M.NativePrimitives enc)
     (p : Program M r) : (evalCertificate enc N p).space = runSpace enc N p := rfl
 
-/-- Native `ComputableTidilyInO` theorem for clocked output evaluation. -/
+/-- Native `ComputableInO` theorem for clocked output evaluation. -/
 theorem eval_inO (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Program M r) :
-    ComputableTidilyInO (fun q : ℕ × (M.Config × FiniteState M r) => eval q.2.1 p q.1 q.2.2)
+    ComputableInO (fun q : ℕ × (M.Config × FiniteState M r) => eval q.2.1 p q.1 q.2.2)
       (runInputEncoding enc) (encOption enc.value)
       (runTime enc N p) (runSpace enc N p) :=
   (evalCertificate enc N p).computes
@@ -801,12 +801,12 @@ theorem le_runSpace_of_run_eq_inl (enc : M.Encoding) (N : M.NativePrimitives enc
 /-! ### Automatic whole-run algorithm transport -/
 
 theorem unoption_inO (ev : M.Value ↪ List Bool) :
-    ComputableTidilyInO (fun o : Option M.Value => (encOption ev o).tail)
+    ComputableInO (fun o : Option M.Value => (encOption ev o).tail)
       (encOption ev) encBits
       (fun o => (encOption ev o).length) (fun o => (encOption ev o).length) := by
-  have hraw : ComputableTidilyInDegree (fun o : Option M.Value => encOption ev o)
+  have hraw : ComputableInDegree (fun o : Option M.Value => encOption ev o)
       (encOption ev) encBits 1 1 := .of_eq fun _ => rfl
-  exact ((ComputableTidilyInDegree.tail (enc₁ := encBool) (enc := encBits)).comp hraw).inO_one
+  exact ((ComputableInDegree.tail (enc₁ := encBool) (enc := encBits)).comp hraw).inO_one
 
 /-- Transport a halting generic-RAM execution certificate (`GenericRAM.Executes`) within `steps a`
 instructions to a native multitape Turing-machine certificate for `f : α → M.Value`.
@@ -851,7 +851,7 @@ def transportCertificate (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Pr
       cSteps.space a + (cCfg.space a + cInit.space a) +
         runSpace enc N p (steps a, (cfg a, initState a)) := rfl
 
-/-- Parameterized `ComputableTidilyInO` transport theorem from `GenericRAM.Executes`. -/
+/-- Parameterized `ComputableInO` transport theorem from `GenericRAM.Executes`. -/
 theorem transport_inO (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Program M r)
     {f : α → M.Value} {cfg : α → M.Config} {initState : α → FiniteState M r}
     {steps : α → ℕ}
@@ -860,7 +860,7 @@ theorem transport_inO (enc : M.Encoding) (N : M.NativePrimitives enc) (p : Progr
     (cInit : NativeCertificate initState ei (encoding enc))
     (hExec : ∀ a, ∃ m ≤ steps a,
       GenericRAM.Executes (cfg a) p (initState a).denote (f a) m) :
-    ComputableTidilyInO f ei enc.value
+    ComputableInO f ei enc.value
       (fun a => cSteps.time a + (cCfg.time a + cInit.time a) +
         runTime enc N p (steps a, (cfg a, initState a)))
       (fun a => cSteps.space a + (cCfg.space a + cInit.space a) +
@@ -1049,7 +1049,7 @@ theorem pcEquals_isPolynomial (enc : M.Encoding) (c : NativeCertificate s ei (en
   have heq : (⟨fun p : ℕ × ℕ => ((encNat p.1).length + 1) *
       ((encNat p.1).length + (encNat p.2).length + 1),
     fun p : ℕ × ℕ => (encPair encNat encNat p).length,
-    ComputableTidilyInO.eq encNat⟩ : NativeCertificate _ _ _).IsPolynomial := by
+    ComputableInO.eq encNat⟩ : NativeCertificate _ _ _).IsPolynomial := by
     refine ⟨.of_forall_le 1 2 fun p => ?_, .self⟩
     simp only [length_encPair]
     nlinarith
@@ -1084,7 +1084,7 @@ theorem stepCertificate_isPolynomial (enc : M.Encoding) (N : M.NativePrimitives 
 any fixed program is tidily computable in polynomial time. -/
 theorem step_polyTime (enc : M.Encoding) (N : M.NativePrimitives enc)
     (p : Program M r) (hN : N.IsPolynomial) :
-    ComputableTidilyInPolyTime (fun q : M.Config × FiniteState M r => step q.1 p q.2)
+    ComputableInPolyTime (fun q : M.Config × FiniteState M r => step q.1 p q.2)
       (inputEncoding enc) (resultEncoding enc) :=
   (stepCertificate enc N p).polyTime (stepCertificate_isPolynomial enc N p hN)
 
@@ -1176,7 +1176,7 @@ theorem transportCertificate_isPolynomial (enc : M.Encoding) (N : M.NativePrimit
       linear_space, resultEncoding]
     omega
 
-/-- Automatic `ComputableTidilyInPolyTime` transport corollary from `GenericRAM.Executes`. -/
+/-- Automatic `ComputableInPolyTime` transport corollary from `GenericRAM.Executes`. -/
 theorem transport_polyTime (enc : M.Encoding) (N : M.NativePrimitives enc)
     (p : Program M r) {f : α → M.Value} {cfg : α → M.Config}
     {initState : α → FiniteState M r} {steps : α → ℕ}
@@ -1191,7 +1191,7 @@ theorem transport_polyTime (enc : M.Encoding) (N : M.NativePrimitives enc)
     {B : α → ℕ} (hB : PolyBounded (fun a => (ei a).length) B)
     (hOutLen : ∀ a, ∀ j ≤ steps a,
       (resultEncoding enc (run (cfg a) p j (initState a))).length ≤ B a) :
-    ComputableTidilyInPolyTime f ei enc.value :=
+    ComputableInPolyTime f ei enc.value :=
   (transportCertificate enc N p cSteps cCfg cInit hExec).polyTime
     (transportCertificate_isPolynomial enc N p cSteps cCfg cInit hExec
       hN hSteps hCfg hInit hStepsBound hB hOutLen)
@@ -1237,7 +1237,7 @@ theorem polyBounded_length_run (enc : M.Encoding) (N : M.NativePrimitives enc)
   simp only [loopEncoding, length_encPair]
   omega
 
-/-- Automatic `ComputableTidilyInPolyTime` transport for a constant step-budget bound
+/-- Automatic `ComputableInPolyTime` transport for a constant step-budget bound
 `∀ a, steps a ≤ K`: the intermediate outcome lengths along `0 ≤ j ≤ K` are bounded by induction on
 `K` using `roundCertificate_isPolynomial`. -/
 theorem transport_polyTime_of_le_const (enc : M.Encoding) (N : M.NativePrimitives enc)
@@ -1251,7 +1251,7 @@ theorem transport_polyTime_of_le_const (enc : M.Encoding) (N : M.NativePrimitive
     (hN : N.IsPolynomial)
     (hSteps : cSteps.IsPolynomial) (hCfg : cCfg.IsPolynomial) (hInit : cInit.IsPolynomial)
     (K : ℕ) (hStepsLe : ∀ a, steps a ≤ K) :
-    ComputableTidilyInPolyTime f ei enc.value := by
+    ComputableInPolyTime f ei enc.value := by
   have hSum : ∀ n : ℕ, PolyBounded (fun a => (ei a).length)
       (fun a => ∑ j ∈ Finset.range n,
         (resultEncoding enc (run (cfg a) p j (initState a))).length) := by
