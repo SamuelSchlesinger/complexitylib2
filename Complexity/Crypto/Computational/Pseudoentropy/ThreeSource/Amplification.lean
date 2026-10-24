@@ -54,16 +54,20 @@ def amplifiedGenerate (n sourceBits observationBound densityBound commonBits ind
 /-- The entire amplified family is uniformly efficient, including on malformed seed inputs. -/
 theorem isPolyTime_amplifiedGenerate {pair : SamplablePair} (saved : pair.SeedRealization)
     {observationBound densityBound common : ℕ → ℕ}
-    (hobservation : ComputableTidilyInPolyTime observationBound encUnary encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
-    (hcommon : ComputableTidilyInPolyTime common encUnary encUnary) :
-    ComputableTidilyInPolyTime
+    (hobservation : ComputableInPolyTime observationBound encUnary encUnary)
+    (hdensity : ComputableInPolyTime densityBound encUnary encUnary)
+    (hcommon : ComputableInPolyTime common encUnary encUnary) :
+    ComputableInPolyTime
       (fun input => amplifiedGenerate input.1.1 (saved.length input.1.1)
         (observationBound input.1.1) (densityBound input.1.1) (common input.1.1) input.1.2
           (saved.evaluate input.1.1) input.2)
       (encPair (encPair encUnary encUnary) encBits) encBits := by
+  have hobservation := hobservation.tidy
+  have hdensity := hdensity.tidy
+  have hcommon := hcommon.tidy
+  refine .of_tidy ?_
   have hlength := saved.length_isPolyTime.tidy
-  have hgenerate := isPolyTime_paddedGenerate saved hobservation hdensity hcommon
+  have hgenerate := (isPolyTime_paddedGenerate saved (.of_tidy hobservation) (.of_tidy hdensity) (.of_tidy hcommon)).tidy
   unfold amplifiedGenerate
   apply PRGStretch.polyTime_iterate
   · apply hgenerate.comp (g := fun input : ((ℕ × ℕ) × List Bool) × List Bool =>
@@ -125,7 +129,7 @@ theorem exists_secure_amplified_choice {pair : SamplablePair} {gap : ℕ → ℝ
       (densityBound n) (common n) index (saved.evaluate n))
     (count := fun n => size (saved.length n) (densityBound n) * common n + 1 - common n)
     (choose := choose)
-    (isPolyTime_paddedGenerate saved hobservation hdensity hcommon)
+    (isPolyTime_paddedGenerate saved (.of_tidy hobservation) (.of_tidy hdensity) (.of_tidy hcommon)).tidy
     hcommon hcount hsecure
   refine ⟨choose, hchoose, fun test htest => ?_⟩
   unfold amplifiedGenerate

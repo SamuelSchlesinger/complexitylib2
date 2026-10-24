@@ -121,11 +121,13 @@ example (left right : Bool) :
   keyGenSerialized_nand_correct (by decide) (by decide) keys_supported left right
     (cipher_supported left) (cipher_supported right)
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Both dimensions and both entire raw words vary with the input.
 example : ComputableTidilyInPolyTime
     (fun p : ℕ × ℕ × List Bool × List Bool => decryptSerialized p.1 p.2.1 p.2.2.1 p.2.2.2)
     (encPair encUnary (encPair encUnary (encPair encBits encBits))) encBool := by fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun p : ℕ × ℕ × List Bool × List Bool => nandSerialized p.1 p.2.1 p.2.2.1 p.2.2.2)
     (encPair encUnary (encPair encUnary (encPair encBits encBits))) encBits := by fun_prop
@@ -136,6 +138,7 @@ private noncomputable def completeClient (p : ℕ × ℕ × ℕ × ℕ × Bool �
   let right ← encryptSerialized p.1 p.2.1 p.2.2.1 keys.1 p.2.2.2.2.2
   return decryptSerialized p.1 p.2.2.1 keys.2 (nandSerialized p.1 p.2.2.1 left right)
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : IsPPTOn
     (encPair encUnary (encPair encUnary (encPair encUnary
       (encPair encUnary (encPair encBool encBool))))) encBool completeClient := by
@@ -165,14 +168,14 @@ info: 'Cslib.Crypto.Homomorphic.GSW.keyGenSerialized_nand_correct' depends on ax
 #guard_msgs in
 #print axioms keyGenSerialized_nand_correct
 /--
-info: 'Cslib.Crypto.Homomorphic.GSW.computableTidilyInPolyTime_decryptSerialized' depends on axioms:
+info: 'Cslib.Crypto.Homomorphic.GSW.computableInPolyTime_decryptSerialized' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms computableTidilyInPolyTime_decryptSerialized
+#print axioms computableInPolyTime_decryptSerialized
 /--
-info: 'Cslib.Crypto.Homomorphic.GSW.computableTidilyInPolyTime_nandSerialized' depends on axioms:
+info: 'Cslib.Crypto.Homomorphic.GSW.computableInPolyTime_nandSerialized' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms computableTidilyInPolyTime_nandSerialized
+#print axioms computableInPolyTime_nandSerialized

@@ -122,12 +122,15 @@ attribute [program_certificate] isPolyTime_generate
 /-- A saved sampler gives one efficient evaluator for the entire indexed family. -/
 theorem isPolyTime_generate_of_realization {pair : SamplablePair} (saved : pair.SeedRealization)
     {observationBound densityBound : ℕ → ℕ}
-    (hobservation : ComputableTidilyInPolyTime observationBound encUnary encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary) :
-    ComputableTidilyInPolyTime (fun input => generate input.1.1 (saved.length input.1.1)
+    (hobservation : ComputableInPolyTime observationBound encUnary encUnary)
+    (hdensity : ComputableInPolyTime densityBound encUnary encUnary) :
+    ComputableInPolyTime (fun input => generate input.1.1 (saved.length input.1.1)
       (observationBound input.1.1) (densityBound input.1.1) input.1.2
       (saved.evaluate input.1.1) input.2)
       (encPair (encPair encUnary encUnary) encBits) encBits := by
+  have hobservation := hobservation.tidy
+  have hdensity := hdensity.tidy
+  refine .of_tidy ?_
   have hlength := saved.length_isPolyTime.tidy
   have hevaluate := saved.efficient.tidy
   apply isPolyTime_generate <;> polytime
@@ -173,8 +176,8 @@ made before the test is quantified and is used only in the proof, never by `gene
 theorem exists_secure_choice {pair : SamplablePair} {gap : ℕ → ℝ}
     (hpair : pair.HasGap gap) (saved : pair.SeedRealization)
     {observationBound densityBound : ℕ → ℕ}
-    (hobservation : ComputableTidilyInPolyTime observationBound encUnary encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
+    (hobservation : ComputableInPolyTime observationBound encUnary encUnary)
+    (hdensity : ComputableInPolyTime densityBound encUnary encUnary)
     (hfits : ∀ n observation, observation ∈ ((pair.joint n).map Prod.fst).support →
       (pair.encode n observation).length ≤ observationBound n)
     (hgap : ∀ᶠ n in atTop, 4 / (dyadicSize (densityBound n) : ℝ) ≤ gap n) :
@@ -190,6 +193,8 @@ theorem exists_secure_choice {pair : SamplablePair} {gap : ℕ → ℝ}
                 (fun word => ProbComp.eval (test n (choose n) word)))
           ((uniformList (outputLength n (saved.length n) (observationBound n) (densityBound n)
             (choose n))).bind (fun word => ProbComp.eval (test n (choose n) word)))) := by
+  have hobservation := hobservation.tidy
+  have hdensity := hdensity.tidy
   obtain ⟨choose, hvalid⟩ := exists_valid_choice hpair saved hgap
   refine ⟨choose, hvalid.mono (fun _ h => h.index_lt), ?_⟩
   intro test htest

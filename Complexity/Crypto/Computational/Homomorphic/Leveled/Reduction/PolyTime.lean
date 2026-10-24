@@ -57,8 +57,9 @@ theorem isPPTOn_publicKeyGame (bit : Bool) :
 saved state charged. The supported-width hypothesis is needed only for the semantic proof. -/
 theorem isPPT_zeroLinkAdversary
     (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) E.keyGen)
-    {depth : ℕ → ℕ} (hdepth : ComputableTidilyInPolyTime depth encUnary encUnary) :
+    {depth : ℕ → ℕ} (hdepth : ComputableInPolyTime depth encUnary encUnary) :
     (zeroLinkAdversary E depth adversary).IsPPT := by
+  have hdepth := hdepth.tidy
   have hchoose := hadversary.choose
   have hguess := hadversary.guess
   constructor

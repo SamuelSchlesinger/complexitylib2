@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Probabilistic.Sampling
 import Complexity.Crypto.Computational.GGM.Evaluation
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-! Functional pipelines use the ordinary monadic interface and existing deterministic proofs. -/
 
@@ -33,6 +34,7 @@ example {α β γ : Type} {input : α ↪ List Bool} {middle : β ↪ List Bool}
       finish b) := by
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- GGM's existing evaluator proof works after any certified seed/path sampler.
 example {α : Type} {input : α ↪ List Bool}
     {sample : α → ProbComp (List Bool × List Bool)} {generator : List Bool → List Bool}
@@ -68,6 +70,7 @@ example {sample : List Bool → ProbComp Bool} (hsample : IsPPTOn encBits encBoo
       pure (first :: second :: word)) := by
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- GGM consumes the original query path after a seed has been sampled.
 example {sample : List Bool → ProbComp (List Bool)} {generator : List Bool → List Bool}
     (hsample : IsPPTOn encBits encBits sample)

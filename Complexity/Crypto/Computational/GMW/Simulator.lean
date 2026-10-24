@@ -880,9 +880,9 @@ theorem isPPTOn_gmwViewReduction {α : Type} {enc : α ↪ List Bool}
     {generator : List Bool → List Bool} {length : ℕ → ℕ} {f : α → CNF ℕ}
     {Vstar : ℕ → α → List Bool → WordOracleComp Unit (List Bool)}
     {adversary : ℕ → α → List Bool → List Bool → ProbComp Bool}
-    (hg : ComputableTidilyInPolyTime generator encBits encBits)
+    (hg : ComputableInPolyTime generator encBits encBits)
     (hlen : ∀ s, (generator s).length = length s.length)
-    (hf : ComputableTidilyInPolyTime f enc encCNF)
+    (hf : ComputableInPolyTime f enc encCNF)
     (hV : IsOraclePPTOn (encPair encUnary (encPair enc encBits)) encBits
       (fun p => Vstar p.1 p.2.1 p.2.2))
     (hadv : IsPPTOn (encPair (encPair encUnary (encPair enc encBits)) encBits) encBool
@@ -892,8 +892,10 @@ theorem isPPTOn_gmwViewReduction {α : Type} {enc : α ↪ List Bool}
       (fun p : (ℕ × (α × (List Bool × List Bool))) × List Bool =>
         gmwViewReduction generator length f Vstar adversary
           p.1.1 p.1.2.1 p.1.2.2.1 p.1.2.2.2 p.2) := by
+  have hg := hg.tidy
+  have hf := hf.tidy
   let input := encPair encUnary (encPair enc (encPair encBits encBits))
-  have hlength := PRG.polyTime_length hg hlen
+  have hlength := (PRG.polyTime_length (.of_tidy hg) hlen).tidy
   have hpad : IsPPTOn (encPair input (encList encBits)) encBits
       (fun p : (ℕ × (α × (List Bool × List Bool))) × List (List Bool) =>
         gmwRealWithPads generator (p.1.1 + 7) (length (p.1.1 + 7)) (f p.1.2.1)
@@ -972,9 +974,9 @@ theorem gmwView_negligible_of_advice_prg {α : Type} {enc : α ↪ List Bool}
     {generator : List Bool → List Bool} {length : ℕ → ℕ} {f : α → CNF ℕ}
     {Vstar : ℕ → α → List Bool → WordOracleComp Unit (List Bool)}
     {adversary : ℕ → α → List Bool → List Bool → ProbComp Bool}
-    (hg : ComputableTidilyInPolyTime generator encBits encBits)
+    (hg : ComputableInPolyTime generator encBits encBits)
     (hlen : ∀ s, (generator s).length = length s.length)
-    (hf : ComputableTidilyInPolyTime f enc encCNF)
+    (hf : ComputableInPolyTime f enc encCNF)
     (hV : IsOraclePPTOn (encPair encUnary (encPair enc encBits)) encBits
       (fun p => Vstar p.1 p.2.1 p.2.2))
     (hadv : IsPPTOn (encPair (encPair encUnary (encPair enc encBits)) encBits) encBool
@@ -1005,7 +1007,9 @@ theorem gmwView_negligible_of_advice_prg {α : Type} {enc : α ↪ List Bool}
         (adversary n (a n) (z n)))
       (distinguishingGame (ProbComp.eval (gmwSimulator generator length f Vstar n (a n) (z n)))
         (adversary n (a n) (z n)))) := by
-  have hclock := isPPTOn_gmwViewReduction hg hlen hf hV hadv
+  have hg := hg.tidy
+  have hf := hf.tidy
+  have hclock := isPPTOn_gmwViewReduction (.of_tidy hg) hlen (.of_tidy hf) hV hadv
   have hneg := hPRG
     (fun p => gmwViewReduction generator length f Vstar adversary
       p.1.1 p.1.2.1 p.1.2.2.1 p.1.2.2.2 p.2) hclock a w z ha hw hz
@@ -1074,7 +1078,7 @@ theorem AdvicePRG.gmwView_negligible {α : Type} {enc : α ↪ List Bool}
         (adversary n (a n) (z n)))
       (distinguishingGame (ProbComp.eval (gmwSimulator generator length f Vstar n (a n) (z n)))
         (adversary n (a n) (z n)))) :=
-  gmwView_negligible_of_advice_prg hAdv.1.tidy hAdv.2.1 hf.tidy hV hadv hAdv.2.2 ha hw hz hw_sat
+  gmwView_negligible_of_advice_prg hAdv.1 hAdv.2.1 hf hV hadv hAdv.2.2 ha hw hz hw_sat
 
 /-- **Zero-knowledge simulation of the 3-copy GMW protocol.** For any uniform strict oracle PPT
 malicious verifier `Vstar` and any deterministic polynomial-time families of instances `a`, valid
@@ -1083,26 +1087,30 @@ malicious verifier `Vstar` and any deterministic polynomial-time families of ins
 theorem gmwView_indistinguishable_gmwSimulator {α : Type} {enc : α ↪ List Bool}
     {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hG : PseudorandomGenerator generator length)
-    {f : α → CNF ℕ} (hf : ComputableTidilyInPolyTime f enc encCNF)
+    {f : α → CNF ℕ} (hf : ComputableInPolyTime f enc encCNF)
     {Vstar : ℕ → α → List Bool → WordOracleComp Unit (List Bool)}
     (hV : IsOraclePPTOn (encPair encUnary (encPair enc encBits)) encBits
       (fun p => Vstar p.1 p.2.1 p.2.2))
     {a : ℕ → α} {w z : ℕ → List Bool}
-    (ha : ComputableTidilyInPolyTime a encUnary enc)
-    (hw_comp : ComputableTidilyInPolyTime w encUnary encBits)
-    (hz : ComputableTidilyInPolyTime z encUnary encBits)
+    (ha : ComputableInPolyTime a encUnary enc)
+    (hw_comp : ComputableInPolyTime w encUnary encBits)
+    (hz : ComputableInPolyTime z encUnary encBits)
     (hw_sat : ∀ n, ThreeSAT.verifier (f (a n), w n) = true) :
     ComputationallyIndistinguishable
       (fun n => ((gmwProver generator (n + 7) (length (n + 7)) (f (a n)) (w n)).run
         (Vstar n (a n) (z n))
         (gmwProver generator (n + 7) (length (n + 7)) (f (a n)) (w n)).init).map Prod.fst)
       (fun n => ProbComp.eval (gmwSimulator generator length f Vstar n (a n) (z n))) := by
+  have hf := hf.tidy
+  have ha := ha.tidy
+  have hw_comp := hw_comp.tidy
+  have hz := hz.tidy
   intro adversary hadversary
   have htest : IsPPTOn (encPair (encPair encUnary (encPair enc encBits)) encBits) encBool
       (fun p => adversary p.1.1 p.2) :=
     hadversary.preprocess (by fun_prop) (by fun_prop)
   have hclock := isPPTOn_gmwViewReduction
-    (adversary := fun n _ _ view => adversary n view) hG.polyTime.tidy hG.length_eq hf hV htest
+    (adversary := fun n _ _ view => adversary n view) hG.polyTime hG.length_eq (.of_tidy hf) hV htest
   let red : Distinguisher := fun n challenge =>
     gmwViewReduction generator length f Vstar (fun n _ _ view => adversary n view)
       n (a n) (w n) (z n) challenge
