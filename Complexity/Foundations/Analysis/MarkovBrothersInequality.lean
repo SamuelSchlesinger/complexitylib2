@@ -26,7 +26,7 @@ import Mathlib.Topology.Order.Compact
 # The Markov brothers' inequality
 
 A real polynomial `p` of degree at most `n` with `|p| ≤ M` on `[-1, 1]` has `|p'| ≤ n² M` on
-`[-1, 1]` (`Polynomial.abs_eval_derivative_le`), the inequality of A. A. Markov
+`[-1, 1]` (`Polynomial.abs_eval_derivative_le_sq_mul`), the inequality of A. A. Markov
 ([BorweinErdelyi1995], [Rivlin1990]). The proof combines two classical inequalities.
 
 * **Schur's inequality**: a polynomial `q` of degree less than `n ≥ 1` with
@@ -60,7 +60,7 @@ lemma behind the degree bounds of Nisan and Szegedy [NisanSzegedy1994]
 
 * `Polynomial.abs_eval_le_mul_of_sqrt_mul_abs_eval_le`: Schur's inequality.
 * `Polynomial.sqrt_mul_abs_eval_derivative_le`: Bernstein's inequality.
-* `Polynomial.abs_eval_derivative_le`: **the Markov brothers' inequality**, `|p'| ≤ n² M`.
+* `Polynomial.abs_eval_derivative_le_sq_mul`: **the Markov brothers' inequality**, `|p'| ≤ n² M`.
 * `Polynomial.sub_mul_abs_eval_derivative_le`: Markov's inequality on an interval `[a, b]`.
 * `Polynomial.sub_mul_abs_eval_derivative_le_of_forall_nat`,
   `Polynomial.sub_mul_abs_eval_le_of_forall_nat`: polynomials bounded at the integers of `[0, N]`.
@@ -342,7 +342,7 @@ theorem sqrt_mul_abs_eval_derivative_le {n : ℕ} {p : ℝ[X]} (hp : p.natDegree
 
 /-- **The Markov brothers' inequality**: a real polynomial `p` of degree at most `n` with `|p| ≤ M`
 on `[-1, 1]` satisfies `|p'| ≤ n² M` on `[-1, 1]`. -/
-theorem abs_eval_derivative_le {n : ℕ} {p : ℝ[X]} (hp : p.natDegree ≤ n) {M : ℝ}
+theorem abs_eval_derivative_le_sq_mul {n : ℕ} {p : ℝ[X]} (hp : p.natDegree ≤ n) {M : ℝ}
     (hM : ∀ y ∈ Icc (-1 : ℝ) 1, |p.eval y| ≤ M) {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
     |(derivative p).eval x| ≤ n ^ 2 * M := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
@@ -376,7 +376,7 @@ theorem sub_mul_abs_eval_derivative_le {n : ℕ} {p : ℝ[X]} (hp : p.natDegree 
     rw [hL, show t = (2 * x - a - b) / (b - a) from rfl]
     field_simp
     ring
-  have h := abs_eval_derivative_le hdeg hbound ht
+  have h := abs_eval_derivative_le_sq_mul hdeg hbound ht
   rw [derivative_comp, eval_mul, eval_comp, hLt, abs_mul] at h
   have hL' : (derivative L).eval t = (b - a) / 2 := by simp [L]
   rw [hL', abs_of_pos (by positivity)] at h

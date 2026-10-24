@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.TQBF
-import Complexity.Foundations.Relation.RelatesWithinSteps
+import Complexity.Foundations.Logic.Function.Iterate
 
 /-!
 # Evaluating quantified Boolean formulas with an explicit stack

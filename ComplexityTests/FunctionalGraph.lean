@@ -8,6 +8,7 @@ import Complexity.Foundations.Combinatorics.FunctionalGraph.CheckpointForest
 import Complexity.Foundations.Combinatorics.FunctionalGraph.ForestIntervals
 import Complexity.Foundations.Combinatorics.FunctionalGraph.ForestNavigation
 import Complexity.Foundations.Combinatorics.FunctionalGraph.ForestSegments
+import Complexity.Foundations.Data.List.Lex
 
 /-!
 # Checkpoint forest, interval label, segment, and navigation tests
@@ -75,6 +76,13 @@ example : ∃ low high : Fin 2 → Fin (Nat.card (Fin 2)),
     ∀ x y, (low y ≤ low x ∧ low x ≤ high y) ↔
       ∃ t ≤ transientDepth toZero x, toZero^[t] x = y :=
   exists_forest_intervals toZero
+
+-- Lexicographic prefix interval lemmas (`List.isPrefix_le`, `List.IsPrefix.of_le_of_le`).
+example (c : List ℕ) (h1 : [1, 2] ≤ c) (h2 : c ≤ [1, 2, 3]) : [1, 2] <+: c :=
+  List.IsPrefix.of_le_of_le ⟨[3], rfl⟩ h1 h2
+
+example : ([1, 2] : List ℕ) ≤ [1, 2, 3] :=
+  List.isPrefix_le ⟨[3], rfl⟩
 
 /-! ### Nontrivial compressed edge, navigation, and off-hull key collision on `Fin 5`
 

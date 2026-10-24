@@ -5,7 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.QueryComplexity.ApproximateDegree.Or
-import Complexity.Foundations.Analysis.MarkovInequality
+import Complexity.Foundations.Analysis.MarkovBrothersInequality
 import Complexity.Foundations.BooleanAnalysis.Symmetrization
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.RootsExtrema
 
@@ -25,7 +25,7 @@ open Cslib Cslib.BitString Cslib.QueryComplexity Polynomial
 example (n : ℕ) :
     (∀ x ∈ Set.Icc (-1 : ℝ) 1, |(derivative (Chebyshev.T ℝ n)).eval x| ≤ n ^ 2 * 1) ∧
       (derivative (Chebyshev.T ℝ n)).eval 1 = n ^ 2 := by
-  refine ⟨fun x hx => abs_eval_derivative_le (Chebyshev.natDegree_T ℝ n).le
+  refine ⟨fun x hx => abs_eval_derivative_le_sq_mul (Chebyshev.natDegree_T ℝ n).le
     (fun y hy => Chebyshev.abs_eval_T_real_le_one n (abs_le.2 hy)) hx, ?_⟩
   exact_mod_cast Chebyshev.derivative_T_eval_one (R := ℝ) n
 
@@ -160,10 +160,10 @@ info: 'Polynomial.sqrt_mul_abs_eval_derivative_le' depends on axioms: [propext, 
 #print axioms Polynomial.sqrt_mul_abs_eval_derivative_le
 
 /--
-info: 'Polynomial.abs_eval_derivative_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Polynomial.abs_eval_derivative_le_sq_mul' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Polynomial.abs_eval_derivative_le
+#print axioms Polynomial.abs_eval_derivative_le_sq_mul
 
 /--
 info: 'Polynomial.sub_mul_abs_eval_le_of_forall_nat' depends on axioms: [propext, Classical.choice, Quot.sound]

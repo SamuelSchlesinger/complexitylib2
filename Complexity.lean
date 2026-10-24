@@ -1522,7 +1522,8 @@ public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
 public import Complexity.Foundations.Analysis.BernoulliInequality
 public import Complexity.Foundations.Analysis.HarmonicMean
-public import Complexity.Foundations.Analysis.MarkovInequality
+public import Complexity.Foundations.Analysis.InnerProductSpace.Basic
+public import Complexity.Foundations.Analysis.MarkovBrothersInequality
 public import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
 public import Complexity.Foundations.BooleanAnalysis.Bonami
@@ -1631,6 +1632,7 @@ public import Complexity.Foundations.Combinatorics.LineCode.Line
 public import Complexity.Foundations.Combinatorics.LineCode.Menu
 public import Complexity.Foundations.Combinatorics.LineCode.Menu.Collision
 public import Complexity.Foundations.Combinatorics.LineCode.Menu.Counting
+public import Complexity.Foundations.Combinatorics.MajorityTree
 public import Complexity.Foundations.Combinatorics.MajorityVote
 public import Complexity.Foundations.Combinatorics.Multigraph
 public import Complexity.Foundations.Combinatorics.PowersetTail
@@ -1712,6 +1714,7 @@ public import Complexity.Foundations.Data.List.Basic
 public import Complexity.Foundations.Data.List.Counting
 public import Complexity.Foundations.Data.List.Equiv
 public import Complexity.Foundations.Data.List.Fold
+public import Complexity.Foundations.Data.List.Lex
 public import Complexity.Foundations.Data.List.Lookup
 public import Complexity.Foundations.Data.List.OfFn
 public import Complexity.Foundations.Data.Matrix.Binary
@@ -1721,6 +1724,7 @@ public import Complexity.Foundations.Data.MvPolynomial.Catalecticant
 public import Complexity.Foundations.Data.MvPolynomial.DualNumber
 public import Complexity.Foundations.Data.MvPolynomial.Hessian
 public import Complexity.Foundations.Data.MvPolynomial.HessianRank
+public import Complexity.Foundations.Data.Nat.ArithmeticProgression
 public import Complexity.Foundations.Data.Nat.Bits
 public import Complexity.Foundations.Data.Nat.Card
 public import Complexity.Foundations.Data.Nat.Choose
@@ -1748,6 +1752,7 @@ public import Complexity.Foundations.FieldTheory.Finite.Subfield
 public import Complexity.Foundations.FieldTheory.Finite.UnitSum
 public import Complexity.Foundations.FieldTheory.TensorBasis
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
+public import Complexity.Foundations.Geometry.Euclidean.Angle.Unoriented.Basic
 public import Complexity.Foundations.GroupTheory.Perm.Fin
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last
@@ -1762,6 +1767,8 @@ public import Complexity.Foundations.LinearAlgebra.Matrix.SubmatrixRobust
 public import Complexity.Foundations.LinearAlgebra.Matrix.Toeplitz
 public import Complexity.Foundations.LinearAlgebra.PivotSpace
 public import Complexity.Foundations.LinearAlgebra.Rank
+public import Complexity.Foundations.Logic.Function.Iterate
+public import Complexity.Foundations.MeasureTheory.Constructions.BorelSpace.Order
 public import Complexity.Foundations.Order.BooleanSubalgebra
 public import Complexity.Foundations.Order.Changes
 public import Complexity.Foundations.Order.UpperLower

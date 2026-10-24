@@ -9,7 +9,6 @@ module
 
 public import Complexity.Init
 public import Mathlib.LinearAlgebra.Dimension.LinearMap
-public import Mathlib.LinearAlgebra.Matrix.Rank
 import Mathlib.LinearAlgebra.Dimension.DivisionRing
 
 /-!
@@ -22,7 +21,6 @@ its generators. The linear maps need not have finite-dimensional domains or codo
 
 * `LinearMap.rank_smul_le`: scalar multiplication does not increase rank.
 * `LinearMap.rank_le_sum_of_mem_span`: a rank budget for a finite span.
-* `Matrix.natCast_rank_eq_rank_toLin'`: the natural matrix rank agrees with linear-map rank.
 
 ## References
 
@@ -53,10 +51,3 @@ theorem rank_le_sum_of_mem_span {ι : Type*} [Fintype ι] (f : A →ₗ[K] B)
     (Finset.sum_le_sum fun i _ => (rank_smul_le (coefficients i) (family i)).trans (hbound i))
 
 end LinearMap
-
-/-- The natural rank of a finite matrix agrees with the cardinal rank of its linear map. -/
-theorem Matrix.natCast_rank_eq_rank_toLin' {K m n : Type*} [Field K]
-    [Fintype n] [DecidableEq n] (M : Matrix m n K) :
-    (M.rank : Cardinal) = M.toLin'.rank := by
-  rw [Matrix.rank, Matrix.toLin'_apply']
-  exact Module.finrank_eq_rank _ _

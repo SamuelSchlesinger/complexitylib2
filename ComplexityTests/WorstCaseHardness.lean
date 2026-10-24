@@ -214,11 +214,11 @@ info: 'Cslib.Code.card_hintDecode_ne_le' depends on axioms:
 #print axioms Cslib.Code.card_hintDecode_ne_le
 
 /--
-info: 'Cslib.Code.exists_forall_majTree_eq' depends on axioms:
+info: 'Cslib.exists_forall_majTree_eq' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.exists_forall_majTree_eq
+#print axioms Cslib.exists_forall_majTree_eq
 
 /--
 info: 'Cslib.LinearAlgebra.kernelVec_ne_zero' depends on axioms:

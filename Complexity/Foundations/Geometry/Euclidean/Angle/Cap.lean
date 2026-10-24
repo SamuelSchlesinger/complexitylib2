@@ -5,12 +5,12 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: candidate (Mathlib, `Mathlib/Geometry/Euclidean/Angle/Unoriented/` and
--- `Mathlib/Analysis/InnerProductSpace/Basic.lean`)
+-- upstream: candidate (Mathlib, `Mathlib/Geometry/Euclidean/Angle/Unoriented/`)
 
 public import Complexity.Init
-public import Mathlib.Geometry.Euclidean.Angle.Unoriented.Basic
+public import Complexity.Foundations.Geometry.Euclidean.Angle.Unoriented.Basic
 public import Mathlib.Data.Finset.Prod
+import Complexity.Foundations.Analysis.InnerProductSpace.Basic
 import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Geometry.Euclidean.Angle.Unoriented.TriangleInequality
@@ -36,8 +36,6 @@ inner product is at least `(3 κ ^ 2 - 1) / 2`, which exceeds `2 κ ^ 2 - 1` by 
 
 ## Main results
 
-* `norm_sum_sq_real`: the squared norm of a finite sum, expanded over the diagonal and the
-  ordered pairs of distinct indices.
 * `InnerProductGeometry.two_mul_sq_sub_one_le_inner`: the pairwise bound in a cap.
 * `InnerProductGeometry.le_sum_offDiag_inner`: the bound on the sum of the pairwise inner
   products in a cap.
@@ -52,23 +50,7 @@ open scoped RealInnerProductSpace
 
 variable {V ι : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
 
-/-- The squared norm of a finite sum is the sum of the squared norms plus the inner products
-over the ordered pairs of distinct indices. -/
-theorem norm_sum_sq_real (s : Finset ι) (f : ι → V) :
-    ‖∑ i ∈ s, f i‖ ^ 2 = ∑ i ∈ s, ‖f i‖ ^ 2 + ∑ p ∈ s.offDiag, ⟪f p.1, f p.2⟫ := by
-  classical
-  rw [← real_inner_self_eq_norm_sq, sum_inner,
-    ← sum_congr rfl fun i _ => (inner_sum s f (f i)).symm,
-    ← sum_product' (f := fun i j => ⟪f i, f j⟫), ← diag_union_offDiag,
-    sum_union (disjoint_diag_offDiag s), sum_diag]
-  simp only [real_inner_self_eq_norm_sq]
-
 namespace InnerProductGeometry
-
-/-- The angle between unit vectors is the `arccos` of their inner product. -/
-theorem angle_eq_arccos_inner_of_norm_eq_one {x y : V} (hx : ‖x‖ = 1) (hy : ‖y‖ = 1) :
-    angle x y = arccos ⟪x, y⟫ := by
-  simp [angle, hx, hy]
 
 /-- **Two vectors in a cap.** Two unit vectors whose inner products with a unit vector `x` are at
 least `κ ≥ 0` have inner product at least `2 κ ^ 2 - 1`: each makes an angle at most `arccos κ`
