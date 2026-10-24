@@ -67,7 +67,7 @@ namespace Cslib.BitString.PartialAssignment
 
 open Function Finset
 
-variable {ι : Type*} [Fintype ι] [DecidableEq ι] {ρ : PartialAssignment ι}
+variable {ι : Type*} {ρ : PartialAssignment ι} [Fintype ι] [DecidableEq ι]
 
 /-! ### Counting extensions -/
 
