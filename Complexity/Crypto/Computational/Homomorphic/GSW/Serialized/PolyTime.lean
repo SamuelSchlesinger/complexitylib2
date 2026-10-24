@@ -134,8 +134,9 @@ theorem computableTidilyInPolyTime_encryptEntry
       (encPair input encUnary) encNat := by
     apply ((bitsGetD false).comp
       ((hcoinsRow.comp (fst input encUnary)).prod (snd input encUnary))).ite'
-    · exact matrixBinaryEntry (by fun_prop) (by fun_prop) (by fun_prop)
-        (snd input encUnary) (by fun_prop)
+    · exact (ComputableInPolyTime.matrixBinaryEntry
+        (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+        (.of_tidy (snd input encUnary)) (.of_tidy (by fun_prop))).tidy
     · exact const 0
   have hsum := binary_sum.comp (mapWithInput
     (f := fun a r => if (((coins a).getD (i a) []).getD (k a) []).getD r false

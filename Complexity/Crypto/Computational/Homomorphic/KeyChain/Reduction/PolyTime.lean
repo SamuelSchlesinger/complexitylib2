@@ -95,7 +95,7 @@ theorem isPPTOn_guessLink {n : α → ℕ} {state challengeCiphertext : α → L
     (hchallenge : ComputableTidilyInPolyTime challengeCiphertext input encBits) :
     IsPPTOn input encBool
       (fun a => E.guessLink test (n a) (state a) (challengeCiphertext a)) := by
-  have hcontext := linkStateDecoder.computableTidilyInPolyTime.comp hstate
+  have hcontext := linkStateDecoder.computableInPolyTime.tidy.comp hstate
   dsimp only [encLinkState] at hcontext
   have hbefore := hcontext.snd'.fst'
   have hpredecessor := hcontext.snd'.snd'.fst'
