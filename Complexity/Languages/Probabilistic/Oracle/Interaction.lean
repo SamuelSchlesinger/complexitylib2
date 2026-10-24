@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.Oracle
+public import Complexity.Languages.Probabilistic.Semantics
 
 /-!
 # Running a program against a stateful oracle
@@ -20,6 +21,11 @@ and the final oracle state, with fresh fair samples for the private coins, and
 A prover of an interactive proof is such an oracle; `Cslib.Complexity.Prover.run` is the case of
 word queries and replies (`Cslib.Complexity.Prover.run_eq_runWith`).
 
+`runWith` is the instance of the generic `OracleComp.runWith` whose handler is the sum of the
+lifted uniform handler and `oracle` (`runWith_eq_runWith_sumHandler`). Against a memoryless oracle
+it is `OracleComp.evalWith` of the sum of the uniform handler and the oracle, with the state
+unchanged (`runWith_lift`).
+
 ## Main definitions
 
 * `Cslib.ProbOracleComp.runWith`: the joint law of the result and the final oracle state.
@@ -27,6 +33,8 @@ word queries and replies (`Cslib.Complexity.Prover.run_eq_runWith`).
 
 ## Main results
 
+* `Cslib.ProbOracleComp.runWith_eq_runWith_sumHandler`, `Cslib.ProbOracleComp.runWith_lift`,
+  `Cslib.ProbOracleComp.acceptProbWith_lift`: the instances of the generic semantics.
 * `Cslib.ProbOracleComp.runWith_pure`, `Cslib.ProbOracleComp.runWith_bind`,
   `Cslib.ProbOracleComp.runWith_map`, `Cslib.ProbOracleComp.runWith_query`,
   `Cslib.ProbOracleComp.runWith_sample`: structural rules for `runWith`.
@@ -55,6 +63,37 @@ noncomputable def runWith (program : ProbOracleComp spec α) (s : State) : PMF (
 /-- The probability that `program` returns `true` against the oracle from the state `s`. -/
 noncomputable def acceptProbWith (program : ProbOracleComp spec Bool) (s : State) : ℝ≥0∞ :=
   (runWith oracle program s).map Prod.fst true
+
+/-- The run is the generic stateful run whose handler answers private samples by fresh uniform
+draws, keeping the state, and external calls by `oracle`. -/
+theorem runWith_eq_runWith_sumHandler (program : ProbOracleComp spec α) (s : State) :
+    runWith oracle program s =
+      OracleComp.runWith (OracleComp.sumHandler (fun n => StateT.lift (ProbComp.unifOracle n))
+        oracle) program s := by
+  rw [runWith, handler_eq_sumHandler]
+  rfl
+
+/-- Against a memoryless oracle, the run is `OracleComp.evalWith` of the uniform handler on the
+sampling side and the oracle on the other, with the state unchanged. -/
+theorem runWith_lift (h : (q : Query) → PMF (spec q)) (program : ProbOracleComp spec α)
+    (s : State) :
+    runWith (fun q => StateT.lift (h q)) program s =
+      (OracleComp.evalWith (OracleComp.sumHandler ProbComp.unifOracle h) program).map (·, s) := by
+  have hlift : OracleComp.sumHandler (fun n => StateT.lift (σ := State) (ProbComp.unifOracle n))
+      (fun q => StateT.lift (h q)) =
+      fun q => StateT.lift (OracleComp.sumHandler ProbComp.unifOracle h q) := by
+    funext q
+    cases q <;> rfl
+  rw [runWith_eq_runWith_sumHandler, hlift, OracleComp.runWith_lift]
+
+/-- Against a memoryless oracle, the acceptance probability is the probability of `true` under
+`OracleComp.evalWith` of the uniform handler and the oracle. -/
+theorem acceptProbWith_lift (h : (q : Query) → PMF (spec q)) (program : ProbOracleComp spec Bool)
+    (s : State) :
+    acceptProbWith (fun q => StateT.lift (h q)) program s =
+      OracleComp.evalWith (OracleComp.sumHandler ProbComp.unifOracle h) program true := by
+  rw [acceptProbWith, runWith_lift, PMF.map_comp,
+    show (Prod.fst ∘ fun a : Bool => (a, s)) = id from rfl, PMF.map_id]
 
 /-- A pure program returns its value and leaves the oracle state unchanged. -/
 @[simp] theorem runWith_pure (a : α) (s : State) : runWith oracle (pure a) s = PMF.pure (a, s) :=

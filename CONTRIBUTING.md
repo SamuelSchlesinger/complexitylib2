@@ -53,6 +53,17 @@ Mathlib's standard linter set already enforces the mechanical part; reviews enfo
 Improving an interface never weakens the mathematics: keep the models, encodings, independent
 resource bounds and nonvacuity of the results it touches.
 
+### Algorithms are programs
+
+Probabilistic algorithms, such as key generation, signing, provers, verifiers, simulators,
+extractors, samplers and reductions, are `ProbComp` or `OracleComp` programs. `PMF` is reserved
+for their semantics, `OracleComp.evalWith` and its instances such as `ProbComp.eval`, and for
+genuinely semantic objects: ideal distributions, the laws of games and the distributions compared
+in a statistical argument. A program can be run against different oracles, budgeted, realized by a
+machine and substituted into a reduction. A `PMF`-valued algorithm can do none of these, and
+needs a separate hypothesis that some program realizes it. Exact theorems stay exact, as
+statements about `evalWith`; see `Complexity/Languages/Probabilistic/Semantics.lean`.
+
 ### Public surface under the module system
 
 Under an ordinary `import`, importers rebuild only when a module's exported `.olean` changes. That

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Languages.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.Iteration
+public import Complexity.Languages.Probabilistic.Semantics
 
 import Complexity.Languages.Probabilistic.Oracle.Simulation
 
@@ -23,12 +24,17 @@ some stateful execution (`mem_support_iff_exists`): an oracle that answers its f
 chosen reply realizes each path. Invariants of adaptive loops quantify over possible results, so
 they remain valid for every shared oracle and every reply length.
 
+`support` is the instance of the generic `OracleComp.supportWith` in which every reply is possible
+(`support_eq_supportWith`).
+
 ## Main definitions
 
 * `Cslib.ProbOracleComp.support`: the results at the leaves of the program's tree of calls.
 
 ## Main results
 
+* `Cslib.ProbOracleComp.support_eq_supportWith`: `support` is `OracleComp.supportWith` of all
+  replies.
 * `Cslib.ProbOracleComp.mem_support_bind_iff`: a possible result of a sequence is a possible result
   of a continuation at a possible intermediate result.
 * `Cslib.ProbOracleComp.support_sample`: private samples range over the closed program's support.
@@ -58,6 +64,15 @@ the results at the leaves of its tree of calls. -/
 def support : ProbOracleComp spec α → Set α
   | .pure a => {a}
   | .liftBind _ cont => ⋃ a, support (cont a)
+
+/-- The possible results are the generic `OracleComp.supportWith` with every reply possible. -/
+theorem support_eq_supportWith (program : ProbOracleComp spec α) :
+    support program = OracleComp.supportWith (fun _ => Set.univ) program := by
+  induction program with
+  | pure a => rfl
+  | liftBind q cont ih =>
+    change ⋃ a, support (cont a) = ⋃ a ∈ Set.univ, OracleComp.supportWith _ (cont a)
+    simp only [ih, Set.mem_univ, Set.iUnion_true]
 
 /-- A returned value is the only possible result. -/
 @[simp] theorem support_pure (a : α) : support (pure a : ProbOracleComp spec α) = {a} := rfl
