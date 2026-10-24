@@ -225,7 +225,7 @@ example (S : Finset (ZMod 3 × ZMod 3)) (hS : S.Nonempty) (hS4 : 2 * #S ≤ 9) :
   have hlam : (RotationMap.affinePlane (ZMod 3)).spectralExpansion < 1 := by
     refine (RotationMap.spectralExpansion_affinePlane_le (K := ZMod 3)).trans_lt ?_
     rw [Real.sqrt_lt' one_pos]
-    simp [ZMod.card]
+    simp only [ZMod.card, Nat.cast_ofNat, one_div, one_pow]
     norm_num
   have hS0 : (0 : ℝ) < #S := by exact_mod_cast hS.card_pos
   have hpos : (0 : ℝ) < (1 - (RotationMap.affinePlane (ZMod 3)).spectralExpansion) *

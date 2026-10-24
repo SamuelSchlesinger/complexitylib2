@@ -313,7 +313,12 @@ example : dist
   refine (((LinearHash.isTwoUniversal 2 1).leftover_hash_conditional _ fun _ => _).trans
     (le_of_eq ?_)).trans_lt (b := √(1 / 2) / 2) ?_
   · congr 2
-    simp [PMF.uniformOfFintype_apply]
+    simp only [Fintype.card_pi, univ_unique, Fin.default_eq_zero, Fin.isValue, Fintype.card_bool,
+        prod_const, card_singleton, pow_one, Nat.cast_ofNat, Fintype.univ_bool,
+        uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_ofNat,
+        collisionProbability_uniform, card_univ, Fintype.card_fin, Nat.reducePow, sum_const,
+        mem_singleton, Bool.true_eq_false, not_false_eq_true, card_insert_of_notMem, Nat.reduceAdd,
+        nsmul_eq_mul, ne_eq, OfNat.ofNat_ne_zero, mul_inv_cancel_left₀, one_div]
     norm_num
   · have : √(1 / 2 : ℝ) < 1 := (Real.sqrt_lt' one_pos).2 (by norm_num)
     linarith
@@ -331,7 +336,8 @@ example : dist (seededHash (PMF.uniformOfFintype (Fin 1 → BitString 3))
     simp [PMF.uniformOfFintype_apply]
   have hs : √((Fintype.card (BitString 1) : ℝ) * (2 * (1 / 8))) = √(1 / 2) := by
     congr 1
-    simp
+    simp only [Fintype.card_pi, univ_unique, Fin.default_eq_zero, Fin.isValue, Fintype.card_bool,
+        prod_const, card_singleton, pow_one, Nat.cast_ofNat, one_div]
     norm_num
   have : √(1 / 2 : ℝ) < 1 := (Real.sqrt_lt' one_pos).2 (by norm_num)
   rw [hheavy, hs, MeasureTheory.measure_empty, ENNReal.toReal_zero, mul_zero, zero_add]

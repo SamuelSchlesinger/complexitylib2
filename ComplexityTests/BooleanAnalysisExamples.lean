@@ -50,7 +50,10 @@ example : fourierCoeff (fun x => signVal (and₂ x)) {0, 1} = -1 / 2 := by
 /-- The BLR test accepts the conjunction of two bits on `10` of the `16` pairs. -/
 theorem blrAcceptance_and₂ : blrAcceptance and₂ = 5 / 8 := by
   simp only [blrAcceptance, Fin.expect_univ_cons, Fintype.expect_bool, Fintype.expect_unique]
-  simp [and₂, Bool.add_eq_xor]
+  simp only [and₂, Nat.reduceAdd, Fin.isValue, Fin.cons_zero, Fin.cons_one, Bool.and_self,
+      bne_self_eq_false, Pi.add_apply, Bool.add_eq_xor, ↓reduceIte, Bool.and_true, Bool.bne_true,
+      Bool.not_false, add_self_div_two, Bool.and_false, Bool.bne_false, Bool.false_eq_true,
+      Bool.true_eq_false, add_zero, zero_div, one_div, zero_add]
   norm_num
 
 -- Through the Fourier formula for the acceptance, the cubed coefficients sum to `1 / 4`.
@@ -88,7 +91,11 @@ the noise: with probability `2 · 1/4 · (1 - (1 - δ) ^ 2)`. -/
 theorem noiseSensitivity_and₂ (δ : ℝ) : noiseSensitivity δ and₂ = δ - δ ^ 2 / 2 := by
   simp only [noiseSensitivity, Fin.expect_univ_cons, Fintype.expect_bool, Fintype.expect_unique,
     bernoulliAverage_cons]
-  simp [and₂, Bool.add_eq_xor, bernoulliAverage_const]
+  simp only [and₂, Nat.reduceAdd, Fin.isValue, Fin.cons_zero, Fin.cons_one, Bool.and_self,
+      Pi.add_apply, Bool.add_eq_xor, bne_self_eq_false, ne_eq, not_true_eq_false, ↓reduceIte,
+      bernoulliAverage_const, mul_zero, Bool.bne_true, Bool.not_false, Bool.and_true, add_zero,
+      Bool.and_false, Bool.false_eq_true, not_false_eq_true, mul_one, zero_add, Bool.bne_false,
+      Bool.true_eq_false, sub_add_cancel]
   ring
 
 /-- Each bit of the conjunction is pivotal on half of the inputs. -/
@@ -100,7 +107,10 @@ theorem influence_and₂ : influence 0 (fun x => signVal (and₂ x)) = 1 / 2 := 
 theorem totalInfluence_and₂ : totalInfluence (fun x => signVal (and₂ x)) = 1 := by
   simp only [totalInfluence, Fin.sum_univ_two, influence_signVal, Fin.expect_univ_cons,
     Fintype.expect_bool, Fintype.expect_unique]
-  simp [and₂, Function.update]
+  simp only [and₂, Function.update, Fin.isValue, ↓reduceDIte, Nat.reduceAdd, Fin.cons_zero,
+      Bool.not_false, one_ne_zero, Fin.cons_one, Bool.and_false, Bool.and_self, ↓reduceIte,
+      Bool.and_true, Bool.true_eq_false, zero_add, one_div, Bool.not_true, Bool.false_eq_true,
+      add_self_div_two, zero_ne_one, add_zero, zero_div]
   norm_num
 
 -- `NS_δ ≤ δ I` on the conjunction; the computed value `δ - δ ^ 2 / 2` agrees.
@@ -122,7 +132,8 @@ example : ∃ x : Fin 2 → Bool,
     (f := hadamardCode (fun _ : Fin 2 => true))
     (g := hadamardCode (tensor (fun _ => true) (fun _ => true)))
     (A := fun _ : Unit => Pi.single ((0 : Fin 2), (1 : Fin 2)) true) (b := fun _ => true)
-    (ε := 1 / 32) (ε' := 1 / 32) (by simp) (by simp) (by simp; norm_num)
+    (ε := 1 / 32) (ε' := 1 / 32) (by simp) (by simp)
+    (by simp only [one_div, tensorTestAcceptance_hadamardCode]; norm_num)
     (by rw [equationTestAcceptance_hadamardCode (by simp)]; norm_num)
   refine ⟨x, by simpa using hx, ?_⟩
   simpa [hadamardCode_tensor_single] using he ()
@@ -132,7 +143,9 @@ example : ∃ x : Fin 2 → Bool,
 -- Both coordinates of a mask of rate `p` are selected with probability `p ^ 2`.
 example (p : ℝ) :
     bernoulliAverage p (fun P : Fin 2 → Bool => if P 0 && P 1 then (1 : ℝ) else 0) = p ^ 2 := by
-  simp [bernoulliAverage_cons, bernoulliAverage_const]
+  simp only [Fin.isValue, Bool.and_eq_true, bernoulliAverage_cons, Nat.reduceAdd, Fin.cons_zero,
+      Bool.false_eq_true, Fin.cons_one, false_and, ↓reduceIte, bernoulliAverage_const, mul_zero,
+      true_and, mul_one, zero_add]
   ring
 
 -- A mask of rate `1 / 3` on three coordinates selects one coordinate on average.
