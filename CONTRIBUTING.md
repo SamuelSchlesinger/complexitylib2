@@ -121,13 +121,21 @@ evidence belong in commit or PR descriptions.
 Link to these sources instead of repeating them in new guides. Add a separate document only when
 it provides useful explanation that does not already have a suitable home.
 
+The guide (`guide/`) is the narrative path into the library: a chapter per area, written as a
+newcomer should meet it, with checked Lean examples whose names link to the API documentation.
+When a chapter needs proof plumbing or a missing lemma, improve the library rather than
+documenting around it.
+
 The [README](README.md#build-and-use) explains how to generate API documentation using
-[doc-gen4](https://github.com/leanprover/doc-gen4). Its separate `docbuild` project shares the
-library's toolchain, bibliography and dependency checkouts. After changing library dependencies,
-run `MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update complexitylib`. When changing Lean,
-also update the doc-gen4 tag in `docbuild/lakefile.toml` and run
-`MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update doc-gen4`.
-Commit the refreshed documentation lockfile and run the documentation checks and build.
+[doc-gen4](https://github.com/leanprover/doc-gen4) and how to build the guide with
+[Verso](https://github.com/leanprover/verso). Their separate `docbuild` and `guide` projects share
+the library's toolchain and dependency checkouts, and `docbuild` its bibliography. After changing
+library dependencies, run `MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update complexitylib`
+and the same with `-d guide`. When changing Lean, also update the doc-gen4 tag in
+`docbuild/lakefile.toml` and the Verso tag in `guide/lakefile.toml`, both named after the Lean
+version, and run `MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d docbuild update doc-gen4` and
+`MATHLIB_NO_CACHE_ON_UPDATE=1 lake -d guide update verso`. Commit the refreshed lockfiles and
+run the documentation checks and builds.
 
 ## Maintaining the headline abstracts
 
