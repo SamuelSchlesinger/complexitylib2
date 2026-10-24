@@ -517,8 +517,16 @@ Oracle lowness of SPP (`GapPWithOracle_eq_GapP_of_mem_SPP`, hence lowness for `S
 and the unrelativized-`FP`-target classes `LWPPWithFixedTarget` and `WPPWithFixedTarget`), LWPP
 (`exists_mul_mem_GapP_of_mem_LWPP`, hence lowness for `C=P`, `PP`, and the unrelativized-`FP`-target
 classes `LWPPWithFixedTarget` and `WPPWithFixedTarget`), and WPP (`PPWithOracle_eq_PP_of_mem_WPP`)
-is proved in [WPP.Lowness](Complexity/Computability/Complexity/Classes/WPP/Lowness.lean);
-target-relativized `LWPP^A` / `WPP^A` definitions and lowness with `FP^A` targets are not claimed.
+is proved in [WPP.Lowness](Complexity/Computability/Complexity/Classes/WPP/Lowness.lean), and
+[SharpP.Lowness](Complexity/Computability/Complexity/Classes/SharpP/Lowness.lean) proves
+precomposition of `#P` and `GapP` with `FP^(UP ∩ coUP)` functions, the exact lowness
+characterizations `Low(#P) = UP ∩ coUP` (`SharpPWithOracle_eq_SharpP_iff`), `Low(UP ∩ coUP) = UP ∩ coUP`
+(`UPWithOracle_inter_coUPWithOracle_eq_iff`), `Low(GapP) = SPP` (`GapPWithOracle_eq_GapP_iff`),
+and `Low(SPP) = SPP` (`SPPWithOracle_eq_SPP_iff`), `UP ∩ coUP` lowness for `UP`, `coUP`, `FewP`,
+`US`, and `SBPWithFixedTarget`, and `SPP`/`FewP`/`UP ∩ coUP` lowness for relativized modular
+counting classes (`ModPWithOracle_eq_ModP_of_mem_SPP`, `coModPWithOracle_eq_coModP_of_mem_SPP`,
+`ParityPWithOracle_eq_ParityP_of_mem_SPP`);
+target-relativized `LWPP^A` / `WPP^A` / `SBP^A` definitions and lowness with `FP^A` targets are not claimed.
 [Oracle lowness of `NP ∩ coNP` and `UP ∩ coUP`](Complexity/Computability/Complexity/Classes/Oracle/Lowness.lean)
 proves `P^(NP ∩ coNP) = NP ∩ coNP`, `P^(UP ∩ coUP) = UP ∩ coUP`, `NP^(NP ∩ coNP) = NP`, the
 characterization `NP^A = NP ↔ A ∈ NP ∩ coNP` (`NPWithOracle_eq_NP_iff`), and

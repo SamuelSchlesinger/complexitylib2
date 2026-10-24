@@ -662,6 +662,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 public import Complexity.Computability.Complexity.Classes.SharpP.Completeness
 public import Complexity.Computability.Complexity.Classes.SharpP.GapMachine
+public import Complexity.Computability.Complexity.Classes.SharpP.Lowness
 public import Complexity.Computability.Complexity.Classes.SharpP.Machine
 public import Complexity.Computability.Complexity.Classes.SharpP.Oracle
 public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
