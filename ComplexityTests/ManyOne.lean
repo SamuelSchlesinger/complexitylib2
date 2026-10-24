@@ -203,12 +203,31 @@ example {Y : PromiseProblem β} : PromiseProblem.NPHard encB Y ↔
 
 /-! ### Randomized reductions on promise problems -/
 
+universe u in
+example {α : Type u} (enc : α ↪ List Bool) (X : PromiseProblem α) :
+    PromiseProblem.PolyTimeReducible enc enc X X :=
+  .refl enc X
+
 example {X : PromiseProblem α} {Y : PromiseProblem β} :
     PromiseProblem.RPReducible encA encB X Y ↔
       ∃ R : α → Cslib.ProbComp β, Cslib.Probability.IsPPTOn encA encB R ∧
         (∀ a ∈ X.yes, ∀ b ∈ (Cslib.ProbComp.eval (R a)).support, b ∈ Y.yes) ∧
         ∀ a ∈ X.no, 2 / 3 ≤ ((Cslib.ProbComp.eval (R a)).toOuterMeasure Y.no).toReal :=
   Iff.rfl
+
+example {X : PromiseProblem α} {Y : PromiseProblem β} :
+    PromiseProblem.RPReducible encA encB X Y ↔
+      ∃ R : α → Cslib.ProbComp β, Cslib.Probability.IsPPTOn encA encB R ∧
+        (∀ a ∈ X.yes, ((Cslib.ProbComp.eval (R a)).toOuterMeasure Y.yes).toReal = 1) ∧
+        ∀ a ∈ X.no, 2 / 3 ≤ ((Cslib.ProbComp.eval (R a)).toOuterMeasure Y.no).toReal :=
+  PromiseProblem.rpReducible_iff_toOuterMeasure_eq_one
+
+example {X : PromiseProblem α} {Y : PromiseProblem β} {s : α → ℝ} :
+    PromiseProblem.RPReducibleWithError encA encB s Xᶜ Yᶜ ↔
+      ∃ R : α → Cslib.ProbComp β, Cslib.Probability.IsPPTOn encA encB R ∧
+        (∀ a ∈ X.no, ∀ b ∈ (Cslib.ProbComp.eval (R a)).support, b ∈ Y.no) ∧
+        ∀ a ∈ X.yes, s a ≤ ((Cslib.ProbComp.eval (R a)).toOuterMeasure Y.yes).toReal :=
+  PromiseProblem.rpReducibleWithError_compl_iff
 
 example {X : PromiseProblem α} {Y : PromiseProblem β}
     (h : PromiseProblem.PolyTimeReducible encA encB X Y) :

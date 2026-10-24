@@ -52,29 +52,32 @@ Reductions of promise problems are Karp reductions in the sense of Goldreich's s
 asking every problem separating the yes-instances from the no-instances to be NP-hard, which
 `PromiseProblem.NPHard.npHard_of_subset` derives.
 
-For randomized hardness results in metacomplexity [Ilango, Section 2][Ilango2020],
-[Ilango, Loff and Oliveira, Section 3.2][IlangoLoffOliveira2020],
-[Hirahara, Lemma 8.3 and Theorem 8.5][Hirahara2022], a **randomized polynomial-time many-one
-reduction with one-sided error** (`PromiseProblem.RPReducible`, and the threshold-indexed
+For randomized hardness results in metacomplexity [Ilango, Section 2, p. 34:11][Ilango2020],
+[Ilango, Loff and Oliveira, Section 4.2, Lemmas 15–16, pp. 22:20–22:23][IlangoLoffOliveira2020],
+[Hirahara, ECCC TR22-119, Lemma 8.3, p. 26 and Theorem 8.5, pp. 30–31][Hirahara2022], a
+**randomized polynomial-time many-one reduction with one-sided error**
+(`PromiseProblem.RPReducible`, and the library's threshold-indexed generalization
 `PromiseProblem.RPReducibleWithError`) is a uniform strict PPT program `R : α → ProbComp β` that
 maps every yes-instance of `X` exclusively into `Y.yes` and maps every no-instance of `X` into
-`Y.no` with probability at least `2 / 3` (or `s a`). This convention matches the metacomplexity
+`Y.no` with probability at least `2 / 3` (or `s a`). This orientation matches the metacomplexity
 sources, where upper bounds on circuit or Kolmogorov complexity hold deterministically for every
 random choice on yes-instances while lower bounds on no-instances hold with high probability.
-Equivalence bridges connect `RPReducible` to:
+Equivalence and convention bridges connect `RPReducible` and `RPReducibleWithError` to:
 
 * the `Pr[...]` event notation (`PromiseProblem.rpReducible_iff_probability`),
 * probability-one completeness (`PromiseProblem.rpReducible_iff_toOuterMeasure_eq_one`),
 * explicit seeded polynomial-time functions reading a random string of polynomial length
   (`PromiseProblem.rpReducible_iff_exists_seeded`), and
-* the dual one-sided error convention of Valiant and Vazirani [ValiantVazirani1986] through
-  promise-problem complement (`PromiseProblem.rpReducible_compl_iff`).
+* the dual one-sided error orientation through promise-problem complement
+  (`PromiseProblem.rpReducibleWithError_compl_iff`, `PromiseProblem.rpReducible_compl_iff`), which
+  for an inverse-polynomial threshold `s a` represents the unamplified one-sided orientation of
+  Valiant and Vazirani [Valiant and Vazirani, pp. 86–87][ValiantVazirani1986].
 
 The probabilistic promise classes `PromiseBPP`, `PromiseRP` and `PromiseCoRP` follow Goldreich's
-semantic definitions [Goldreich, Definition 1.2 and Section 5.1][Goldreich2006], requiring bounded
-or one-sided error only on instances in the promise, and `PromiseBPP` and `PromiseCoRP` are closed
-under `RPReducible` (`PromiseProblem.RPReducible.mem_PromiseBPP`,
-`PromiseProblem.RPReducible.mem_PromiseCoRP`).
+semantic definitions [Goldreich, July 2005 author version, Definition 1.2, p. 4 and Section 6.2,
+p. 18][Goldreich2006], requiring bounded or one-sided error only on instances in the promise, and
+`PromiseBPP` and `PromiseCoRP` are closed under `RPReducible`
+(`PromiseProblem.RPReducible.mem_PromiseBPP`, `PromiseProblem.RPReducible.mem_PromiseCoRP`).
 
 ## Main definitions
 
@@ -128,6 +131,7 @@ under `RPReducible` (`PromiseProblem.RPReducible.mem_PromiseBPP`,
 * `Cslib.Complexity.PromiseProblem.rpReducible_iff_probability`,
   `Cslib.Complexity.PromiseProblem.rpReducible_iff_toOuterMeasure_eq_one`,
   `Cslib.Complexity.PromiseProblem.rpReducible_iff_exists_seeded`,
+  `Cslib.Complexity.PromiseProblem.rpReducibleWithError_compl_iff`,
   `Cslib.Complexity.PromiseProblem.rpReducible_compl_iff`: faithfulness and convention bridges.
 * `Cslib.Complexity.PromiseProblem.RPReducible.mem_PromiseBPP`,
   `Cslib.Complexity.PromiseProblem.RPReducible.mem_PromiseCoRP`,
@@ -137,16 +141,17 @@ under `RPReducible` (`PromiseProblem.RPReducible.mem_PromiseBPP`,
 ## References
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Chapter 11][AroraBarak09]
-* [O. Goldreich, *On promise problems: a survey*][Goldreich2006]
+* [O. Goldreich, *On promise problems: a survey*, July 2005 author version][Goldreich2006]
 * [S. Even, A. Selman, Y. Yacobi, *The complexity of promise problems with applications to
   public-key cryptography*][EvenSelmanYacobi1984]
 * [R. Ilango, *Approaching MCSP from Above and Below: Hardness for a Conditional Variant and
-  AC⁰[p]*, Section 2][Ilango2020]
+  AC⁰[p]*, Section 2, p. 34:11][Ilango2020]
 * [R. Ilango, B. Loff, I. C. Oliveira, *NP-Hardness of Circuit Minimization for Multi-Output
-  Functions*, Section 3.2][IlangoLoffOliveira2020]
-* [S. Hirahara, *NP-Hardness of Learning Programs and Partial MCSP*, Section 8][Hirahara2022]
+  Functions*, Section 4.2, Lemmas 15–16, pp. 22:20–22:23][IlangoLoffOliveira2020]
+* [S. Hirahara, *NP-Hardness of Learning Programs and Partial MCSP*, ECCC TR22-119, Section 8,
+  Lemma 8.3 and Theorem 8.5][Hirahara2022]
 * [L. G. Valiant, V. V. Vazirani, *NP is as Easy as Detecting Unique
-  Solutions*][ValiantVazirani1986]
+  Solutions*, pp. 86–87][ValiantVazirani1986]
 -/
 
 @[expose] public section
@@ -165,8 +170,8 @@ variable {α : Type} {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × Li
 /-- `V` solves the promise problem `Q` with bounded error, using random strings whose length is `p`
 evaluated at the length of the encoded instance: for every yes-instance at least two thirds of the
 random strings are accepted, and for every no-instance at least two thirds are rejected
-[Goldreich, Definition 1.2][Goldreich2006]. Nothing is required on instances outside the
-promise. -/
+[Goldreich, July 2005 author version, Definition 1.2, p. 4][Goldreich2006]. Nothing is required on
+instances outside the promise. -/
 def SolvesWithBoundedError (enc : α ↪ List Bool) (p : Polynomial ℕ)
     (V : α × List Bool → Bool) (Q : PromiseProblem α) : Prop :=
   (∀ a ∈ Q.yes, 2 * 2 ^ p.eval (enc a).length ≤
@@ -179,7 +184,8 @@ def SolvesWithBoundedError (enc : α ↪ List Bool) (p : Polynomial ℕ)
 /-- `V` solves the promise problem `Q` with one-sided error, using random strings whose length is
 `p` evaluated at the length of the encoded instance: for every yes-instance at least half of the
 random strings are accepted, and for every no-instance none is
-[Goldreich, Section 5.1][Goldreich2006]. Nothing is required on instances outside the promise. -/
+[Goldreich, July 2005 author version, Section 6.2, p. 18][Goldreich2006]. Nothing is required on
+instances outside the promise. -/
 def SolvesWithOneSidedError (enc : α ↪ List Bool) (p : Polynomial ℕ)
     (V : α × List Bool → Bool) (Q : PromiseProblem α) : Prop :=
   (∀ a ∈ Q.yes, 2 ^ p.eval (enc a).length ≤
@@ -232,7 +238,7 @@ variable {α : Type} {enc : α ↪ List Bool} {Q : PromiseProblem α} {A : Set �
 
 /-- The promise problems solved with bounded error by polynomial-time algorithms reading
 polynomially long random strings, with respect to the encoding `enc` of instances
-[Goldreich, Definition 1.2][Goldreich2006]. -/
+[Goldreich, July 2005 author version, Definition 1.2, p. 4][Goldreich2006]. -/
 def PromiseBPP (enc : α ↪ List Bool) : Set (PromiseProblem α) :=
   {Q | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
     ComputableInPolyTime V (encPair enc encBits) encBool ∧
@@ -240,7 +246,7 @@ def PromiseBPP (enc : α ↪ List Bool) : Set (PromiseProblem α) :=
 
 /-- The promise problems solved with one-sided error (no false positives on no-instances) by
 polynomial-time algorithms reading polynomially long random strings
-[Goldreich, Section 5.1][Goldreich2006]. -/
+[Goldreich, July 2005 author version, Section 6.2, p. 18][Goldreich2006]. -/
 def PromiseRP (enc : α ↪ List Bool) : Set (PromiseProblem α) :=
   {Q | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
     ComputableInPolyTime V (encPair enc encBits) encBool ∧
@@ -248,7 +254,7 @@ def PromiseRP (enc : α ↪ List Bool) : Set (PromiseProblem α) :=
 
 /-- The promise problems solved with one-sided error (no false negatives on yes-instances) by
 polynomial-time algorithms reading polynomially long random strings: those whose complements are
-in `PromiseRP` [Goldreich, Section 5.1][Goldreich2006]. -/
+in `PromiseRP` [Goldreich, July 2005 author version, Section 6.2, p. 18][Goldreich2006]. -/
 def PromiseCoRP (enc : α ↪ List Bool) : Set (PromiseProblem α) :=
   {Q | Qᶜ ∈ PromiseRP enc}
 
@@ -532,7 +538,7 @@ end PromiseProbabilistic
 
 namespace PromiseProblem
 
-variable {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
+variable {α β γ : Type*} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
   {X : PromiseProblem α} {Y Y' : PromiseProblem β} {Z : PromiseProblem γ}
 
 /-! ### Reductions -/
@@ -598,6 +604,11 @@ theorem PolyTimeReducible.exists_polyTimeReducible (h : PolyTimeReducible encA e
   refine ⟨f ⁻¹' B, fun a ha => hyes (hfyes ha), Set.disjoint_left.2 fun a ha ha' =>
     Set.disjoint_left.1 hno ha (hfno ha'), f, hf, fun _ => Iff.rfl⟩
 
+section Randomized
+
+variable {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {encC : γ ↪ List Bool}
+  {X : PromiseProblem α} {Y Y' : PromiseProblem β} {Z : PromiseProblem γ}
+
 /-- **`PromiseNP` is closed under polynomial-time reductions.** -/
 theorem PolyTimeReducible.mem_PromiseNP (h : PolyTimeReducible encA encB X Y)
     (hY : Y ∈ PromiseNP encB) : X ∈ PromiseNP encA := by
@@ -635,10 +646,12 @@ theorem PolyTimeReducible.mem_PromiseCoRP (h : PolyTimeReducible encA encB X Y)
 /-! ### Randomized reductions with one-sided error -/
 
 /-- A **randomized polynomial-time many-one reduction with one-sided error** and soundness
-threshold `s : α → ℝ` from a promise problem `X` to a promise problem `Y`
-[Ilango, Section 2][Ilango2020], [Ilango, Loff and Oliveira, Section 3.2][IlangoLoffOliveira2020],
-[Hirahara, Lemma 8.3 and Theorem 8.5][Hirahara2022]: a uniform strict PPT program
-`R : α → ProbComp β` such that:
+threshold `s : α → ℝ` from a promise problem `X` to a promise problem `Y` (library generalization of
+the fixed-threshold reduction of [Ilango, Section 2, p. 34:11][Ilango2020] to support general
+constant or subconstant soundness thresholds as in
+[Ilango, Loff and Oliveira, Section 4.2, Lemmas 15–16, pp. 22:20–22:23][IlangoLoffOliveira2020] and
+[Hirahara, ECCC TR22-119, Lemma 8.3, p. 26 and Theorem 8.5, pp. 30–31][Hirahara2022]): a uniform
+strict PPT program `R : α → ProbComp β` such that:
 
 * **Completeness (no false negatives on `X.yes`):** for every `a ∈ X.yes`, every supported output
   of `R a` lies in `Y.yes`;
@@ -654,9 +667,9 @@ def RPReducibleWithError (encA : α ↪ List Bool) (encB : β ↪ List Bool) (s 
 
 /-- A **randomized polynomial-time many-one reduction with one-sided error** from a promise problem
 `X` to a promise problem `Y`, with the standard soundness threshold `2 / 3`
-[Ilango, Section 2][Ilango2020], [Hirahara, Lemma 8.3 and Theorem 8.5][Hirahara2022]: a uniform
-strict PPT program `R : α → ProbComp β` mapping every yes-instance of `X` exclusively into `Y.yes`
-and mapping every no-instance of `X` into `Y.no` with probability at least `2 / 3`. -/
+[Ilango, Section 2, p. 34:11][Ilango2020]: a uniform strict PPT program `R : α → ProbComp β`
+mapping every yes-instance of `X` exclusively into `Y.yes` and mapping every no-instance of `X` into
+`Y.no` with probability at least `2 / 3`. -/
 def RPReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool)
     (X : PromiseProblem α) (Y : PromiseProblem β) : Prop :=
   ∃ R : α → ProbComp β, IsPPTOn encA encB R ∧
@@ -684,34 +697,6 @@ theorem rpReducible_iff_probability [DecidablePred (· ∈ Y.no)] :
         ∀ a ∈ X.no, 2 / 3 ≤ Pr[(fun b => decide (b ∈ Y.no)) <$> R a] := by
   simp only [RPReducible, ProbComp.probability_map_decide_mem]
 
-/-- For a discrete distribution `p`, every supported outcome lies in `S` if and only if `S` has
-real probability `1`. This bridges the support-based completeness condition
-`∀ b ∈ support, b ∈ Y.yes` [Ilango, Section 2][Ilango2020] and the probability-one condition
-`Pr[R(x) ∈ Y.yes] = 1` [Ilango, Loff and Oliveira, Section 3.2][IlangoLoffOliveira2020],
-[Hirahara, Lemma 8.3][Hirahara2022]. -/
-theorem forall_mem_support_iff_toOuterMeasure_toReal_eq_one (p : _root_.PMF β) (S : Set β) :
-    (∀ b ∈ p.support, b ∈ S) ↔ (p.toOuterMeasure S).toReal = 1 := by
-  have hadd := PMF.toOuterMeasure_toReal_add_compl p S
-  have hnonneg : 0 ≤ (p.toOuterMeasure Sᶜ).toReal := ENNReal.toReal_nonneg
-  have hzero : (p.toOuterMeasure Sᶜ).toReal = 0 ↔ ∀ b ∈ p.support, b ∈ S := by
-    rw [← not_iff_not]
-    have hpos := PMF.toOuterMeasure_toReal_pos_iff p Sᶜ
-    simp only [Set.mem_compl_iff] at hpos
-    constructor
-    · intro h hforall
-      obtain ⟨b, hbS, hbs⟩ := hpos.mp (lt_of_le_of_ne hnonneg (Ne.symm h))
-      exact hbS (hforall b hbs)
-    · intro h
-      have ⟨b, hbs, hbS⟩ : ∃ b ∈ p.support, b ∉ S := by
-        by_contra! hc
-        exact h hc
-      exact ne_of_gt (hpos.mpr ⟨b, hbS, hbs⟩)
-  constructor
-  · intro h
-    linarith [hzero.mpr h]
-  · intro h
-    exact hzero.mp (by linarith)
-
 /-- Equivalence of support-based completeness and probability-one completeness for
 `RPReducibleWithError`. -/
 theorem rpReducibleWithError_iff_toOuterMeasure_eq_one {s : α → ℝ} :
@@ -719,11 +704,11 @@ theorem rpReducibleWithError_iff_toOuterMeasure_eq_one {s : α → ℝ} :
       ∃ R : α → ProbComp β, IsPPTOn encA encB R ∧
         (∀ a ∈ X.yes, ((ProbComp.eval (R a)).toOuterMeasure Y.yes).toReal = 1) ∧
         ∀ a ∈ X.no, s a ≤ ((ProbComp.eval (R a)).toOuterMeasure Y.no).toReal := by
-  simp only [RPReducibleWithError, forall_mem_support_iff_toOuterMeasure_toReal_eq_one]
+  simp only [RPReducibleWithError, ENNReal.toReal_eq_one_iff,
+    PMF.toOuterMeasure_apply_eq_one_iff, Set.subset_def]
 
 /-- Equivalence of support-based completeness and probability-one completeness for
-`RPReducible` [Ilango, Loff and Oliveira, Section 3.2][IlangoLoffOliveira2020],
-[Hirahara, Lemma 8.3][Hirahara2022]. -/
+`RPReducible` [Ilango, Section 2, p. 34:11][Ilango2020]. -/
 theorem rpReducible_iff_toOuterMeasure_eq_one :
     RPReducible encA encB X Y ↔
       ∃ R : α → ProbComp β, IsPPTOn encA encB R ∧
@@ -738,18 +723,33 @@ theorem RPReducibleWithError.mono {s₁ s₂ : α → ℝ}
   let ⟨R, hR, hyes, hno⟩ := h
   ⟨R, hR, hyes, fun a ha => (hs a ha).trans (hno a ha)⟩
 
-/-- Every `RPReducible` reduction with soundness `2 / 3` [Ilango, Section 2][Ilango2020] is also
-an `RPReducibleWithError` reduction with soundness `1 / 2` [Ilango, Loff and Oliveira,
-Section 3.2][IlangoLoffOliveira2020]. -/
+/-- Weakening `RPReducible` from soundness threshold `2 / 3` [Ilango, Section 2, p. 34:11]
+[Ilango2020] to `1 / 2` (library weakening lemma). -/
 theorem RPReducible.rpReducibleWithError_half (h : RPReducible encA encB X Y) :
     RPReducibleWithError encA encB (fun _ => 1 / 2) X Y :=
   RPReducibleWithError.mono h fun _ _ => by norm_num
 
-/-- **Valiant–Vazirani dual convention bridge** [Valiant and Vazirani][ValiantVazirani1986],
-[Goldreich, Section 5.1][Goldreich2006]: a randomized reduction from `X` to `Y` in the dual
-one-sided error convention (mapping yes-instances into `Y.yes` with probability at least `2 / 3`
-and mapping no-instances exclusively into `Y.no`) is `RPReducible` between the complement promise
-problems `Xᶜ` and `Yᶜ`. -/
+/-- **Complement-duality identity for `RPReducibleWithError`** (library identity): a randomized
+reduction between the complement promise problems `Xᶜ` and `Yᶜ` with threshold `s` is a randomized
+reduction from `X` to `Y` in the dual one-sided error orientation, mapping no-instances exclusively
+into `Y.no` and mapping yes-instances into `Y.yes` with probability at least `s a`. When `s a` is an
+inverse-polynomial threshold such as `1 / (4 * n)`, this represents the unamplified one-sided
+orientation of Valiant and Vazirani [Valiant and Vazirani, Section 1, Theorem 1.1, pp. 86–87]
+[ValiantVazirani1986], [Goldreich, July 2005 author version, Section 6.2, p. 18][Goldreich2006]. -/
+theorem rpReducibleWithError_compl_iff {s : α → ℝ} :
+    RPReducibleWithError encA encB s Xᶜ Yᶜ ↔
+      ∃ R : α → ProbComp β, IsPPTOn encA encB R ∧
+        (∀ a ∈ X.no, ∀ b ∈ (ProbComp.eval (R a)).support, b ∈ Y.no) ∧
+        ∀ a ∈ X.yes, s a ≤ ((ProbComp.eval (R a)).toOuterMeasure Y.yes).toReal :=
+  Iff.rfl
+
+/-- **Complement-duality identity for `RPReducible`** (library identity): a randomized reduction
+between the complement promise problems `Xᶜ` and `Yᶜ` at the constant soundness threshold `2 / 3` is
+a randomized reduction from `X` to `Y` in the dual one-sided error orientation (mapping
+yes-instances into `Y.yes` with probability at least `2 / 3` and mapping no-instances exclusively
+into `Y.no`). Unlike Valiant and Vazirani [Valiant and Vazirani, pp. 86–87][ValiantVazirani1986],
+which uses an inverse-polynomial YES success probability `1 / (4 * n)` (see
+`rpReducibleWithError_compl_iff`), this identity fixes the constant threshold `2 / 3`. -/
 theorem rpReducible_compl_iff :
     RPReducible encA encB Xᶜ Yᶜ ↔
       ∃ R : α → ProbComp β, IsPPTOn encA encB R ∧
@@ -768,12 +768,12 @@ private theorem toOuterMeasure_map_uniformList_toReal (f : List Bool → β) (n 
   simp [Function.comp_def, Set.mem_preimage]
 
 open Classical in
-/-- **Seeded-function characterization of `RPReducible`** [Ilango, Section 2][Ilango2020],
-[Ilango, Loff and Oliveira, Section 3.2][IlangoLoffOliveira2020]: `X` is `RPReducible` to `Y`
-if and only if there are a polynomial `p` and a function `f : α × List Bool → β`, computable in
-polynomial time with respect to `encPair encA encBits` and `encB`, such that for every `a ∈ X.yes`
-and every random string `r` of length `p(|a|)` we have `f(a, r) ∈ Y.yes`, and for every `a ∈ X.no`
-at least two thirds of the random strings `r` of length `p(|a|)` satisfy `f(a, r) ∈ Y.no`. -/
+/-- **Seeded-function characterization of `RPReducible`** [Ilango, Section 2, p. 34:11][Ilango2020]:
+`X` is `RPReducible` to `Y` if and only if there are a polynomial `p` and a function
+`f : α × List Bool → β`, computable in polynomial time with respect to `encPair encA encBits` and
+`encB`, such that for every `a ∈ X.yes` and every random string `r` of length `p(|a|)` we have
+`f(a, r) ∈ Y.yes`, and for every `a ∈ X.no` at least two thirds of the random strings `r` of length
+`p(|a|)` satisfy `f(a, r) ∈ Y.no`. -/
 theorem rpReducible_iff_exists_seeded :
     RPReducible encA encB X Y ↔
       ∃ (p : Polynomial ℕ) (f : α × List Bool → β),
@@ -872,34 +872,9 @@ theorem RPReducible.of_subset (h : RPReducible encA encB X Y) (hyes : Y.yes ⊆ 
     (hno : Y.no ⊆ Y'.no) : RPReducible encA encB X Y' :=
   RPReducibleWithError.of_subset h hyes hno
 
-/-- If `p` lands in `S` with probability at least `s₁` and for every supported `b ∈ S` the
-continuation `k b` lands in `T` with probability at least `s₂`, then `p.bind k` lands in `T` with
-probability at least `s₁ * s₂`. -/
-private theorem toOuterMeasure_bind_ge_mul (p : _root_.PMF β) (k : β → _root_.PMF γ)
-    (S : Set β) (T : Set γ) {s₁ s₂ : ℝ} (hs₂ : 0 ≤ s₂)
-    (hp : s₁ ≤ (p.toOuterMeasure S).toReal)
-    (hk : ∀ b ∈ p.support, b ∈ S → s₂ ≤ ((k b).toOuterMeasure T).toReal) :
-    s₁ * s₂ ≤ ((p.bind k).toOuterMeasure T).toReal := by
-  classical
-  have hle : p.toOuterMeasure S * ENNReal.ofReal s₂ ≤ (p.bind k).toOuterMeasure T := by
-    rw [PMF.toOuterMeasure_bind_apply, PMF.toOuterMeasure_apply, ← ENNReal.tsum_mul_right]
-    refine ENNReal.tsum_le_tsum fun b => ?_
-    by_cases hbS : b ∈ S
-    · simp only [Set.indicator_of_mem hbS]
-      by_cases hbs : b ∈ p.support
-      · exact mul_le_mul_of_nonneg_left
-          ((ENNReal.ofReal_le_iff_le_toReal (PMF.toOuterMeasure_ne_top _ _)).mpr (hk b hbs hbS))
-          zero_le
-      · have hz : p b = 0 := by simpa only [PMF.mem_support_iff, not_not] using hbs
-        simp [hz]
-    · simp [Set.indicator_of_notMem hbS]
-  have htoReal := ENNReal.toReal_mono (PMF.toOuterMeasure_ne_top _ _) hle
-  rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal hs₂] at htoReal
-  exact (mul_le_mul_of_nonneg_right hp hs₂).trans htoReal
-
-/-- **Composition of randomized one-sided reductions (multiplicative soundness)**: composing a
-reduction from `X` to `Y` with soundness `s₁ a` and a reduction from `Y` to `Z` with uniform
-soundness `s₂` yields a reduction from `X` to `Z` with soundness `s₁ a * s₂`. -/
+/-- **Composition of randomized one-sided reductions (multiplicative soundness, library lemma)**:
+composing a reduction from `X` to `Y` with soundness `s₁ a` and a reduction from `Y` to `Z` with
+uniform soundness `s₂` yields a reduction from `X` to `Z` with soundness `s₁ a * s₂`. -/
 theorem RPReducibleWithError.trans {s₁ : α → ℝ} {s₂ : ℝ}
     (hXY : RPReducibleWithError encA encB s₁ X Y)
     (hYZ : RPReducibleWithError encB encC (fun _ => s₂) Y Z)
@@ -912,12 +887,12 @@ theorem RPReducibleWithError.trans {s₁ : α → ℝ} {s₂ : ℝ}
     obtain ⟨b, hb, hc⟩ := hc
     exact hyes₂ b (hyes₁ a ha b hb) c hc
   · rw [ProbComp.eval_bind]
-    exact toOuterMeasure_bind_ge_mul (ProbComp.eval (R₁ a)) (fun b => ProbComp.eval (R₂ b))
+    exact PMF.toOuterMeasure_bind_ge_mul (ProbComp.eval (R₁ a)) (fun b => ProbComp.eval (R₂ b))
       Y.no Z.no hs₂ (hno₁ a ha) fun b _ hb => hno₂ b hb
 
-/-- **Composition of randomized one-sided reductions (additive error accounting)**: composing a
-reduction from `X` to `Y` with soundness `s₁ a` (error `1 - s₁ a`) and a reduction from `Y` to `Z`
-with soundness `s₂` (error `1 - s₂`) yields a reduction from `X` to `Z` with soundness
+/-- **Composition of randomized one-sided reductions (additive error accounting, library lemma)**:
+composing a reduction from `X` to `Y` with soundness `s₁ a` (error `1 - s₁ a`) and a reduction from
+`Y` to `Z` with soundness `s₂` (error `1 - s₂`) yields a reduction from `X` to `Z` with soundness
 `s₁ a + s₂ - 1`. -/
 theorem RPReducibleWithError.trans_add {s₁ : α → ℝ} {s₂ : ℝ}
     (hXY : RPReducibleWithError encA encB s₁ X Y)
@@ -1040,8 +1015,8 @@ private theorem probability_maj3 (M : β → ProbComp Bool) (b : β) :
   rw [h1, h2, h3, hfalse]
   ring
 
-/-- **`PromiseCoRP` is closed under `RPReducible`**: if `X` reduces to `Y` by a randomized
-one-sided reduction and `Y ∈ PromiseCoRP encB`, then `X ∈ PromiseCoRP encA`. -/
+/-- **`PromiseCoRP` is closed under `RPReducible`** (library lemma): if `X` reduces to `Y` by a
+randomized one-sided reduction and `Y ∈ PromiseCoRP encB`, then `X ∈ PromiseCoRP encA`. -/
 theorem RPReducible.mem_PromiseCoRP (hXY : RPReducible encA encB X Y)
     (hY : Y ∈ PromiseCoRP encB) : X ∈ PromiseCoRP encA := by
   obtain ⟨R, hR, hyesR, hnoR⟩ := hXY
@@ -1059,7 +1034,7 @@ theorem RPReducible.mem_PromiseCoRP (hXY : RPReducible encA encB X Y)
       · exact hyesM y₂ (hyesR a ha y₂ hy₂) hb₂
       · exact Bool.noConfusion hfalse
   · have hT_false : 1 / 3 ≤ (ProbComp.eval (T a) false).toReal := by
-      have h := toOuterMeasure_bind_ge_mul (ProbComp.eval (R a)) (fun y => ProbComp.eval (M y))
+      have h := PMF.toOuterMeasure_bind_ge_mul (ProbComp.eval (R a)) (fun y => ProbComp.eval (M y))
         Y.no {false} (by norm_num : (0 : ℝ) ≤ 1 / 2) (hnoR a ha)
         fun y _ hy => by
           rw [PMF.toOuterMeasure_apply_singleton]
@@ -1086,8 +1061,8 @@ theorem RPReducible.mem_coRP_of_ofSet {A : Set α} (hAY : RPReducible encA encB 
     (hY : Y ∈ PromiseCoRP encB) : A ∈ coRP encA :=
   ofSet_mem_PromiseCoRP.mp (hAY.mem_PromiseCoRP hY)
 
-/-- **`PromiseBPP` is closed under `RPReducible`**: if `X` reduces to `Y` by a randomized
-one-sided reduction and `Y ∈ PromiseBPP encB`, then `X ∈ PromiseBPP encA`. -/
+/-- **`PromiseBPP` is closed under `RPReducible`** (library lemma): if `X` reduces to `Y` by a
+randomized one-sided reduction and `Y ∈ PromiseBPP encB`, then `X ∈ PromiseBPP encA`. -/
 theorem RPReducible.mem_PromiseBPP (hXY : RPReducible encA encB X Y)
     (hY : Y ∈ PromiseBPP encB) : X ∈ PromiseBPP encA := by
   obtain ⟨R, hR, hyesR, hnoR⟩ := hXY
@@ -1122,9 +1097,11 @@ theorem RPReducible.mem_PromiseBPP (hXY : RPReducible encA encB X Y)
   refine mem_PromiseBPP_iff_exists_isPPTOn.mpr ⟨and2 T, isPPTOn_and2 hT, fun a ha => ?_,
     fun a ha => ?_⟩
   · have hT_yes : 9 / 11 ≤ Pr[T a] := by
-      have h := toOuterMeasure_bind_ge_mul (ProbComp.eval (R a)) (fun y => ProbComp.eval (M y))
-        Y.yes {true} (by norm_num : (0 : ℝ) ≤ 9 / 11)
-        ((forall_mem_support_iff_toOuterMeasure_toReal_eq_one _ _).mp (hyesR a ha)).ge
+      have hyes_one : ((ProbComp.eval (R a)).toOuterMeasure Y.yes).toReal = 1 :=
+        (ENNReal.toReal_eq_one_iff _).mpr
+          ((PMF.toOuterMeasure_apply_eq_one_iff _ _).mpr (hyesR a ha))
+      have h := PMF.toOuterMeasure_bind_ge_mul (ProbComp.eval (R a)) (fun y => ProbComp.eval (M y))
+        Y.yes {true} (by norm_num : (0 : ℝ) ≤ 9 / 11) hyes_one.ge
         fun y _ hy => by
           rw [PMF.toOuterMeasure_apply_singleton]
           exact hMyes y hy
@@ -1154,8 +1131,7 @@ theorem RPReducible.mem_BPP_of_ofSet {A : Set α} (hAY : RPReducible encA encB (
     (hY : Y ∈ PromiseBPP encB) : A ∈ BPP encA :=
   ofSet_mem_PromiseBPP.mp (hAY.mem_PromiseBPP hY)
 
-/-- **`PromiseRP` is closed under dual (`Xᶜ` to `Yᶜ`) `RPReducible` reductions** (the
-Valiant–Vazirani one-sided error convention). -/
+/-- **`PromiseRP` is closed under dual (`Xᶜ` to `Yᶜ`) `RPReducible` reductions** (library lemma). -/
 theorem RPReducible.mem_PromiseRP_of_compl (hXY : RPReducible encA encB Xᶜ Yᶜ)
     (hY : Y ∈ PromiseRP encB) : X ∈ PromiseRP encA :=
   compl_mem_PromiseCoRP_iff.mp (hXY.mem_PromiseCoRP (compl_mem_PromiseRP_iff.mp hY))
@@ -1165,25 +1141,27 @@ theorem RPReducible.mem_PromiseBPP_of_compl (hXY : RPReducible encA encB Xᶜ Y�
     (hY : Y ∈ PromiseBPP encB) : X ∈ PromiseBPP encA := by
   simpa using compl_mem_PromiseBPP (hXY.mem_PromiseBPP (compl_mem_PromiseBPP hY))
 
-/-- If a decision problem `A` reduces to `Y` in the dual one-sided error convention
+/-- If a decision problem `A` reduces to `Y` in the dual one-sided error orientation
 (`RPReducible encA encB (ofSet A)ᶜ Yᶜ`) and `Y ∈ PromiseRP encB`, then `A ∈ RP encA`. -/
 theorem RPReducible.mem_RP_of_compl_ofSet {A : Set α}
     (hAY : RPReducible encA encB (ofSet A)ᶜ Yᶜ) (hY : Y ∈ PromiseRP encB) : A ∈ RP encA :=
   ofSet_mem_PromiseRP.mp (hAY.mem_PromiseRP_of_compl hY)
 
 /-- If every problem in `NP encA` reduces to `Y` via `RPReducible` and `Y ∈ PromiseCoRP encB`,
-then `NP encA ⊆ coRP encA`. -/
+then `NP encA ⊆ coRP encA` (library lemma). -/
 theorem NP_subset_coRP_of_forall_rpReducible
     (hHard : ∀ A ∈ NP encA, RPReducible encA encB (ofSet A) Y) (hY : Y ∈ PromiseCoRP encB) :
     NP encA ⊆ coRP encA :=
   fun A hA => (hHard A hA).mem_coRP_of_ofSet hY
 
 /-- If every problem in `NP encA` reduces to `Y` via `RPReducible` and `Y ∈ PromiseBPP encB`,
-then `NP encA ⊆ BPP encA`. -/
+then `NP encA ⊆ BPP encA` (library lemma). -/
 theorem NP_subset_BPP_of_forall_rpReducible
     (hHard : ∀ A ∈ NP encA, RPReducible encA encB (ofSet A) Y) (hY : Y ∈ PromiseBPP encB) :
     NP encA ⊆ BPP encA :=
   fun A hA => (hHard A hA).mem_BPP_of_ofSet hY
+
+end Randomized
 
 /-! ### NP-hardness -/
 
