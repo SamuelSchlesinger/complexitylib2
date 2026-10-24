@@ -109,6 +109,14 @@ example (input : List Bool) (i : ℕ) :
   simpa [Nat.add_assoc] using ToTM2.reachable_stack_bound workRoundtrip
     (workRoundtrip_computes input) (workRoundtrip_runsInSpace input) i
 
+example {α β : Type} {f : α → List Bool} {g : β → List Bool} {φ : α → β}
+    (h : TM2Computable f g φ) (space : α → ℕ) :
+    h.StacksBounded space ↔
+      ∀ a i k,
+        (((TM2.stepTotal h.tm.m)^[i]
+          (initList h.tm (List.map h.inputAlphabet.symm (f a)))).stk k).length ≤ space a :=
+  Iff.rfl
+
 -- Existing polynomial-space functions and PSPACE languages transfer through the equivalences.
 example : ∃ h : TM2Computable encBits encBits List.reverse,
     (∀ stack, Finite (h.tm.Γ stack)) ∧

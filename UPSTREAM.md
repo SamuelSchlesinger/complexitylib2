@@ -56,7 +56,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   finite-alphabet `FinTM2`, including canonical `haltList` cleanup, with linear time overhead and
   total stack length at most input length plus native work space plus output length.
   `Reverse/Transfer` proves polynomial-time and PSPACE equivalence under the original binary
-  encodings; `TM2/Recoding` supplies the word conversions without decoding the typed embeddings.
+  encodings; `PolyTime/List` supplies the word conversions and `TM2/Recoding` transfers TM2
+  computations across them without decoding the typed embeddings.
   These comparisons do not preserve sublinear work-space conventions.
 * **Probabilistic programs.** Coordinate the shared `PFunctor.FreeM` API with #1086–#1089 and
   typed oracles with #1129. The copied PMF blocks have their own markers and removal instructions
