@@ -12,6 +12,7 @@ public import Mathlib.Combinatorics.SimpleGraph.VertexCover
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
 /-!
@@ -199,8 +200,8 @@ namespace VertexCover
 /-- Whether the edge `e` joins two distinct declared vertices of `G` and neither endpoint is in
 `C`. -/
 def isUncoveredEdge (G : Graph) (C : List ℕ) (e : ℕ × ℕ) : Bool :=
-  G.1.any (fun v => decide (v = e.1)) && G.1.any (fun v => decide (v = e.2)) &&
-    decide (e.1 ≠ e.2) && !C.any (fun v => decide (v = e.1)) && !C.any (fun v => decide (v = e.2))
+  decide (e.1 ∈ G.1) && decide (e.2 ∈ G.1) &&
+    decide (e.1 ≠ e.2) && !decide (e.1 ∈ C) && !decide (e.2 ∈ C)
 
 /-- The edges of `G` between distinct declared vertices with neither endpoint in `C`. -/
 def uncoveredEdges (G : Graph) (C : List ℕ) : List (ℕ × ℕ) :=
@@ -213,11 +214,7 @@ def isCover (G : Graph) (C : List ℕ) : Bool :=
 theorem isUncoveredEdge_eq_true_iff {G : Graph} {C : List ℕ} {e : ℕ × ℕ} :
     isUncoveredEdge G C e = true ↔
       e.1 ∈ G.1 ∧ e.2 ∈ G.1 ∧ e.1 ≠ e.2 ∧ e.1 ∉ C ∧ e.2 ∉ C := by
-  simp only [isUncoveredEdge, Bool.and_eq_true, List.any_eq_true, decide_eq_true_eq,
-    Bool.not_eq_true', List.any_eq_false, exists_eq_right, and_assoc]
-  exact ⟨fun ⟨h₁, h₂, h₃, h₄, h₅⟩ => ⟨h₁, h₂, h₃, fun h => h₄ e.1 h rfl, fun h => h₅ e.2 h rfl⟩,
-    fun ⟨h₁, h₂, h₃, h₄, h₅⟩ =>
-      ⟨h₁, h₂, h₃, fun v hv hve => h₄ (hve ▸ hv), fun v hv hve => h₅ (hve ▸ hv)⟩⟩
+  simp [isUncoveredEdge, and_assoc]
 
 theorem mem_uncoveredEdges_iff {G : Graph} {C : List ℕ} {e : ℕ × ℕ} :
     e ∈ uncoveredEdges G C ↔
@@ -247,36 +244,8 @@ private theorem computableTidilyInPolyTime_isUncoveredEdge :
     ComputableTidilyInPolyTime
       (fun p : (Graph × List ℕ) × (ℕ × ℕ) => isUncoveredEdge p.1.1 p.1.2 p.2)
       (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool := by
-  have hV : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => p.1.1.1)
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) (encList encNat) := by
-    unfold encGraph
-    fun_prop
-  have hC : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => p.1.2)
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) (encList encNat) := by
-    fun_prop
-  have h₁ : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => p.1.1.1.any fun v => decide (v = p.2.1))
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool :=
-    anyWithInput hV (by fun_prop)
-  have h₂ : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => p.1.1.1.any fun v => decide (v = p.2.2))
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool :=
-    anyWithInput hV (by fun_prop)
-  have h₃ : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => decide (p.2.1 ≠ p.2.2))
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool := by
-    fun_prop
-  have h₄ : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => !p.1.2.any fun v => decide (v = p.2.1))
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool :=
-    bool_not.comp (anyWithInput hC (by fun_prop))
-  have h₅ : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => !p.1.2.any fun v => decide (v = p.2.2))
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool :=
-    bool_not.comp (anyWithInput hC (by fun_prop))
-  exact bool_and' (bool_and' (bool_and' (bool_and' h₁ h₂) h₃) h₄) h₅
+  unfold isUncoveredEdge encGraph
+  fun_prop
 
 attribute [local fun_prop] computableTidilyInPolyTime_isUncoveredEdge
 

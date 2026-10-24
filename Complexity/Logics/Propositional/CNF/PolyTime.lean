@@ -29,6 +29,10 @@ exactly-one constraints. They apply to empty lists and lists with repeated varia
 requires a polynomial-time renaming function, but does not require injectivity; injectivity is
 needed separately when transferring satisfiability.
 
+## Main definitions
+
+* `Cslib.Logic.PL.encOccurrence`: encoding of a literal occurrence.
+
 ## Main results
 
 * `Cslib.Logic.PL.Clause.computableInPolyTime_impLits`,
@@ -37,8 +41,9 @@ needed separately when transferring satisfiability.
   `Cslib.Logic.PL.CNF.computableInPolyTime_relabel`: renaming variables.
 * `Cslib.Logic.PL.CNF.computableInPolyTime_exactlyOne`: exactly-one constraints.
 * `Cslib.Logic.PL.CNF.computableInPolyTime_vars`,
-  `Cslib.Logic.PL.CNF.computableInPolyTime_distinctVars`: listing variable occurrences and distinct
-  variables.
+  `Cslib.Logic.PL.CNF.computableInPolyTime_distinctVars`,
+  `Cslib.Logic.PL.computableInPolyTime_occurrences`: listing variable occurrences, distinct
+  variables and literal occurrences.
 * `Cslib.Logic.PL.Clause.computableInPolyTime_length`,
   `Cslib.Logic.PL.CNF.computableInPolyTime_length`,
   `Cslib.Logic.PL.CNF.computableInPolyTime_vars_length`,
@@ -145,8 +150,10 @@ polynomial-time. -/
 theorem CNF.computableInPolyTime_distinctVars [DecidableEq V] (enc : V ↪ List Bool) :
     ComputableInPolyTime (CNF.distinctVars (V := V))
       (encList (encList (encPair enc encBool))) (encList enc) := by
+  have hrep : ComputableTidilyInPolyTime (fun n => List.replicate n true) encUnary encBits :=
+    of_linear (.of_eq fun _ => rfl)
   refine .of_tidy ?_
-  unfold CNF.distinctVars
+  unfold CNF.distinctVars Cslib.Complexity.selectDistinct
   fun_prop
 
 attribute [local fun_prop] ComputableInPolyTime.tidy in
@@ -159,6 +166,20 @@ theorem CNF.computableInPolyTime_numVars [DecidableEq V] (enc : V ↪ List Bool)
     funext fun φ => (CNF.length_distinctVars φ).symm
   rw [e]
   refine .of_tidy ?_
+  fun_prop
+
+/-- Encoding of a literal occurrence: unary clause and position indices with an encoded literal. -/
+def encOccurrence (enc : V ↪ List Bool) : Occurrence V ↪ List Bool :=
+  encPair encUnary (encPair encUnary (encPair enc encBool))
+
+attribute [local fun_prop] ComputableInPolyTime.tidy in
+/-- Enumerating the literal occurrences of a CNF formula is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_occurrences (enc : V ↪ List Bool) :
+    ComputableInPolyTime (occurrences (V := V))
+      (encList (encList (encPair enc encBool))) (encList (encOccurrence enc)) := by
+  refine .of_tidy ?_
+  unfold occurrences encOccurrence
   fun_prop
 
 attribute [local fun_prop] ComputableInPolyTime.tidy in

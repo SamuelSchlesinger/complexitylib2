@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.Data.List.SelectDistinct
 public import Complexity.Logics.Propositional.CNF
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Nat.Bitwise
@@ -21,7 +22,8 @@ injective relabelling preserves it (`CNF.modelCount_relabel`). As a function of 
 is the counting problem `#SAT` [Valiant][Valiant1979].
 
 The distinct variables of `φ` in order of their first occurrence are listed by `CNF.distinctVars`,
-of length `CNF.numVars` (`CNF.length_distinctVars`). On any list of variables `vs`,
+of length `CNF.numVars` (`CNF.length_distinctVars`), and the literal occurrences with their clause
+and position indices are listed by `occurrences`. On any list of variables `vs`,
 `bitsAssignment vs i` assigns to the variable at position `j` of `vs` the binary digit `j` of `i`,
 so satisfiability of a formula whose variables lie in `vs` is a search over `i < 2 ^ |vs|`
 (`CNF.satisfiable_iff_exists_bitsAssignment`).
@@ -38,6 +40,8 @@ with a given one on the variables of the formula (`CNF.modelCount_eq_one_iff`).
 * `Cslib.Logic.PL.CNF.numVars`: the number of distinct variables of a formula.
 * `Cslib.Logic.PL.CNF.distinctVars`: the distinct variables of a formula, in order of first
   occurrence.
+* `Cslib.Logic.PL.Occurrence`, `Cslib.Logic.PL.occurrences`: the occurrences of literals in a
+  formula.
 * `Cslib.Logic.PL.bitsAssignment`: the assignment numbered by `i` on a list of variables.
 * `Cslib.Logic.PL.CNF.extendAssignment`: an assignment of the variables of a formula, extended by
   `false` to all variables.
@@ -46,8 +50,10 @@ with a given one on the variables of the formula (`CNF.modelCount_eq_one_iff`).
 ## Main results
 
 * `Cslib.Logic.PL.CNF.mem_distinctVars`, `Cslib.Logic.PL.CNF.nodup_distinctVars`,
-  `Cslib.Logic.PL.CNF.length_distinctVars`: `φ.distinctVars` lists the `φ.numVars` variables of `φ`
-  without repetition.
+  `Cslib.Logic.PL.CNF.distinctVars_toFinset`, `Cslib.Logic.PL.CNF.length_distinctVars`:
+  `φ.distinctVars` lists the `φ.numVars` variables of `φ` without repetition.
+* `Cslib.Logic.PL.mem_occurrences`, `Cslib.Logic.PL.map_occurrences`,
+  `Cslib.Logic.PL.length_occurrences`: the literal occurrences of `φ` and their variables.
 * `Cslib.Logic.PL.exists_lt_two_pow_bitsAssignment_eq`,
   `Cslib.Logic.PL.CNF.satisfiable_iff_exists_bitsAssignment`: satisfiability is a search over
   `2 ^ |vs|` numbered assignments.
@@ -65,7 +71,54 @@ with a given one on the variables of the formula (`CNF.modelCount_eq_one_iff`).
 
 namespace Cslib.Logic.PL
 
-variable {V W : Type*} [DecidableEq V]
+open Cslib.Complexity
+
+variable {V W : Type*}
+
+/-- An occurrence of a literal in a formula: its clause, its position in the clause, and the
+literal. -/
+abbrev Occurrence (V : Type*) : Type _ := ℕ × ℕ × Literal V
+
+/-- The occurrences of literals in a formula. -/
+def occurrences (φ : CNF V) : List (Occurrence V) :=
+  φ.zipIdx.flatMap fun c => c.1.zipIdx.map fun l => (c.2, l.2, l.1)
+
+/-- Membership in `occurrences φ` as valid clause and literal indices. -/
+theorem mem_occurrences {φ : CNF V} {o : Occurrence V} :
+    o ∈ occurrences φ ↔ ∃ (h₁ : o.1 < φ.length) (h₂ : o.2.1 < φ[o.1].length),
+      o.2.2 = φ[o.1][o.2.1] := by
+  obtain ⟨i, j, l⟩ := o
+  simp only [occurrences, List.mem_flatMap, List.mem_map, List.mem_zipIdx_iff_getElem?]
+  constructor
+  · rintro ⟨⟨c, i'⟩, hc, ⟨l', j'⟩, hl, he⟩
+    simp only [Prod.mk.injEq] at he hc hl
+    obtain ⟨rfl, rfl, rfl⟩ := he
+    obtain ⟨hi, hci⟩ := List.getElem?_eq_some_iff.1 hc
+    subst hci
+    obtain ⟨hj, hlj⟩ := List.getElem?_eq_some_iff.1 hl
+    exact ⟨hi, hj, hlj.symm⟩
+  · rintro ⟨hi, hj, hl⟩
+    exact ⟨(φ[i], i), by simp [hi], (φ[i][j], j), by simp [hj], by rw [hl]⟩
+
+/-- The variables of the occurrences, in order, are the variables of the formula. -/
+theorem map_occurrences (φ : CNF V) : (occurrences φ).map (fun o => o.2.2.1) = φ.vars := by
+  have hc : ∀ c : Clause V × ℕ, (c.1.zipIdx.map fun l => (c.2, l.2, l.1).2.2.1) =
+      c.1.map Prod.fst := fun c => by
+    calc (c.1.zipIdx.map fun l => (c.2, l.2, l.1).2.2.1) =
+        (c.1.zipIdx.map Prod.fst).map Prod.fst := by rw [List.map_map]; rfl
+      _ = c.1.map Prod.fst := by rw [List.zipIdx_map_fst]
+  calc (occurrences φ).map (fun o => o.2.2.1)
+      = φ.zipIdx.flatMap fun c => c.1.map Prod.fst := by
+        simp only [occurrences, List.map_flatMap, List.map_map, Function.comp_def, hc]
+    _ = (φ.zipIdx.map Prod.fst).flatMap fun c => c.map Prod.fst := by rw [List.flatMap_map]
+    _ = φ.vars := by
+        rw [List.zipIdx_map_fst, CNF.vars, List.map_flatten, List.flatMap_def]
+
+/-- A formula has one occurrence for each occurrence of a variable. -/
+theorem length_occurrences (φ : CNF V) : (occurrences φ).length = φ.vars.length := by
+  rw [← map_occurrences, List.length_map]
+
+variable [DecidableEq V]
 
 /-- The number of distinct variables of a formula. -/
 def CNF.numVars (φ : CNF V) : ℕ := φ.vars.toFinset.card
@@ -81,34 +134,24 @@ theorem CNF.numVars_le_mul_length {k : ℕ} {φ : CNF V} (h : ∀ c ∈ φ, c.le
 
 /-- The variables of `φ` without repetitions, in the order of their first occurrences. -/
 def CNF.distinctVars (φ : CNF V) : List V :=
-  (φ.vars.zipIdx.filter fun p => decide (φ.vars.idxOf p.1 = p.2)).map Prod.fst
+  selectDistinct φ.vars (List.replicate φ.vars.length true)
 
 /-- The distinct variables of `φ` are the variables of `φ`. -/
-theorem CNF.mem_distinctVars {φ : CNF V} {v : V} : v ∈ φ.distinctVars ↔ v ∈ φ.vars := by
-  simp only [CNF.distinctVars, List.mem_map, List.mem_filter, List.mem_zipIdx_iff_getElem?,
-    decide_eq_true_eq, Prod.exists, exists_and_right, exists_eq_right]
-  exact ⟨fun ⟨_, hi, _⟩ => List.mem_of_getElem? hi,
-    fun hv => ⟨φ.vars.idxOf v, by simp [List.idxOf_lt_length_iff.2 hv], rfl⟩⟩
+theorem CNF.mem_distinctVars {φ : CNF V} {v : V} : v ∈ φ.distinctVars ↔ v ∈ φ.vars :=
+  mem_selectDistinct_replicate
 
 /-- `φ.distinctVars` lists each variable once. -/
-theorem CNF.nodup_distinctVars (φ : CNF V) : φ.distinctVars.Nodup := by
-  have hzip : φ.vars.zipIdx.Nodup := by
-    rw [List.Nodup, List.pairwise_iff_getElem]
-    intro i j hi hj hij h
-    have := congrArg Prod.snd h
-    simp only [List.getElem_zipIdx, Nat.zero_add] at this
-    omega
-  refine (hzip.filter _).map_on ?_
-  rintro ⟨u, i⟩ hu ⟨v, j⟩ hv (rfl : u = v)
-  simp only [List.mem_filter, decide_eq_true_eq] at hu hv
-  rw [← hu.2, ← hv.2]
+theorem CNF.nodup_distinctVars (φ : CNF V) : φ.distinctVars.Nodup :=
+  nodup_selectDistinct _ _
 
-/-- A formula has `numVars` distinct variables. -/
-theorem CNF.length_distinctVars (φ : CNF V) : φ.distinctVars.length = φ.numVars := by
-  rw [CNF.numVars, ← List.toFinset_card_of_nodup φ.nodup_distinctVars]
-  congr 1
+/-- The finite set of distinct variables of `φ` is the finite set of variables of `φ`. -/
+theorem CNF.distinctVars_toFinset (φ : CNF V) : φ.distinctVars.toFinset = φ.vars.toFinset := by
   ext v
   simp [CNF.mem_distinctVars]
+
+/-- A formula has `numVars` distinct variables. -/
+theorem CNF.length_distinctVars (φ : CNF V) : φ.distinctVars.length = φ.numVars :=
+  length_selectDistinct_replicate φ.vars
 
 /-- The assignment numbered by `i` on the list of variables `vs`: the variable at position `j` of
 `vs` takes the binary digit `j` of `i`. -/

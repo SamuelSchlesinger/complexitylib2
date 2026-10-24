@@ -1714,6 +1714,7 @@ public import Complexity.Foundations.Data.List.Fold
 public import Complexity.Foundations.Data.List.Lex
 public import Complexity.Foundations.Data.List.Lookup
 public import Complexity.Foundations.Data.List.OfFn
+public import Complexity.Foundations.Data.List.SelectDistinct
 public import Complexity.Foundations.Data.Matrix.Binary
 public import Complexity.Foundations.Data.Matrix.Permanent
 public import Complexity.Foundations.Data.Matrix.TotallyRegular
