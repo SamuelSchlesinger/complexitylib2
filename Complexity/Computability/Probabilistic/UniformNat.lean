@@ -23,9 +23,9 @@ loop is used.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_dyadicSize`: efficient unary range size.
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_dyadicSize`: efficient unary range size.
 * `Cslib.Probability.isPPTOn_sampleBinaryNat`: uniform sampling with binary output.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleBinaryNat`: sample a computed bit width.
+* `Turing.MultiTapeTM.ComputableInPolyTime.sampleBinaryNat`: sample a computed bit width.
 * `Cslib.Probability.isPPTOn_sampleDyadicIndex`: exact uniform sampling in the dyadic range.
 * `Cslib.Probability.isPPTOn_sampleBoundedIndex`: capped sampling with a rejection sentinel.
 * `Cslib.Probability.isPPTOn_sampleDyadicCoin`: exact capped dyadic probabilities.
@@ -38,18 +38,18 @@ Adapted from `Computability/Probabilistic/UniformNat.lean` on the cslib `crypto`
 
 @[expose] public section
 
-namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
+namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 /-- Compute the dyadic range in unary via capped binary decoding. Its exponential expression
 does not authorize exponential output: the proved linear cap supplies the implementation. -/
 @[fun_prop]
-theorem unary_dyadicSize : ComputableTidilyInPolyTime Cslib.Probability.dyadicSize
+theorem unary_dyadicSize : ComputableInPolyTime Cslib.Probability.dyadicSize
     encUnary encUnary := by
-  change ComputableTidilyInPolyTime (fun n => Cslib.Probability.dyadicSize n) encUnary encUnary
+  change ComputableInPolyTime (fun n => Cslib.Probability.dyadicSize n) encUnary encUnary
   simp only [Cslib.Probability.dyadicSize_eq_boundedBinaryValue]
   fun_prop
 
-end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+end Turing.MultiTapeTM.ComputableInPolyTime
 
 namespace Cslib.Probability
 
@@ -57,12 +57,12 @@ open Turing.MultiTapeTM
 
 /-- A unary bit width gives a uniformly strict PPT sampler with binary natural output. -/
 theorem isPPTOn_sampleBinaryNat : IsPPTOn encUnary encNat sampleBinaryNat :=
-  isPPTOn_sampleList.map ComputableTidilyInPolyTime.bitsBinaryValue
+  isPPTOn_sampleList.map ComputableInPolyTime.bitsBinaryValue
 
 /-- An efficiently supplied unary bound gives a strict PPT exact dyadic sampler. -/
 @[program_certificate]
 theorem isPPTOn_sampleDyadicIndex {α : Type} {input : α ↪ List Bool} {bound : α → ℕ}
-    (hbound : ComputableTidilyInPolyTime bound input encUnary) :
+    (hbound : ComputableInPolyTime bound input encUnary) :
     IsPPTOn input encUnary (fun a => sampleDyadicIndex (bound a)) := by
   unfold sampleDyadicIndex
   ppt
@@ -71,8 +71,8 @@ theorem isPPTOn_sampleDyadicIndex {α : Type} {input : α ↪ List Bool} {bound 
 @[program_certificate]
 theorem isPPTOn_sampleDyadicCoin {α : Type} {input : α ↪ List Bool}
     {bound numerator : α → ℕ}
-    (hbound : ComputableTidilyInPolyTime bound input encUnary)
-    (hnumerator : ComputableTidilyInPolyTime numerator input encUnary) :
+    (hbound : ComputableInPolyTime bound input encUnary)
+    (hnumerator : ComputableInPolyTime numerator input encUnary) :
     IsPPTOn input encBool (fun a => sampleDyadicCoin (bound a) (numerator a)) := by
   unfold sampleDyadicCoin
   ppt
@@ -80,7 +80,7 @@ theorem isPPTOn_sampleDyadicCoin {α : Type} {input : α ↪ List Bool}
 /-- An efficiently supplied unary bound gives a strict PPT capped index sampler. -/
 @[program_certificate]
 theorem isPPTOn_sampleBoundedIndex {α : Type} {input : α ↪ List Bool} {bound : α → ℕ}
-    (hbound : ComputableTidilyInPolyTime bound input encUnary) :
+    (hbound : ComputableInPolyTime bound input encUnary) :
     IsPPTOn input encUnary (fun a => sampleBoundedIndex (bound a)) := by
   unfold sampleBoundedIndex
   ppt
@@ -89,9 +89,9 @@ end Cslib.Probability
 
 /-- Sample a binary natural using an efficiently computed unary bit width. -/
 @[fun_prop]
-theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleBinaryNat {α : Type}
+theorem Turing.MultiTapeTM.ComputableInPolyTime.sampleBinaryNat {α : Type}
     {input : α ↪ List Bool} {width : α → ℕ}
-    (hwidth : ComputableTidilyInPolyTime width input encUnary) :
+    (hwidth : ComputableInPolyTime width input encUnary) :
     Cslib.Probability.IsPPTOn input encNat
       (fun a => Cslib.Probability.sampleBinaryNat (width a)) :=
   Cslib.Probability.isPPTOn_sampleBinaryNat.preprocess hwidth

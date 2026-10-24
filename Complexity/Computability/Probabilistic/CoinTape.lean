@@ -11,6 +11,7 @@ public import Complexity.Computability.Probabilistic.PPT
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.CoinTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayInput
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -106,20 +107,21 @@ theorem IsPPTOn.exists_total_seeded_evaluator (h : IsPPTOn input output program)
   have hencode (a : α) (coins : List Bool) :
       output (evaluate a coins) = raw (tape a coins) (input a) := (hvalid a coins).choose_spec.2
   refine ⟨c, d, evaluate, ?_, fun a coins => (hvalid a coins).choose_spec.1, ?_⟩
-  · have hinput : ComputableTidilyInPolyTime input input encBits := .of_eq fun _ => rfl
-    have hbudget : ComputableTidilyInPolyTime budget input encUnary := by
+  · have hinput : ComputableInPolyTime input input encBits := .of_eq fun _ => rfl
+    have hbudget : ComputableInPolyTime budget input encUnary := by
       dsimp only [budget]
       fun_prop
-    have hpad : ComputableTidilyInPolyTime (fun a => List.replicate (budget a) true)
+    have hpad : ComputableInPolyTime (fun a => List.replicate (budget a) true)
         input encBits := hbudget.of_enc_eq (fun _ => rfl)
-    have ht : ComputableTidilyInPolyTime
+    have ht : ComputableInPolyTime
         (fun p : α × List Bool => (tape p.1 p.2, input p.1))
         (encPair input encBits) (encPair encBits encBits) := by
-      have hfirst := ComputableTidilyInPolyTime.fst input encBits
-      have hsecond := ComputableTidilyInPolyTime.snd input encBits
-      exact (ComputableTidilyInPolyTime.bitsTakeWithInput
+      have hfirst := ComputableInPolyTime.fst input encBits
+      have hsecond := ComputableInPolyTime.snd input encBits
+      exact (ComputableInPolyTime.bitsTakeWithInput
         (hsecond.bitsAppend (hpad.comp hfirst)) (hbudget.comp hfirst)).prod (hinput.comp hfirst)
-    exact (hraw.comp ht).of_enc_eq (fun p => hencode p.1 p.2)
+    exact ((ComputableInPolyTime.of_tidy hraw).comp ht).of_enc_eq
+      (fun p => hencode p.1 p.2) |>.tidy
   · intro a length hbudget
     apply PMF.map_injective output.injective
     rw [hlaw, PMF.map_comp, ← BitString.uniformList_take hbudget, PMF.map_comp]
@@ -154,9 +156,10 @@ theorem IsPPTOn.exists_padded_coin_evaluator (h : IsPPTOn input output program) 
   obtain ⟨c, d, evaluate, hefficient, hlaw⟩ := h.exists_polyTime_coin_evaluator
   refine ⟨c, d, fun coins input => evaluate (coins.take (c * (input.length + 1) ^ d)) input,
     ?_, ?_⟩
-  · exact hefficient.comp (show ComputableTidilyInPolyTime
-      (fun p : List Bool × List Bool => (p.1.take (c * (p.2.length + 1) ^ d), p.2))
-      (encPair encBits encBits) (encPair encBits encBits) by fun_prop)
+  · exact ((ComputableInPolyTime.of_tidy hefficient).comp
+      (show ComputableInPolyTime
+        (fun p : List Bool × List Bool => (p.1.take (c * (p.2.length + 1) ^ d), p.2))
+        (encPair encBits encBits) (encPair encBits encBits) by fun_prop)).tidy
   · intro a length hlength
     rw [hlaw, ← BitString.uniformList_take hlength, PMF.map_comp]
     rfl
