@@ -72,6 +72,6 @@ theorem SamplablePair.HasGap.exists_pseudorandomGenerator {pair : SamplablePair}
     exact EntropyGrid.length_combinedGenerate ..
   · exact EntropyGrid.combinedGenerate_indistinguishable hpair saved
       (observationBound := bound) (densityBound := densityBound) (common := common)
-      ⟨hbound, hdensity, hcommon, hfits, hsize⟩ hgap
+      ⟨.of_tidy hbound, .of_tidy hdensity, .of_tidy hcommon, hfits, hsize⟩ hgap
 
 end Cslib.Crypto.Pseudoentropy
