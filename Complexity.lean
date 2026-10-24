@@ -1201,7 +1201,6 @@ public import Complexity.Computability.QueryComplexity.Randomized
 public import Complexity.Computability.QueryComplexity.Randomized.Nisan
 public import Complexity.Computability.QueryComplexity.Relations
 public import Complexity.Computability.QueryComplexity.Restriction
-public import Complexity.Computability.QueryComplexity.Sensitivity.Hypercube
 public import Complexity.Computability.QueryComplexity.SensitivityBounds
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Basic
@@ -1247,7 +1246,6 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.TournamentCyclic
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Tower
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.TowerProfiles
-public import Complexity.Computability.QueryComplexity.Symmetrization
 public import Complexity.Computability.QueryComplexity.Threshold
 public import Complexity.Computability.QueryComplexity.Yao
 public import Complexity.Computability.RAM.Cost
@@ -1521,6 +1519,7 @@ public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Derivati
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNorm
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.Tensorization
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.TwoPoint
+public import Complexity.Foundations.BooleanAnalysis.Hypercube
 public import Complexity.Foundations.BooleanAnalysis.Influence
 public import Complexity.Foundations.BooleanAnalysis.KahnKalaiLinial
 public import Complexity.Foundations.BooleanAnalysis.LightPatterns
@@ -1535,6 +1534,7 @@ public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.PolynomialCorrelation
 public import Complexity.Foundations.BooleanAnalysis.RelevantCoordinates
 public import Complexity.Foundations.BooleanAnalysis.SignApproximation
+public import Complexity.Foundations.BooleanAnalysis.Symmetrization
 public import Complexity.Foundations.Combinatorics.AffineDisperser
 public import Complexity.Foundations.Combinatorics.AffineDisperser.AffineSubspace
 public import Complexity.Foundations.Combinatorics.AffineDisperser.BinaryField

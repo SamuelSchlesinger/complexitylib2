@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.Degree
-public import Complexity.Computability.QueryComplexity.Sensitivity.Hypercube
+public import Complexity.Foundations.BooleanAnalysis.Hypercube
 public import Cslib.Computability.QueryComplexity.Measures
 
 /-!

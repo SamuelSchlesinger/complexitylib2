@@ -10,8 +10,8 @@ module
 public import Complexity.Computability.QueryComplexity.ApproximateDegree
 public import Complexity.Computability.QueryComplexity.Huang
 public import Complexity.Computability.QueryComplexity.Relations
-import Complexity.Computability.QueryComplexity.Symmetrization
 import Complexity.Foundations.Analysis.MarkovInequality
+import Complexity.Foundations.BooleanAnalysis.Symmetrization
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Mathlib.Analysis.Calculus.Deriv.Polynomial

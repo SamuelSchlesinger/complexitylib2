@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.QueryComplexity.NisanSzegedy
 public import Complexity.Computability.QueryComplexity.Threshold
 public import Mathlib.RingTheory.Polynomial.Chebyshev
-import Complexity.Computability.QueryComplexity.Symmetrization
+import Complexity.Foundations.BooleanAnalysis.Symmetrization
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Chebyshev.RootsExtrema
 
 /-!
