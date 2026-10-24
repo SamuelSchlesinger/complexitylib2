@@ -17,9 +17,10 @@ import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
 /-!
-# Composing tidy step machines
+# Composing step-machine resource certificates
 
-The composition `g.comp f` of tidy step machines is tidy: its halting test and its step take the
+The composition `g.comp f` of certified step machines has a resource certificate: its halting test
+and its step take the
 time of those of `f` and `g` plus a polynomial in the size of the state, and the space of those of
 `f` and `g` plus the size of the state.
 
@@ -29,12 +30,12 @@ time of those of `f` and `g` plus a polynomial in the size of the state, and the
 
 ## Main results
 
-* `Turing.StepMachine.Tidy.comp`: the composition of tidy step machines is tidy.
+* `Turing.StepMachine.ResourceCertificate.comp`: compose plain resource certificates.
 -/
 
 namespace Turing.StepMachine
 
-open MultiTapeTM ComputableTidilyInO
+open MultiTapeTM ComputableInO
 
 /-! ### Encodings -/
 
@@ -83,22 +84,22 @@ public lemma length_encCompState (s : CompState σf σg) :
 /-! ### Projections -/
 
 lemma CompState.g_inO :
-    ComputableTidilyInO CompState.g (encCompState encF encG) (encPair encG encNat)
+    ComputableInO CompState.g (encCompState encF encG) (encPair encG encNat)
       (fun s => (encCompState encF encG s).length)
       fun s => (encCompState encF encG s).length :=
   (fst _ _).of_equiv CompState.equivProd
 
-lemma CompState.phase_inO : ComputableTidilyInO CompState.phase (encCompState encF encG) encPhase
+lemma CompState.phase_inO : ComputableInO CompState.phase (encCompState encF encG) encPhase
     (fun s => (encCompState encF encG s).length)
     fun s => (encCompState encF encG s).length :=
   (snd _ _).fst'.of_equiv CompState.equivProd
 
-lemma CompState.f_inO : ComputableTidilyInO CompState.f (encCompState encF encG) encF
+lemma CompState.f_inO : ComputableInO CompState.f (encCompState encF encG) encF
     (fun s => (encCompState encF encG s).length)
     fun s => (encCompState encF encG s).length :=
   (snd _ _).snd'.fst'.of_equiv CompState.equivProd
 
-lemma CompState.cd_inO : ComputableTidilyInO CompState.cd (encCompState encF encG) encCountdown
+lemma CompState.cd_inO : ComputableInO CompState.cd (encCompState encF encG) encCountdown
     (fun s => (encCompState encF encG s).length)
     fun s => (encCompState encF encG s).length :=
   (snd _ _).snd'.snd'.of_equiv CompState.equivProd
@@ -107,15 +108,15 @@ lemma CompState.cd_inO : ComputableTidilyInO CompState.cd (encCompState encF enc
 
 namespace Countdown
 
-lemma k_inO : ComputableTidilyInO Countdown.k encCountdown encNat
+lemma k_inO : ComputableInO Countdown.k encCountdown encNat
     (fun c => (encCountdown c).length) fun c => (encCountdown c).length :=
   (fst _ _).of_equiv equivProd
 
-lemma found_inO : ComputableTidilyInO Countdown.found encCountdown encBool
+lemma found_inO : ComputableInO Countdown.found encCountdown encBool
     (fun c => (encCountdown c).length) fun c => (encCountdown c).length :=
   (snd _ _).fst'.of_equiv equivProd
 
-lemma len_inO : ComputableTidilyInO Countdown.len encCountdown encNat
+lemma len_inO : ComputableInO Countdown.len encCountdown encNat
     (fun c => (encCountdown c).length) fun c => (encCountdown c).length :=
   (snd _ _).snd'.of_equiv equivProd
 
@@ -125,9 +126,9 @@ public lemma length_encCountdown (c : Countdown) :
   omega
 
 /-- The test `k = 1`. -/
-lemma isOne_inO : ComputableTidilyInO (fun n => decide (n = 1)) encNat encBool
+lemma isOne_inO : ComputableInO (fun n => decide (n = 1)) encNat encBool
     (fun n => ((encNat n).length + 1) ^ 2) fun n => (encNat n).length + 1 := by
-  have h := (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool)
+  have h := (ComputableInDegree.of_finite (encIn := encPair encBool encBool)
     (encMid := encBool) fun q : Bool × Bool => q.1 && !q.2).inO_one.comp_linear
       ((natIsZero.comp natPred).prod (natIsZero.mono_le (T' := fun n => ((encNat n).length + 1) ^ 2)
         (S' := fun n => (encNat n).length + 1) (fun n => by nlinarith) fun n => by omega))
@@ -140,7 +141,7 @@ lemma isOne_inO : ComputableTidilyInO (fun n => decide (n = 1)) encNat encBool
     omega
 
 /-- **A push onto the countdown**, in quadratic time and linear space. -/
-lemma push_inO : ComputableTidilyInO (fun p : Countdown × Bool => p.1.push p.2)
+lemma push_inO : ComputableInO (fun p : Countdown × Bool => p.1.push p.2)
     (encPair encCountdown encBool) encCountdown
     (fun p => ((encPair encCountdown encBool p).length + 1) ^ 2)
     fun p => (encPair encCountdown encBool p).length + 1 := by
@@ -159,15 +160,15 @@ lemma push_inO : ComputableTidilyInO (fun p : Countdown × Bool => p.1.push p.2)
     split_ifs <;> nlinarith
 
 /-- **The symbol found by the countdown**, in linear time. -/
-lemma symbol_inO : ComputableTidilyInO (fun p : ℕ × Countdown => p.2.symbol p.1)
+lemma symbol_inO : ComputableInO (fun p : ℕ × Countdown => p.2.symbol p.1)
     (encPair encNat encCountdown) (encOption encBool)
     (fun p => (encPair encNat encCountdown p).length)
     fun p => (encPair encNat encCountdown p).length := by
   have hk := k_inO.comp_linear (snd encNat encCountdown)
-  have htest := (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool)
+  have htest := (ComputableInDegree.of_finite (encIn := encPair encBool encBool)
     (encMid := encBool) fun q : Bool × Bool => q.1 || !q.2).inO_one.comp_linear
       ((natIsZero.comp_linear (fst encNat encCountdown)).prod (natIsZero.comp_linear hk))
-  have hsome := (ComputableTidilyInDegree.optionSome (enc₁ := encBool)
+  have hsome := (ComputableInDegree.optionSome (enc₁ := encBool)
     (enc := encOption encBool)).inO_one.comp_linear (found_inO.comp_linear (snd encNat _))
   refine ((htest.ite (const none) hsome).of_enc_eq fun p => ?_).mono 3 (fun p => ?_) fun p => ?_
   · simp only [symbol, Function.comp_apply]
@@ -185,16 +186,16 @@ lemma moveOn_eq (n p : ℕ) (d : SignType) :
   rcases d with _ | _ | _ <;> rfl
 
 /-- **The head of `g` after a move**, in quadratic time and linear space. -/
-lemma moveOn_inO : ComputableTidilyInO (fun q : ℕ × ℕ × SignType => moveOn q.1 q.2.1 q.2.2)
+lemma moveOn_inO : ComputableInO (fun q : ℕ × ℕ × SignType => moveOn q.1 q.2.1 q.2.2)
     (encPair encNat (encPair encNat encMove)) encNat
     (fun q => ((encPair encNat (encPair encNat encMove) q).length + 1) ^ 2)
     fun q => (encPair encNat (encPair encNat encMove) q).length + 1 := by
   have hn := fst encNat (encPair encNat encMove)
   have hp := (snd encNat (encPair encNat encMove)).fst'
   have hd := (snd encNat (encPair encNat encMove)).snd'
-  have hdz := (ComputableTidilyInDegree.of_finite (encIn := encMove) (encMid := encBool)
+  have hdz := (ComputableInDegree.of_finite (encIn := encMove) (encMid := encBool)
     fun d : SignType => decide (d = 0)).inO_one.comp_linear hd
-  have hdn := (ComputableTidilyInDegree.of_finite (encIn := encMove) (encMid := encBool)
+  have hdn := (ComputableInDegree.of_finite (encIn := encMove) (encMid := encBool)
     fun d : SignType => decide (d = -1)).inO_one.comp_linear hd
   have heq := (eq encNat).comp (hp.prod (natSucc.comp hn))
   have h := hdz.ite hp (hdn.ite (natPred.comp hp) (heq.ite hp (natSucc.comp hp)))
@@ -222,9 +223,9 @@ lemma length_encCountdown_foldl (w : List Bool) (c : Countdown) :
 
 /-- **Counting down a word**, in cubic time and linear space. -/
 lemma foldl_push_inO {γ : Type} {encIn : γ ↪ List Bool} {list : γ → List Bool}
-    {cd : γ → Countdown} {T S : γ → ℕ} (hlist : ComputableTidilyInO list encIn encBits T S)
-    (hcd : ComputableTidilyInO cd encIn encCountdown T S) :
-    ComputableTidilyInO (fun x => (list x).foldl Countdown.push (cd x)) encIn encCountdown
+    {cd : γ → Countdown} {T S : γ → ℕ} (hlist : ComputableInO list encIn encBits T S)
+    (hcd : ComputableInO cd encIn encCountdown T S) :
+    ComputableInO (fun x => (list x).foldl Countdown.push (cd x)) encIn encCountdown
       (fun x => T x + ((list x).length + (encCountdown (cd x)).length + 1) ^ 3)
       fun x => S x + (list x).length + (encCountdown (cd x)).length + 1 := by
   have h := foldl (encA := encBool) hlist hcd Countdown.push_inO
@@ -348,8 +349,8 @@ lemma space_bigO :
     .of_le fun p => by simp [compSpace]; omega⟩
 
 /-- **Running `f`**, a step of the composition while `f` has not halted. -/
-lemma stepF_inO (hf : f.Tidy encF Tf Sf) :
-    ComputableTidilyInO (fun p : CompState σf σg × Option Bool =>
+lemma stepF_inO (hf : f.ResourceCertificate encF Tf Sf) :
+    ComputableInO (fun p : CompState σf σg × Option Bool =>
       ((⟨p.1.g, p.1.phase, (f.step p.1.f p.2).1,
           (f.step p.1.f p.2).2.2.foldl .push p.1.cd⟩ : CompState σf σg),
         (f.step p.1.f p.2).2.1, ([] : List Bool))) encArg encRes
@@ -399,8 +400,8 @@ lemma stepF_inO (hf : f.Tidy encF Tf Sf) :
     bigO
 
 /-- **Stepping `g`**, the step of the composition once `f` has halted. -/
-lemma stepG_inO (hg : g.Tidy encG Tg Sg) :
-    ComputableTidilyInO (fun p : CompState σf σg × Option Bool =>
+lemma stepG_inO (hg : g.ResourceCertificate encG Tg Sg) :
+    ComputableInO (fun p : CompState σf σg × Option Bool =>
       ((⟨((g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).1,
           moveOn p.1.cd.len p.1.g.2 (g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).2.1), .rewindStart,
           f.init, .start (moveOn p.1.cd.len p.1.g.2 (g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).2.1)⟩ :
@@ -468,7 +469,7 @@ lemma le_compTime (s : CompState σf σg) :
 
 /-- A state in another phase, linear in the state. -/
 lemma setPhase_inO (c : CompPhase) :
-    ComputableTidilyInO (fun p : CompState σf σg × Option Bool =>
+    ComputableInO (fun p : CompState σf σg × Option Bool =>
       (⟨p.1.g, c, p.1.f, p.1.cd⟩ : CompState σf σg)) encArg (encCompState encF encG)
       (fun p => (encArg p).length) fun p => (encArg p).length := by
   have hs := fst (encCompState encF encG) (encOption encBool)
@@ -479,7 +480,7 @@ lemma setPhase_inO (c : CompPhase) :
       fun p => rfl).mono 8 (fun p => ?_) fun p => ?_ <;> omega
 
 /-- **Rewinding**, the step of the composition in the phases `rewindStart` and `rewind`. -/
-lemma rewind_inO : ComputableTidilyInO (fun p : CompState σf σg × Option Bool =>
+lemma rewind_inO : ComputableInO (fun p : CompState σf σg × Option Bool =>
       if decide (p.1.phase = .rewindStart) then
         ((⟨p.1.g, .rewind, p.1.f, p.1.cd⟩ : CompState σf σg), (-1 : SignType), ([] : List Bool))
       else if p.2.isNone then ((⟨p.1.g, .run, p.1.f, p.1.cd⟩ : CompState σf σg), 1, [])
@@ -488,10 +489,10 @@ lemma rewind_inO : ComputableTidilyInO (fun p : CompState σf σg × Option Bool
       (fun p => compTime encF encG Tf Sf Tg p.1) fun p => compSpace encF encG Sf Sg p.1 := by
   have hs := fst (encCompState encF encG) (encOption encBool)
   have ha := snd (encCompState encF encG) (encOption encBool)
-  have hph := (ComputableTidilyInDegree.of_finite (encIn := encPhase) (encMid := encBool)
+  have hph := (ComputableInDegree.of_finite (encIn := encPhase) (encMid := encBool)
     fun c : CompPhase => decide (c = CompPhase.rewindStart)).inO_one.comp_linear
       (CompState.phase_inO.comp_linear hs)
-  have hnone := (ComputableTidilyInDegree.of_finite (encIn := encOption encBool)
+  have hnone := (ComputableInDegree.of_finite (encIn := encOption encBool)
     (encMid := encBool) fun a : Option Bool => a.isNone).inO_one.comp_linear ha
   have hkeep := ((CompState.g_inO.comp_linear hs).prod ((CompState.phase_inO.comp_linear hs).prod
     ((CompState.f_inO.comp_linear hs).prod (CompState.cd_inO.comp_linear hs)))).of_enc_eq
@@ -499,7 +500,7 @@ lemma rewind_inO : ComputableTidilyInO (fun p : CompState σf σg × Option Bool
       (g := fun p : CompState σf σg × Option Bool =>
         (⟨p.1.g, p.1.phase, p.1.f, p.1.cd⟩ : CompState σf σg)) fun p => rfl
   have hres {st : CompState σf σg × Option Bool → CompState σf σg} {T S}
-      (h : ComputableTidilyInO st encArg (encCompState encF encG) T S) (d : SignType) :=
+      (h : ComputableInO st encArg (encCompState encF encG) T S) (d : SignType) :=
     h.prod ((const d (encMid := encMove)).prod (const ([] : List Bool) (encMid := encBits)))
   have hAt := (encArg_bigO (encF := encF) (encG := encG)).trans
     (time_bigO (Tf := Tf) (Sf := Sf) (Tg := Tg)).2.1
@@ -530,15 +531,16 @@ lemma compStep_eq (f : StepMachine σf Bool Bool) (g : StepMachine σg Bool Bool
       else ((⟨p.1.g, p.1.phase, p.1.f, p.1.cd⟩ : CompState σf σg), -1, []) := by
   obtain ⟨⟨sg, _ | _ | _, sf, cd⟩, a⟩ := p <;> simp [compStep]
 
-/-- **The composition of tidy step machines is tidy.** -/
-public theorem Tidy.comp (hf : f.Tidy encF Tf Sf) (hg : g.Tidy encG Tg Sg) :
-    (g.comp f).Tidy (encCompState encF encG) (compTime encF encG Tf Sf Tg)
+/-- **Resource certificates compose with the explicit time and space budgets.** -/
+public theorem ResourceCertificate.comp
+    (hf : f.ResourceCertificate encF Tf Sf) (hg : g.ResourceCertificate encG Tg Sg) :
+    (g.comp f).ResourceCertificate (encCompState encF encG) (compTime encF encG Tf Sf Tg)
       (compSpace encF encG Sf Sg) where
   computable_halt := by
-    have hph := (ComputableTidilyInDegree.of_finite (encIn := encPhase) (encMid := encBool)
+    have hph := (ComputableInDegree.of_finite (encIn := encPhase) (encMid := encBool)
       fun c : CompPhase => decide (c = CompPhase.run)).inO_one.comp_linear
         (CompState.phase_inO (encF := encF) (encG := encG))
-    have hh := (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool)
+    have hh := (ComputableInDegree.of_finite (encIn := encPair encBool encBool)
       (encMid := encBool) fun q : Bool × Bool => q.1 && q.2).inO_one.comp_linear
         (hph.prod (hg.computable_halt.comp (CompState.g_inO (encF := encF)).fst'))
     refine (hh.of_enc_eq fun s => rfl).mono 4 (fun s => ?_) fun s => ?_
@@ -548,7 +550,7 @@ public theorem Tidy.comp (hf : f.Tidy encF Tf Sf) (hg : g.Tidy encG Tg Sg) :
       omega
   computable_step := by
     have hs := fst (encCompState encF encG) (encOption encBool)
-    have hph := (ComputableTidilyInDegree.of_finite (encIn := encPhase) (encMid := encBool)
+    have hph := (ComputableInDegree.of_finite (encIn := encPhase) (encMid := encBool)
       fun c : CompPhase => decide (c = CompPhase.run)).inO_one.comp_linear
         (CompState.phase_inO.comp_linear hs)
     have hfh := hf.computable_halt.comp (CompState.f_inO.comp_linear hs)

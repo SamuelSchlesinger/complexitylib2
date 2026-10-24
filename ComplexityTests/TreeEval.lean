@@ -61,9 +61,9 @@ example : encInstance ⟨2, 2, sample⟩ ≠ encInstance ⟨2, 0, .leaf ![false,
 
 open Turing MultiTapeTM Reader in
 /-- **Tree Evaluation in small space**: `O((ℓ + H + 1) · log (ℓ + 2) + log (n + 2))`. -/
-example : ∃ t, ComputableTidilyInBigO (fun I : Instance => List.ofFn I.tree.eval) encInstance
+example : ∃ t, ComputableInBigO (fun I : Instance => List.ofFn I.tree.eval) encInstance
     encBits t fun I => spaceBound I.ell I.height + (encNat ((encInstance I).length + 1)).length :=
-  computableTidilyInSpace_eval
+  computableInBigO_eval
 
 /-- The sample instance packaged as a nontrivial instance (`1 ≤ ℓ` and `1 ≤ H`). -/
 def sampleNontrivial : NontrivialInstance := ⟨⟨2, 2, sample⟩, by decide, by decide⟩
@@ -85,11 +85,11 @@ example : spaceBound sampleNontrivial.1.ell sampleNontrivial.1.height +
 
 open Turing MultiTapeTM in
 /-- **Tree Evaluation in space `O(log n · log log n)`** on nontrivial instances. -/
-example : ∃ t, ComputableTidilyInBigO
+example : ∃ t, ComputableInBigO
     (fun I : NontrivialInstance => List.ofFn I.1.tree.eval) encNontrivialInstance encBits t
     fun I => (encNat (encNontrivialInstance I).length).length *
       (encNat (encNat (encNontrivialInstance I).length).length).length :=
-  computableTidilyInSpace_eval_log_mul_log_log
+  computableInBigO_eval_log_mul_log_log
 
 end ComplexityTests.TreeEval
 
@@ -120,18 +120,18 @@ info: 'Turing.ReadMachine.computes_toStepMachine' depends on axioms:
 #print axioms Turing.ReadMachine.computes_toStepMachine
 
 /--
-info: 'Turing.ReadMachine.tidy_toStepMachine' depends on axioms:
+info: 'Turing.ReadMachine.toStepMachine_resourceCertificate' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.ReadMachine.tidy_toStepMachine
+#print axioms Turing.ReadMachine.toStepMachine_resourceCertificate
 
 /--
-info: 'Cslib.TreeEval.Reader.tidy_machine' depends on axioms:
+info: 'Cslib.TreeEval.Reader.machine_resourceCertificate' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.TreeEval.Reader.tidy_machine
+#print axioms Cslib.TreeEval.Reader.machine_resourceCertificate
 
 /--
 info: 'Cslib.TreeEval.Reader.inv_run' depends on axioms:
@@ -155,11 +155,11 @@ info: 'Cslib.TreeEval.encode_injective' depends on axioms:
 #print axioms Cslib.TreeEval.encode_injective
 
 /--
-info: 'Cslib.TreeEval.computableTidilyInSpace_eval' depends on axioms:
+info: 'Cslib.TreeEval.computableInBigO_eval' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.TreeEval.computableTidilyInSpace_eval
+#print axioms Cslib.TreeEval.computableInBigO_eval
 
 /--
 info: 'Cslib.TreeEval.ell_lt_length_encNat_length_encInstance' depends on axioms:
@@ -183,8 +183,8 @@ info: 'Cslib.TreeEval.spaceBound_add_length_le_log_mul_log_log' depends on axiom
 #print axioms Cslib.TreeEval.spaceBound_add_length_le_log_mul_log_log
 
 /--
-info: 'Cslib.TreeEval.computableTidilyInSpace_eval_log_mul_log_log' depends on axioms:
+info: 'Cslib.TreeEval.computableInBigO_eval_log_mul_log_log' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.TreeEval.computableTidilyInSpace_eval_log_mul_log_log
+#print axioms Cslib.TreeEval.computableInBigO_eval_log_mul_log_log

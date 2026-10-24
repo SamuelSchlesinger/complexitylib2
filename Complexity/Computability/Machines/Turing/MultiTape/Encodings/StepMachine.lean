@@ -15,14 +15,16 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OnWords
 public import Complexity.Computability.Machines.Turing.MultiTape.StepMachine.Basic
 public import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
 /-!
-# Step machines of tidily computable functions
+# Plain resource certificates for step machines
 
-A step machine (`Turing.StepMachine`) whose initial state, halting test and step are tidily
-computable is tidily computable. Each step costs the time of the step function and of a few
+A step machine (`Turing.StepMachine`) whose initial state, halting test and step have charged
+plain resource certificates is computable within plain time and work-space bounds. Each step costs
+the time of the step function and of a few
 operations linear in the size of the state, but nothing for the input: the realizing machine keeps
 its input head where the step machine has it. The space is that of the step function plus the size
 of the states.
@@ -31,13 +33,15 @@ of the states.
 
 * `Turing.MultiTapeTM.encMove`: the encoding of moves of the input head.
 * `Turing.MultiTapeTM.encPeek`: the encoding of a state behind the symbol under the input head.
-* `Turing.StepMachine.Tidy`: step machines with tidily computable halting test and step.
+* `Turing.StepMachine.ResourceCertificate`: charged plain certificates for the halting test and
+  step.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.stepMachine`: step machines of tidily
-  computable functions are tidily computable, with no cost for the input head.
-* `Turing.StepMachine.Tidy.computableTidilyInTimeAndSpace`: the same for tidy step machines, with
+* `Turing.MultiTapeTM.ComputableInBigO.stepMachine`: step machines of computable
+  functions have plain time and work-space bounds, with no cost for the input head.
+* `Turing.StepMachine.ResourceCertificate.computableInBigO`: the same from resource certificates,
+  with
   the bounds of the steps along the run.
 -/
 
@@ -56,61 +60,6 @@ public lemma linear_stepFlagWord :
   funext c
   cases c <;> rfl
 
-/-! ### Tidy machines on selected tapes -/
-
-section Tapes
-
-variable {β δ : Type*} {k K : ℕ} {S : Type*} {tm : MultiTapeTM k Bool S} {encB : β ↪ List Bool}
-  {encD : δ ↪ List Bool} {f : β → δ} {t s : β → ℕ}
-
-/-- A tidy machine writing its output to tape `V`. -/
-public lemma transformsTapes_outputToWord (h : ComputesFunTidilyInTimeAndSpace tm encB encD f t s)
-    {e : Fin (k + 1) ↪ Fin K} {V : Fin K} (he : e (Fin.last k) = V) (b : β) :
-    TransformsTapes (tm.outputToWord.extendTapes e) (fun inp ws => inp = encB b ∧ ws = fun _ => [])
-      (fun _ _ ws' em => ws' = Function.update (fun _ => []) V (encD (f b)) ∧ em = [])
-      (t b + (encD (f b)).length + 2) (s b + 2 * (encD (f b)).length + 2 * K + 3) := by
-  have hk : k + 1 ≤ K := by simpa using Fintype.card_le_of_embedding e
-  have h' := ((h b).outputToWord.imp
-      (P' := fun inp ws => inp = encB b ∧ ws = Function.update (fun _ => []) (Fin.last k) [])
-      (Q' := fun _ ws ws' em => ws' = Function.update ws (Fin.last k) (encD (f b)) ∧ em = [])
-      (fun _ _ ⟨hin, hws⟩ => ⟨hin, by simp [hws]⟩)
-      (fun _ _ _ _ ⟨_, hws⟩ ⟨hws', he⟩ => ⟨by simp [hws', hws], he⟩) le_rfl le_rfl
-    ).extendTapes_update e
-  rw [he] at h'
-  exact h'.imp (fun _ _ ⟨hin, hws⟩ => ⟨hin, by simp [hws]⟩)
-    (fun _ _ _ _ ⟨_, hws⟩ ⟨hws', he⟩ => ⟨by simp [hws', hws], he⟩) le_rfl (by omega)
-
-/-- A tidy machine run on the word on tape `V`, emitting its output. -/
-public lemma transformsTapes_inputFromWord_fun
-    (h : ComputesFunTidilyInTimeAndSpace tm encB encD f t s)
-    {e : Fin (k + 2) ↪ Fin K} {V : Fin K} (he : e (Fin.natAdd k 0) = V) (b : β) :
-    TransformsTapes ((tm.inputFromWord true).extendTapes e)
-      (fun _ ws => ws = Function.update (fun _ => []) V (encB b))
-      (fun _ ws ws' em => ws' = ws ∧ em = encD (f b))
-      (t b + 4) (s b + 2 * (encB b).length + 3 * K + 10) := by
-  have hk : k + 2 ≤ K := by simpa using Fintype.card_le_of_embedding e
-  have h' := ((h b).inputFromWord true).extendTapes_update e
-  rw [he] at h'
-  exact h'.imp (fun _ _ hws => ⟨trivial, hws⟩)
-    (fun _ _ _ _ hws ⟨h, he⟩ => ⟨by rw [h, hws, Function.update_idem], he⟩) le_rfl (by omega)
-
-/-- A tidy machine run on the word on tape `V`, writing its output to tape `O`. -/
-public lemma transformsTapes_onWords (h : ComputesFunTidilyInTimeAndSpace tm encB encD f t s)
-    {e : Fin (k + 1 + 2) ↪ Fin K} {V O : Fin K} (hi : e (Fin.natAdd (k + 1) 0) = V)
-    (ho : e ((Fin.last k).castAdd 2) = O) (b : β) :
-    TransformsTapes ((tm.onWords true).extendTapes e)
-      (fun _ ws => ws = Function.update (fun _ => []) V (encB b))
-      (fun _ ws ws' em => ws' = Function.update ws O (encD (f b)) ∧ em = [])
-      (t b + (encD (f b)).length + 6)
-      (s b + 2 * (encB b).length + 2 * (encD (f b)).length + 4 * K + 15) := by
-  have hk : k + 1 + 2 ≤ K := by simpa using Fintype.card_le_of_embedding e
-  have h' := (((h b).onWords true).imp
-    (P' := fun _ ws => True ∧ ws = Function.update (fun _ => []) (Fin.natAdd (k + 1) 0) (encB b))
-    (fun _ _ h => h.2) (fun _ _ _ _ _ h => h) le_rfl le_rfl).extendTapes_update e
-  rw [hi, ho] at h'
-  exact h'.imp (fun _ _ hws => ⟨trivial, hws⟩) (fun _ _ _ _ _ h => h) le_rfl (by omega)
-
-end Tapes
 
 /-- Moves of the input head: none, to the left, to the right. -/
 @[expose] public def encMove : SignType ↪ List Bool :=
@@ -188,24 +137,24 @@ lemma slotT_run_some (c : Bool) (w : List Bool) : slotT.run (some c) w = c :: w 
   | nil => rfl
   | cons b w ih => simp [ih]
 
-open ComputableTidilyInO
+open ComputableInO
 
 variable {τ : Type} {enc : τ ↪ List Bool}
 
 /-- The value behind the recorded symbol. -/
-public lemma peek_snd : ComputableTidilyInO Prod.snd (encPeek enc) enc
+public lemma peek_snd : ComputableInO Prod.snd (encPeek enc) enc
     (fun p => (encPeek enc p).length) fun p => (encPeek enc p).length :=
   of_linear (dropTwoT.computableInLinearTimeAndSpace fun p => by
     obtain ⟨_ | b, t⟩ := p <;> simp [peekWord, dropTwoT_run_two])
 
 /-- The recorded symbol. -/
-public lemma peek_fst : ComputableTidilyInO Prod.fst (encPeek enc) (encOption encBool)
+public lemma peek_fst : ComputableInO Prod.fst (encPeek enc) (encOption encBool)
     (fun p => (encPeek enc p).length) fun p => (encPeek enc p).length :=
   of_linear (peekSymT.computableInLinearTimeAndSpace fun p => by
     obtain ⟨_ | b, t⟩ := p <;> simp [peekWord, peekSymT_run_three])
 
 /-- No symbol recorded in front of a value. -/
-public lemma peek_none : ComputableTidilyInO (fun t => ((none : Option Bool), t)) enc (encPeek enc)
+public lemma peek_none : ComputableInO (fun t => ((none : Option Bool), t)) enc (encPeek enc)
     (fun t => (enc t).length) fun t => (enc t).length :=
   of_linear (slotT.computableInLinearTimeAndSpace fun t => by
     cases h : enc t with
@@ -214,9 +163,9 @@ public lemma peek_none : ComputableTidilyInO (fun t => ((none : Option Bool), t)
 
 /-- A constant, in zero space. -/
 public lemma constZero {α β : Type} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool} (b : β) :
-    ComputableTidilyInO (fun _ : α => b) encIn encMid (fun a => (encIn a).length) fun _ => 0 := by
+    ComputableInO (fun _ : α => b) encIn encMid (fun a => (encIn a).length) fun _ => 0 := by
   obtain ⟨c, hc⟩ := computableInTimeAndSpace_of_const (encIn := encIn) (encOut := encMid) b
-  exact .of_bounds hc.computableTidilyInTimeAndSpace (2 * c + 2 + (encMid b).length)
+  exact .of_bounds hc (2 * c + 2 + (encMid b).length)
     (fun a => by nlinarith) (fun _ => Nat.zero_le _) (fun a => by simp)
 
 /-! ### The parts of a round -/
@@ -232,9 +181,9 @@ public abbrev encAug (encS : σ ↪ List Bool) : σ × SignType ↪ List Bool :=
 
 /-- The step, read from the state behind the symbol under the input head. -/
 lemma step_peek_inO
-    (hstep : ComputableTidilyInO (fun p : σ × Option Bool => step p.1 p.2)
+    (hstep : ComputableInO (fun p : σ × Option Bool => step p.1 p.2)
       (encPair encS (encOption encBool)) (encPair encS (encPair encMove encBits)) TS SS) :
-    ComputableTidilyInO (fun p : Option Bool × (σ × SignType) => step p.2.1 p.1)
+    ComputableInO (fun p : Option Bool × (σ × SignType) => step p.2.1 p.1)
       (encPeek (encAug encS)) (encPair encS (encPair encMove encBits))
       (fun p => (encPeek (encAug encS) p).length + (encPeek (encAug encS) p).length +
         TS (p.2.1, p.1))
@@ -297,19 +246,20 @@ lemma step_space_le (cI D SI Sm L K P P₂ sR : ℕ) (hcI : cI ≤ D) (hD : 100 
 
 /-! ### The theorem -/
 
-/-- **Step machines of tidily computable functions are tidily computable.** Let the step machine
+/-- **Step machines with resource bounds are computable.** Let the step machine
 `⟨init x, halt, step⟩` halt on the input `encIn x` after `rounds x` steps with the output
-`encOut (g x)`. If `init`, `halt` and `step` are tidily computable, then so is `g`, in time
+`encOut (g x)`. If `init`, `halt` and `step` have charged plain certificates, then `g` is
+computable, in time
 `O(TI x + (rounds x + 1) * (tMax x + lMax x + 1) + n)` and space `O(SI x + sMax x + lMax x + 1)`,
 where `tMax`, `sMax` bound the time and space of `halt` and `step` along the run and `lMax` the
 size of the states. The input head is never rewound between steps. -/
-public theorem ComputableTidilyInTimeAndSpace.stepMachine {σ γ ω : Type} {encS : σ ↪ List Bool}
+public theorem ComputableInBigO.stepMachine {σ γ ω : Type} {encS : σ ↪ List Bool}
     {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} (init : γ → σ) (halt : σ → Bool)
     (step : σ → Option Bool → σ × SignType × List Bool) (g : γ → ω) (rounds : γ → ℕ)
     {TI SI : γ → ℕ} {TH SH : σ → ℕ} {TS SS : σ × Option Bool → ℕ}
-    (hinit : ComputableTidilyInO init encIn encS TI SI)
-    (hhalt : ComputableTidilyInO halt encS encBool TH SH)
-    (hstep : ComputableTidilyInO (fun p : σ × Option Bool => step p.1 p.2)
+    (hinit : ComputableInO init encIn encS TI SI)
+    (hhalt : ComputableInO halt encS encBool TH SH)
+    (hstep : ComputableInO (fun p : σ × Option Bool => step p.1 p.2)
       (encPair encS (encOption encBool)) (encPair encS (encPair encMove encBits)) TS SS)
     (hrounds : ∀ x, (StepMachine.mk (init x) halt step).HaltsAt (encIn x) (rounds x))
     (hg : ∀ x, encOut (g x) =
@@ -325,224 +275,232 @@ public theorem ComputableTidilyInTimeAndSpace.stepMachine {σ γ ω : Type} {enc
       SH ((StepMachine.mk (init x) halt step).run (encIn x) i).state ≤ sMax x)
     (hlMax : ∀ x, ∀ i ≤ rounds x,
       (encS ((StepMachine.mk (init x) halt step).run (encIn x) i).state).length ≤ lMax x) :
-    ∃ c, ComputableTidilyInTimeAndSpace g encIn encOut
+    ComputableInBigO g encIn encOut
+      (fun x => TI x + (rounds x + 1) * (tMax x + lMax x + 1) + (encIn x).length)
+      (fun x => SI x + sMax x + lMax x + 1) := by
+  -- Clean tape boundaries are internal to the compiler; the exported output is uncharged.
+  have hraw : ∃ c, ComputableTidilyInTimeAndSpace g encIn encOut
       (fun x => c * (TI x + (rounds x + 1) * (tMax x + lMax x + 1) + (encIn x).length))
       (fun x => c * (SI x + sMax x + lMax x + 1)) := by
-  -- the parts, on the state behind the symbol under the input head
-  have hS := step_peek_inO (encS := encS) hstep
-  have fE := hS.snd'.snd'
-  have fN := peek_none.comp_linear (hS.fst'.prod hS.snd'.fst')
-  have fM := (peek_snd (enc := encAug encS)).snd'
-  have fC := (of_linear linear_stepFlagWord).comp_linear
-    ((ComputableTidilyInDegree.of_finite (encIn := encBool) (encMid := encBool)
-      fun b : Bool => !b).inO_one.comp_linear (hhalt.comp (peek_snd (enc := encAug encS)).fst'))
-  have fI := (peek_none (enc := encAug encS)).comp_linear (hinit.prod (constZero (0 : SignType)))
-  obtain ⟨cE, ⟨kE, SE, _, tmE, htmE⟩, -⟩ := fE
-  obtain ⟨cN, ⟨kN, SN, _, tmN, htmN⟩, -⟩ := fN
-  obtain ⟨cM, ⟨kM, SM, _, tmM, htmM⟩, -⟩ := fM
-  obtain ⟨cC, ⟨kC, SC, _, tmC, htmC⟩, -⟩ := fC
-  obtain ⟨cI, ⟨kI, SI', _, tmI, htmI⟩, -⟩ := fI
-  -- the tapes: those of the machines, then the state `V`, the next state `N`, a flag `F` for
-  -- copying, the flag `C` for another round and the move `Mv`
-  obtain ⟨M, hM⟩ : ∃ M, M = kI + kE + kN + kM + kC + 8 := ⟨_, rfl⟩
-  let V : Fin (M + 5) := ⟨M, by omega⟩
-  let N : Fin (M + 5) := ⟨M + 1, by omega⟩
-  let F : Fin (M + 5) := ⟨M + 2, by omega⟩
-  let C : Fin (M + 5) := ⟨M + 3, by omega⟩
-  let Mv : Fin (M + 5) := ⟨M + 4, by omega⟩
-  have hVN : V ≠ N := by simp [V, N, Fin.ext_iff]
-  have hVF : V ≠ F := by simp [V, F, Fin.ext_iff]
-  have hNF : N ≠ F := by simp [N, F, Fin.ext_iff]
-  have hVC : V ≠ C := by simp [V, C, Fin.ext_iff]
-  have hVM : V ≠ Mv := by simp [V, Mv, Fin.ext_iff]
-  obtain ⟨eI, heI⟩ := exists_embedding_eq (K := M + 5) (by omega) (Fin.last kI) V
-  obtain ⟨eE, heE⟩ := exists_embedding_eq (K := M + 5) (by omega) (Fin.natAdd kE (0 : Fin 2)) V
-  obtain ⟨eN, heN, heN'⟩ := exists_embedding_eq₂ (K := M + 5) (by omega)
-    (i := Fin.natAdd (kN + 1) (0 : Fin 2)) (o := (Fin.last kN).castAdd 2)
-    (by simp [Fin.ext_iff]) hVN
-  obtain ⟨eM, heM, heM'⟩ := exists_embedding_eq₂ (K := M + 5) (by omega)
-    (i := Fin.natAdd (kM + 1) (0 : Fin 2)) (o := (Fin.last kM).castAdd 2)
-    (by simp [Fin.ext_iff]) hVM
-  obtain ⟨eC, heC, heC'⟩ := exists_embedding_eq₂ (K := M + 5) (by omega)
-    (i := Fin.natAdd (kC + 1) (0 : Fin 2)) (o := (Fin.last kC).castAdd 2)
-    (by simp [Fin.ext_iff]) hVC
-  have hI := transformsTapes_outputToWord htmI heI
-  have hE := transformsTapes_inputFromWord_fun htmE heE
-  have hN := transformsTapes_onWords htmN heN heN'
-  have hMm := transformsTapes_onWords htmM heM heM'
-  have hC := transformsTapes_onWords (encD := encBits) htmC heC heC'
-  set D := cE + cN + cM + cC + cI + M + 100 with hD
-  refine ⟨1000 * D * D, _, _, by set_option synthInstance.maxSize 1024 in infer_instance,
-    stepTM (tmI.outputToWord.extendTapes eI) ((tmE.inputFromWord true).extendTapes eE)
-      ((tmN.onWords true).extendTapes eN) ((tmM.onWords true).extendTapes eM)
-      ((tmC.onWords true).extendTapes eC) V N F C Mv hVN hVF hNF, fun x => ?_⟩
-  -- the run of the step machine on `x`
-  set m := StepMachine.mk (init x) halt step with hm
-  set R := rounds x
-  set w := encIn x
-  let q (i : ℕ) : σ := (m.run w i).state
-  let a (i : ℕ) : Option Bool := inputSymbolAt w (m.run w i).pos
-  let st (i : ℕ) : σ × SignType × List Bool := step (q i) (a i)
-  let mv (i : ℕ) : SignType := if i = 0 then 0 else (st (i - 1)).2.1
-  have hnh (i : ℕ) (hi : i < R) : halt (q i) = false := by
-    simpa using (hrounds x).2 i hi
-  have hrun (i : ℕ) (hi : i < R) : m.run w (i + 1) =
-      ⟨(st i).1, moveInputPos (m.run w i).pos (st i).2.1, (m.run w i).out ++ (st i).2.2⟩ :=
-    m.run_succ_of_not_halt (hnh i hi)
-  have hq (i : ℕ) (hi : i < R) : q (i + 1) = (st i).1 := by simp only [q, hrun i hi]
-  -- uniform bounds on the parts
-  set L := lMax x
-  set Tm := tMax x
-  set Sm := sMax x
-  have hDK : M + 5 ≤ D := by omega
-  have hP (b : Option Bool) (n : ℕ) (hn : n ≤ R) (mm : SignType) :
-      (encPeek (encAug encS) (b, (q n, mm))).length ≤ 2 * L + 4 := by
-    have : (encS (q n)).length ≤ L := hlMax x n hn
-    cases b <;> cases mm <;> simp [peekWord, encMove] <;> omega
-  have hst (n : ℕ) (hn : n ≤ R) : TS (q n, a n) + TH (q n) ≤ Tm ∧ SS (q n, a n) + SH (q n) ≤ Sm :=
-    ⟨htMax x n hn, hsMax x n hn⟩
-  have hfl (n : ℕ) : (stepFlagWord (!halt (q n))).length ≤ 1 := by
-    unfold stepFlagWord; split_ifs <;> simp
-  have hmv (mm : SignType) : (encMove mm).length ≤ 1 := by cases mm <;> simp [encMove]
-  have h := computesTidily_stepTM hVN hVF hNF hVC hVM w R (fun n => encAug encS (q n, mv n))
-    (fun n => (st n).2.2) (fun n => encMove (st n).2.1) (fun n => stepFlagWord (!halt (q n)))
-    (fun n => (m.run w n).pos) rfl
-    (fun n hn => by simp only [hrun n hn, moveOfCell_encMove])
-    (fun n hn => by simp [hnh n hn, stepFlagWord])
-    (by simpa [stepFlagWord] using (hrounds x).1)
-    ((hI x).imp (fun _ _ h => h) (fun _ _ _ _ _ ⟨h, he⟩ => ⟨h.trans rfl, he⟩) le_rfl le_rfl)
-    (tE := fun _ => D * (Tm + 4 * L + 10) + 4)
-    (sE := fun _ => D * (Sm + 4 * L + 10) + 8 * L + 30 + 3 * (M + 5))
-    (tN := fun _ => D * (2 * Tm + 8 * L + 20) + 2 * L + 10)
-    (sN := fun _ => D * (2 * Sm + 8 * L + 20) + 12 * L + 40 + 4 * (M + 5))
-    (tM := fun _ => D * (2 * L + 5) + 7)
-    (sM := fun _ => D * (2 * L + 5) + 4 * L + 30 + 4 * (M + 5))
-    (tC := fun _ => D * (Tm + 2 * L + 5) + 7)
-    (sC := fun _ => D * (Sm + 2 * L + 5) + 4 * L + 30 + 4 * (M + 5))
-    (fun n hn => (hE (a n, (q n, mv n))).imp (fun _ _ h => h)
-      (fun _ _ _ _ _ ⟨h, he⟩ => ⟨h, he.trans rfl⟩) (by
-        have := hP (a n) n hn.le (mv n); have := (hst n hn.le).1
-        exact Nat.add_le_add_right (Nat.mul_le_mul (by omega) (by dsimp -zeta only; omega)) _) (by
-        have := hP (a n) n hn.le (mv n); have := (hst n hn.le).2
-        have := Nat.mul_le_mul (show cE ≤ D by omega)
-          (show (encPeek (encAug encS) (a n, q n, mv n)).length +
-            (encPeek (encAug encS) (a n, q n, mv n)).length + SS (q n, a n) + 1 ≤
-              Sm + 4 * L + 10 by omega)
-        dsimp -zeta only; omega))
-    (fun n hn => (hN (a n, (q n, mv n))).imp (fun _ _ h => h)
-      (fun _ _ _ _ _ ⟨h, he⟩ => ⟨by rw [h]; simp [hq n hn, mv, st, peekWord, slot], he⟩) (by
-        have := hP (a n) n hn.le (mv n); have := (hst n hn.le).1
-        have : (encPeek (encPair encS encMove) (none, (step (q n) (a n)).1,
-            (step (q n) (a n)).2.1)).length ≤ 2 * L + 4 := by
-          have := hP none (n + 1) hn (step (q n) (a n)).2.1
-          rw [hq n hn] at this
-          exact this
-        have := Nat.mul_le_mul (show cN ≤ D by omega)
-          (show (encPeek (encAug encS) (a n, q n, mv n)).length +
-            (encPeek (encAug encS) (a n, q n, mv n)).length + TS (q n, a n) +
-            ((encPeek (encAug encS) (a n, q n, mv n)).length +
-            (encPeek (encAug encS) (a n, q n, mv n)).length + TS (q n, a n)) + 1 ≤
-              2 * Tm + 8 * L + 20 by omega)
-        dsimp -zeta only; simp only [Function.comp_apply]; omega) (by
-        have := hP (a n) n hn.le (mv n); have := (hst n hn.le).2
-        have : (encPeek (encPair encS encMove) (none, (step (q n) (a n)).1,
-            (step (q n) (a n)).2.1)).length ≤ 2 * L + 4 := by
-          have := hP none (n + 1) hn (step (q n) (a n)).2.1
-          rw [hq n hn] at this
-          exact this
-        have := Nat.mul_le_mul (show cN ≤ D by omega)
-          (show (encPeek (encAug encS) (a n, q n, mv n)).length +
-            (encPeek (encAug encS) (a n, q n, mv n)).length + SS (q n, a n) +
-            ((encPeek (encAug encS) (a n, q n, mv n)).length +
-            (encPeek (encAug encS) (a n, q n, mv n)).length + SS (q n, a n)) + 1 ≤
-              2 * Sm + 8 * L + 20 by omega)
-        dsimp -zeta only; simp only [Function.comp_apply]; omega))
-    (fun n hn => (hMm (none, (q (n + 1), mv (n + 1)))).imp (fun _ _ h => by rw [h]; rfl)
-      (fun _ _ _ _ _ ⟨h, he⟩ => ⟨by rw [h]; simp [mv], he⟩) (by
-        have := hP none (n + 1) hn (mv (n + 1)); have := hmv (mv (n + 1))
-        have := Nat.mul_le_mul (show cM ≤ D by omega)
-          (show (encPeek (encAug encS) (none, q (n + 1), mv (n + 1))).length + 1 ≤ 2 * L + 5 by
-            omega)
-        dsimp -zeta only; omega) (by
-        have := hP none (n + 1) hn (mv (n + 1)); have := hmv (mv (n + 1))
-        have := Nat.mul_le_mul (show cM ≤ D by omega)
-          (show (encPeek (encAug encS) (none, q (n + 1), mv (n + 1))).length + 1 ≤ 2 * L + 5 by
-            omega)
-        dsimp -zeta only; omega))
-    (fun n hn => (hC (none, (q n, mv n))).imp (fun _ _ h => by rw [h]; rfl)
-      (fun _ _ _ _ _ ⟨h, he⟩ => ⟨by rw [h]; rfl, he⟩) (by
-        have := hP none n hn (mv n); have := (hst n hn).1; have := hfl n
-        have := Nat.mul_le_mul (show cC ≤ D by omega)
-          (show (encPeek (encAug encS) (none, q n, mv n)).length + TH (q n) + 1 ≤
-            Tm + 2 * L + 5 by omega)
-        dsimp -zeta only; simp only [Function.comp_apply, encBits_apply]; omega) (by
-        have := hP none n hn (mv n); have := (hst n hn).2; have := hfl n
-        have := Nat.mul_le_mul (show cC ≤ D by omega)
-          (show (encPeek (encAug encS) (none, q n, mv n)).length + SH (q n) + 1 ≤
-            Sm + 2 * L + 5 by omega)
-        dsimp -zeta only; simp only [Function.comp_apply, encBits_apply]; omega))
-    (sR := stepRoundSpace (M + 5) 1 (2 * L + 4) (2 * L + 4) 1
-      (D * (Sm + 4 * L + 10) + 8 * L + 30 + 3 * (M + 5))
-      (D * (2 * Sm + 8 * L + 20) + 12 * L + 40 + 4 * (M + 5))
-      (D * (2 * L + 5) + 4 * L + 30 + 4 * (M + 5))
-      (D * (Sm + 2 * L + 5) + 4 * L + 30 + 4 * (M + 5))) (fun n hn => by
+    -- the parts, on the state behind the symbol under the input head
+    have hS := step_peek_inO (encS := encS) hstep
+    have fE := hS.snd'.snd'
+    have fN := peek_none.comp_linear (hS.fst'.prod hS.snd'.fst')
+    have fM := (peek_snd (enc := encAug encS)).snd'
+    have fC := (of_linear linear_stepFlagWord).comp_linear
+      ((ComputableInDegree.of_finite (encIn := encBool) (encMid := encBool)
+        fun b : Bool => !b).inO_one.comp_linear (hhalt.comp (peek_snd (enc := encAug encS)).fst'))
+    have fI := (peek_none (enc := encAug encS)).comp_linear (hinit.prod (constZero (0 : SignType)))
+    obtain ⟨cE, ⟨kE, SE, _, tmE, htmE⟩, -⟩ := Internal.normalizeO fE
+    obtain ⟨cN, ⟨kN, SN, _, tmN, htmN⟩, -⟩ := Internal.normalizeO fN
+    obtain ⟨cM, ⟨kM, SM, _, tmM, htmM⟩, -⟩ := Internal.normalizeO fM
+    obtain ⟨cC, ⟨kC, SC, _, tmC, htmC⟩, -⟩ := Internal.normalizeO fC
+    obtain ⟨cI, ⟨kI, SI', _, tmI, htmI⟩, -⟩ := Internal.normalizeO fI
+    -- the tapes: those of the machines, then the state `V`, the next state `N`, a flag `F` for
+    -- copying, the flag `C` for another round and the move `Mv`
+    obtain ⟨M, hM⟩ : ∃ M, M = kI + kE + kN + kM + kC + 8 := ⟨_, rfl⟩
+    let V : Fin (M + 5) := ⟨M, by omega⟩
+    let N : Fin (M + 5) := ⟨M + 1, by omega⟩
+    let F : Fin (M + 5) := ⟨M + 2, by omega⟩
+    let C : Fin (M + 5) := ⟨M + 3, by omega⟩
+    let Mv : Fin (M + 5) := ⟨M + 4, by omega⟩
+    have hVN : V ≠ N := by simp [V, N, Fin.ext_iff]
+    have hVF : V ≠ F := by simp [V, F, Fin.ext_iff]
+    have hNF : N ≠ F := by simp [N, F, Fin.ext_iff]
+    have hVC : V ≠ C := by simp [V, C, Fin.ext_iff]
+    have hVM : V ≠ Mv := by simp [V, Mv, Fin.ext_iff]
+    obtain ⟨eI, heI⟩ := exists_embedding_eq (K := M + 5) (by omega) (Fin.last kI) V
+    obtain ⟨eE, heE⟩ := exists_embedding_eq (K := M + 5) (by omega) (Fin.natAdd kE (0 : Fin 2)) V
+    obtain ⟨eN, heN, heN'⟩ := exists_embedding_eq₂ (K := M + 5) (by omega)
+      (i := Fin.natAdd (kN + 1) (0 : Fin 2)) (o := (Fin.last kN).castAdd 2)
+      (by simp [Fin.ext_iff]) hVN
+    obtain ⟨eM, heM, heM'⟩ := exists_embedding_eq₂ (K := M + 5) (by omega)
+      (i := Fin.natAdd (kM + 1) (0 : Fin 2)) (o := (Fin.last kM).castAdd 2)
+      (by simp [Fin.ext_iff]) hVM
+    obtain ⟨eC, heC, heC'⟩ := exists_embedding_eq₂ (K := M + 5) (by omega)
+      (i := Fin.natAdd (kC + 1) (0 : Fin 2)) (o := (Fin.last kC).castAdd 2)
+      (by simp [Fin.ext_iff]) hVC
+    have hI := transformsTapes_outputToWord htmI heI
+    have hE := transformsTapes_inputFromWord_fun htmE heE
+    have hN := transformsTapes_onWords htmN heN heN'
+    have hMm := transformsTapes_onWords htmM heM heM'
+    have hC := transformsTapes_onWords (encD := encBits) htmC heC heC'
+    set D := cE + cN + cM + cC + cI + M + 100 with hD
+    refine ⟨1000 * D * D, _, _, by set_option synthInstance.maxSize 1024 in infer_instance,
+      stepTM (tmI.outputToWord.extendTapes eI) ((tmE.inputFromWord true).extendTapes eE)
+        ((tmN.onWords true).extendTapes eN) ((tmM.onWords true).extendTapes eM)
+        ((tmC.onWords true).extendTapes eC) V N F C Mv hVN hVF hNF, fun x => ?_⟩
+    -- the run of the step machine on `x`
+    set m := StepMachine.mk (init x) halt step with hm
+    set R := rounds x
+    set w := encIn x
+    let q (i : ℕ) : σ := (m.run w i).state
+    let a (i : ℕ) : Option Bool := inputSymbolAt w (m.run w i).pos
+    let st (i : ℕ) : σ × SignType × List Bool := step (q i) (a i)
+    let mv (i : ℕ) : SignType := if i = 0 then 0 else (st (i - 1)).2.1
+    have hnh (i : ℕ) (hi : i < R) : halt (q i) = false := by
+      simpa using (hrounds x).2 i hi
+    have hrun (i : ℕ) (hi : i < R) : m.run w (i + 1) =
+        ⟨(st i).1, moveInputPos (m.run w i).pos (st i).2.1, (m.run w i).out ++ (st i).2.2⟩ :=
+      m.run_succ_of_not_halt (hnh i hi)
+    have hq (i : ℕ) (hi : i < R) : q (i + 1) = (st i).1 := by simp only [q, hrun i hi]
+    -- uniform bounds on the parts
+    set L := lMax x
+    set Tm := tMax x
+    set Sm := sMax x
+    have hDK : M + 5 ≤ D := by omega
+    have hP (b : Option Bool) (n : ℕ) (hn : n ≤ R) (mm : SignType) :
+        (encPeek (encAug encS) (b, (q n, mm))).length ≤ 2 * L + 4 := by
+      have : (encS (q n)).length ≤ L := hlMax x n hn
+      cases b <;> cases mm <;> simp [peekWord, encMove] <;> omega
+    have hst (n : ℕ) (hn : n ≤ R) : TS (q n, a n) + TH (q n) ≤ Tm ∧ SS (q n, a n) + SH (q n) ≤ Sm :=
+      ⟨htMax x n hn, hsMax x n hn⟩
+    have hfl (n : ℕ) : (stepFlagWord (!halt (q n))).length ≤ 1 := by
+      unfold stepFlagWord; split_ifs <;> simp
+    have hmv (mm : SignType) : (encMove mm).length ≤ 1 := by cases mm <;> simp [encMove]
+    have h := computesTidily_stepTM hVN hVF hNF hVC hVM w R (fun n => encAug encS (q n, mv n))
+      (fun n => (st n).2.2) (fun n => encMove (st n).2.1) (fun n => stepFlagWord (!halt (q n)))
+      (fun n => (m.run w n).pos) rfl
+      (fun n hn => by simp only [hrun n hn, moveOfCell_encMove])
+      (fun n hn => by simp [hnh n hn, stepFlagWord])
+      (by simpa [stepFlagWord] using (hrounds x).1)
+      ((hI x).imp (fun _ _ h => h) (fun _ _ _ _ _ ⟨h, he⟩ => ⟨h.trans rfl, he⟩) le_rfl le_rfl)
+      (tE := fun _ => D * (Tm + 4 * L + 10) + 4)
+      (sE := fun _ => D * (Sm + 4 * L + 10) + 8 * L + 30 + 3 * (M + 5))
+      (tN := fun _ => D * (2 * Tm + 8 * L + 20) + 2 * L + 10)
+      (sN := fun _ => D * (2 * Sm + 8 * L + 20) + 12 * L + 40 + 4 * (M + 5))
+      (tM := fun _ => D * (2 * L + 5) + 7)
+      (sM := fun _ => D * (2 * L + 5) + 4 * L + 30 + 4 * (M + 5))
+      (tC := fun _ => D * (Tm + 2 * L + 5) + 7)
+      (sC := fun _ => D * (Sm + 2 * L + 5) + 4 * L + 30 + 4 * (M + 5))
+      (fun n hn => (hE (a n, (q n, mv n))).imp (fun _ _ h => h)
+        (fun _ _ _ _ _ ⟨h, he⟩ => ⟨h, he.trans rfl⟩) (by
+          have := hP (a n) n hn.le (mv n); have := (hst n hn.le).1
+          exact Nat.add_le_add_right (Nat.mul_le_mul (by omega) (by dsimp -zeta only; omega)) _) (by
+          have := hP (a n) n hn.le (mv n); have := (hst n hn.le).2
+          have := Nat.mul_le_mul (show cE ≤ D by omega)
+            (show (encPeek (encAug encS) (a n, q n, mv n)).length +
+              (encPeek (encAug encS) (a n, q n, mv n)).length + SS (q n, a n) + 1 ≤
+                Sm + 4 * L + 10 by omega)
+          dsimp -zeta only; omega))
+      (fun n hn => (hN (a n, (q n, mv n))).imp (fun _ _ h => h)
+        (fun _ _ _ _ _ ⟨h, he⟩ => ⟨by rw [h]; simp [hq n hn, mv, st, peekWord, slot], he⟩) (by
+          have := hP (a n) n hn.le (mv n); have := (hst n hn.le).1
+          have : (encPeek (encPair encS encMove) (none, (step (q n) (a n)).1,
+              (step (q n) (a n)).2.1)).length ≤ 2 * L + 4 := by
+            have := hP none (n + 1) hn (step (q n) (a n)).2.1
+            rw [hq n hn] at this
+            exact this
+          have := Nat.mul_le_mul (show cN ≤ D by omega)
+            (show (encPeek (encAug encS) (a n, q n, mv n)).length +
+              (encPeek (encAug encS) (a n, q n, mv n)).length + TS (q n, a n) +
+              ((encPeek (encAug encS) (a n, q n, mv n)).length +
+              (encPeek (encAug encS) (a n, q n, mv n)).length + TS (q n, a n)) + 1 ≤
+                2 * Tm + 8 * L + 20 by omega)
+          dsimp -zeta only; simp only [Function.comp_apply]; omega) (by
+          have := hP (a n) n hn.le (mv n); have := (hst n hn.le).2
+          have : (encPeek (encPair encS encMove) (none, (step (q n) (a n)).1,
+              (step (q n) (a n)).2.1)).length ≤ 2 * L + 4 := by
+            have := hP none (n + 1) hn (step (q n) (a n)).2.1
+            rw [hq n hn] at this
+            exact this
+          have := Nat.mul_le_mul (show cN ≤ D by omega)
+            (show (encPeek (encAug encS) (a n, q n, mv n)).length +
+              (encPeek (encAug encS) (a n, q n, mv n)).length + SS (q n, a n) +
+              ((encPeek (encAug encS) (a n, q n, mv n)).length +
+              (encPeek (encAug encS) (a n, q n, mv n)).length + SS (q n, a n)) + 1 ≤
+                2 * Sm + 8 * L + 20 by omega)
+          dsimp -zeta only; simp only [Function.comp_apply]; omega))
+      (fun n hn => (hMm (none, (q (n + 1), mv (n + 1)))).imp (fun _ _ h => by rw [h]; rfl)
+        (fun _ _ _ _ _ ⟨h, he⟩ => ⟨by rw [h]; simp [mv], he⟩) (by
+          have := hP none (n + 1) hn (mv (n + 1)); have := hmv (mv (n + 1))
+          have := Nat.mul_le_mul (show cM ≤ D by omega)
+            (show (encPeek (encAug encS) (none, q (n + 1), mv (n + 1))).length + 1 ≤ 2 * L + 5 by
+              omega)
+          dsimp -zeta only; omega) (by
+          have := hP none (n + 1) hn (mv (n + 1)); have := hmv (mv (n + 1))
+          have := Nat.mul_le_mul (show cM ≤ D by omega)
+            (show (encPeek (encAug encS) (none, q (n + 1), mv (n + 1))).length + 1 ≤ 2 * L + 5 by
+              omega)
+          dsimp -zeta only; omega))
+      (fun n hn => (hC (none, (q n, mv n))).imp (fun _ _ h => by rw [h]; rfl)
+        (fun _ _ _ _ _ ⟨h, he⟩ => ⟨by rw [h]; rfl, he⟩) (by
+          have := hP none n hn (mv n); have := (hst n hn).1; have := hfl n
+          have := Nat.mul_le_mul (show cC ≤ D by omega)
+            (show (encPeek (encAug encS) (none, q n, mv n)).length + TH (q n) + 1 ≤
+              Tm + 2 * L + 5 by omega)
+          dsimp -zeta only; simp only [Function.comp_apply, encBits_apply]; omega) (by
+          have := hP none n hn (mv n); have := (hst n hn).2; have := hfl n
+          have := Nat.mul_le_mul (show cC ≤ D by omega)
+            (show (encPeek (encAug encS) (none, q n, mv n)).length + SH (q n) + 1 ≤
+              Sm + 2 * L + 5 by omega)
+          dsimp -zeta only; simp only [Function.comp_apply, encBits_apply]; omega))
+      (sR := stepRoundSpace (M + 5) 1 (2 * L + 4) (2 * L + 4) 1
+        (D * (Sm + 4 * L + 10) + 8 * L + 30 + 3 * (M + 5))
+        (D * (2 * Sm + 8 * L + 20) + 12 * L + 40 + 4 * (M + 5))
+        (D * (2 * L + 5) + 4 * L + 30 + 4 * (M + 5))
+        (D * (Sm + 2 * L + 5) + 4 * L + 30 + 4 * (M + 5))) (fun n hn => by
+        have h₁ := hP (a n) n hn.le (mv n)
+        have h₂ := hP none (n + 1) hn (mv (n + 1))
+        have := hfl n
+        have := hmv (st n).2.1
+        simp only [encPeek_apply] at h₁ h₂
+        simp only [stepRoundSpace, List.length_append, slot, peekWord, List.length_cons,
+          List.length_nil] at h₁ h₂ ⊢
+        omega)
+    rw [hg x, m.out_run fun i hi => hnh i hi]
+    -- the bounds
+    have hround (n : ℕ) (hn : n < R) : stepRoundTime (stepFlagWord (!halt (q n))).length
+        (peekWord (a n) ++ encAug encS (q n, mv n)).length
+        (slot ++ encAug encS (q (n + 1), mv (n + 1))).length (encMove (st n).2.1).length
+        (D * (Tm + 4 * L + 10) + 4) (D * (2 * Tm + 8 * L + 20) + 2 * L + 10) (D * (2 * L + 5) + 7)
+        (D * (Tm + 2 * L + 5) + 7) + 1 ≤ 100 * (D * (Tm + L + 1)) := by
       have h₁ := hP (a n) n hn.le (mv n)
       have h₂ := hP none (n + 1) hn (mv (n + 1))
       have := hfl n
       have := hmv (st n).2.1
       simp only [encPeek_apply] at h₁ h₂
-      simp only [stepRoundSpace, List.length_append, slot, peekWord, List.length_cons,
+      simp only [stepRoundTime, List.length_append, slot, peekWord, List.length_cons,
         List.length_nil] at h₁ h₂ ⊢
-      omega)
-  rw [hg x, m.out_run fun i hi => hnh i hi]
-  -- the bounds
-  have hround (n : ℕ) (hn : n < R) : stepRoundTime (stepFlagWord (!halt (q n))).length
-      (peekWord (a n) ++ encAug encS (q n, mv n)).length
-      (slot ++ encAug encS (q (n + 1), mv (n + 1))).length (encMove (st n).2.1).length
-      (D * (Tm + 4 * L + 10) + 4) (D * (2 * Tm + 8 * L + 20) + 2 * L + 10) (D * (2 * L + 5) + 7)
-      (D * (Tm + 2 * L + 5) + 7) + 1 ≤ 100 * (D * (Tm + L + 1)) := by
-    have h₁ := hP (a n) n hn.le (mv n)
-    have h₂ := hP none (n + 1) hn (mv (n + 1))
-    have := hfl n
-    have := hmv (st n).2.1
-    simp only [encPeek_apply] at h₁ h₂
-    simp only [stepRoundTime, List.length_append, slot, peekWord, List.length_cons,
-      List.length_nil] at h₁ h₂ ⊢
-    have e₁ : D * (Tm + 4 * L + 10) = D * Tm + 4 * (D * L) + 10 * D := by ring
-    have e₂ : D * (2 * Tm + 8 * L + 20) = 2 * (D * Tm) + 8 * (D * L) + 20 * D := by ring
-    have e₃ : D * (2 * L + 5) = 2 * (D * L) + 5 * D := by ring
-    have e₄ : D * (Tm + 2 * L + 5) = D * Tm + 2 * (D * L) + 5 * D := by ring
-    have e₅ : D * (Tm + L + 1) = D * Tm + D * L + D := by ring
-    have : L ≤ D * L := Nat.le_mul_of_pos_left _ (by omega)
-    rw [e₁, e₂, e₃, e₄, e₅]
-    omega
-  have hS : ∑ n ∈ Finset.range R, (stepRoundTime (stepFlagWord (!halt (q n))).length
-      (peekWord (a n) ++ encAug encS (q n, mv n)).length
-      (slot ++ encAug encS (q (n + 1), mv (n + 1))).length (encMove (st n).2.1).length
-      (D * (Tm + 4 * L + 10) + 4) (D * (2 * Tm + 8 * L + 20) + 2 * L + 10) (D * (2 * L + 5) + 7)
-      (D * (Tm + 2 * L + 5) + 7) + 1) ≤ R * (100 * (D * (Tm + L + 1))) :=
-    (Finset.sum_le_sum fun n hn => hround n (Finset.mem_range.mp hn)).trans (by simp)
-  have hP₁ : (encPeek (encAug encS) (none, (init x, 0))).length ≤ 2 * L + 4 :=
-    hP none 0 (Nat.zero_le _) 0
-  have hP₂ : (slot ++ encAug encS (q R, mv R)).length ≤ 2 * L + 4 := by
-    simpa [slot, peekWord] using hP none R le_rfl (mv R)
-  have hsR : stepRoundSpace (M + 5) 1 (2 * L + 4) (2 * L + 4) 1
-      (D * (Sm + 4 * L + 10) + 8 * L + 30 + 3 * (M + 5))
-      (D * (2 * Sm + 8 * L + 20) + 12 * L + 40 + 4 * (M + 5))
-      (D * (2 * L + 5) + 4 * L + 30 + 4 * (M + 5))
-      (D * (Sm + 2 * L + 5) + 4 * L + 30 + 4 * (M + 5)) ≤ 200 * (D * (Sm + L + 1)) := by
-    simp only [stepRoundSpace]
-    have e₁ : D * (Sm + 4 * L + 10) = D * Sm + 4 * (D * L) + 10 * D := by ring
-    have e₂ : D * (2 * Sm + 8 * L + 20) = 2 * (D * Sm) + 8 * (D * L) + 20 * D := by ring
-    have e₃ : D * (2 * L + 5) = 2 * (D * L) + 5 * D := by ring
-    have e₄ : D * (Sm + 2 * L + 5) = D * Sm + 2 * (D * L) + 5 * D := by ring
-    have e₅ : D * (Sm + L + 1) = D * Sm + D * L + D := by ring
-    have : L ≤ D * L := Nat.le_mul_of_pos_left _ (by omega)
-    rw [e₁, e₂, e₃, e₄, e₅]
-    omega
-  refine h.mono ?_ ?_
-  · exact step_time_le cI D (TI x) w.length R Tm L _ _ _ (by omega) (by omega) hP₁ hP₂ hS
-  · exact step_space_le cI D (SI x) Sm L (M + 5) _ _ _ (by omega) (by omega) hDK hP₁ hP₂ hsR
+      have e₁ : D * (Tm + 4 * L + 10) = D * Tm + 4 * (D * L) + 10 * D := by ring
+      have e₂ : D * (2 * Tm + 8 * L + 20) = 2 * (D * Tm) + 8 * (D * L) + 20 * D := by ring
+      have e₃ : D * (2 * L + 5) = 2 * (D * L) + 5 * D := by ring
+      have e₄ : D * (Tm + 2 * L + 5) = D * Tm + 2 * (D * L) + 5 * D := by ring
+      have e₅ : D * (Tm + L + 1) = D * Tm + D * L + D := by ring
+      have : L ≤ D * L := Nat.le_mul_of_pos_left _ (by omega)
+      rw [e₁, e₂, e₃, e₄, e₅]
+      omega
+    have hS : ∑ n ∈ Finset.range R, (stepRoundTime (stepFlagWord (!halt (q n))).length
+        (peekWord (a n) ++ encAug encS (q n, mv n)).length
+        (slot ++ encAug encS (q (n + 1), mv (n + 1))).length (encMove (st n).2.1).length
+        (D * (Tm + 4 * L + 10) + 4) (D * (2 * Tm + 8 * L + 20) + 2 * L + 10) (D * (2 * L + 5) + 7)
+        (D * (Tm + 2 * L + 5) + 7) + 1) ≤ R * (100 * (D * (Tm + L + 1))) :=
+      (Finset.sum_le_sum fun n hn => hround n (Finset.mem_range.mp hn)).trans (by simp)
+    have hP₁ : (encPeek (encAug encS) (none, (init x, 0))).length ≤ 2 * L + 4 :=
+      hP none 0 (Nat.zero_le _) 0
+    have hP₂ : (slot ++ encAug encS (q R, mv R)).length ≤ 2 * L + 4 := by
+      simpa [slot, peekWord] using hP none R le_rfl (mv R)
+    have hsR : stepRoundSpace (M + 5) 1 (2 * L + 4) (2 * L + 4) 1
+        (D * (Sm + 4 * L + 10) + 8 * L + 30 + 3 * (M + 5))
+        (D * (2 * Sm + 8 * L + 20) + 12 * L + 40 + 4 * (M + 5))
+        (D * (2 * L + 5) + 4 * L + 30 + 4 * (M + 5))
+        (D * (Sm + 2 * L + 5) + 4 * L + 30 + 4 * (M + 5)) ≤ 200 * (D * (Sm + L + 1)) := by
+      simp only [stepRoundSpace]
+      have e₁ : D * (Sm + 4 * L + 10) = D * Sm + 4 * (D * L) + 10 * D := by ring
+      have e₂ : D * (2 * Sm + 8 * L + 20) = 2 * (D * Sm) + 8 * (D * L) + 20 * D := by ring
+      have e₃ : D * (2 * L + 5) = 2 * (D * L) + 5 * D := by ring
+      have e₄ : D * (Sm + 2 * L + 5) = D * Sm + 2 * (D * L) + 5 * D := by ring
+      have e₅ : D * (Sm + L + 1) = D * Sm + D * L + D := by ring
+      have : L ≤ D * L := Nat.le_mul_of_pos_left _ (by omega)
+      rw [e₁, e₂, e₃, e₄, e₅]
+      omega
+    refine h.mono ?_ ?_
+    · exact step_time_le cI D (TI x) w.length R Tm L _ _ _ (by omega) (by omega) hP₁ hP₂ hS
+    · exact step_space_le cI D (SI x) Sm L (M + 5) _ _ _ (by omega) (by omega) hDK hP₁ hP₂ hsR
+  obtain ⟨c, hc⟩ := hraw
+  exact ⟨c, hc.computableInTimeAndSpace.mono
+    (fun x => Nat.mul_le_mul_left c (Nat.le_succ _))
+    (fun x => Nat.mul_le_mul_left c (Nat.le_succ _))⟩
 
 end Turing.MultiTapeTM
 
@@ -550,12 +508,12 @@ namespace Turing.StepMachine
 
 open MultiTapeTM
 
-/-- **Tidy step machines**: the halting test and the step of `m` are tidily computable within
-`T` and `S` of the state. -/
-public structure Tidy {σ : Type} (m : StepMachine σ Bool Bool) (encS : σ ↪ List Bool)
+/-- Plain certificates for the halting test and step, within `T` and `S` of the state.
+The step output includes the next state, move and emitted block, all charged to `S`. -/
+public structure ResourceCertificate {σ : Type} (m : StepMachine σ Bool Bool) (encS : σ ↪ List Bool)
     (T S : σ → ℕ) : Prop where
-  computable_halt : ComputableTidilyInO m.halt encS encBool T S
-  computable_step : ComputableTidilyInO (fun p : σ × Option Bool => m.step p.1 p.2)
+  computable_halt : ComputableInO m.halt encS encBool T S
+  computable_step : ComputableInO (fun p : σ × Option Bool => m.step p.1 p.2)
     (encPair encS (encOption encBool)) (encPair encS (encPair encMove encBits))
     (fun p => T p.1) fun p => S p.1
 
@@ -564,22 +522,22 @@ public structure Tidy {σ : Type} (m : StepMachine σ Bool Bool) (encS : σ ↪ 
     StepMachine σ Γ Out :=
   { m with init := s }
 
-/-- **Tidy step machines compute tidily.** If the tidy step machine `m`, started in the state
+/-- **Resource certificates give whole-run bounds.** If the step machine `m`, started in the state
 `init x` computed within `TI x` and `SI x`, halts on `encIn x` after `rounds x` steps with the
 output `encOut (g x)`, and its steps along the run take time `tMax x` and space `sMax x`, then `g`
-is tidily computable in time `O(TI x + (rounds x + 1) * (tMax x + sMax x + SI x + 1) + n)` and
+is computable in time `O(TI x + (rounds x + 1) * (tMax x + sMax x + SI x + 1) + n)` and
 space `O(SI x + sMax x)`: the initial state bounds the states along the run, besides the steps.
 -/
-public theorem Tidy.computableTidilyInTimeAndSpace_of_init {σ γ ω : Type} {encS : σ ↪ List Bool}
+public theorem ResourceCertificate.computableInBigO_of_init {σ γ ω : Type} {encS : σ ↪ List Bool}
     {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} {m : StepMachine σ Bool Bool} {T S : σ → ℕ}
-    (hm : m.Tidy encS T S) {init : γ → σ} {TI SI : γ → ℕ}
-    (hinit : ComputableTidilyInO init encIn encS TI SI) (g : γ → ω) (rounds : γ → ℕ)
+    (hm : m.ResourceCertificate encS T S) {init : γ → σ} {TI SI : γ → ℕ}
+    (hinit : ComputableInO init encIn encS TI SI) (g : γ → ω) (rounds : γ → ℕ)
     (hrounds : ∀ x, (m.withInit (init x)).HaltsAt (encIn x) (rounds x))
     (hg : ∀ x, encOut (g x) = ((m.withInit (init x)).run (encIn x) (rounds x)).out)
     {tMax sMax : γ → ℕ}
     (hmax : ∀ x, ∀ i ≤ rounds x, T ((m.withInit (init x)).run (encIn x) i).state ≤ tMax x ∧
       S ((m.withInit (init x)).run (encIn x) i).state ≤ sMax x) :
-    ComputableTidilyInBigO g encIn encOut
+    ComputableInBigO g encIn encOut
       (fun x => TI x + (rounds x + 1) * (tMax x + sMax x + SI x + 1) + (encIn x).length)
       fun x => SI x + sMax x := by
   obtain ⟨cS, hcS⟩ := hm.computable_step.length_le
@@ -602,14 +560,14 @@ public theorem Tidy.computableTidilyInTimeAndSpace_of_init {σ γ ω : Type} {en
       have h₃ := Nat.mul_le_mul_left cS (Nat.add_le_add_right (hmax x i (by omega)).2 1)
       dsimp only [withInit, stepAt] at h₁ h₂ h₃ ⊢
       omega
-  obtain ⟨c, hc⟩ := ComputableTidilyInTimeAndSpace.stepMachine (encS := encS)
+  have hc := ComputableInBigO.stepMachine (encS := encS)
     init m.halt m.step g rounds hinit hm.computable_halt hm.computable_step hrounds hg
     (tMax := fun x => 2 * tMax x) (sMax := fun x => 2 * sMax x)
     (fun x i hi => (Nat.add_le_add (hmax x i hi).1 (hmax x i hi).1).trans_eq (two_mul _).symm)
     (fun x i hi => (Nat.add_le_add (hmax x i hi).2 (hmax x i hi).2).trans_eq (two_mul _).symm)
     hlen
-  refine .of_bounds hc ?_ (.const_mul c (.of_le_linear (cS + cI + 3) (cS + cI + 1) fun x => by
-    nlinarith))
+  refine hc.weaken ?_ (.of_le_linear (cS + cI + 3) (cS + cI + 1) fun x => by
+    nlinarith)
   have hR := BigOLe.mul_left (fun x => rounds x + 1)
     (v := fun x => 2 * tMax x + (cS * (sMax x + 1) + cI * (SI x + 1)) + 1)
     (w := fun x => tMax x + sMax x + SI x + 1)
@@ -622,19 +580,19 @@ public theorem Tidy.computableTidilyInTimeAndSpace_of_init {σ γ ω : Type} {en
       (tMax x + sMax x + SI x + 1) + (encIn x).length := .of_le fun x => by omega
   bigO
 
-/-- **Tidy step machines compute tidily**, from their initial state: as
-`Turing.StepMachine.Tidy.computableTidilyInTimeAndSpace_of_init`, in time
+/-- **Resource certificates give whole-run bounds**, from the initial state: as
+`Turing.StepMachine.ResourceCertificate.computableInBigO_of_init`, in time
 `O((rounds x + 1) * (tMax x + sMax x + 1) + n)` and space `O(sMax x)`. -/
-public theorem Tidy.computableTidilyInTimeAndSpace {σ γ ω : Type} {encS : σ ↪ List Bool}
+public theorem ResourceCertificate.computableInBigO {σ γ ω : Type} {encS : σ ↪ List Bool}
     {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} {m : StepMachine σ Bool Bool} {T S : σ → ℕ}
-    (hm : m.Tidy encS T S) (g : γ → ω) (rounds : γ → ℕ)
+    (hm : m.ResourceCertificate encS T S) (g : γ → ω) (rounds : γ → ℕ)
     (hrounds : ∀ x, m.HaltsAt (encIn x) (rounds x))
     (hg : ∀ x, encOut (g x) = (m.run (encIn x) (rounds x)).out) {tMax sMax : γ → ℕ}
     (hmax : ∀ x, ∀ i ≤ rounds x,
       T (m.run (encIn x) i).state ≤ tMax x ∧ S (m.run (encIn x) i).state ≤ sMax x) :
-    ComputableTidilyInBigO g encIn encOut
+    ComputableInBigO g encIn encOut
       (fun x => (rounds x + 1) * (tMax x + sMax x + 1) + (encIn x).length) sMax :=
-  (hm.computableTidilyInTimeAndSpace_of_init (constZero m.init) g rounds hrounds hg hmax).weaken
+  (hm.computableInBigO_of_init (constZero m.init) g rounds hrounds hg hmax).weaken
     (.of_le_linear 2 0 fun x => by simp only [Nat.add_zero]; omega) (.of_le fun x => by omega)
 
 end Turing.StepMachine
