@@ -509,6 +509,10 @@ and the unrelativized-`FP`-target classes `LWPPWithFixedTarget` and `WPPWithFixe
 classes `LWPPWithFixedTarget` and `WPPWithFixedTarget`), and WPP (`PPWithOracle_eq_PP_of_mem_WPP`)
 is proved in [WPP.Lowness](Complexity/Computability/Complexity/Classes/WPP/Lowness.lean);
 target-relativized `LWPP^A` / `WPP^A` definitions and lowness with `FP^A` targets are not claimed.
+[Oracle lowness of `NP ∩ coNP` and `UP ∩ coUP`](Complexity/Computability/Complexity/Classes/Oracle/Lowness.lean)
+proves `P^(NP ∩ coNP) = NP ∩ coNP`, `P^(UP ∩ coUP) = UP ∩ coUP`, `NP^(NP ∩ coNP) = NP`, the
+characterization `NP^A = NP ↔ A ∈ NP ∩ coNP` (`NPWithOracle_eq_NP_iff`), and
+`NP = coNP ↔ ∀ A ∈ NP, NP^A = NP` (`NP_eq_coNP_iff_forall_NPWithOracle_eq_NP`).
 PP is closed under polynomial-time truth-table reductions (Fortnow–Reingold), hence under
 intersection, union, difference, symmetric difference (Beigel–Reingold–Spielman) and
 polynomial-time bounded quantifiers ([PP.TruthTable](Complexity/Computability/Complexity/Classes/PP/TruthTable.lean)).
