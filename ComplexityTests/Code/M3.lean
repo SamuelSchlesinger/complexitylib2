@@ -162,7 +162,24 @@ example :
   have hcard (s : ℕ) : Fintype.card (GaloisField 2 (16 * (s + 1))) = 2 ^ (16 * (s + 1)) := by
     rw [Fintype.card_eq_nat_card, GaloisField.card 2 _ (by omega)]
   exact ⟨inferInstance, inferInstance, fun s => (nonempty_addEquiv_bitString (hcard s)).some,
-    justesenCode_asymptoticallyGood _⟩
+    isAsymptoticallyGood_justesenCode _⟩
+
+/-- **The full code family is not asymptotically good.** Although `Set.univ` has rate `1` and its
+block lengths `s + 2` grow without bound, its minimum distance is `1`, so its relative distance
+`1 / (s + 2)` tends to `0`. -/
+example : ¬ IsAsymptoticallyGood (fun s : ℕ => (Set.univ : Set (Fin (s + 2) → Bool))) := by
+  intro h
+  obtain ⟨Δ, -, hΔ⟩ := h.exists_minDist
+  let x : Fin (Δ + 2) → Bool := fun _ => false
+  let y : Fin (Δ + 2) → Bool := Function.update x 0 true
+  have hxy : x ≠ y := fun h => by simpa [x, y] using congrFun h 0
+  have hdist : hammingDist x y = 1 := hammingDist_update_of_ne (by decide : x 0 ≠ true)
+  have hmin : minDist (Set.univ : Set (Fin (Δ + 2) → Bool)) ≤ 1 := by
+    have := minDist_le_hammingDist (Set.mem_univ x) (Set.mem_univ y) hxy
+    rwa [hdist, Nat.cast_one] at this
+  have hle := (hΔ Δ).trans (mul_le_mul_right hmin (Δ : ℕ∞))
+  rw [Fintype.card_fin, mul_one, Nat.cast_le] at hle
+  omega
 
 /-! ### Axioms of the headline theorems -/
 
@@ -242,10 +259,10 @@ Quot.sound]
 #print axioms Cslib.Code.le_minDist_justesenCode
 
 /--
-info: 'Cslib.Code.justesenCode_asymptoticallyGood' depends on axioms: [propext, Classical.choice,
+info: 'Cslib.Code.isAsymptoticallyGood_justesenCode' depends on axioms: [propext, Classical.choice,
 Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Code.justesenCode_asymptoticallyGood
+#print axioms Cslib.Code.isAsymptoticallyGood_justesenCode
 
 end ComplexityTests.Code.M3

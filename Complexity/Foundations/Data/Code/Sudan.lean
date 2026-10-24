@@ -26,15 +26,23 @@ at most `D / (k - 1)` for `k ≥ 2`.
 
 The decoder `Cslib.Code.sudan` returns the roots `P` of the elimination interpolant
 `Cslib.Code.Sudan.interpolant α w (k - 1) D` that have degree less than `k` and agree with `w` at
-more than `D` points. With distinct points, `k ≥ 2` and more than `n` monomials, its list consists
-of exactly those polynomials (`Cslib.Code.mem_sudan_iff`), and its length `L` always satisfies
-`L * (k - 1) ≤ D` (`Cslib.Code.card_sudan_mul_le`). For `k ≥ 2` and
+more than `D` points. Because `Cslib.Code.Sudan.interpolant` searches `Y`-degrees up to
+`D / (k - 1)`, completeness (`Cslib.Code.mem_sudan_iff`) requires positive weight `k - 1 ≥ 1`, that
+is `k ≥ 2`: with distinct points, `k ≥ 2` and more than `n` monomials, its list consists of
+exactly those polynomials (`Cslib.Code.mem_sudan_iff`), while soundness
+(`Cslib.Code.degree_lt_and_lt_card_of_mem_sudan`) and the list-size bound `L * (k - 1) ≤ D`
+(`Cslib.Code.card_sudan_mul_le`) hold for all `k`. For `k ≥ 2` and
 `2 * (k - 1) * n < (D + 1) * (D + 2)`, this list decodes the Reed–Solomon code of dimension `k`
 from agreement `D + 1 ≈ √(2 * (k - 1) * n)` (`Cslib.Code.mem_sudan_iff_of_lt`), and at most
 `D / (k - 1)` codewords have that agreement with any word
 (`Cslib.Code.ncard_sep_reedSolomon_mul_le`). Unique decoding needs agreement `(n + k) / 2`, so this
 goes beyond half the minimum distance when the rate `k / n` is small: asymptotically, below
 `3 - 2 * √2 ≈ 0.17`.
+
+This module proves the correctness of the decoder only: `Cslib.Code.sudan` computes the interpolant
+by elimination (`Cslib.Code.Sudan.interpolant`) and takes its roots in `F[X][Y]` noncomputably
+(`Polynomial.roots`), which in the literature are found in polynomial time by factoring bivariate
+polynomials; no running time is formalized here.
 
 ## Main definitions
 
@@ -69,7 +77,8 @@ variable {F ι : Type*} [Field F] [Fintype ι] [DecidableEq F]
 /-- *Sudan's list decoder* for dimension `k` and weighted degree `D` with evaluation points `α`: the
 roots `P` of the least-`Y`-degree Sudan interpolant `Sudan.interpolant α w (k - 1) D` for the
 received word `w`, as a polynomial in `Y`, that have degree less than `k` and agree with `w` at more
-than `D` points. -/
+than `D` points. Completeness (`mem_sudan_iff`) assumes `k ≥ 2` so that the weight `k - 1` is
+positive; the roots are taken noncomputably via `Polynomial.roots`. -/
 noncomputable def sudan (α w : ι → F) (k D : ℕ) : Finset F[X] :=
   {P ∈ (Sudan.interpolant α w (k - 1) D).roots.toFinset |
     P.degree < k ∧ D < #{i | P.eval (α i) = w i}}

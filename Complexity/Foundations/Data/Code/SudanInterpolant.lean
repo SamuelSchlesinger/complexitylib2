@@ -17,7 +17,7 @@ import Mathlib.LinearAlgebra.Lagrange
 import Mathlib.LinearAlgebra.Matrix.ToLin
 
 /-!
-# Sudan interpolants of least `Y`-degree by elimination
+# Sudan interpolants, weighted degree, and elimination
 
 Let `w : ι → F` be a received word and let `α` be distinct evaluation points. Sudan's list decoder
 [Sudan1997], [GuruswamiRudraSudan2019] for polynomials `P` of degree at most `d` needs a nonzero

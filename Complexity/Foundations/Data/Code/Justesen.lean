@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.Data.Code.AsymptoticallyGood
 public import Complexity.Foundations.Data.Code.Concatenation
 public import Complexity.Foundations.Data.Code.ReedSolomon
 public import Cslib.Foundations.Data.BitString
@@ -46,7 +47,7 @@ With the binomial estimate `V(r) * 4 ^ (2 * b) ≤ 4 ^ r * 5 ^ (2 * b)`
 `K = 2 ^ (16 * s - 1)`, the Justesen code is a binary code of length
 `n = 32 * s * (2 ^ (16 * s) - 1)` with `2 ^ k` codewords, where `n ≤ 4 * k`, and minimum distance
 at least `n / 128` (`Cslib.Code.card_le_mul_minDist_justesenCode`,
-`Cslib.Code.justesenCode_asymptoticallyGood`); the lengths grow without bound with `s`, while the
+`Cslib.Code.isAsymptoticallyGood_justesenCode`); the lengths grow without bound with `s`, while the
 rate stays at least `1 / 4` and the relative distance at least `1 / 128`. These constants are not
 optimized: estimating `V(r)` by the binary entropy function `H` instead gives relative distance
 approaching `(1 - 2 R) H⁻¹(1 / 2) ≈ 0.11 * (1 - 2 R)` at rate `R < 1 / 2`
@@ -54,8 +55,6 @@ approaching `(1 - 2 R) H⁻¹(1 / 2) ≈ 0.11 * (1 - 2 R)` at rate `R < 1 / 2`
 
 ## Main definitions
 
-* `Cslib.Code.IsAsymptoticallyGood`: asymptotically good code families (unbounded block length,
-  positive rate and positive relative distance).
 * `Cslib.Code.wozencraft`: the Wozencraft inner encoding with a given multiplier.
 * `Cslib.Code.justesen`: the Justesen encoding of an outer word.
 * `Cslib.Code.justesenCode`: the Justesen code.
@@ -68,7 +67,7 @@ approaching `(1 - 2 R) H⁻¹(1 / 2) ≈ 0.11 * (1 - 2 R)` at rate `R < 1 / 2`
 * `Cslib.Code.card_justesenCode`: the number of codewords.
 * `Cslib.Code.card_le_mul_minDist_justesenCode`: the relative distance of Justesen codes at rate at
   least `1 / 4`.
-* `Cslib.Code.justesenCode_asymptoticallyGood`: Justesen codes are asymptotically good.
+* `Cslib.Code.isAsymptoticallyGood_justesenCode`: Justesen codes are asymptotically good.
 
 ## References
 
@@ -254,23 +253,6 @@ theorem card_justesenCode (φ : F ≃+ BitString b) {K : ℕ} (hK : K ≤ Fintyp
     Module.card_eq_pow_finrank (K := F),
     finrank_reedSolomon Units.val_injective (by rwa [Fintype.card_units]), hq, ← pow_mul]
 
-/-- A family of codes `C s : Set (ι s → α)` over the alphabet `α` is *asymptotically good* if its
-block lengths `|ι s|` grow without bound and its rates and relative distances are bounded away from
-zero: for some `R, Δ > 0`, every `C s` has at least `|α| ^ k` codewords for a dimension `k` with
-`|ι s| ≤ R * k` (rate at least `1 / R`) and minimum distance `d` with `|ι s| ≤ Δ * d` (relative
-distance at least `1 / Δ`). -/
-structure IsAsymptoticallyGood {σ : Type*} {ι : σ → Type*} [∀ s, Fintype (ι s)]
-    {α : Type*} [Fintype α] [DecidableEq α] (C : ∀ s, Set (ι s → α)) : Prop where
-  /-- The block lengths grow without bound. -/
-  exists_le_card : ∀ N, ∃ s, N ≤ Fintype.card (ι s)
-  /-- The rate is bounded away from zero: for some `R > 0`, every code in the family has at least
-  `|α| ^ k` codewords for a dimension `k` with `|ι s| ≤ R * k`. -/
-  exists_rate : ∃ R > 0, ∀ s, ∃ k, Fintype.card (ι s) ≤ R * k ∧
-    Fintype.card α ^ k ≤ Nat.card (C s)
-  /-- The relative distance is bounded away from zero: for some `Δ > 0`, every code in the family
-  has minimum distance `d` with `|ι s| ≤ Δ * d`. -/
-  exists_minDist : ∃ Δ > 0, ∀ s, (Fintype.card (ι s) : ℕ∞) ≤ Δ * minDist (C s)
-
 /-- **The relative distance of Justesen codes at rate at least `1 / 4`** [Justesen1972]. Let `s ≥ 1`
 and let `F` be a field written as `b = 16 * s` bits, which then has `2 ^ (16 * s)` elements. The
 Justesen code of outer dimension `K = 2 ^ (16 * s - 1)` is a binary code of length
@@ -336,7 +318,7 @@ written as `16 * (s + 1)` bits through `φ s : F s ≃+ BitString (16 * (s + 1))
 `justesenCode (φ s) (2 ^ (16 * (s + 1) - 1))` form an asymptotically good family of binary codes:
 their lengths `32 * (s + 1) * (2 ^ (16 * (s + 1)) - 1)` grow without bound, with rate at least
 `1 / 4` and relative distance at least `1 / 128`. -/
-theorem justesenCode_asymptoticallyGood
+theorem isAsymptoticallyGood_justesenCode
     {F : ℕ → Type*} [∀ s, Field (F s)] [∀ s, Fintype (F s)] [∀ s, DecidableEq (F s)]
     (φ : ∀ s, F s ≃+ BitString (16 * (s + 1))) :
     IsAsymptoticallyGood fun s => justesenCode (φ s) (2 ^ (16 * (s + 1) - 1)) where
@@ -374,6 +356,7 @@ theorem justesenCode_asymptoticallyGood
         omega
       rw [Fintype.card_bool, card_justesenCode (φ s) hK]
   exists_minDist :=
-    ⟨128, by norm_num, fun s => card_le_mul_minDist_justesenCode (Nat.succ_pos s) (φ s)⟩
+    ⟨128, by norm_num, fun s => by
+      simpa using card_le_mul_minDist_justesenCode (Nat.succ_pos s) (φ s)⟩
 
 end Cslib.Code
