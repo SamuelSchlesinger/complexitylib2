@@ -383,6 +383,7 @@ import ComplexityTests.RationalHitting.Point
 import ComplexityTests.RationalHitting.Runtime
 import ComplexityTests.ReductionClasses
 import ComplexityTests.Reingold
+import ComplexityTests.RejectionSampling
 import ComplexityTests.Relativization
 import ComplexityTests.RelativizedCounting
 import ComplexityTests.RepeatedTrials
