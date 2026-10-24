@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import pathlib
 import sys
 import tempfile
@@ -195,6 +196,32 @@ class OutputCheckTests(unittest.TestCase):
     def test_unchecked_reports_say_so(self) -> None:
         self.write(self.reference, "Complexity/A.olean", "changed")
         self.assertIn("not checked", self.check(self.copy, skip=True))
+
+    def write_ileans(self, modules: dict[str, list[str]]) -> None:
+        """Write an `.ilean` file for each module, with the given direct imports."""
+        for module, imports in modules.items():
+            self.write(self.reference, module.replace(".", "/") + ".ilean", json.dumps(
+                {"module": module, "directImports": [[i, False, False, False] for i in imports]}))
+
+    def test_outputs_of_deleted_modules_are_ignored(self) -> None:
+        self.write_ileans({"Complexity": ["Complexity.A"], "ComplexityTests": [],
+                           "ComplexityAbstracts": [], "Complexity.A": ["Mathlib.Init"],
+                           "Complexity.Deleted": []})
+        self.assertEqual(list(q.load_ileans(self.reference)), ["Complexity.A"])
+
+    def test_missing_reachable_output_is_refused(self) -> None:
+        self.write_ileans({"Complexity": ["Complexity.Live"], "ComplexityTests": [],
+                           "ComplexityAbstracts": [], "Complexity.Live": ["Complexity.Missing"]})
+        with self.assertRaises(SystemExit) as error:
+            q.load_ileans(self.reference)
+        self.assertIn("Missing.ilean is missing (imported by Complexity.Live)",
+                      str(error.exception.code))
+
+    def test_missing_root_output_is_refused(self) -> None:
+        self.write_ileans({"Complexity": [], "ComplexityTests": []})
+        with self.assertRaises(SystemExit) as error:
+            q.load_ileans(self.reference)
+        self.assertIn("ComplexityAbstracts.ilean is missing (a root)", str(error.exception.code))
 
 
 if __name__ == "__main__":
