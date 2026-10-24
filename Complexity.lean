@@ -619,8 +619,6 @@ public import Complexity.Computability.Complexity.Classes.Oracle.Lowness
 public import Complexity.Computability.Complexity.Classes.Oracle.Monotone
 public import Complexity.Computability.Complexity.Classes.Oracle.PP
 public import Complexity.Computability.Complexity.Classes.Oracle.PolyTime
-public import Complexity.Computability.Complexity.Classes.Oracle.Replay
-public import Complexity.Computability.Complexity.Classes.Oracle.Simulation
 public import Complexity.Computability.Complexity.Classes.Oracle.Space
 public import Complexity.Computability.Complexity.Classes.Oracle.TQBF
 public import Complexity.Computability.Complexity.Classes.P
@@ -1069,6 +1067,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.P
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryTake
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Deterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Oracle
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Simulation
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayInput
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.RunsWords
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sampling

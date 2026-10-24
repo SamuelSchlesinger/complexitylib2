@@ -12,12 +12,12 @@ public import Complexity.Computability.Complexity.Classes.SBP
 public import Complexity.Computability.Complexity.Classes.US
 public import Complexity.Computability.Complexity.Classes.WPP.Lowness
 import Complexity.Computability.Complexity.Classes.Oracle.PolyTime
-import Complexity.Computability.Complexity.Classes.Oracle.Replay
 import Complexity.Computability.Complexity.Classes.SharpP.Aggregation
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 import Complexity.Computability.Complexity.Classes.SharpP.Products
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Oracle
 
 /-!
 # Oracle lowness of `#P`, `UP ∩ coUP`, `SPP`, and modular counting classes

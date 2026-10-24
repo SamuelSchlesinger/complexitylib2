@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
+import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Deterministic
 
 /-! Noninjective control-state maps retain choice and query effects over a non-Boolean alphabet. -/
 

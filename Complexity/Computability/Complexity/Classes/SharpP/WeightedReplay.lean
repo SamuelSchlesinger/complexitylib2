@@ -7,8 +7,8 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Classes.Oracle.Replay
 public import Complexity.Computability.Complexity.Classes.SharpP
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Oracle
 public import Complexity.Probability.AdaptiveWeights
 import Complexity.Computability.Complexity.Classes.SharpP.Products
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime

@@ -7,12 +7,13 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Finite
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Deterministic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
@@ -37,7 +38,9 @@ Iterating the instruction with a binary counter
 within polynomial space whenever `g` is computable within polynomial space
 (`Turing.MultiTapePTM.exists_computableTidilyInO_run`). The time is not bounded by a polynomial:
 it charges, for every instruction, the largest time of `g` on a word no longer than the clock
-(`Turing.MultiTapeTM.wordMax`).
+(`Turing.MultiTapeTM.wordMax`). When `g` is polynomial-time, both the instruction and the clocked
+run are polynomial-time (`Turing.MultiTapePTM.computableTidilyInPolyTime_answerStep`,
+`Turing.MultiTapePTM.computableTidilyInPolyTime_run`).
 
 ## Main definitions
 
@@ -53,6 +56,10 @@ it charges, for every instruction, the largest time of `g` on a word no longer t
 * `Turing.MultiTapePTM.answerStep_inO`: the bounds of an instruction.
 * `Turing.MultiTapePTM.exists_computableTidilyInO_run`: a clocked run against an oracle computed
   within polynomial space is computable within polynomial space.
+* `Turing.MultiTapePTM.computableTidilyInPolyTime_answerStep`: an instruction against a
+  polynomial-time oracle is polynomial-time.
+* `Turing.MultiTapePTM.computableTidilyInPolyTime_run`: a clocked run against a polynomial-time
+  oracle is polynomial-time.
 
 ## References
 
@@ -413,5 +420,62 @@ theorem exists_computableTidilyInO_run [Finite Operation] {α : Type} {input : �
       ((cf * (L + c * (L + 1) ^ d + 1 + 1) + 1) ^ e + cg * (c * (L + 1) ^ d + 1) ^ dg) +
       cf * (L + c * (L + 1) ^ d + 1 + 1) + (c * (L + 1) ^ d + 1) +
       (cf * (L + c * (L + 1) ^ d + 1 + 1) + 1) ^ do') (by fun_prop)) fun a => le_rfl
+
+/-- **An instruction against a polynomial-time oracle is polynomial-time.** Against an oracle
+answering `[g w]` to a request `w`, with `g` polynomial-time, an instruction is polynomial-time in
+the encoded configuration: it either installs `g` of the pending request or is local. -/
+theorem computableTidilyInPolyTime_answerStep {g : List Bool → Bool}
+    (hg : ComputableTidilyInPolyTime g encBits encBool) :
+    ComputableTidilyInPolyTime (machine.answerStep fun q => [g q.2]) encFiniteConfig
+      encFiniteConfig := by
+  have h : ComputableTidilyInPolyTime (fun cfg => if (machine.pendingQuery cfg).isSome then
+      machine.receiveBit (cfg, g (machine.pendingRequest cfg)) else machine.localStep cfg)
+      encFiniteConfig encFiniteConfig :=
+    ComputableTidilyInPolyTime.cond
+      ((ComputableTidilyInPolyTime.of_finite Option.isSome).comp machine.pendingQuery_pt)
+      (machine.receiveBit_pt.comp
+        (ComputableTidilyInPolyTime.id'.prod (hg.comp machine.pendingRequest_pt)))
+      machine.localStep_pt
+  exact h.of_enc_eq fun cfg => by rw [answerStep_bit]
+
+omit [Fintype Operation] in
+/-- **A clocked run against a polynomial-time oracle is polynomial-time.** Against the oracle
+answering `[g w]` to a request `w`, where `g` is polynomial-time, the run with every coin fixed to
+`false` under the clock `c * (n + 1) ^ d` is polynomial-time in the encoded input. -/
+theorem computableTidilyInPolyTime_run [Finite Operation] {α : Type} {input : α ↪ List Bool}
+    {g : List Bool → Bool} (hg : ComputableTidilyInPolyTime g encBits encBool) (c d : ℕ) :
+    ComputableTidilyInPolyTime (fun a => OracleComp.interpret (m := Id) (fun q => [g q.2])
+      (machine.run (pure false) (fun op word => OracleComp.query (op, word))
+        (c * ((input a).length + 1) ^ d) (input a))) input encBits := by
+  classical
+  let _ := Fintype.ofFinite Operation
+  obtain ⟨cf, hcf⟩ := length_encFiniteConfig_le (k := k) (State := Control) (Oracle := Operation)
+  have hcount : ComputableTidilyInPolyTime (fun a => c * ((input a).length + 1) ^ d) input
+      encUnary :=
+    ((ComputableTidilyInPolyTime.unary_eval (Polynomial.C c * (Polynomial.X + 1) ^ d)).comp
+      (ComputableTidilyInPolyTime.encoding_length input)).of_enc_eq fun a => by simp
+  have hinit : ComputableTidilyInPolyTime
+      (fun a => FiniteConfig.init (k := k) (Oracle := Operation) machine.initial (input a))
+      input encFiniteConfig :=
+    ComputableTidilyInPolyTime.finiteConfig_init (by fun_prop) _
+  have hspace (a : α) (i : ℕ) : FiniteConfig.SpaceBound (input a).length i 1
+      ((machine.answerStep fun q => [g q.2])^[i]
+        (FiniteConfig.init machine.initial (input a))) := by
+    induction i with
+    | zero => exact FiniteConfig.spaceBound_init _ _ _
+    | succ i ih =>
+      rw [Function.iterate_succ_apply']
+      exact machine.spaceBound_answerStep g ih
+  have hbound : PolyBounded (fun a => (input a).length)
+      (fun a => cf * ((input a).length + c * ((input a).length + 1) ^ d + 1 + 1)) :=
+    PolyBounded.mono (PolyBounded.of_polynomiallyBounded (fun a => (input a).length)
+      (bound := fun L => cf * (L + c * (L + 1) ^ d + 1 + 1)) (by fun_prop)) fun _ => le_rfl
+  have hit := ComputableTidilyInPolyTime.iterate hcount hinit
+    (machine.computableTidilyInPolyTime_answerStep hg) hbound fun a i hi =>
+      (hcf _ _ _ _ (hspace a i)).trans (Nat.mul_le_mul_left cf (by omega))
+  have hout : ComputableTidilyInPolyTime
+      (fun cfg : FiniteConfig k Bool Control Operation => cfg.tapes.output) encFiniteConfig
+      encBits := by fun_prop
+  exact (hout.comp hit).of_enc_eq fun a => by rw [interpret_run_pure_false]; rfl
 
 end Turing.MultiTapePTM

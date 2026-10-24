@@ -8,11 +8,11 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.IP.CoinFixing
-public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.SharpP.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Deterministic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
