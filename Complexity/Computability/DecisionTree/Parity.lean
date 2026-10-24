@@ -7,24 +7,22 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.PartialAssignment
-public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Computability.DecisionTree.Sensitivity
+public import Complexity.Computability.QueryComplexity.Threshold
+public import Complexity.Foundations.Data.BitString.PartialAssignment
 
 /-!
 # Decision trees for parity
 
 Flipping any bit flips the parity, so parity is sensitive to every bit at every input
-(`sensitivityAt_parity`). Its sensitivity, block sensitivity, certificate complexity and decision
-tree complexity therefore all equal the number of bits [Jukna, Chapter 14][Jukna2012].
+(`BitString.sensitivityAt_parity`), and every decision tree for it queries all of its bits in the
+worst case (`DecisionTree.complexity_parity`) [Jukna, Chapter 14][Jukna2012]. More generally,
+restricted parity queries every free bit (`DecisionTree.card_free_le_complexity_parity_fill`).
 
 ## Main results
 
 * `Cslib.DecisionTree.complexity_parity`: the decision tree complexity of the parity of `n` bits
   is `n`.
-* `Cslib.BitString.sensitivity_parity`, `Cslib.QueryComplexity.blockSensitivity_parity`,
-  `Cslib.QueryComplexity.certificateComplexity_parity`: so are its sensitivity, block sensitivity
-  and certificate complexity.
 * `Cslib.DecisionTree.card_free_le_complexity_parity_fill`: restricted parity still needs to query
   every free bit.
 
@@ -40,38 +38,6 @@ namespace Cslib
 open Finset BitString QueryComplexity
 
 variable {n : ℕ}
-
-namespace BitString
-
-/-- Parity is sensitive to every bit at every input. -/
-theorem sensitivityAt_parity (x : BitString n) : sensitivityAt (parity n) x = n := by
-  have : (univ.filter fun i => parity n (Function.update x i !x i) ≠ parity n x) = univ := by
-    refine eq_univ_of_forall fun i => mem_filter.2 ⟨mem_univ i, ?_⟩
-    rw [parity, parityOn_update_not (mem_univ i)]
-    cases parityOn univ x <;> decide
-  change #(univ.filter fun i => parity n (Function.update x i !x i) ≠ parity n x) = n
-  rw [this, card_univ, Fintype.card_fin]
-
-/-- The sensitivity of parity is its number of coordinates. -/
-theorem sensitivity_parity : sensitivity (parity n) = n :=
-  le_antisymm (sensitivity_le_card _) ((sensitivityAt_parity (fun _ => false)).symm.trans_le
-    (sensitivityAt_le_sensitivity _ _))
-
-end BitString
-
-namespace QueryComplexity
-
-/-- The block sensitivity of parity is its number of coordinates. -/
-theorem blockSensitivity_parity : blockSensitivity (parity n) = n :=
-  le_antisymm (blockSensitivity_le_card _)
-    (sensitivity_parity.symm.trans_le (sensitivity_le_blockSensitivity _))
-
-/-- The certificate complexity of parity is its number of coordinates. -/
-theorem certificateComplexity_parity : certificateComplexity (parity n) = n :=
-  le_antisymm (certificateComplexity_le_card _)
-    (blockSensitivity_parity.symm.trans_le (blockSensitivity_le_certificateComplexity _))
-
-end QueryComplexity
 
 namespace DecisionTree
 

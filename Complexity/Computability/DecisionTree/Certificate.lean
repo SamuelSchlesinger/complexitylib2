@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.DecisionTree.Sensitivity
+public import Complexity.Computability.QueryComplexity.OneSided
 
 /-!
 # Decision trees from certificates
@@ -20,11 +21,6 @@ most `C₀(f) C₁(f)` queries, where `C_b(f)` is the largest certificate comple
 value `b` (`complexity_le_certificateComplexityFor_mul`) [BlumImpagliazzo1987], [Tardos1989],
 [Jukna, Section 14.2][Jukna2012]. In particular, decision tree complexity is at most the square of
 certificate complexity.
-
-## Main definitions
-
-* `Cslib.QueryComplexity.certificateComplexityFor`: the certificate complexity `C_b(f)` of the
-  inputs where `f` has value `b`.
 
 ## Main results
 
@@ -96,19 +92,6 @@ theorem complexity_le_card_add [Finite ι] {f : (ι → Bool) → β} (S : Finse
 end DecisionTree
 
 namespace QueryComplexity
-
-/-- `C_b(f)`: the largest certificate complexity of `f` at an input where it has value `b`. -/
-def certificateComplexityFor (f : BooleanFunction n) (b : Bool) : ℕ :=
-  (univ.filter fun x => f x = b).sup (certificateComplexityAt f)
-
-theorem certificateComplexityAt_le_certificateComplexityFor {f : BooleanFunction n}
-    {x : BitString n} {b : Bool} (h : f x = b) :
-    certificateComplexityAt f x ≤ certificateComplexityFor f b :=
-  le_sup (f := certificateComplexityAt f) (mem_filter.2 ⟨mem_univ x, h⟩)
-
-theorem certificateComplexityFor_le_certificateComplexity (f : BooleanFunction n) (b : Bool) :
-    certificateComplexityFor f b ≤ certificateComplexity f :=
-  sup_mono (filter_subset _ _)
 
 /-- Restricting by answers on `S` does not lengthen certificates: every certificate for the
 function restricted by `a` at `z` is at most as long as a certificate of `f` at the filled input,

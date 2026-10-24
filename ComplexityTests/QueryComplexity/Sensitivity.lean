@@ -47,6 +47,10 @@ example {n : ℕ} : sensitivityAt (threshold n 1) (fun _ => false) = n ∧
     blockSensitivity (threshold n 1) = n :=
   ⟨sensitivityAt_threshold_one_right, blockSensitivity_threshold_one_right⟩
 
+example {n : ℕ} : sensitivity (parity n) = n ∧ blockSensitivity (parity n) = n ∧
+    certificateComplexity (parity n) = n :=
+  ⟨sensitivity_parity, blockSensitivity_parity, certificateComplexity_parity⟩
+
 /-! ### Evasiveness -/
 
 example : DecisionTree.complexity (majority 4) = 4 ∧ DecisionTree.complexity (threshold 7 5) = 7 :=
