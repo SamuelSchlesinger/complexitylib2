@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -92,6 +93,7 @@ theorem step_eq_run_interpret (machine : MultiTapePTM k Bool Control Operation)
 
 variable [Finite Control] [DecidableEq External] [Finite External]
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- A handler certified as strict oracle PPT makes one complete interpreter step strict oracle
 PPT. Only the selected transition runs, so a non-query step makes no external call. -/
 theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
@@ -117,7 +119,7 @@ theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
       | .query channel next => do
         let (answer, state) ← handler pair.1 (channel, (pair.2.1.channels channel).1) pair.2.2
         return (pair.2.1.receive channel next answer, state))
-  · fun_prop
+  · exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
   · intro control
     cases control with
     | none => fun_prop
@@ -147,6 +149,7 @@ theorem isOraclePPTOn_step [Fintype Operation] {input : α ↪ List Bool}
           · fun_prop
           · fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- A bounded native run with an open stateful handler is strict oracle PPT. A local invariant,
 over every possible handler result under every external oracle, bounds reply length and
 private-state growth; the loop certificate charges all interpreter storage. -/
@@ -173,6 +176,9 @@ theorem isOraclePPTOn_run [Finite Operation] {input : α ↪ List Bool}
         (ProbOracleComp.handler
           (fun n => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin n))) (handler a))
         (machine.runOracle (count a) (word a))).run (initial a)) := by
+  have hwordPlain := ComputableInPolyTime.of_tidy hword
+  have hcountPlain := ComputableInPolyTime.of_tidy hcount
+  have hinitialPlain := ComputableInPolyTime.of_tidy hinitial
   let _ := Fintype.ofFinite Operation
   obtain ⟨cr, dr, hresourceSize⟩ := polynomiallyBounded_iff_le.mp hresources
   obtain ⟨cf, hconfigurationSize⟩ :=
@@ -222,7 +228,7 @@ theorem isOraclePPTOn_run [Finite Operation] {input : α ↪ List Bool}
             nlinarith⟩)
     (size := fun a => 2 * cf * ((word a).length + count a + budget a + 1) +
       (stateEncoding (initial a)).length + count a * budget a + 1)
-    (ComputableTidilyInPolyTime.polyBounded (by dsimp only [budget]; fun_prop))
+    (ComputableInPolyTime.polyBounded (by dsimp only [budget]; fun_prop))
     (by
       rintro a i ⟨cfg, state⟩ hi ⟨hcfg, _, hstate⟩
       have hf := hconfigurationSize _ _ _ cfg hcfg

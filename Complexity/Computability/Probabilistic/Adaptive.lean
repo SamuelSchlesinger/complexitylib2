@@ -15,6 +15,8 @@ import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Strict PPT adaptive iteration
 
@@ -122,7 +124,8 @@ theorem IsPPTOn.iterateWith_of_bounded_growth {initial : α → State} {count : 
   refine (IsPPTOn.iterateWith_spec hcount hinitial hstep
     (fun a i state => (stateEncoding state).length ≤
       (stateEncoding (initial a)).length + i * growth a)
-    (by simp) ?_ (hinitial.polyBounded_length.add (hcount.polyBounded.mul hpoly)) ?_).1
+    (by simp) ?_ ((ComputableInPolyTime.of_tidy hinitial).polyBounded_length.add
+      ((ComputableInPolyTime.of_tidy hcount).polyBounded.mul hpoly)) ?_).1
   · intro a i state _ hstate next hnext
     simpa only [Nat.add_mul, Nat.one_mul, Nat.add_assoc] using
       (hgrowth a state next hnext).trans (Nat.add_le_add_right hstate _)
@@ -139,7 +142,7 @@ theorem IsPPTOn.iterate_of_bounded_growth {initial : α → State} {count : α �
       (stateEncoding next).length ≤ (stateEncoding state).length + growth) :
     IsPPTOn input stateEncoding (fun a => OracleComp.iterate (count a) step (initial a)) :=
   IsPPTOn.iterateWith_of_bounded_growth (step := fun _ => step) hcount hinitial
-    (hstep.preprocess (ComputableTidilyInPolyTime.snd input stateEncoding))
+    (hstep.preprocess (ComputableInPolyTime.snd input stateEncoding).tidy)
     (.const growth) (fun _ => hgrowth)
 
 /-- Iteration of a step that never increases its encoded state needs no extra size invariant. -/

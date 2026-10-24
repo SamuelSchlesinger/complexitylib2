@@ -11,6 +11,7 @@ public import Complexity.Computability.Probabilistic.PPT.Composition
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputPrefix
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Probabilistic.Oracle.Composition
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Captured inputs in efficient probabilistic programs
@@ -47,11 +48,11 @@ theorem IsPPTOn.prefix {α : Type} {input : α ↪ List Bool} {pre : α → List
     (hprefix : ComputableTidilyInPolyTime pre input encBits) :
     IsPPTOn input encBits (fun a => (pre a ++ ·) <$> program a) := by
   apply IsOraclePPTOn.isPPTOn
-  have happend := ComputableTidilyInPolyTime.bitsAppend
-    (ComputableTidilyInPolyTime.fst encBits encBits)
-    (ComputableTidilyInPolyTime.snd encBits encBits)
+  have happend := ComputableInPolyTime.bitsAppend
+    (ComputableInPolyTime.fst encBits encBits)
+    (ComputableInPolyTime.snd encBits encBits)
   simpa only [ProbOracleComp.sample_map, Functor.map_map, Function.comp_def] using
-    ((hprogram.isOraclePPTOn (Operation := Empty)).pair hprefix).map happend
+    ((hprogram.isOraclePPTOn (Operation := Empty)).pair hprefix).map happend.tidy
 
 variable {α β γ : Type} {input : α ↪ List Bool} {left : β ↪ List Bool}
   {right : γ ↪ List Bool}
@@ -69,7 +70,7 @@ theorem IsPPTOn.pair {program : α → ProbComp γ} {f : α → β}
 theorem IsPPTOn.keep_input {program : α → ProbComp β}
     (hprogram : IsPPTOn input left program) :
     IsPPTOn input (encPair input left) (fun a => (fun b => (a, b)) <$> program a) :=
-  hprogram.pair ComputableTidilyInPolyTime.id'
+  hprogram.pair ComputableInPolyTime.id'.tidy
 
 /-- A monadic continuation may use both the caller's input and the sampled result. -/
 @[fun_prop]
