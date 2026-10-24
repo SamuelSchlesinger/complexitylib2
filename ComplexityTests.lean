@@ -109,6 +109,7 @@ import ComplexityTests.Crypto.GSWNative
 import ComplexityTests.Crypto.GSWParameters
 import ComplexityTests.Crypto.GSWSampling
 import ComplexityTests.Crypto.GSWSecurity
+import ComplexityTests.Crypto.GameBounds
 import ComplexityTests.Crypto.HomomorphicEvaluation
 import ComplexityTests.Crypto.HomomorphicExample
 import ComplexityTests.Crypto.HomomorphicFixedKey

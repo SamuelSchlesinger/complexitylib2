@@ -63,7 +63,8 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   pointwise addition/multiplication wrappers needed by lambda-shaped automation clients;
   remove the submitted registrations when #1069 lands. The candidate public helpers
   `Negligible.add_fun` and `Negligible.mul_fun` remain until upstream declarations preserve
-  those full names. `Crypto/Game.lean` retains the unmerged #1069 security-game API.
+  those full names. `Crypto/Game.lean` retains the unmerged #1069 security-game API. Its two local pointwise/common-mixture advantage bounds (#802) must also be retained when
+  syncing or removing that copy.
   The probability/game stack copies the October 23 upstream refresh (#1062, #1069, #1070,
   #1072 and #1129). `Crypto.negligible_iff` and the negligible closure lemmas now come from
   the base pin; local PMF additions and negligible automation remain alongside the copied portions.
