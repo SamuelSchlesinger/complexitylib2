@@ -24,7 +24,7 @@ multiplicity, including unused gates. No separate substitution operation is need
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Substitution.lean` in
+* Adapted from LowerBound/Fusion/Substitution.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

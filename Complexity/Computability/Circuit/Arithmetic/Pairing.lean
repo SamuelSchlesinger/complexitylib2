@@ -27,7 +27,7 @@ The premise is equality of formal polynomials, not agreement of functions over a
 
 ## References
 
-* Ported from `LowerBound/Fusion/Arithmetic/Interaction/Hessian/Pairing.lean` in
+* Ported from LowerBound/Fusion/Arithmetic/Interaction/Hessian/Pairing.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

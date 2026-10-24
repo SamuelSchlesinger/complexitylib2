@@ -37,7 +37,7 @@ balanced checkpoint parameter (`reachability_hitting_time`).
 
 ## References
 
-* Adapted from `lean/Proofs/NavigationCircuits.lean` in
+* Adapted from lean/Proofs/NavigationCircuits.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

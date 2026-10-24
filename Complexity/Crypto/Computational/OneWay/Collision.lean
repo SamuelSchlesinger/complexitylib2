@@ -30,7 +30,7 @@ The general OWF-to-PRG development follows [T. Holenstein, *Pseudorandom Generat
 Functions: A Simple Construction for Any Hardness*][Holenstein2006], Sections 4–5. This elementary
 guessing argument is separate from its stronger pseudoentropy-pair construction.
 
-Adapted from `Crypto/Computational/OneWay/Collision.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/OneWay/Collision.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared nonnegative game API.
 -/
 

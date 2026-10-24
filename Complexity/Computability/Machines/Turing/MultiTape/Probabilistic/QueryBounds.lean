@@ -34,7 +34,7 @@ therefore yields the exact same `OracleComp` program as `machine.run`.
 
 ## References
 
-Adapted from `Computability/Machines/Turing/MultiTape/Oracle/QueryBounds.lean` on the cslib
+Adapted from Computability/Machines/Turing/MultiTape/Oracle/QueryBounds.lean on the cslib
 `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the common machine.
 -/
 

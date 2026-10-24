@@ -17,10 +17,13 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Op
 # Polynomial-time rational hitting-list generator
 
 This module assembles the polynomial-time rational hitting-list generator from the certified
-parameter schedule (`Runtime/Parameters.lean`), the staged division-free integer determinant
-(`Runtime/Determinant.lean`), the integer lift tables (`Runtime/Lift.lean`), the reduced-rational
-binary encoding (`Runtime/Encode.lean`), and the per-point Cramer normalization
-(`Runtime/Point.lean`).
+parameter schedule (`Complexity/Computability/Circuit/Rational/Runtime/Parameters.lean`), the staged
+division-free integer determinant
+(`Complexity/Computability/Circuit/Rational/Runtime/Determinant.lean`), the integer lift tables
+(`Complexity/Computability/Circuit/Rational/Runtime/Lift.lean`), the reduced-rational
+binary encoding (`Complexity/Computability/Circuit/Rational/Runtime/Encode.lean`), and the per-point
+Cramer normalization
+(`Complexity/Computability/Circuit/Rational/Runtime/Point.lean`).
 
 Given parameters `(n, s)`, `gridPointWords` enumerates the three-dimensional grid
 `{1, …, H}³` in lexicographic order and collects the encoded normalized tuples emitted at all

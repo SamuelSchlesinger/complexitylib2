@@ -33,7 +33,8 @@ No algorithm or resource bound is introduced here.
 * The proofs restate private declarations from Paul Cadman's Mathlib module
   `Mathlib/LinearAlgebra/Matrix/Determinant/Bird/Correctness.lean` (Copyright 2026, Apache 2.0).
   They consolidate the local generic-ring and integer restatements previously in
-  `Circuit/Arithmetic/Determinant.lean` and `Circuit/Rational/Determinant.lean`.
+  `Complexity/Computability/Circuit/Arithmetic/Determinant.lean` and
+  `Complexity/Computability/Circuit/Rational/Determinant.lean`.
 * The integer restatement came from OpenAI's formalization [OpenAI2026RationalHitting], revision
   adc7f1241b42e322a6451854ab7e4b4c146bf78a, via the complexitylib port
   [Schlesinger2026RationalHitting], revision add0aca8ee0d71e68969f2cb45cf91554a50f787.

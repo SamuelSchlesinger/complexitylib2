@@ -46,9 +46,9 @@ records are accepted, sorting by label restores the original order: each label h
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/BufferModel.lean`,
-  `MassProduction/Nonuniform/BufferEndpoints.lean` and
-  `MassProduction/Nonuniform/RecordArray.lean` in
+* Adapted from MassProduction/Nonuniform/BufferModel.lean,
+  MassProduction/Nonuniform/BufferEndpoints.lean and
+  MassProduction/Nonuniform/RecordArray.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction],
   using the sorting network of
   [K. E. Batcher, *Sorting Networks and Their Applications*][Batcher1968].

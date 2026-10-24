@@ -46,7 +46,7 @@ The state type may live in any universe. No order on it is needed.
 
 ## References
 
-* Adapted from `lean/Proofs/{CycleProjection,TargetTimes}.lean` in
+* Adapted from lean/Proofs/{CycleProjection,TargetTimes}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

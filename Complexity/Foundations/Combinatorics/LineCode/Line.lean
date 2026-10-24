@@ -43,7 +43,7 @@ points. Cleanliness of a request (`IsClean`) is decidable.
 ## References
 
 * Adapted, with nonzero vectors in place of projective directions, from
-  `MassProduction/Scheduler.lean` and `MassProduction/Nonuniform/PhaseMenu.lean` in
+  MassProduction/Scheduler.lean and MassProduction/Nonuniform/PhaseMenu.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

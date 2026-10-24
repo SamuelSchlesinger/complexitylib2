@@ -29,7 +29,7 @@ independent and is not logged.
 
 ## References
 
-Adapted from `Computability/Probabilistic/QueryBounds.lean` on the cslib `crypto` branch at
+Adapted from Computability/Probabilistic/QueryBounds.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the current word-oracle realization contract.
 -/
 

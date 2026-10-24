@@ -24,7 +24,8 @@ dimension therefore give first-order reductions.
 ## Main definitions
 
 * `Cslib.Logic.FO.Ordered.FullTupleInterpretation.certificate`: the native numeric certificate for
-  `FullTupleInterpretation.toDomainInterpretation` (defined in `FullTuple/Encoding.lean`).
+  `FullTupleInterpretation.toDomainInterpretation` (defined in
+  `Complexity/Logics/FirstOrder/Ordered/FullTuple/Encoding.lean`).
 
 ## Main results
 

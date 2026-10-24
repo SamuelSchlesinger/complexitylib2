@@ -28,7 +28,7 @@ arbitrary. Compilation and cost accounting remain those of native contextual sim
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Contextual.lean` in
+* Adapted from LowerBound/Fusion/Contextual.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

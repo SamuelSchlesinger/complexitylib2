@@ -42,7 +42,7 @@ security requires a further reduction.
 * [O. Goldreich, S. Goldwasser, S. Micali, *How to Construct Random Functions*][GGM1986],
   Section 3.3, the algorithms `A_i` in the proof of Theorem 3.
 
-Adapts `Crypto/Computational/GGM/Hybrid.lean` on the cslib `crypto` branch at
+Adapts Crypto/Computational/GGM/Hybrid.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` to the shared typed interpreter.
 -/
 

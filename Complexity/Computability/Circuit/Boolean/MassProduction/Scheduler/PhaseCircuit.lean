@@ -43,11 +43,11 @@ construction is existential and does not certify the running time of any constru
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/BufferedPhaseCost.lean`,
-  `MassProduction/Nonuniform/BufferOccupancy.lean`,
-  `MassProduction/Nonuniform/CandidateSelection.lean`,
-  `MassProduction/Nonuniform/ConstantTranslations.lean` and
-  `MassProduction/Nonuniform/MaskedOr.lean` in
+* Adapted from MassProduction/Nonuniform/BufferedPhaseCost.lean,
+  MassProduction/Nonuniform/BufferOccupancy.lean,
+  MassProduction/Nonuniform/CandidateSelection.lean,
+  MassProduction/Nonuniform/ConstantTranslations.lean and
+  MassProduction/Nonuniform/MaskedOr.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction],
   using the sorting network of
   [K. E. Batcher, *Sorting Networks and Their Applications*][Batcher1968].

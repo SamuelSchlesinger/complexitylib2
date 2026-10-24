@@ -45,7 +45,7 @@ the time to construct them.
 
 ## References
 
-* Adapted from `lean/Proofs/LongTime.lean` in
+* Adapted from lean/Proofs/LongTime.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions], whose
   bound is `33000000 * (n + 1) * optimizedBudget n s (2 ^ n) + 200 * m * (n + 1)`.

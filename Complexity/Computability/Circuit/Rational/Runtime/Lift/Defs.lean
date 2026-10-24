@@ -30,7 +30,7 @@ proves that they compute the landed matrix definitions:
   `u - v`, so that sum is dropped.
 
 Magnitude bounds, bit-length budgets, and polynomial-time Turing machine certificates for these list
-programs are proved in `Rational/Runtime/Lift.lean`.
+programs are proved in `Complexity/Computability/Circuit/Rational/Runtime/Lift.lean`.
 
 ## Main definitions
 

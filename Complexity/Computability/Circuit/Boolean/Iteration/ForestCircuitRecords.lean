@@ -42,7 +42,7 @@ circuit.
 
 ## References
 
-* Adapted from `lean/Proofs/ForestCircuitRecords.lean` in
+* Adapted from lean/Proofs/ForestCircuitRecords.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

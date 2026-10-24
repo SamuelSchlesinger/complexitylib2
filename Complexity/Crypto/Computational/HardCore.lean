@@ -49,7 +49,7 @@ the Goldreich–Levin construction is a separate step in the OWP-to-PRG reductio
 * [L. Trevisan, *CS276 Lecture 13: Pseudorandom Generators*][Trevisan2009PRG],
   scribed by Siu-On Chan, Theorem 2 and its prediction reduction.
 
-Adapted from `Crypto/Computational/HardCore.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/HardCore.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared nonnegative game API and tidy machines.
 -/
 

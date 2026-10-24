@@ -55,7 +55,8 @@ instances supply `n` in unary together with raw De Morgan circuit codes
 (`Cslib.Circuits.Boolean.encCode`) evaluated via `evalCode`
 (`Complexity.Computability.Circuit.Boolean.EvaluationTime`), are instances of these uniform
 families (`LocalOpt_mem_PLS`, `Pigeon_mem_PPP`, `EndOfLine_mem_PPAD`, `Leaf_mem_PPA`) and
-therefore belong to `TFNP`. The companion module `TFNP/Subclasses/Completeness.lean` compiles
+therefore belong to `TFNP`. The companion module
+`Complexity/Computability/Complexity/Classes/TFNP/Subclasses/Completeness.lean` compiles
 uniform polynomial-time family evaluations into circuit codes, proving `SearchComplete` for
 `LocalOpt`, `Pigeon`, `EndOfLine` and `Leaf`. These reductions preserve vertex witnesses and, for
 local search, the numerical cost values through fixed-width binary words with leading zeros.

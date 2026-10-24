@@ -39,7 +39,7 @@ atom. Extracting a failing atom from a cover may use classical logic.
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Framework.lean` in
+* Adapted from LowerBound/Fusion/Framework.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

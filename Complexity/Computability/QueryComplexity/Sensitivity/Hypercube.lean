@@ -23,7 +23,7 @@ Every set `V` of more than half of the points of the cube `ι → Bool` contains
 
 The theorem and its signed adjacency matrix, which squares to `|ι|`, are Huang's [Huang2019].
 Huang counts eigenvalues with Cauchy's interlacing theorem, which Mathlib lacks; here a dimension
-count replaces it. Mathlib's `Archive/Sensitivity.lean` formalizes the case `S = univ`, but the
+count replaces it. Mathlib's Archive/Sensitivity.lean formalizes the case `S = univ`, but the
 Archive cannot be imported.
 
 Order the coordinates and sign the edge from `x` in direction `i` by the character of the

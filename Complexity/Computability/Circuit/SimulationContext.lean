@@ -35,7 +35,7 @@ sharing and output wiring. Costs count every gadget gate, including gates unused
 
 ## References
 
-* Ported from `Translation/Contextual.lean` in [S. Schlesinger, *Algebraic circuit
+* Ported from Translation/Contextual.lean in [S. Schlesinger, *Algebraic circuit
   formalizations in Complexitylib*][Schlesinger2026Algebraic], using native circuit simulation.
 -/
 

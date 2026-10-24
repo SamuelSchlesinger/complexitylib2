@@ -48,7 +48,7 @@ therefore answered from `s = Fintype.card K - 1` resource values (`succ_eq_card`
 
 ## References
 
-* Adapted from `MassProduction/HighRate/BooleanRecovery.lean` in
+* Adapted from MassProduction/HighRate/BooleanRecovery.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

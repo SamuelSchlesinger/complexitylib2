@@ -30,7 +30,7 @@ the `f i`, so it inherits their line parity.
 
 ## References
 
-* Adapted from `MassProduction/HighRate/Systematic.lean` and `MassProduction/HighRate/Code.lean`
+* Adapted from MassProduction/HighRate/Systematic.lean and MassProduction/HighRate/Code.lean
   in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/

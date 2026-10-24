@@ -49,7 +49,7 @@ efficient execution on an encoding of arbitrary sets.
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Semifilter.lean` in
+* Adapted from LowerBound/Fusion/Semifilter.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

@@ -32,7 +32,7 @@ including duplicates and payload, are preserved; sorting need not be stable.
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/KeyedSort.lean` in
+* Adapted from MassProduction/Nonuniform/KeyedSort.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 * [K. E. Batcher, *Sorting Networks and Their Applications*][Batcher1968].
 -/

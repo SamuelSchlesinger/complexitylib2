@@ -51,7 +51,7 @@ containment (`forest_interval_spec`, `exists_forest_intervals`).
 
 ## References
 
-* Adapted from `lean/Proofs/ForestIntervals.lean` in
+* Adapted from lean/Proofs/ForestIntervals.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

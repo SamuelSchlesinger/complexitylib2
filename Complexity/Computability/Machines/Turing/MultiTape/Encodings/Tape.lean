@@ -34,7 +34,7 @@ stored extent, including blank gaps.
 
 ## References
 
-Adapts the encodings in `Computability/Probabilistic/Tape.lean` on the cslib `crypto` branch at
+Adapts the encodings in Computability/Probabilistic/Tape.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using Christian Reitwiessner's standard encodings
 and Bolton Bailey's tape representations.
 -/

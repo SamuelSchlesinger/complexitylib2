@@ -43,7 +43,7 @@ bit of the computation, including its input and workspace.
 
 ## References
 
-* Adapted from `lean/Proofs/{Targets,TargetTimes}.lean` in
+* Adapted from lean/Proofs/{Targets,TargetTimes}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions], whose
   first-time and halting-time bounds have the constants `3120000` and `3000000`.

@@ -45,7 +45,7 @@ single power `x ↦ x ^ e` with `e = 1 + (2 ^ T - 1) % λ(M)` (`reducedExponent`
 
 ## References
 
-* Adapted from `lean/Proofs/SequentialSquaring.lean` in
+* Adapted from lean/Proofs/SequentialSquaring.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

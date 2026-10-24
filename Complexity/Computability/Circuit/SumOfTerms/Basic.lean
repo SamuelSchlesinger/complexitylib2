@@ -31,7 +31,7 @@ Separate addition costs and arbitrary uniform weights are also provided.
 
 ## References
 
-* Adapted from `Basis/SumOfTerms.lean` in
+* Adapted from Basis/SumOfTerms.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

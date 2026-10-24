@@ -53,7 +53,7 @@ prefix `x, f x, …, f^[K] x` of `K + 1` pairwise distinct states meets `H`.
 
 ## References
 
-* Adapted from `lean/Proofs/{Reconstruction,DistinguishedPoints}.lean` at revision `c4cfa198` of
+* Adapted from lean/Proofs/{Reconstruction,DistinguishedPoints}.lean at revision `c4cfa198` of
   [S. Schlesinger, *Square-root circuit bounds for iterated functions*]
   [Schlesinger2026IteratedFunctions].
 -/

@@ -32,8 +32,8 @@ result; `PPT.Capture` retains the caller's input through the same calculus.
 
 ## References
 
-Adapted from `Computability/Probabilistic/Realization/Composition.lean` and
-`Computability/Probabilistic/Composition.lean` on the cslib `crypto` branch at
+Adapted from Computability/Probabilistic/Realization/Composition.lean and
+Computability/Probabilistic/Composition.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, reusing the common machine and tidy deterministic
 calculus.
 -/

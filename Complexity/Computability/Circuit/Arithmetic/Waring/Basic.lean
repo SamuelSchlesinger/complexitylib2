@@ -25,7 +25,7 @@ is shared by the arithmetic compiler and the term-count lower bounds.
 
 ## References
 
-* Adapted from `LowerBound/Fusion/SumOfTerms/Waring.lean` in
+* Adapted from LowerBound/Fusion/SumOfTerms/Waring.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

@@ -31,7 +31,7 @@ products of gradients. No assumption on the characteristic is needed.
 
 ## References
 
-* Ported from `LowerBound/Fusion/Arithmetic/Interaction/Hessian.lean` and its `Pairing.lean`
+* Ported from LowerBound/Fusion/Arithmetic/Interaction/Hessian.lean and its `Pairing.lean`
   application in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/

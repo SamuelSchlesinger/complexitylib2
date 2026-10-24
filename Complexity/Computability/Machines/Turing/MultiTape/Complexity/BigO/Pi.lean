@@ -29,7 +29,7 @@ native-machine bounds, including encoded output size, not exact transition count
 ## References
 
 Uses Christian Reitwiessner's native tidy degree/resource calculus and list primitives.
-The finite-family construction follows `Complexity/PolyTime/Pi.lean`, which credits the
+The finite-family construction follows Complexity/PolyTime/Pi.lean, which credits the
 cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 

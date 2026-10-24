@@ -29,7 +29,7 @@ variables whose solutions contain no subcube of dimension `D` has at most
 
 The exponent `1 - 1 / k` cannot be improved, already for `D = 1`: requiring even parity on each of
 `N / k` disjoint blocks of `k` variables gives `2 ^ ((1 - 1 / k) N)` solutions, no two of which
-are neighbours (see `Parity/DepthThree.lean`).
+are neighbours (see `Complexity/Logics/Propositional/Parity/DepthThree.lean`).
 
 ## Main definitions
 

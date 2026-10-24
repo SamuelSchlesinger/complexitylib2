@@ -37,7 +37,7 @@ modify shared private state.
 
 ## References
 
-Adapted from `MultiTape/Oracle/Clock.lean` on the cslib `crypto` branch at
+Adapted from MultiTape/Oracle/Clock.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` to the common machine and typed program interface.
 -/
 

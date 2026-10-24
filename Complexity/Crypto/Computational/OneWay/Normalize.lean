@@ -38,7 +38,7 @@ assuming that the original function is length-preserving, injective or regular.
 * [T. Holenstein, *Pseudorandom Generators from One-Way Functions: A Simple Construction for
   Any Hardness*][Holenstein2006], Definition 1 and Section 4.
 
-Adapted from `Crypto/Computational/OneWay/Normalize.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/OneWay/Normalize.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`. This is the word-encoding reduction to the write-up's
 fixed-output-width setting, using the shared tidy machine calculus and nonnegative game API.
 -/

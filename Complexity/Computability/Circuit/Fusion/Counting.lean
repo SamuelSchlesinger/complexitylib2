@@ -32,7 +32,7 @@ restricted circuit clients may use their local degree, width or liveness hypothe
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Counting.lean` in
+* Adapted from LowerBound/Fusion/Counting.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

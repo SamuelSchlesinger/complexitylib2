@@ -31,7 +31,7 @@ required.
 
 ## References
 
-* The coefficient argument is adapted from `LowerBound/Fusion/SumOfTerms/Waring.lean` in
+* The coefficient argument is adapted from LowerBound/Fusion/SumOfTerms/Waring.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 * [J. M. Landsberg and Z. Teitler, *On the ranks and border ranks of symmetric
   tensors*][LandsbergTeitler2009], equation (1) and Remark 6.5, describe the catalecticant bound.

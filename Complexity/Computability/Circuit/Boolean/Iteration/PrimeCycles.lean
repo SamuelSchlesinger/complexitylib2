@@ -74,7 +74,7 @@ advances `b` by `1` modulo `ℓ r` when `b < ℓ r` and fixes every other state.
 
 ## References
 
-* Adapted from `lean/Proofs/PrimeCycles.lean` in
+* Adapted from lean/Proofs/PrimeCycles.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

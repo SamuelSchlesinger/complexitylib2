@@ -273,7 +273,7 @@ theorem steps_iff_exists_run : Steps p s t ↔ ∃ n, run p n s = t := by
 
 /-! ## Halting and evaluation
 
-The halting and evaluation API of `Cslib.URM` (`URM/Execution.lean`), for RAM programs. -/
+The halting and evaluation API of `Cslib.URM` (URM/Execution.lean), for RAM programs. -/
 
 /-- Two halted states reachable from the same state are equal. -/
 theorem Steps.eq_of_halts {s₁ s₂ : State} (h₁ : Steps p s s₁) (hh₁ : s₁.isHalted p)

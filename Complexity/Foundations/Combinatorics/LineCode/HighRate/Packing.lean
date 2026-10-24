@@ -36,8 +36,8 @@ the source by at most one copy (`mul_packingCopies_mul_le`).
 
 ## References
 
-* Adapted from `MassProduction/HighRate/Packing.lean` and
-  `MassProduction/HighRate/CodePacking.lean` in
+* Adapted from MassProduction/HighRate/Packing.lean and
+  MassProduction/HighRate/CodePacking.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

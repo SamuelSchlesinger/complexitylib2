@@ -49,8 +49,10 @@ tidy `fun_prop` proof.
 There is deliberately no `fun_prop` transition from plain to tidy: registering it together with
 the reverse transition would create a search cycle. In particular, a tidy goal such as
 `ComputableTidilyInPolyTime (fun a => [f a]) enc (encList encIntBin)` cannot use a plain certificate
-for `f` directly. This occurs when constructing singleton target lists in `WPP/Robustness.lean`
-and `WPP/TwoSided.lean`. Unbounded `fun_prop` can exhaust its heartbeat budget while looking for
+for `f` directly. This occurs when constructing singleton target lists in
+`Complexity/Computability/Complexity/Classes/WPP/Robustness.lean`
+and `Complexity/Computability/Complexity/Classes/WPP/TwoSided.lean`. Unbounded `fun_prop` can
+exhaust its heartbeat budget while looking for
 another certificate. Restate the needed hypothesis with `have hf := hf.tidy` before `fun_prop`,
 or use `polytime` from `Complexity.Tactic.PolyTime`, which prepares plain hypotheses for tidy
 search. When trying composition speculatively, use
@@ -58,7 +60,8 @@ search. When trying composition speculatively, use
 switch tactics. This is a search budget, not a guarantee that every unsuccessful search is cheap.
 
 `selectVerifier`, `andVerifier` and `orVerifier` have plain `fun_prop` rules in
-`Classes/SharpP/Combinators.lean`, so plain verifier hypotheses need no manual `.tidy` conversion
+`Complexity/Computability/Complexity/Classes/SharpP/Combinators.lean`, so plain verifier hypotheses
+need no manual `.tidy` conversion
 for a plain goal. Their tidy rules remain available for proofs using the tidy calculus.
 
 For a tidy certificate covering a whole composite whose intermediate encoding is difficult to
@@ -66,8 +69,9 @@ infer, prefer `polytime`, or convert the hypotheses with `.tidy` and use
 `.of_tidy (by fun_prop)`. Two representative cases are the binary threshold
 `fun a => 3 * (k a * 2 ^ q.eval (enc a).length)` in `inter_mem_SBP_of_mem_BPP` (where `k` uses
 `encNat`, while the exponent uses `encUnary`), and the input-dependent `sharpTest` verifier in
-`Classes/Toda.lean`. `polytime` proves both directly from plain hypotheses. The mixed-encoding
-examples and the bounded singleton failure are checked in `ComplexityTests/PolyTimeMixes.lean`.
+`Complexity/Computability/Complexity/Classes/Toda.lean`. `polytime` proves both directly from plain
+hypotheses. The mixed-encoding
+examples and the bounded singleton failure are checked in ComplexityTests/PolyTimeMixes.lean.
 
 Upstream `Turing.MultiTapeTM.DecidableInTimeAndSpace` decides a problem through its Boolean
 indicator. `Turing.MultiTapeTM.decidableInTimeAndSpace_iff` restates it for any Boolean function

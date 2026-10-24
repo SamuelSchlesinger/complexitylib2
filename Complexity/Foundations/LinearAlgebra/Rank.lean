@@ -26,7 +26,7 @@ its generators. The linear maps need not have finite-dimensional domains or codo
 
 ## References
 
-* The linear-map span lemmas are ported from `LinearAlgebra/Rank.lean` in
+* The linear-map span lemmas are ported from LinearAlgebra/Rank.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

@@ -47,8 +47,8 @@ This ports the Hessian application of the Algebraic library to the native circui
 
 ## References
 
-* The source applications are `Applications/Hessian.lean` and
-  `LowerBound/Fusion/Arithmetic/Interaction/Hessian/Relative.lean` in
+* The source applications are Applications/Hessian.lean and
+  LowerBound/Fusion/Arithmetic/Interaction/Hessian/Relative.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 * [P. Bürgisser, M. Clausen, M. A. Shokrollahi, *Algebraic Complexity
   Theory*][BurgisserClausenShokrollahi1997] for background on arithmetic circuits.

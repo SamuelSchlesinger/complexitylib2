@@ -45,8 +45,8 @@ examines `k * menuLength g k L ≤ g * (1 + 3 * L) + k` candidate lines.
 ## References
 
 * Adapted, with nonzero vectors in place of projective directions, from
-  `MassProduction/Nonuniform/PhaseMenu.lean`, `MassProduction/Nonuniform/BinaryPhaseMenu.lean`
-  and `MassProduction/Nonuniform/Menu.lean` in
+  MassProduction/Nonuniform/PhaseMenu.lean, MassProduction/Nonuniform/BinaryPhaseMenu.lean
+  and MassProduction/Nonuniform/Menu.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

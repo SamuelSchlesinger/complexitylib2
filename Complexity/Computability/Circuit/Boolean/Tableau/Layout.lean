@@ -16,7 +16,8 @@ public import Mathlib.Tactic.DeriveFintype
 # Block and wire layout of the uniform tableau circuit
 
 For a multi-tape Turing machine with `k` work tapes and state type `State` running for `T` steps on
-inputs of length `n`, the uniform tableau circuit (`Tableau/Basic.lean`) has `n` input wires, two
+inputs of length `n`, the uniform tableau circuit
+(`Complexity/Computability/Circuit/Boolean/Tableau/Basic.lean`) has `n` input wires, two
 constant gates (`false` at wire `n` and `true` at wire `n + 1`), and `T + 1` blocks of
 `blockSize k State T` gates. Work-tape cells `-T, …, T` and input positions `0, …, n + 1` share
 `numCols T = 2 T + 1` columns. Within each block, gates are arranged into four regions:

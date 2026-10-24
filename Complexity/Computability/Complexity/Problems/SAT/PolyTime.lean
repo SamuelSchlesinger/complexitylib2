@@ -21,8 +21,9 @@ labels do not inflate certificates. Repeated variables read the same certificate
 
 Together with `Cslib.Complexity.SAT.isVerifier`, this proves membership in `NP`
 [Arora and Barak, Section 2.3][AroraBarak09]. Combined with the tableau reduction in
-`CookLevin/PolyTime.lean`, this gives `Cslib.Complexity.CookLevin.SAT_npComplete` in
-`CookLevin/Completeness.lean`.
+`Complexity/Computability/Complexity/CookLevin/PolyTime.lean`, this gives
+`Cslib.Complexity.CookLevin.SAT_npComplete` in
+`Complexity/Computability/Complexity/CookLevin/Completeness.lean`.
 
 ## Main definitions
 

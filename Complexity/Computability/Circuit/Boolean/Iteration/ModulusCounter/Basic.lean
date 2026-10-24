@@ -57,7 +57,7 @@ and distinct exponents below `ModulusCounter.period k` give distinct Boolean fun
 
 ## References
 
-* Adapted from `lean/Proofs/{ModulusCounter,CounterCircuit}.lean` in
+* Adapted from lean/Proofs/{ModulusCounter,CounterCircuit}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

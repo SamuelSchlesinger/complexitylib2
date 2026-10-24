@@ -44,7 +44,7 @@ selects one uniform PPT inverter across all security parameters.
 * [O. Goldreich, L. Levin, *A Hard-Core Predicate for All One-Way Functions*][GoldreichLevin1989]
 * [L. Trevisan, *CS276 Lecture 12: Goldreich–Levin*][Trevisan2009GL]
 
-Adapted from `Crypto/Computational/GoldreichLevin/WordReduction.lean` on the cslib `crypto` branch
+Adapted from Crypto/Computational/GoldreichLevin/WordReduction.lean on the cslib `crypto` branch
 at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using typed saved seeds and the tidy TM calculus.
 -/
 

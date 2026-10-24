@@ -65,7 +65,7 @@ handled by the same hardwiring argument.
 
 ## References
 
-* Adapted from `lean/Proofs/UniversalMap.lean` in
+* Adapted from lean/Proofs/UniversalMap.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

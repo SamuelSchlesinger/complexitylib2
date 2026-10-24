@@ -43,7 +43,7 @@ requires circuits for both directions, whose sizes are charged explicitly.
 
 ## References
 
-* Adapted from `lean/Proofs/SparseDisplacement.lean` at revision `c4cfa198` of
+* Adapted from lean/Proofs/SparseDisplacement.lean at revision `c4cfa198` of
   [S. Schlesinger, *Square-root circuit bounds for iterated functions*]
   [Schlesinger2026IteratedFunctions].
 -/

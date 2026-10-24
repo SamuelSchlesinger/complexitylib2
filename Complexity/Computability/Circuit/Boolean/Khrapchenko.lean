@@ -22,7 +22,8 @@ import Mathlib.Tactic.Zify
 /-!
 # Khrapchenko's bound
 
-**Khrapchenko's theorem** says that a De Morgan formula (see `Circuit/Boolean/Formula.lean`) that
+**Khrapchenko's theorem** says that a De Morgan formula (see
+`Complexity/Computability/Circuit/Boolean/Formula.lean`) that
 is true on a set `A` of inputs and false on a set `B` has leaf size at least
 `|E(A, B)| ^ 2 / (|A| |B|)`, where `E(A, B)` are the pairs of `A × B` at Hamming distance one
 (`Formula.sq_card_hammingEdges_le`, stated without division) [Khrapchenko1971b],
@@ -42,7 +43,8 @@ Splitting the bits in halves, `x ⊕ y = (x ∧ ¬y) ∨ (¬x ∧ y)` gives form
 
 Since a formula of depth `d` has at most `2 ^ d` leaves, formulas for parity have depth at least
 `2 log₂ n` (`two_mul_log_le_depth_of_computes_parity`). Here the depth counts negations; for the
-textbook bound, where negations are free, see `Circuit/Boolean/KhrapchenkoDepth.lean`: the
+textbook bound, where negations are free, see
+`Complexity/Computability/Circuit/Boolean/KhrapchenkoDepth.lean`: the
 formula depth of the parity of `2 ^ k` bits is exactly `2 k` (`formulaDepth_parity_two_pow`).
 
 ## Main definitions

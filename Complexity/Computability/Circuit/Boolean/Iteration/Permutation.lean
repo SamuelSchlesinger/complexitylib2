@@ -29,7 +29,7 @@ type (`permutation_inverse_encoded`). Similarly, `x` is a periodic point exactly
 
 ## References
 
-* Adapted from `lean/Proofs/Applications.lean` in
+* Adapted from lean/Proofs/Applications.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

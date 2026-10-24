@@ -20,7 +20,7 @@ public import Complexity.Computability.Circuit.Boolean.Iteration.CounterChart.En
 
 ## References
 
-* Adapted from `lean/Proofs/CounterChartDecode.lean` at revision `c4cfa198` of
+* Adapted from lean/Proofs/CounterChartDecode.lean at revision `c4cfa198` of
   [S. Schlesinger, *Square-root circuit bounds for iterated functions*]
   [Schlesinger2026IteratedFunctions].
 -/

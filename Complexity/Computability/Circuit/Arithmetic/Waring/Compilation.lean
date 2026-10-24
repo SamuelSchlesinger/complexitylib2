@@ -44,7 +44,7 @@ the construction is asserted.
 
 ## References
 
-* Adapted from `LowerBound/Fusion/SumOfTerms/Waring/Translation.lean` and its `Binary.lean`
+* Adapted from LowerBound/Fusion/SumOfTerms/Waring/Translation.lean and its `Binary.lean`
   extension in [S. Schlesinger, *Algebraic circuit formalizations in
   Complexitylib*][Schlesinger2026Algebraic]. The source's separate arithmetic expression and
   contextual translation frameworks are replaced by the shared formula and circuit APIs.

@@ -47,7 +47,7 @@ step lowers `canonicalTime` by one (`canonicalTime_apply`). Past the transient d
 
 ## References
 
-* Adapted from `lean/Proofs/{Spectrum,PhaseIdentities}.lean` at revision `c4cfa198` of
+* Adapted from lean/Proofs/{Spectrum,PhaseIdentities}.lean at revision `c4cfa198` of
   [S. Schlesinger, *Square-root circuit bounds for iterated functions*]
   [Schlesinger2026IteratedFunctions].
 -/

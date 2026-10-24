@@ -33,7 +33,7 @@ execution or convergence-time claim. A converse construction from covers is not 
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Cyclic.lean` in
+* Adapted from LowerBound/Fusion/Cyclic.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

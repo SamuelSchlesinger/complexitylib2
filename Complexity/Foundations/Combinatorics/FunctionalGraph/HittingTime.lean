@@ -56,7 +56,7 @@ The state type may live in any universe; it is finite, and representatives use a
 
 ## References
 
-* Adapted from `lean/Proofs/{HittingTimes,Navigation,VisitSchedules,VisitCounts}.lean` in
+* Adapted from lean/Proofs/{HittingTimes,Navigation,VisitSchedules,VisitCounts}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

@@ -43,7 +43,7 @@ operations support polynomially bounded counters and list enumeration in reducti
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 
-The indexed bound is adapted from `Cslib/Computability/Probabilistic/Encoding.lean` on the cslib
+The indexed bound is adapted from Cslib/Computability/Probabilistic/Encoding.lean on the cslib
 `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 

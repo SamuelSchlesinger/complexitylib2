@@ -47,8 +47,8 @@ does not certify the running time of any circuit constructor.
 
 * [D. Uhlig, *Networks computing Boolean functions for multiple input values*][Uhlig1992].
 * [I. Wegener, *The Complexity of Boolean Functions*][Wegener1987], proof of Theorem 10.2.3.
-* Simplifies `MassProduction/UhligRoutingCircuit.lean`, `MassProduction/UhligDecoder.lean` and
-  `MassProduction/UhligLayer.lean` in
+* Simplifies MassProduction/UhligRoutingCircuit.lean, MassProduction/UhligDecoder.lean and
+  MassProduction/UhligLayer.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

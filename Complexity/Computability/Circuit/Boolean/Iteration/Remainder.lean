@@ -47,11 +47,11 @@ are free.
 
 ## References
 
-* Adapted from `lean/Proofs/{StreamingRemainder,PhaseArithmetic}.lean` in
+* Adapted from lean/Proofs/{StreamingRemainder,PhaseArithmetic}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions]. The
   source's modular difference reduces by a cubic shift-and-subtract division circuit
-  (`lean/Proofs/Division.lean`); here both arguments are reduced by the streaming remainder.
+  (lean/Proofs/Division.lean); here both arguments are reduced by the streaming remainder.
 -/
 
 @[expose] public section

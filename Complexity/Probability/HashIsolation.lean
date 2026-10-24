@@ -34,7 +34,7 @@ query as well as the hash matrix.
   The isolation and averaged entropy bounds allow arbitrary two-universal families and
   input distributions, retaining the sampled hash length as public information.
 
-Adapted from `Probability/HashIsolation.lean` on the cslib `crypto` branch at
+Adapted from Probability/HashIsolation.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 
 -/

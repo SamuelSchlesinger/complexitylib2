@@ -34,7 +34,7 @@ ordinary `Synthesis` certificates; they do not search for a cheaper construction
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/FlagSelection.lean` in
+* Adapted from MassProduction/Nonuniform/FlagSelection.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

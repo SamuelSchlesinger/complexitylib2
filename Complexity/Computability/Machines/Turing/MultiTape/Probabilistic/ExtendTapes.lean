@@ -28,7 +28,7 @@ program. It preserves the program itself, allowing stateful coin and query inter
 ## References
 
 The common proof in `MultiTape.Machine.ExtendTapes` adapts the cslib `crypto` branch's
-`MultiTape/Oracle/ExtendTapes.lean` at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
+MultiTape/Oracle/ExtendTapes.lean at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 
 @[expose] public section

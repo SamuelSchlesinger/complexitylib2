@@ -19,7 +19,8 @@ literals are ordinary source families in this interface; no problem or model wra
 
 Supplied functions are free in `ecomplexityFrom`. In particular, supplying negative literals
 does not charge their construction. The circuit itself has only constants, AND and OR gates.
-Circuits with internal NOT gates are handled in `Fusion/DeMorgan.lean`, through the dual-rail
+Circuits with internal NOT gates are handled in
+`Complexity/Computability/Circuit/Fusion/DeMorgan.lean`, through the dual-rail
 translation, at the cost of a factor two in size.
 
 ## Main results
@@ -31,7 +32,7 @@ translation, at the cost of a factor two in size.
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Boolean.lean` in
+* Adapted from LowerBound/Fusion/Boolean.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

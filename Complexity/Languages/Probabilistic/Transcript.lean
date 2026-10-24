@@ -33,7 +33,7 @@ In particular, a machine's clock bounds its requests but need not bound the orac
 
 ## References
 
-Adapted from `Languages/Probabilistic/Transcript.lean` on the cslib `crypto` branch at
+Adapted from Languages/Probabilistic/Transcript.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the single `OracleComp.interpret` interface.
 -/
 

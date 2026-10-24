@@ -23,7 +23,7 @@ constructions improve this dependence by sharing work between copies.
 
 ## References
 
-* Adapted from `MassProduction/ShannonSynthesis.lean` in
+* Adapted from MassProduction/ShannonSynthesis.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

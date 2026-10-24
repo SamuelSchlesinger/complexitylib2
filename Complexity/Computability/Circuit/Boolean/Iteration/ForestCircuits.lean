@@ -39,7 +39,7 @@ square-root-size bound `O(optimizedBudget n c.size (2 ^ n))` (`forest_reachabili
 
 ## References
 
-* Adapted from `lean/Proofs/ForestCircuits.lean` in
+* Adapted from lean/Proofs/ForestCircuits.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

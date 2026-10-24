@@ -30,7 +30,7 @@ matching source; no uniqueness assumption is needed for this characterization.
 
 ## References
 
-* Adapts the sorted-broadcast argument in `MassProduction/Nonuniform/BroadcastCorrectness.lean`
+* Adapts the sorted-broadcast argument in MassProduction/Nonuniform/BroadcastCorrectness.lean
   from [S. Schlesinger,
   *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/

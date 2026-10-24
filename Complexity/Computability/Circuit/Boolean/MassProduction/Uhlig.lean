@@ -63,9 +63,9 @@ constructor.
 * [D. Uhlig, *Networks computing Boolean functions for multiple input values*][Uhlig1992].
 * [I. Wegener, *The Complexity of Boolean Functions*][Wegener1987], Theorem 10.2.3.
 * [O. B. Lupanov, *On a Method of Circuit Synthesis*][Lupanov1958], for single copies.
-* Simplifies `MassProduction/UhligRecursion.lean`, `MassProduction/UhligParameters.lean`,
-  `MassProduction/UhligAsymptoticBounds.lean`, `MassProduction/UhligTheorem.lean` and
-  `MassProduction/LupanovSynthesis.lean` in
+* Simplifies MassProduction/UhligRecursion.lean, MassProduction/UhligParameters.lean,
+  MassProduction/UhligAsymptoticBounds.lean, MassProduction/UhligTheorem.lean and
+  MassProduction/LupanovSynthesis.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

@@ -20,7 +20,8 @@ certificate `z`, it has a satisfying assignment encoding `z` exactly when `tm`, 
 Each family of clauses is first characterised semantically (`eval_initClauses`,
 `eval_readClauses`, `eval_stepClauses`, …). The uniqueness clauses (`eval_uniqueClauses`) are not
 needed for soundness; they make the satisfying assignments unique for each certificate
-(`CookLevin/Parsimonious.lean`), and completeness checks that the assignment read off the run
+(`Complexity/Computability/Complexity/CookLevin/Parsimonious.lean`), and completeness checks that
+the assignment read off the run
 satisfies them. Soundness then shows, by induction on time, that a
 satisfying assignment describes the run on the certificate it encodes (`Agrees`,
 `agrees_of_eval_tableau`):

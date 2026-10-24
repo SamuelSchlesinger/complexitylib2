@@ -41,9 +41,9 @@ Evaluation does not establish admissibility or check untouched memory for word b
 using representation `hr` and admissibility `hv`. Argument delivery and decoding remain
 uncharged. Whole-client bounds remain separate resource proofs.
 
-See the checked examples in `ComplexityTests/WordRAMDynamic.lean` for typed stack observations,
+See the checked examples in ComplexityTests/WordRAMDynamic.lean for typed stack observations,
 the seven-body/eight-charged push and certificate lifting, and
-`ComplexityTests/WordRAMPrefixSums.lean` for repeated calls retaining persistent data.
+ComplexityTests/WordRAMPrefixSums.lean for repeated calls retaining persistent data.
 
 ## Main definitions
 

@@ -25,7 +25,7 @@ actually halt within the sum of their bounds; every instruction of preparation i
 
 ## References
 
-Adapted from `Computability/Probabilistic/Realization/Composition.lean` on the cslib `crypto`
+Adapted from Computability/Probabilistic/Realization/Composition.lean on the cslib `crypto`
 branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared sequencing compiler.
 -/
 

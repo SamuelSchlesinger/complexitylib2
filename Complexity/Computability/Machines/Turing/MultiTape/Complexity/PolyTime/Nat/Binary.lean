@@ -24,7 +24,8 @@ import Mathlib.Data.Nat.Bitwise
 
 Polynomial-time certificates for arithmetic on the binary encoding `Turing.MultiTapeTM.encNat`
 (digits least significant first), the binary counterparts of the unary certificates in
-`PolyTime/Nat.lean`. Addition and multiplication are Christian Reitwiessner's degree-bounded
+`Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat.lean`. Addition and
+multiplication are Christian Reitwiessner's degree-bounded
 machines (`Turing.MultiTapeTM.computableTidilyInDegree_add`,
 `Turing.MultiTapeTM.computableTidilyInDegree_mul`). A list is summed by a left fold whose
 accumulator grows by at most one digit more than the length of the element added. Powers of two are

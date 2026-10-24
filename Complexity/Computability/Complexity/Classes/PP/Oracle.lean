@@ -27,7 +27,8 @@ second; more than half accept exactly when the first count is larger. This proof
 existing counting identities, and assumes no relativized counting-closure theorem.
 
 These are verifier classes. Equivalence with probabilistic oracle machines is separate.
-AWPP lowness for this oracle-verifier model is proved in `AWPP/Lowness.lean`.
+AWPP lowness for this oracle-verifier model is proved in
+`Complexity/Computability/Complexity/Classes/AWPP/Lowness.lean`.
 
 ## Main definitions
 

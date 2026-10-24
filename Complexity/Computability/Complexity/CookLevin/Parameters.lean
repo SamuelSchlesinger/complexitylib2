@@ -16,13 +16,16 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bi
 /-!
 # Computing the Cook–Levin parameters
 
-The reduction in `CookLevin/Reduction.lean` builds a tableau from a framed input prefix, a
+The reduction in `Complexity/Computability/Complexity/CookLevin/Reduction.lean` builds a tableau
+from a framed input prefix, a
 certificate length and a time bound. This module certifies their joint computation, with the two
 bounds in unary so that enumerating times and tape positions has polynomial cost. The certificate
 polynomial and the constants in the verifier's time bound are fixed parameters.
 
-The clause and variable-numbering certificates in `CookLevin/Clauses.lean` and
-`CookLevin/Encoding.lean` compose with this result in `CookLevin/PolyTime.lean`.
+The clause and variable-numbering certificates in
+`Complexity/Computability/Complexity/CookLevin/Clauses.lean` and
+`Complexity/Computability/Complexity/CookLevin/Encoding.lean` compose with this result in
+`Complexity/Computability/Complexity/CookLevin/PolyTime.lean`.
 
 ## Main results
 

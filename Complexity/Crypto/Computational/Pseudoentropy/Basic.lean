@@ -46,7 +46,7 @@ strict PPT sampler's fair-bit tape as a uniform seed, including unused randomnes
   Any Hardness*][Holenstein2006], Definitions 3 and 4. We use a sampler presentation and uniform
   strict PPT predictors. Signed correlation is twice success probability minus one.
 
-Adapted from `Crypto/Computational/Pseudoentropy/Basic.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Pseudoentropy/Basic.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared nonnegative game API and tidy machine
 certificates. Existence of a pair with a positive gap is a separate security theorem.
 -/

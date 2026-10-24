@@ -26,8 +26,8 @@ Consequently an eventual rational-rate bound extends to every positive input len
 
 ## References
 
-* Adapted from `MassProduction/InputSplit.lean`, `MassProduction/Growth.lean` and
-  `MassProduction/Padding.lean` in
+* Adapted from MassProduction/InputSplit.lean, MassProduction/Growth.lean and
+  MassProduction/Padding.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

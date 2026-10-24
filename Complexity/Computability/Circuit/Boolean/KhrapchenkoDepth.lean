@@ -22,7 +22,8 @@ leaves has formula depth at least `⌈log₂ L⌉`, with negations free
 `⌈log₂ k (n + 1 - k)⌉` (`clog_mul_le_formulaDepth_threshold`) [Khrapchenko1971b].
 
 For parity this is tight up to one: Yablonskii's balanced formulas
-(`Circuit/Boolean/Yablonskii.lean`) give the upper bound `2 ⌈log₂ n⌉`. In particular the parity of
+(`Complexity/Computability/Circuit/Boolean/Yablonskii.lean`) give the upper bound `2 ⌈log₂ n⌉`. In
+particular the parity of
 `2 ^ k` bits has formula depth exactly `2 k` (`formulaDepth_parity_two_pow`), and for
 `0 < r ≤ 2 ^ k` the parity of `2 ^ k + r` bits has formula depth `2 k + 1` or `2 k + 2`.
 

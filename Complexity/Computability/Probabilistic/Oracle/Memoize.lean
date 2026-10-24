@@ -32,7 +32,7 @@ oracle computation cannot be run speculatively: a stateful external oracle obser
 
 ## References
 
-Adapts `Computability/Probabilistic/Memoize.lean` on the cslib `crypto` branch at
+Adapts Computability/Probabilistic/Memoize.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` to oracle computations.
 -/
 

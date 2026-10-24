@@ -41,7 +41,7 @@ No measurable-space choices appear in the client-facing statements.
   These bounded-score estimates support repetition in entropy extraction; they do not assert
   the full smoothed conditional-entropy statement of that proposition.
 
-Adapted from `Probability/Concentration.lean` on the cslib `crypto` branch at
+Adapted from Probability/Concentration.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, reusing Mathlib's sub-Gaussian estimates.
 
 -/

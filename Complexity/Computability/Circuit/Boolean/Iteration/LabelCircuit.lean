@@ -49,7 +49,7 @@ them.
 
 ## References
 
-* Adapted from `lean/Proofs/LabelCircuits.lean` in
+* Adapted from lean/Proofs/LabelCircuits.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions], whose
   bounds have the constants `10040000` and `30120000`. The dictionary here is the library's

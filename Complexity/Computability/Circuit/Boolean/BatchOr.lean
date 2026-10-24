@@ -41,7 +41,7 @@ and cannot introduce a spurious source. These gate bounds do not certify constru
 
 ## References
 
-Simplifies `MassProduction/Nonuniform/BatchOrCircuit.lean` in
+Simplifies MassProduction/Nonuniform/BatchOrCircuit.lean in
 [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

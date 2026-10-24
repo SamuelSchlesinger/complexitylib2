@@ -43,7 +43,7 @@ The finite bounds also allow independent saved coins, reused across every decode
   The hash family here is a public Boolean matrix; the suffix-guessing argument is the one
   developed in `Pseudoentropy.Reduction` and `Probability.Guessing`.
 
-Adapted from `Crypto/Computational/Pseudoentropy/HashReduction.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Pseudoentropy/HashReduction.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, reusing the pinned finite-PMF distance
 and shared decoder.
 -/

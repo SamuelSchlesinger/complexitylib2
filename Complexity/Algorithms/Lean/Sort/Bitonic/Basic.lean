@@ -37,8 +37,8 @@ not a stable sorting algorithm.
 ## References
 
 * [K. E. Batcher, *Sorting Networks and Their Applications*][Batcher1968].
-* Adapted from `MassProduction/SortingSemantics/Defs.lean` and
-  `MassProduction/SortingSemantics/Internal.lean` in
+* Adapted from MassProduction/SortingSemantics/Defs.lean and
+  MassProduction/SortingSemantics/Internal.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

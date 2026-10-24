@@ -51,7 +51,7 @@ circuits do; nothing here bounds the time to construct them.
 
 ## References
 
-* Adapted from `lean/Proofs/{VariableTime,BinaryNumbers}.lean` in
+* Adapted from lean/Proofs/{VariableTime,BinaryNumbers}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

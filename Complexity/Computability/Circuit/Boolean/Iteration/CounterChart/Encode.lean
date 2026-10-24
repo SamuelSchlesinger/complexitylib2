@@ -30,7 +30,7 @@ enumeration of payload states or an assumed constant-time table primitive.
 
 ## References
 
-* Adapted from `lean/Proofs/CounterChart.lean` at revision `c4cfa198` of
+* Adapted from lean/Proofs/CounterChart.lean at revision `c4cfa198` of
   [S. Schlesinger, *Square-root circuit bounds for iterated functions*]
   [Schlesinger2026IteratedFunctions].
 -/

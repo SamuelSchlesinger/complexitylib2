@@ -31,7 +31,7 @@ with exactly the same arbitrary weighted cost.
 
 ## References
 
-* Adapted from `LowerBound/Fusion/SumOfTerms/Waring/Translation.lean` in
+* Adapted from LowerBound/Fusion/SumOfTerms/Waring/Translation.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
   This uses the generic formula compiler instead of a separate arithmetic expression language.
 -/

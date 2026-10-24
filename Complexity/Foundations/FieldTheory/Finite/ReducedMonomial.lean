@@ -33,7 +33,7 @@ combination of such monomials that vanishes at every point has zero coefficients
 
 ## References
 
-* Adapted from `MassProduction/HighRate/Independence.lean` in
+* Adapted from MassProduction/HighRate/Independence.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

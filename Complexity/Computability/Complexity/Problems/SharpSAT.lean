@@ -24,7 +24,7 @@ import Mathlib.Data.List.GetD
 over variables numbered by `ℕ`: the assignments of the variables occurring in `φ` that satisfy it
 (`Cslib.Logic.PL.CNF.modelCount`). Valiant showed that `#SAT` is complete for `#P` under
 parsimonious reductions [Valiant][Valiant1979], [Arora and Barak, Section 17.3][AroraBarak09];
-completeness is proved in `CookLevin/Counting.lean`.
+completeness is proved in `Complexity/Computability/Complexity/CookLevin/Counting.lean`.
 
 `#SAT` belongs to `#P` (`Cslib.Complexity.SharpSAT.mem_SharpP`). The verifier of `SAT`
 (`Cslib.Complexity.SAT.verifier`) reads the value of each variable at the position of its first

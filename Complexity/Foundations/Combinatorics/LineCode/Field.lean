@@ -36,7 +36,7 @@ and coordinates in a basis turn addition in `K` into coordinatewise exclusive or
 
 ## References
 
-* Adapted from `MassProduction/BinaryField.lean` in
+* Adapted from MassProduction/BinaryField.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

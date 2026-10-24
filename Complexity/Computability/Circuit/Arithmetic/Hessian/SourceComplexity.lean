@@ -32,7 +32,7 @@ When raw variables are supplied alongside helpers, only the helper Hessians need
 
 ## References
 
-* Ported from `LowerBound/Fusion/Arithmetic/Interaction/Hessian/Relative.lean` in
+* Ported from LowerBound/Fusion/Arithmetic/Interaction/Hessian/Relative.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

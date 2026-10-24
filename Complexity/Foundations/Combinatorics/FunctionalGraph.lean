@@ -46,7 +46,7 @@ The state type may live in any universe. Finiteness is required only where state
 
 ## References
 
-* Adapted from `lean/Proofs/{Reconstruction,FiniteOrbit,OrbitStructure}.lean` in
+* Adapted from lean/Proofs/{Reconstruction,FiniteOrbit,OrbitStructure}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

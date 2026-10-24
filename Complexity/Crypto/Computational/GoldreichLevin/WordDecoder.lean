@@ -42,7 +42,7 @@ subsequent reduction; this module certifies the deterministic decoder.
 * [O. Goldreich, L. Levin, *A Hard-Core Predicate for All One-Way Functions*][GoldreichLevin1989]
 * [L. Trevisan, *CS276 Lecture 12: Goldreich–Levin*][Trevisan2009GL]
 
-Adapted from `Crypto/Computational/GoldreichLevin/WordDecoder.lean` on the cslib `crypto` branch
+Adapted from Crypto/Computational/GoldreichLevin/WordDecoder.lean on the cslib `crypto` branch
 at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 

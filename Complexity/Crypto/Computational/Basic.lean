@@ -42,7 +42,7 @@ distributions. Both presentations use the shared `Game.Indistinguishable` defini
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Chapter 9.
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023], Section 3.2.
 
-Adapted from `Crypto/Computational/Basic.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Basic.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, with arbitrary ensemble laws kept outside the program
 syntax and the current upstream nonnegative game API.
 -/

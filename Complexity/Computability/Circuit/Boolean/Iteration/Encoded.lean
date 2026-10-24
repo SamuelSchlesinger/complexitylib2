@@ -29,7 +29,7 @@ After a burn-in of `d` steps, computed by a separate circuit, every orbit lies i
 
 ## References
 
-* Adapted from `lean/Proofs/Extensions.lean` in
+* Adapted from lean/Proofs/Extensions.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

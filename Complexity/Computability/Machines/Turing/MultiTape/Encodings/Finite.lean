@@ -35,7 +35,7 @@ computable; generic `[Finite α]` parameters use `Turing.MultiTapeTM.encFinite`.
 
 ## References
 
-Adapts `Computability/Probabilistic/Finite.lean` on the cslib `crypto` branch at
+Adapts Computability/Probabilistic/Finite.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing unary encoding.
 -/
 

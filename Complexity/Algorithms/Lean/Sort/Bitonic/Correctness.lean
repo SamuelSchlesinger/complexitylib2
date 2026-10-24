@@ -23,7 +23,7 @@ complete records. Sorting the two halves in opposite directions supplies the bit
 
 ## References
 
-* Adapted from `MassProduction/SortingSemantics/Internal.lean` in
+* Adapted from MassProduction/SortingSemantics/Internal.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

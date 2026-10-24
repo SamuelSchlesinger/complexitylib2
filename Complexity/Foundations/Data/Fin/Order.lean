@@ -23,7 +23,7 @@ The value type needs only a partial order.
 
 ## References
 
-Adapted from `MassProduction/Nonuniform/AdjacentDuplicates.lean` in
+Adapted from MassProduction/Nonuniform/AdjacentDuplicates.lean in
 [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

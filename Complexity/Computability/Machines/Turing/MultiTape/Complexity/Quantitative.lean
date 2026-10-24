@@ -44,7 +44,7 @@ Framed-list and option rules infer the payload encoding from the representation 
 ## References
 
 Uses Christian Reitwiessner's degree calculus and streaming backend; see the source markers in
-`Degree.lean` and `Encodings/StreamFold.lean`.
+`Degree.lean` and `Complexity/Computability/Machines/Turing/MultiTape/Encodings/StreamFold.lean`.
 -/
 
 @[expose] public section

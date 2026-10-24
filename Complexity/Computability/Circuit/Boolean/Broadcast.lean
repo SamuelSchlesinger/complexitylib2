@@ -46,7 +46,7 @@ The constructor is executable; its gate bounds do not certify the constructor's 
 
 ## References
 
-* Adapts `MassProduction/Nonuniform/{BroadcastCircuit,BroadcastCorrectness,BroadcastRecords}.lean`
+* Adapts MassProduction/Nonuniform/{BroadcastCircuit,BroadcastCorrectness,BroadcastRecords}.lean
   from [S. Schlesinger,
   *Boolean circuit mass production formalization*][Schlesinger2026MassProduction],
   sharing the adjacent-key tests across value bits.

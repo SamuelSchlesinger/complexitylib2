@@ -41,8 +41,8 @@ certify the running time of any construction.
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/FlagSelection.lean` and
-  `MassProduction/Nonuniform/OrderedPermutation.lean` in
+* Adapted from MassProduction/Nonuniform/FlagSelection.lean and
+  MassProduction/Nonuniform/OrderedPermutation.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

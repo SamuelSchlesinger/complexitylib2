@@ -34,7 +34,7 @@ circuits.
 
 ## References
 
-* Adapted from `lean/Proofs/NavigationFeatures.lean` in
+* Adapted from lean/Proofs/NavigationFeatures.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

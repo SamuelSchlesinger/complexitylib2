@@ -17,7 +17,8 @@ import Mathlib.Tactic.Zify
 
 Write `n = 2 ^ k + r` with `r ≤ 2 ^ k`. Splitting the bits into blocks of `2 ^ (k - 1) + ⌊r / 2⌋`
 and `2 ^ (k - 1) + ⌈r / 2⌉` bits and combining formulas for their parities by
-`x ⊕ y = (x ∧ ¬y) ∨ (¬x ∧ y)` gives a De Morgan formula (see `Circuit/Boolean/Formula.lean`) for
+`x ⊕ y = (x ∧ ¬y) ∨ (¬x ∧ y)` gives a De Morgan formula (see
+`Complexity/Computability/Circuit/Boolean/Formula.lean`) for
 the parity of `n` bits of leaf size at most `2 ^ k (2 ^ k + 3 r)` [Yablonskii1954], [Jukna2012]
 (`exists_formula_parity_two_pow_add`). The bound is exactly additive along the recursion:
 `2 m (2 m + 3 r) = 2 · m (m + 3 s) + 2 · m (m + 3 t)` for `m = 2 ^ (k - 1)`, `s = ⌊r / 2⌋` and

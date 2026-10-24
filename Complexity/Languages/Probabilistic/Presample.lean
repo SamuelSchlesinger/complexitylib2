@@ -38,7 +38,7 @@ case `ProbOracleComp.IsQueryBounded.eval_presample`.
 
 ## References
 
-Adapted from `Languages/Probabilistic/Presample.lean` on the cslib `crypto` branch at
+Adapted from Languages/Probabilistic/Presample.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the typed sum of private and external calls.
 -/
 

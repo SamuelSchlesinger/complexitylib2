@@ -52,7 +52,7 @@ The circuit constructor is executable; the gate-count theorems do not certify it
 ## References
 
 * [K. E. Batcher, *Sorting Networks and Their Applications*][Batcher1968].
-* Adapted from `MassProduction/SortingNetwork.lean` and `MassProduction/SortingCorrectness.lean` in
+* Adapted from MassProduction/SortingNetwork.lean and MassProduction/SortingCorrectness.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

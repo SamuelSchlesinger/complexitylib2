@@ -35,7 +35,7 @@ the source program still has exactly the joint result/cache law of `memoize`.
 
 ## References
 
-Adapted from `Computability/Probabilistic/Memoize.lean` on the cslib `crypto` branch at
+Adapted from Computability/Probabilistic/Memoize.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, reusing the tidy calculus and captured-input rules.
 -/
 

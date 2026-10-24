@@ -32,7 +32,7 @@ label, including a precise account of empty lists and ties.
 ## References
 
 [Holenstein, Claim 2.16][Holenstein2005]. Adapted from
-`Crypto/Computational/Pseudoentropy/Boosting/Vote.lean` on the cslib `crypto` branch at
+Crypto/Computational/Pseudoentropy/Boosting/Vote.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, reusing the shared strict-majority operation.
 -/
 

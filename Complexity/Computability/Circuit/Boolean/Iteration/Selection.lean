@@ -37,7 +37,7 @@ all-pairs priority test.
 
 ## References
 
-* Adapted from `lean/Proofs/{Collisions,Selection}.lean` in
+* Adapted from lean/Proofs/{Collisions,Selection}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

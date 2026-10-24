@@ -39,8 +39,8 @@ used.
 
 ## References
 
-* Adapted from `MassProduction/HighRate/LineParity.lean`,
-  `MassProduction/HighRate/PolynomialSupport.lean` and `MassProduction/LowDegree.lean` in
+* Adapted from MassProduction/HighRate/LineParity.lean,
+  MassProduction/HighRate/PolynomialSupport.lean and MassProduction/LowDegree.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

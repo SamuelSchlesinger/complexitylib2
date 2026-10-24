@@ -78,7 +78,7 @@ polynomial in the total width whenever `2 ^ q` is (`affine_controller_polynomial
 
 ## References
 
-* Adapted from `lean/Proofs/{ControlledMaps,AffinePayload,AffineController}.lean` in
+* Adapted from lean/Proofs/{ControlledMaps,AffinePayload,AffineController}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

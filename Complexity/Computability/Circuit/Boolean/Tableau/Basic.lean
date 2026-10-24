@@ -29,7 +29,7 @@ share the `2 T + 1` *columns* `c`: column `c` holds the input head at position `
 heads and work cells at `c - T`. After two constant gates (`false` at wire `n`, `true` at wire
 `n + 1`), the circuit has one block of gates for each time `t ≤ T`. Block `0` consists of
 constants describing the initial configuration. Block `t + 1` reads block `t` and has four
-regions (`Tableau/Layout.lean`):
+regions (`Complexity/Computability/Circuit/Boolean/Tableau/Layout.lean`):
 
 * the *scan*, column by column: the symbols under the heads, as disjunctions accumulated across
   the columns (`Cslib.Circuits.Boolean.Tableau.ScanLoc`), and the negated head positions;
@@ -47,7 +47,8 @@ relative to its block and column, and a reference is resolved to a wire number b
 (`Cslib.Circuits.Boolean.Tableau.Ref.resolve`).
 
 The circuit is well formed (`Cslib.Circuits.Boolean.Tableau.isCodeFrom_gates`): every gate reads
-only inputs and earlier gates. Its correctness is proved in `Tableau/Correct.lean`.
+only inputs and earlier gates. Its correctness is proved in
+`Complexity/Computability/Circuit/Boolean/Tableau/Correct.lean`.
 
 ## Main definitions
 

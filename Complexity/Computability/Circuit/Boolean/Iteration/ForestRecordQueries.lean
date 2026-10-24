@@ -35,7 +35,7 @@ shared dictionary lookups have returned candidate mark and compressed-edge recor
 
 ## References
 
-* Adapted from `lean/Proofs/ForestRecordQueries.lean` in
+* Adapted from lean/Proofs/ForestRecordQueries.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

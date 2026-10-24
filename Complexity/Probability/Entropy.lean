@@ -45,7 +45,7 @@ entropy identity alone makes no claim about computational indistinguishability.
   Any Hardness*][Holenstein2006], Sections 3.3 and 5.
   Section 5 uses `H(g(W)) + H(P(W) | g(W)) + H(W | g(W), P(W)) = H(W)` to count output bits.
 
-Adapted from `Probability/Entropy.lean` on the cslib `crypto` branch at
+Adapted from Probability/Entropy.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared PMF and conditioning APIs.
 -/
 

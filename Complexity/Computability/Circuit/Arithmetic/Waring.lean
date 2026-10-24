@@ -43,8 +43,8 @@ unrestricted arithmetic circuits. All computation premises are formal polynomial
 
 ## References
 
-* Ported from `LowerBound/Fusion/SumOfTerms/Waring.lean`, its `Rectangular.lean` extension,
-  and `Applications/Waring.lean` in [S. Schlesinger, *Algebraic circuit formalizations in
+* Ported from LowerBound/Fusion/SumOfTerms/Waring.lean, its `Rectangular.lean` extension,
+  and Applications/Waring.lean in [S. Schlesinger, *Algebraic circuit formalizations in
   Complexitylib*][Schlesinger2026Algebraic].
 * [J. M. Landsberg and Z. Teitler, *On the ranks and border ranks of symmetric
   tensors*][LandsbergTeitler2009], equation (1) and Remark 6.5. We use a squarefree restriction

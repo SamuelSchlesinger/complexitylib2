@@ -25,7 +25,7 @@ directions are existential; only the listed points are outputs.
 
 ## References
 
-* Adapted from the scheduler contracts of `MassProduction/Nonuniform/SchedulerCircuit.lean` in
+* Adapted from the scheduler contracts of MassProduction/Nonuniform/SchedulerCircuit.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

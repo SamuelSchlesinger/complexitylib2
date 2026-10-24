@@ -29,7 +29,7 @@ state and unused suffix; only the separate distribution law forgets that suffix.
 
 ## References
 
-Adapted from `Computability/Probabilistic/Presample.lean` on the cslib `crypto` branch at
+Adapted from Computability/Probabilistic/Presample.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the common stateful substitution theorem.
 -/
 

@@ -23,7 +23,7 @@ requests. The canonical transcript records the actual oracle reply at query inst
 
 The `replay*` declarations here replay supplied oracle replies with the coin fixed to `false`.
 The saved-coin controller `Turing.MultiTapePTM.replay` in
-`Computability/Machines/Turing/MultiTape/Probabilistic/Replay.lean` instead replays
+`Complexity/Computability/Machines/Turing/MultiTape/Probabilistic/Replay.lean` instead replays
 supplied random coins for a closed machine using an additional work tape.
 
 ## Main definitions

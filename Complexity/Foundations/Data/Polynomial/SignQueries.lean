@@ -50,7 +50,7 @@ time or space bound for sign determination.
 
 ## References
 
-Adapted from `LeanCanny/Algebra/ScaledSignQueries.lean` in [LeanCanny2026].
+Adapted from LeanCanny/Algebra/ScaledSignQueries.lean in [LeanCanny2026].
 -/
 
 @[expose] public section

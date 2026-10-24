@@ -21,7 +21,8 @@ The converse direction of Fagin's theorem [Fagin, Theorem 6][Fagin1974],
 isomorphism-closed class `K` of finite relational structures over a language `L` with a finite
 vocabulary `v : Vocabulary L`, if `v.queryLanguage K ∈ NP encStructure`, then `K` is existential
 second-order definable (`Cslib.Logic.ESO.Definable.of_queryLanguage_mem_NP`). Combined with
-`Cslib.Logic.ESO.Definable.queryLanguage_mem_NP` from `Fagin/Verifier.lean`, this gives Fagin's
+`Cslib.Logic.ESO.Definable.queryLanguage_mem_NP` from
+`Complexity/Computability/Complexity/Fagin/Verifier.lean`, this gives Fagin's
 characterization `Cslib.Logic.ESO.definable_iff_queryLanguage_mem_NP`
 (`Cslib.Logic.ESO.Definable K ↔ v.queryLanguage K ∈ NP encStructure`).
 
@@ -39,7 +40,8 @@ On `Fin B` equipped with `v.powerStructure a B`, we conjoin `v.layoutESOSentence
 `v.npPowerSentence tm : ESO.Sentence v.powerLanguage`. Pulling this sentence back to `(M, <)` along
 the first-order interpretation `v.powerInterpretation k har` and existentially quantifying the
 linear order `<` via `Cslib.Logic.ESO.Definable.of_powerLanguage` (which handles cardinalities
-`0` and `1` by finite truth-table disjunction in `Fagin/Small.lean`) yields the defining ESO
+`0` and `1` by finite truth-table disjunction in
+`Complexity/Computability/Complexity/Fagin/Small.lean`) yields the defining ESO
 sentence over `L`.
 
 ## Main definitions

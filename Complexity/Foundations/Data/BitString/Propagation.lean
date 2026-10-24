@@ -32,7 +32,7 @@ is irrelevant, including the first link.
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/{Propagation,SortedPropagation}.lean` in
+* Adapted from MassProduction/Nonuniform/{Propagation,SortedPropagation}.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

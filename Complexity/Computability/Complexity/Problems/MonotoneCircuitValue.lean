@@ -27,7 +27,7 @@ problem is an encoded instance of the circuit value problem
 The problem reduces to the circuit value problem in logarithmic space, indeed by the identity on
 encodings (`Cslib.Complexity.MonotoneCircuitValue.logSpaceReducible_circuitValue`), and hence is in
 `P` (`Cslib.Complexity.MonotoneCircuitValue.mem_P`). It is `P`-complete under logarithmic-space
-reductions (`MonotoneCircuitValue/Completeness.lean`).
+reductions (`Complexity/Computability/Complexity/Problems/MonotoneCircuitValue/Completeness.lean`).
 
 ## Main definitions
 

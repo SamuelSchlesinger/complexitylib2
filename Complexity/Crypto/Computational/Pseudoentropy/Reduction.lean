@@ -41,7 +41,7 @@ points, averaging over hash lengths and images, and a uniform PPT implementation
   We use decoder success as the nonnegative game score in Games 2--5, instead of maximizing
   signed prediction advantage over all preimages. This gives the same kind of polynomial loss.
 
-Adapted from `Crypto/Computational/Pseudoentropy/Reduction.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Pseudoentropy/Reduction.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, reusing the pinned finite-PMF distance
 and shared decoder.
 -/
