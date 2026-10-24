@@ -11,6 +11,7 @@ import shutil
 import subprocess
 from urllib.parse import quote
 import xml.etree.ElementTree as ET
+import zlib
 
 import abstract_to_tex as render
 from proof_lengths import command_starts, signature_end
@@ -39,7 +40,7 @@ PREAMBLE = r"""\documentclass[11pt]{article}
 \usepackage{libertine}
 \usepackage[libertine]{newtxmath}
 \usepackage[scaled=0.96]{zi4}
-\usepackage[margin=0.9in]{geometry}
+\usepackage[margin=0.9in,bottom=1.1in,footskip=44pt]{geometry}
 \usepackage{microtype,enumitem,xcolor,tcolorbox,xurl,hyperref,fancyhdr}
 \tcbuselibrary{breakable,skins}
 \definecolor{leanblue}{RGB}{41,110,166}
@@ -49,26 +50,33 @@ PREAMBLE = r"""\documentclass[11pt]{article}
 \newtcolorbox{leanbox}{breakable,enhanced,colback=black!3,colframe=black!45,
   boxrule=0.5pt,arc=2pt,left=7pt,right=7pt,top=5pt,bottom=5pt,
   before skip=7pt,after skip=9pt,leandeclarationmeasure}
-% Measure a declaration's prose and code at their actual display width. Keep the pair
-% together only below 35% of the text height; larger declarations retain breakable boxes.
+% Measure a declaration's prose and code at their actual display width. Bottom-align the
+% minipage so TeX's page builder counts its full height against \pagegoal instead of letting
+% half the box hang into the footer as depth. Keep the pair together below 35% of the text
+% height; larger declarations retain breakable boxes.
 % environ is already required by tcolorbox. These bodies contain display text, not counters.
 \newsavebox{\leandeclarationbox}
 \NewEnviron{leandeclaration}{%
   \par
   \sbox{\leandeclarationbox}{%
-    \begin{minipage}{\linewidth}
+    \begin{minipage}[b]{\linewidth}
     \setlength{\parskip}{0.45em}
     \tcbset{leandeclarationmeasure/.style={unbreakable}}%
     \BODY
     \end{minipage}}%
   \ifdim\dimexpr\ht\leandeclarationbox+\dp\leandeclarationbox\relax<0.35\textheight
-    \noindent\usebox{\leandeclarationbox}\par
+    \par\addvspace{5pt}\noindent\usebox{\leandeclarationbox}\par\addvspace{6pt}
   \else
-    \BODY
+    \ifdim\pagetotal>0.80\textheight
+      \newpage
+    \fi
+    {\interlinepenalty=10000\BODY\par}%
   \fi}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.45em}
 \setlength{\emergencystretch}{2em}
+\widowpenalty=10000
+\clubpenalty=10000
 \setlist[itemize]{leftmargin=1.4em,itemsep=2pt,topsep=3pt}
 \pagestyle{fancy}
 \fancyhf{}
@@ -276,25 +284,27 @@ def render_sections(sections, selected=None):
     """Display all definitions, and either all theorem signatures or an explicit selection."""
     lines, displayed = [], {}
     for item in sections:
-        item_lines = []
         code, shown = displayed_code(item, selected)
         displayed.update(shown)
         if item["kind"] == "decl" and item["code"].strip() and not code:
             continue
         heading = render.section_heading(item)
+        prose_source = heading.group(2) if heading else item["doc"]
+        paragraphs = render.render_tex_paragraphs(prose_source)
         if heading:
-            item_lines.extend([r"\subsection*{" + render.escape_tex_prose(heading.group(1).strip()) + "}",
-                               render.escape_tex_prose(heading.group(2).strip())])
-        else:
-            item_lines.append(render.escape_tex_prose(item["doc"]))
+            lines.append(r"\subsection*{" + render.escape_tex_prose(heading.group(1).strip()) + "}")
         if code:
             code_lines = [highlighted_line(line) or "~" for line in code.splitlines()]
-            item_lines.extend([r"\begin{leanbox}\small\ttfamily\raggedright\noindent",
-                               " \\\\\n".join(code_lines), r"\par\end{leanbox}"])
-        if item["kind"] == "decl" and code:
-            lines.extend([r"\begin{leandeclaration}", *item_lines, r"\end{leandeclaration}"])
+            box = [r"\begin{leanbox}\small\ttfamily\raggedright\noindent",
+                   " \\\\\n".join(code_lines), r"\par\end{leanbox}"]
+            if paragraphs:
+                lines.extend(paragraphs[:-1])
+                lines.extend([r"\begin{leandeclaration}", paragraphs[-1], *box,
+                              r"\end{leandeclaration}"])
+            else:
+                lines.extend(box)
         else:
-            lines.extend(item_lines)
+            lines.extend(paragraphs)
     return "\n\n".join(lines), displayed
 
 
@@ -392,6 +402,58 @@ def document(body):
     return PREAMBLE + style_credit() + body + "\n\\end{document}\n"
 
 
+def page_drawn_bounds(pdf_path, page_heights):
+    """Extract bounding boxes of drawn vector paths (such as code-box borders) per page."""
+    pdf_bytes = Path(pdf_path).read_bytes()
+    streams = []
+    for match in re.finditer(rb"<<([^>]*?)>>\s*stream(?:\r\n|\n)", pdf_bytes):
+        header = match.group(1)
+        if b"/Length1" in header or b"/Subtype" in header or b"/Type" in header:
+            continue
+        length = re.search(rb"/Length\s+(\d+)", header)
+        if not length:
+            continue
+        raw = pdf_bytes[match.end():match.end() + int(length.group(1))]
+        data = zlib.decompress(raw).decode("latin1")
+        if "BT" in data and "ET" in data:
+            streams.append(data)
+    if len(streams) != len(page_heights):
+        raise ValueError(f"Expected {len(page_heights)} page streams in {Path(pdf_path).name}, "
+                         f"found {len(streams)}")
+    pages = []
+    for data, page_height in zip(streams, page_heights):
+        stack, tx, ty, pts, boxes = [(0.0, 0.0)], 0.0, 0.0, [], []
+        for line in data.splitlines():
+            s = line.strip()
+            if s == "q":
+                stack.append((tx, ty))
+            elif s == "Q":
+                tx, ty = stack.pop()
+            elif s.endswith(" cm"):
+                parts = [float(x) for x in s[:-3].split()]
+                if len(parts) == 6:
+                    tx += parts[4]
+                    ty += parts[5]
+            elif s.endswith((" m", " l")):
+                vals = [float(v) for v in s[:-2].split()]
+                if len(vals) == 2:
+                    pts.append((tx + vals[0], page_height - (ty + vals[1])))
+            elif s.endswith(" c"):
+                vals = [float(v) for v in s[:-2].split()]
+                if len(vals) == 6:
+                    for i in range(0, 6, 2):
+                        pts.append((tx + vals[i], page_height - (ty + vals[i + 1])))
+            elif s in ("f", "S", "B", "f*", "B*"):
+                if pts:
+                    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+                    boxes.append((min(xs), min(ys), max(xs), max(ys)))
+                    pts = []
+            elif s == "n":
+                pts = []
+        pages.append(boxes)
+    return pages
+
+
 def build_pdf(tex_path):
     command = ["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error",
                "-no-shell-escape", tex_path.name]
@@ -409,12 +471,34 @@ def build_pdf(tex_path):
     pages = ET.parse(bounds).getroot().findall(".//{*}page")
     if not pages:
         raise ValueError(f"No rendered pages in {pdf.name}")
-    for number, page in enumerate(pages, 1):
+    heights = [float(page.attrib["height"]) for page in pages]
+    drawn_pages = page_drawn_bounds(pdf, heights)
+    for number, (page, boxes) in enumerate(zip(pages, drawn_pages), 1):
         width, height = float(page.attrib["width"]), float(page.attrib["height"])
-        for word in page.findall(".//{*}word"):
-            if (float(word.attrib["xMin"]) < 24 or float(word.attrib["xMax"]) > width - 24
-                    or float(word.attrib["yMin"]) < 18 or float(word.attrib["yMax"]) > height - 18):
+        words = page.findall(".//{*}word")
+        footer_indices = [
+            index for index, word in enumerate(words)
+            if word.text == "Theorem" and index + 1 < len(words)
+            and words[index + 1].text == "and" and float(word.attrib["yMin"]) > height - 80
+        ]
+        footer_top = float(words[footer_indices[0]].attrib["yMin"]) if footer_indices else None
+        footer_words = set(words[footer_indices[0]:footer_indices[0] + 36]) if footer_indices else set()
+        for word in words:
+            x_min, x_max = float(word.attrib["xMin"]), float(word.attrib["xMax"])
+            y_min, y_max = float(word.attrib["yMin"]), float(word.attrib["yMax"])
+            if x_min < 24 or x_max > width - 24 or y_min < 18 or y_max > height - 18:
                 raise ValueError(f"Text clips page margins in {pdf.name}, page {number}: {word.text!r}")
+            if footer_top is not None and word not in footer_words and footer_top - y_max < 12:
+                raise ValueError(
+                    f"Body text encroaches on provenance footer in {pdf.name}, page {number}: "
+                    f"{word.text!r} (yMax={y_max:.2f}, footer={footer_top:.2f})")
+        for x_min, y_min, x_max, y_max in boxes:
+            if x_min < 24 or x_max > width - 24 or y_min < 18 or y_max > height - 18:
+                raise ValueError(f"Code box clips page margins in {pdf.name}, page {number}")
+            if footer_top is not None and footer_top - y_max < 12:
+                raise ValueError(
+                    f"Code box encroaches on provenance footer in {pdf.name}, page {number} "
+                    f"(yMax={y_max:.2f}, footer={footer_top:.2f})")
     return pdf
 
 

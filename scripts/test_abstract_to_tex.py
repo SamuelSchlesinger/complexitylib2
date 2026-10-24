@@ -235,6 +235,33 @@ end Example
         self.assertEqual(abstract_to_tex.escape_tex_prose("[A title]\n[Reference2026]"),
                          r"A title {\footnotesize (Reference2026)}")
 
+    def test_render_tex_preserves_paragraph_boundaries_and_joins_wrapped_lines(self):
+        sample = (
+            "/-! # Title\n\nIntro.\n-/\n\nnamespace Foo\n\n"
+            "/-! ## Section heading\n\n"
+            "First section paragraph wrapped\nacross two source lines.\n\n"
+            "Second section paragraph with *wrapped\nemphasis* before code.\n-/\n"
+            "def sectionCode : Nat := 1\n\n"
+            "/-- Preliminaries paragraph.\n\n"
+            "**Bold lead.** Final explanatory paragraph wrapped\n"
+            "across two lines for the declaration. -/\n"
+            "theorem mainResult : sectionCode = 1 := rfl\n\n"
+            "end Foo\n"
+        )
+        title, intro, sections = abstract_to_tex.parse_abstract(sample)
+        rendered = abstract_to_tex.render_tex(title, intro, sections)
+        self.assertIn(
+            "First section paragraph wrapped across two source lines.\n\n"
+            r"Second section paragraph with \emph{wrapped emphasis} before code.",
+            rendered,
+        )
+        self.assertIn(
+            "Preliminaries paragraph.\n\n"
+            r"\textbf{Bold lead.} Final explanatory paragraph wrapped across two lines "
+            "for the declaration.",
+            rendered,
+        )
+
     def test_only_injectivity_helpers_are_elided(self):
         sample = (
             "def encX : X → List Bool := f\n\n"
