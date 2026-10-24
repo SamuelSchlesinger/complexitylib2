@@ -184,15 +184,15 @@ theorem _root_.Turing.MultiTapeTM.PairEncoding.computableInPolyTime_snd
 
 /-- Project the first entry of an ordinary framed pair. -/
 @[fun_prop]
-theorem fst {α β : Type u} (encA : α ↪ List Bool) (encB : β ↪ List Bool) :
-    ComputableInPolyTime (fun p : α × β => p.1) (encPair encA encB) encA :=
-  PairEncoding.computableInPolyTime_fst (enc₁ := encA) (enc₂ := encB) (enc := encPair encA encB)
+theorem fst {α β : Type u} (enc₁ : α ↪ List Bool) (enc₂ : β ↪ List Bool) :
+    ComputableInPolyTime (fun p : α × β => p.1) (encPair enc₁ enc₂) enc₁ :=
+  PairEncoding.computableInPolyTime_fst (enc₁ := enc₁) (enc₂ := enc₂) (enc := encPair enc₁ enc₂)
 
 /-- Project the second entry of an ordinary framed pair. -/
 @[fun_prop]
-theorem snd {α β : Type u} (encA : α ↪ List Bool) (encB : β ↪ List Bool) :
-    ComputableInPolyTime (fun p : α × β => p.2) (encPair encA encB) encB :=
-  PairEncoding.computableInPolyTime_snd (enc₁ := encA) (enc₂ := encB) (enc := encPair encA encB)
+theorem snd {α β : Type u} (enc₁ : α ↪ List Bool) (enc₂ : β ↪ List Bool) :
+    ComputableInPolyTime (fun p : α × β => p.2) (encPair enc₁ enc₂) enc₂ :=
+  PairEncoding.computableInPolyTime_snd (enc₁ := enc₁) (enc₂ := enc₂) (enc := encPair enc₁ enc₂)
 
 /-- Reuse the same realizing machine for an equal encoded output. -/
 theorem of_enc_eq {δ : Type*} {encD : δ ↪ List Bool} {f : α → β} {g : α → δ}
@@ -209,22 +209,20 @@ theorem polyBounded_length {f : α → β} (hf : ComputableInPolyTime f encIn en
 
 /-- Pair two computed outputs using the standard pair encoding. -/
 @[fun_prop]
-theorem prod {α β γ : Type u} {encIn : α ↪ List Bool} {encB : β ↪ List Bool}
-    {encC : γ ↪ List Bool} {f : α → β} {g : α → γ}
-    (hf : ComputableInPolyTime f encIn encB) (hg : ComputableInPolyTime g encIn encC) :
-    ComputableInPolyTime (fun a => (f a, g a)) encIn (encPair encB encC) := pair hf hg
+theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β₁ ↪ List Bool}
+    {enc₂ : β₂ ↪ List Bool} {f : α → β₁} {g : α → β₂}
+    (hf : ComputableInPolyTime f encIn enc₁) (hg : ComputableInPolyTime g encIn enc₂) :
+    ComputableInPolyTime (fun a => (f a, g a)) encIn (encPair enc₁ enc₂) := pair hf hg
 
-/-- Project the first entry after computing a pair; the pair fixes its encodings. -/
-theorem fst' {α β γ : Type u} {encIn : α ↪ List Bool} {encB : β ↪ List Bool}
-    {encC : γ ↪ List Bool} {f : α → β × γ}
-    (hf : ComputableInPolyTime f encIn (encPair encB encC)) :
-    ComputableInPolyTime (fun a => (f a).1) encIn encB := (fst encB encC).comp hf
+/-- Project the first entry after computing a pair; the input universe is independent. -/
+theorem fst' {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
+    {f : α → β₁ × β₂} (hf : ComputableInPolyTime f encIn (encPair enc₁ enc₂)) :
+    ComputableInPolyTime (fun a => (f a).1) encIn enc₁ := (fst enc₁ enc₂).comp hf
 
-/-- Project the second entry after computing a pair. -/
-theorem snd' {α β γ : Type u} {encIn : α ↪ List Bool} {encB : β ↪ List Bool}
-    {encC : γ ↪ List Bool} {f : α → β × γ}
-    (hf : ComputableInPolyTime f encIn (encPair encB encC)) :
-    ComputableInPolyTime (fun a => (f a).2) encIn encC := (snd encB encC).comp hf
+/-- Project the second entry after computing a pair; the input universe is independent. -/
+theorem snd' {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
+    {f : α → β₁ × β₂} (hf : ComputableInPolyTime f encIn (encPair enc₁ enc₂)) :
+    ComputableInPolyTime (fun a => (f a).2) encIn enc₂ := (snd enc₁ enc₂).comp hf
 
 /-- Boolean conjunction on its fixed finite input domain. -/
 @[fun_prop]
