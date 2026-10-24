@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PlainDirect.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PlainDirect.BigO
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PlainDirect.Degree
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
@@ -132,6 +133,18 @@ theorem computableInO_id :
 example : ComputableInO (fun w : List Bool => w) encBits encBits
     (fun w => w.length + w.length) (fun w => w.length + w.length) :=
   PlainDirect.ComputableInO.comp computableInO_id computableInO_id
+
+/-! ### Degrees on a real machine -/
+
+/-- Upstream's copy machine, within time and workspace of degree one. -/
+theorem computableInDegree_id :
+    ComputableInDegree (fun w : List Bool => w) encBits encBits 1 1 :=
+  ⟨⟨_, _, ⟨1, fun _ => by simp⟩, DegreeBounded.const 0, computableInTimeAndSpace_id⟩,
+    ⟨1, fun _ => by simp [encBits]⟩⟩
+
+/-- The direct composition rule keeps the degrees of the tidy rule. -/
+example : ComputableInDegree (fun w : List Bool => w) encBits encBits 1 1 :=
+  PlainDirect.ComputableInDegree.comp computableInDegree_id computableInDegree_id
 
 /-! ### Axioms -/
 
