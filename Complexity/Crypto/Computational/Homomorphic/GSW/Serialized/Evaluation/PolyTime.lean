@@ -50,15 +50,19 @@ theorem computableTidilyInPolyTime_decryptResidue {secret ciphertext : α → Li
         (w p.1 - 1) (p.2 + 1) * Matrix.binaryEntry (n p.1) (w p.1) (secret p.1) 0 p.2)
       (encPair input encUnary) encNat := by
     apply binary_mul'
-    · exact matrixBinaryEntry (by fun_prop) (by fun_prop) (by fun_prop)
-        (by fun_prop) (by fun_prop)
-    · exact matrixBinaryEntry (by fun_prop) (by fun_prop) (by fun_prop)
-        (const 0) (snd input encUnary)
+    · exact (ComputableInPolyTime.matrixBinaryEntry
+        (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+        (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))).tidy
+    · exact (ComputableInPolyTime.matrixBinaryEntry
+        (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+        (.of_tidy (const 0)) (.of_tidy (snd input encUnary))).tidy
   have hsum := binary_sum.comp (mapWithInput
     (f := fun a j => Matrix.binaryEntry (n a + 1) (w a) (ciphertext a) (w a - 1) (j + 1) *
       Matrix.binaryEntry (n a) (w a) (secret a) 0 j) (range.comp hn) hterm)
-  have hfirst := matrixBinaryEntry (by fun_prop) hw hciphertext (by fun_prop) (const 0)
-    (cols := fun a => n a + 1) (row := fun a => w a - 1)
+  have hfirst := (ComputableInPolyTime.matrixBinaryEntry
+    (.of_tidy (by fun_prop)) (.of_tidy hw) (.of_tidy hciphertext)
+    (.of_tidy (by fun_prop)) (.of_tidy (const 0))
+    (cols := fun a => n a + 1) (row := fun a => w a - 1)).tidy
   unfold decryptResidue
   simpa only [Function.comp_apply, Nat.cast_pow, Nat.cast_ofNat] using
     intBin_emodNat' (intBin_sub' (intBin_natCast.comp hfirst) (intBin_natCast.comp hsum))
@@ -102,8 +106,9 @@ theorem computableTidilyInPolyTime_nandEntry {left right : α → List Bool}
         then Matrix.binaryEntry (n p.1 + 1) (w p.1) (right p.1) p.2 (j p.1) else 0)
       (encPair input encUnary) encNat := by
     apply ((bitsGetD false).comp ((hleft.comp (fst input encUnary)).prod (by fun_prop))).ite'
-    · exact matrixBinaryEntry (by fun_prop) (by fun_prop) (by fun_prop)
-        (snd input encUnary) (by fun_prop)
+    · exact (ComputableInPolyTime.matrixBinaryEntry
+        (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+        (.of_tidy (snd input encUnary)) (.of_tidy (by fun_prop))).tidy
     · exact const 0
   have hsum := binary_sum.comp (mapWithInput
     (f := fun a r => if (left a).getD ((i a * w a + k a) * ((n a + 1) * w a) + r) false
