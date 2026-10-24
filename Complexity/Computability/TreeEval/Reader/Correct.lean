@@ -49,7 +49,7 @@ abbrev cfg (p : ℕ) (R : Regs) (st : List Frame) (mode : Mode) (ctl : Ctl) (out
 variable {T}
 
 /-- One step of the leaf loop. -/
-theorem next_leaf {p : ℕ} (R : Regs) (st : List Frame) (neg : Bool) (t : Fin 3) {i : ℕ}
+private theorem next_leaf {p : ℕ} (R : Regs) (st : List Frame) (neg : Bool) (t : Fin 3) {i : ℕ}
     (hi : i < ℓ) (out : List Bool) :
     machine.next T.encode (cfg (ℓ := ℓ) (H := H) p R st (.call neg t) (.leaf i) out) =
       cfg (ℓ := ℓ) (H := H) p (R.set t (modifyAt (R.get t) i (addMod p
@@ -58,12 +58,12 @@ theorem next_leaf {p : ℕ} (R : Regs) (st : List Frame) (neg : Bool) (t : Fin 3
   simp [ReadMachine.next, machine, step, addr, ReadMachine.readBit, offset, hi, Nat.add_assoc,
     List.getD_eq_getElem?_getD]
 
-theorem cast_ite_sgnVal {p : ℕ} [Fact p.Prime] (b neg : Bool) :
+private theorem cast_ite_sgnVal {p : ℕ} [Fact p.Prime] (b neg : Bool) :
     (((if b then sgnVal p neg else 0 : ℕ)) : ZMod p) = sgn neg * bitVal (ZMod p) b := by
   cases b <;> simp [BitString.bitVal]
 
 /-- **The leaf loop**: after `i ≤ ℓ` steps, bits `0, …, i - 1` of the leaf have been added. -/
-theorem runFrom_leaf_loop {p : ℕ} [Fact p.Prime] {st : List Frame} {v : Fin ℓ → Bool}
+private theorem runFrom_leaf_loop {p : ℕ} [Fact p.Prime] {st : List Frame} {v : Fin ℓ → Bool}
     (hv : T.nodeAt (path st) = .leaf v) (R : Regs) (hR : R.WF p ℓ) (neg : Bool) (t : Fin 3)
     (out : List Bool) : ∀ i ≤ ℓ, ∃ R', machine.runFrom T.encode
       (cfg (ℓ := ℓ) (H := H) p R st (.call neg t) (.leaf 0) out) i =
@@ -97,7 +97,7 @@ theorem runFrom_leaf_loop {p : ℕ} [Fact p.Prime] {st : List Frame} {v : Fin �
 
 /-- **The leaf phase**: a call on the leaf at the current path adds `±` its value to the target
 register and returns, in `ℓ + 2` steps. -/
-theorem runFrom_leaf {p : ℕ} [Fact p.Prime] {st : List Frame} {v : Fin ℓ → Bool}
+private theorem runFrom_leaf {p : ℕ} [Fact p.Prime] {st : List Frame} {v : Fin ℓ → Bool}
     (hv : T.nodeAt (path st) = .leaf v) (R : Regs) (hR : R.WF p ℓ) (neg : Bool) (t : Fin 3)
     (out : List Bool) : ∃ R', machine.runFrom T.encode
       (cfg (ℓ := ℓ) (H := H) p R st (.call neg t) .run out) (ℓ + 2) =
@@ -120,7 +120,7 @@ theorem runFrom_leaf {p : ℕ} [Fact p.Prime] {st : List Frame} {v : Fin ℓ →
 
 /-- Sums over the positions of a table of `n` blocks of `ℓ` bits whose position within the block
 is `i`, as sums over the blocks. -/
-theorem sum_range_mul_ite_mod {M : Type*} [AddCommMonoid M] (n : ℕ) {i : ℕ} (hi : i < ℓ)
+private theorem sum_range_mul_ite_mod {M : Type*} [AddCommMonoid M] (n : ℕ) {i : ℕ} (hi : i < ℓ)
     (F : ℕ → M) :
     ∑ q ∈ Finset.range (n * ℓ), (if q % ℓ = i then F q else 0) =
       ∑ k ∈ Finset.range n, F (k * ℓ + i) := by
@@ -135,7 +135,7 @@ theorem sum_range_mul_ite_mod {M : Type*} [AddCommMonoid M] (n : ℕ) {i : ℕ} 
     simp [hi]
 
 /-- One step of the pass over a table. -/
-theorem next_scan {p : ℕ} (R : Regs) (fr : Frame) (st : List Frame) {k : ℕ}
+private theorem next_scan {p : ℕ} (R : Regs) (fr : Frame) (st : List Frame) {k : ℕ}
     (hk : k < tableLength ℓ) (acc : List ℕ) (out : List Bool) :
     machine.next T.encode (cfg (ℓ := ℓ) (H := H) p R (fr :: st) .ret (.scan k acc) out) =
       cfg (ℓ := ℓ) (H := H) p R (fr :: st) .ret (.scan (k + 1)
@@ -148,7 +148,7 @@ theorem next_scan {p : ℕ} (R : Regs) (fr : Frame) (st : List Frame) {k : ℕ}
 
 /-- **The pass over a table**: after `k` bits, the sums for every output bit `i` cover the
 positions `q < k` of the table for `i` that are set, weighted by the masked registers. -/
-theorem runFrom_scan_loop {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame}
+private theorem runFrom_scan_loop {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame}
     {f : Gate ℓ} (hf : T.nodeAt (path st) = .gate f)
     (R : Regs) (out : List Bool) :
     ∀ k ≤ tableLength ℓ, ∃ acc, machine.runFrom T.encode
@@ -187,7 +187,7 @@ theorem runFrom_scan_loop {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame
         · simp [hb, hi, modifyAt, List.getD_eq_getElem?_getD]
       · simp [hb, BitString.bitVal]
 
-theorem mul_add_div_self (k : ℕ) (i : Fin ℓ) : (k * ℓ + i) / ℓ = k := by
+private theorem mul_add_div_self (k : ℕ) (i : Fin ℓ) : (k * ℓ + i) / ℓ = k := by
   rw [Nat.add_comm, Nat.add_mul_div_right _ _ (Nat.zero_lt_of_lt i.isLt), Nat.div_eq_of_lt i.isLt,
     zero_add]
 
@@ -201,7 +201,7 @@ theorem tableBit_mul_add (f : Gate ℓ) (k : ℕ) (i : Fin ℓ) :
 /-- **The update of a round**: from phase `1`, the pass over the table of the gate subtracts `±`
 the multilinear extensions of its output bits at the masked registers, in `4^ℓ * ℓ + 2` steps,
 and calls the left child for subtraction. -/
-theorem runFrom_update {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame}
+private theorem runFrom_update {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame}
     {f : Gate ℓ} (hf : T.nodeAt (path st) = .gate f)
     (hph : fr.phase = 1) (R : Regs) (hR : R.WF p ℓ) (out : List Bool) :
     ∃ R', machine.runFrom T.encode
@@ -232,28 +232,28 @@ theorem runFrom_update {p : ℕ} [Fact p.Prime] {fr : Frame} {st : List Frame}
     rw [tableBit_mul_add, cast_weight, mul_add_div_self]
     rfl
 
-theorem next_push {p : ℕ} (R : Regs) {st : List Frame} (hst : st.length ≠ H) (neg : Bool)
+private theorem next_push {p : ℕ} (R : Regs) {st : List Frame} (hst : st.length ≠ H) (neg : Bool)
     (t : Fin 3) (out : List Bool) :
     machine.next T.encode (cfg (ℓ := ℓ) (H := H) p R st (.call neg t) .run out) =
       cfg (ℓ := ℓ) (H := H) p (R.scale p (t + 1) (unitVal 0)) (⟨0, 0, neg, t⟩ :: st)
         (.call false (t + 1)) .run out := by
   simp [ReadMachine.next, machine, step, runStep, hst]
 
-theorem next_phase0 {p : ℕ} (R : Regs) (j : ℕ) (neg : Bool) (t : Fin 3) (st : List Frame)
+private theorem next_phase0 {p : ℕ} (R : Regs) (j : ℕ) (neg : Bool) (t : Fin 3) (st : List Frame)
     (out : List Bool) :
     machine.next T.encode (cfg (ℓ := ℓ) (H := H) p R (⟨j, 0, neg, t⟩ :: st) .ret .run out) =
       cfg (ℓ := ℓ) (H := H) p (R.scale p (t + 2) (unitVal j)) (⟨j, 1, neg, t⟩ :: st)
         (.call false (t + 2)) .run out := by
   simp [ReadMachine.next, machine, step, runStep]
 
-theorem next_phase2 {p : ℕ} (R : Regs) (j : ℕ) (neg : Bool) (t : Fin 3) (st : List Frame)
+private theorem next_phase2 {p : ℕ} (R : Regs) (j : ℕ) (neg : Bool) (t : Fin 3) (st : List Frame)
     (out : List Bool) :
     machine.next T.encode (cfg (ℓ := ℓ) (H := H) p R (⟨j, 2, neg, t⟩ :: st) .ret .run out) =
       cfg (ℓ := ℓ) (H := H) p (R.scale p (t + 1) (unitInv p j)) (⟨j, 3, neg, t⟩ :: st)
         (.call true (t + 2)) .run out := by
   simp [ReadMachine.next, machine, step, runStep]
 
-theorem next_phase3 {p : ℕ} (R : Regs) (j : ℕ) (neg : Bool) (t : Fin 3) (st : List Frame)
+private theorem next_phase3 {p : ℕ} (R : Regs) (j : ℕ) (neg : Bool) (t : Fin 3) (st : List Frame)
     (out : List Bool) :
     machine.next T.encode (cfg (ℓ := ℓ) (H := H) p R (⟨j, 3, neg, t⟩ :: st) .ret .run out) =
       if j + 1 < p - 1 then
@@ -272,7 +272,7 @@ def CallSpec (T : Tree ℓ H) (p : ℕ) [Fact p.Prime] (P : List Bool)
 
 /-- **One round** of the machine at a gate performs `gateRound` and starts the next round or
 returns. -/
-theorem exists_runFrom_round {p : ℕ} [Fact p.Prime] {st : List Frame}
+private theorem exists_runFrom_round {p : ℕ} [Fact p.Prime] {st : List Frame}
     {f : Gate ℓ} (hf : T.nodeAt (path st) = .gate f)
     {pl pr : ZMod p → Fin 3 → TreeEval.State (ZMod p) ℓ → TreeEval.State (ZMod p) ℓ}
     (hl : CallSpec T p (path st ++ [false]) pl) (hr : CallSpec T p (path st ++ [true]) pr)
@@ -311,7 +311,7 @@ theorem exists_runFrom_round {p : ℕ} [Fact p.Prime] {st : List Frame}
 
 /-- The rounds `j, …, j + k` of a gate, the last ones before `p - 1`, perform the corresponding
 `gateRound`s and return. -/
-theorem exists_runFrom_rounds {p : ℕ} [Fact p.Prime] {st : List Frame}
+private theorem exists_runFrom_rounds {p : ℕ} [Fact p.Prime] {st : List Frame}
     {f : Gate ℓ} (hf : T.nodeAt (path st) = .gate f)
     {pl pr : ZMod p → Fin 3 → TreeEval.State (ZMod p) ℓ → TreeEval.State (ZMod p) ℓ}
     (hl : CallSpec T p (path st ++ [false]) pl) (hr : CallSpec T p (path st ++ [true]) pr)
@@ -392,12 +392,13 @@ theorem getElem?_encode_height_end : T.encode[ℓ + 1 + H]? = some false := by
   simp [show ℓ + 1 + H - ℓ = H + 1 by omega]
 
 /-- The state while searching the prime. -/
-abbrev primeCfg (ℓ H q d : ℕ) : ReadMachine.Cfg State :=
+private abbrev primeCfg (ℓ H q d : ℕ) : ReadMachine.Cfg State :=
   ⟨⟨ℓ, H, 0, ([], [], []), [], .ret, .prime q d⟩, []⟩
 
 /-- **The header**: after `ℓ + H + 2` steps the machine has read `ℓ` and `H` and starts the search
 for the prime at `2ℓ + 2`. -/
-theorem run_header : machine.run T.encode (ℓ + 1 + (H + 1)) = primeCfg ℓ H (2 * ℓ + 2) 2 := by
+private theorem run_header : machine.run T.encode (ℓ + 1 + (H + 1)) = primeCfg ℓ H
+    (2 * ℓ + 2) 2 := by
   have h₁ : ∀ n ≤ ℓ, machine.run T.encode n =
       ⟨⟨0, 0, 0, ([], [], []), [], .ret, .hdrLength n⟩, []⟩ := by
     intro n hn
@@ -424,11 +425,12 @@ theorem run_header : machine.run T.encode (ℓ + 1 + (H + 1)) = primeCfg ℓ H (
     getElem?_encode_height_end (T := T)]
 
 /-- The registers at the start: three registers of `ℓ` zeros. -/
-abbrev zeroRegs (ℓ : ℕ) : Regs := (List.replicate ℓ 0, List.replicate ℓ 0, List.replicate ℓ 0)
+private abbrev zeroRegs (ℓ : ℕ) : Regs :=
+    (List.replicate ℓ 0, List.replicate ℓ 0, List.replicate ℓ 0)
 
 /-- **Testing a candidate**: from divisor `d`, with no divisor in `[2, d)`, the machine finds that
 `q` is prime and starts the procedure with it, or that it is not and moves to `q + 1`. -/
-theorem exists_runFrom_test {q : ℕ} :
+private theorem exists_runFrom_test {q : ℕ} :
     ∀ k d, d + k = q → 2 ≤ d → (∀ e, 2 ≤ e → e < d → q % e ≠ 0) →
       ∃ n, machine.runFrom T.encode (primeCfg ℓ H q d) n =
         if q.Prime then cfg (ℓ := ℓ) (H := H) q (zeroRegs ℓ) [] (.call false 2) .run []
@@ -468,7 +470,7 @@ theorem le_primeFor (ℓ : ℕ) : 2 * ℓ + 2 ≤ primeFor ℓ :=
   (Nat.find_spec (Nat.exists_infinite_primes (2 * ℓ + 2))).1
 
 /-- **The search for the prime** finds `primeFor ℓ` and starts the procedure with it. -/
-theorem exists_runFrom_search :
+private theorem exists_runFrom_search :
     ∀ k q, q + k = primeFor ℓ → 2 * ℓ + 2 ≤ q → ∃ n, machine.runFrom T.encode
       (primeCfg ℓ H q 2) n =
         cfg (ℓ := ℓ) (H := H) (primeFor ℓ) (zeroRegs ℓ) [] (.call false 2) .run [] := by
@@ -493,12 +495,12 @@ theorem exists_runFrom_search :
     obtain ⟨n', hn'⟩ := ih (q + 1) (by omega) (by omega)
     exact ⟨n + n', by rw [ReadMachine.runFrom_add, hn, hn']⟩
 
-theorem toState_zeroRegs (p : ℕ) : (zeroRegs ℓ).toState p ℓ = 0 := by
+private theorem toState_zeroRegs (p : ℕ) : (zeroRegs ℓ).toState p ℓ = 0 := by
   funext r i
   fin_cases r <;> simp [Regs.toState, Regs.get, List.getD_eq_getElem?_getD]
 
 /-- Registers holding the bits of a value, read in `ZMod p`, hold `0` and `1`. -/
-theorem map_get_eq_ofFn {p : ℕ} [Fact p.Prime] {R : Regs} (hR : R.WF p ℓ) {v : Fin ℓ → Bool}
+private theorem map_get_eq_ofFn {p : ℕ} [Fact p.Prime] {R : Regs} (hR : R.WF p ℓ) {v : Fin ℓ → Bool}
     (h : R.toState p ℓ 2 = embed v) : (R.get 2).map (· == 1) = List.ofFn v := by
   have hp := (Fact.out : p.Prime).one_lt
   obtain ⟨hlen, hlt⟩ := hR 2

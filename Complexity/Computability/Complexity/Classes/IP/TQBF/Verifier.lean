@@ -94,14 +94,14 @@ modulus less one, so that the modulus is positive, and the degree bound `D` of e
 abbrev Params := List ℕ × ℕ × ℕ
 
 /-- The encoding of the parameters, the numbers in unary. -/
-abbrev encParams : Params ↪ List Bool :=
+private abbrev encParams : Params ↪ List Bool :=
   encPair (encList encNat) (encPair encUnary encUnary)
 
 /-- The input of the loop: the parameters and the tokens of the arithmetic formula. -/
 abbrev LoopInput := Params × List (ArithQBF.Kind × ℕ)
 
 /-- The encoding of the input of the loop. -/
-noncomputable abbrev encLoopInput : LoopInput ↪ List Bool :=
+private noncomputable abbrev encLoopInput : LoopInput ↪ List Bool :=
   encPair encParams (encList encArithToken)
 
 /-- A pending claim: a point and a value. -/
@@ -122,7 +122,7 @@ noncomputable abbrev encVState : VState ↪ List Bool :=
 abbrev StepData := LoopInput × VState
 
 /-- The encoding of the data of a step. -/
-noncomputable abbrev encStepData : StepData ↪ List Bool := encPair encLoopInput encVState
+private noncomputable abbrev encStepData : StepData ↪ List Bool := encPair encLoopInput encVState
 
 namespace StepData
 
@@ -334,7 +334,7 @@ private lemma stepAt_pt (k : ArithQBF.Kind) :
   · exact ask_pt.bind_with (opCont_pt .lin)
 
 /-- **A step of the machine is strict oracle PPT** in the encoded input and state. -/
-theorem isOraclePPTOn_step :
+private theorem isOraclePPTOn_step :
     IsOraclePPTOn encStepData encVState (fun a : StepData => step a.1 a.2) := by
   unfold step
   exact IsOraclePPTOn.cond (by fun_prop)
@@ -482,7 +482,7 @@ private lemma growth_polyBounded :
   nlinarith
 
 /-- **The machine is strict oracle PPT** in its encoded input. -/
-theorem isOraclePPTOn_loop : IsOraclePPTOn encLoopInput encVState loop := by
+private theorem isOraclePPTOn_loop : IsOraclePPTOn encLoopInput encVState loop := by
   unfold loop
   exact IsOraclePPTOn.iterateWith_of_bounded_growth (count := fun I => I.2.length) (by fun_prop)
     init_pt isOraclePPTOn_step growth_polyBounded

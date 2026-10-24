@@ -123,7 +123,8 @@ theorem computableTidilyInPolyTime_merlinArthurRepeat {V : α × List Bool → B
 
 /-- On a proof followed by `2 r(n)` rows of `p(n)` bits, the majority vote compares the number of
 rows accepted with the proof with `r(n)`. -/
-theorem merlinArthurRepeat_ofFn_append_ofFn {q r p : Polynomial ℕ} {V : α × List Bool → Bool}
+private theorem merlinArthurRepeat_ofFn_append_ofFn {q r p : Polynomial ℕ}
+    {V : α × List Bool → Bool}
     (a : α) (y : Fin (q.eval (enc a).length) → Bool)
     (x : BitString (2 * r.eval (enc a).length * p.eval (enc a).length)) :
     merlinArthurRepeat enc q r p V (a, List.ofFn y ++ List.ofFn x) = decide (r.eval (enc a).length <
@@ -235,7 +236,8 @@ theorem computableTidilyInPolyTime_arthurMerlinRepeat {V : α × List Bool → B
 
 /-- On `2 r(n)` rows followed by `2 r(n)` replies, the parallel majority vote compares the number
 of rows accepted with their replies with `r(n)`. -/
-theorem arthurMerlinRepeat_ofFn_append_ofFn {r p q : Polynomial ℕ} {V : α × List Bool → Bool}
+private theorem arthurMerlinRepeat_ofFn_append_ofFn {r p q : Polynomial ℕ}
+    {V : α × List Bool → Bool}
     (a : α) (x : BitString (2 * r.eval (enc a).length * p.eval (enc a).length))
     (y : BitString (2 * r.eval (enc a).length * q.eval (enc a).length)) :
     arthurMerlinRepeat enc r p q V (a, List.ofFn x ++ List.ofFn y) =

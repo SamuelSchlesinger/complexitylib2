@@ -84,7 +84,7 @@ theorem computableTidilyInPolyTime_mulXMod :
   unfold mulXMod
   fun_prop
 
-theorem length_mulXMod_le (g r : List Bool) : (mulXMod g r).length ≤ g.length - 1 :=
+private theorem length_mulXMod_le (g r : List Bool) : (mulXMod g r).length ≤ g.length - 1 :=
   List.length_take_le _ _
 
 /-- The remainder modulo a binary polynomial, by a left fold over the coefficients whose state, the
@@ -150,7 +150,7 @@ theorem computableTidilyInPolyTime_powerTable :
 /-! ### Lists of unary naturals -/
 
 /-- Take a unary number of elements of a framed list, by reversing and dropping. -/
-theorem computableTidilyInPolyTime_take {α : Type} (enc : α ↪ List Bool) :
+private theorem computableTidilyInPolyTime_take {α : Type} (enc : α ↪ List Bool) :
     ComputableTidilyInPolyTime (fun p : List α × ℕ => p.1.take p.2)
       (encPair (encList enc) encUnary) (encList enc) := by
   have hrev := (listReverse enc).comp (fst (encList enc) encUnary)
@@ -163,7 +163,8 @@ theorem computableTidilyInPolyTime_take {α : Type} (enc : α ↪ List Bool) :
 
 /-- The product of a computed list of positive unary naturals, when the product is polynomially
 bounded: every partial product is at most the whole product. -/
-theorem computableTidilyInPolyTime_prod_of_le {α : Type} {input : α ↪ List Bool} {list : α → List ℕ}
+private theorem computableTidilyInPolyTime_prod_of_le {α : Type} {input : α ↪ List Bool}
+    {list : α → List ℕ}
     (hlist : ComputableTidilyInPolyTime list input (encList encUnary))
     (hpos : ∀ a, ∀ p ∈ list a, 0 < p) {B : α → ℕ}
     (hB : PolyBounded (fun a => (input a).length) B) (hle : ∀ a, (list a).prod ≤ B a) :
@@ -202,7 +203,7 @@ theorem computableTidilyInPolyTime_primesIoc :
 def selectStep (state : ℕ × List ℕ) (p : ℕ) : ℕ × List ℕ :=
   if p ≤ state.1 then (state.1 / p, state.2 ++ [p]) else state
 
-theorem foldl_selectStep (T : ℕ) (ps chosen : List ℕ) :
+private theorem foldl_selectStep (T : ℕ) (ps chosen : List ℕ) :
     (ps.foldl selectStep (T, chosen)).2 = chosen ++ selectBelow T ps := by
   induction ps generalizing T chosen with
   | nil => simp [selectBelow]
@@ -255,14 +256,14 @@ theorem computableTidilyInPolyTime_degreePrimes :
   unfold degreePrimes
   fun_prop
 
-theorem selectBelow_zero {ps : List ℕ} (hps : ∀ p ∈ ps, 0 < p) : selectBelow 0 ps = [] := by
+private theorem selectBelow_zero {ps : List ℕ} (hps : ∀ p ∈ ps, 0 < p) : selectBelow 0 ps = [] := by
   induction ps with
   | nil => rfl
   | cons p ps ih =>
     rw [selectBelow, ite_eq_right_iff.2 (by have := hps p List.mem_cons_self; omega)]
     exact ih fun q hq => hps q (List.mem_cons_of_mem _ hq)
 
-theorem prod_degreePrimes_le (N : ℕ) : (degreePrimes N).prod ≤ N + 1 := by
+private theorem prod_degreePrimes_le (N : ℕ) : (degreePrimes N).prod ≤ N + 1 := by
   rcases Nat.eq_zero_or_pos (N / (Nat.log 2 N + 1) ^ 2) with hT | hT
   · rw [degreePrimes, hT, selectBelow_zero fun p hp => (mem_primesIoc.1 hp).2.2.pos]
     simp
@@ -328,7 +329,7 @@ theorem computableTidilyInPolyTime_explicitPowerTables :
 
 /-- The mixed-radix digits in the radix of the field degree on `N` bits; every partial product of
 the radix is at most `N + 1`. -/
-theorem computableTidilyInPolyTime_mixedDigit_degreePrimes :
+private theorem computableTidilyInPolyTime_mixedDigit_degreePrimes :
     ComputableTidilyInPolyTime (fun q : (ℕ × ℕ) × ℕ => mixedDigit (degreePrimes q.1.1) q.1.2 q.2)
       (encPair (encPair encUnary encUnary) encUnary) encUnary := by
   have htake : ComputableTidilyInPolyTime (fun q : (ℕ × ℕ) × ℕ => (degreePrimes q.1.1).take q.2)
@@ -358,7 +359,7 @@ theorem computableTidilyInPolyTime_mixedDigit_degreePrimes' {α : Type} {input :
 
 
 /-- Coordinates of the products of monomials of the explicit field on `N` bits, `N` in unary. -/
-theorem computableTidilyInPolyTime_monomialBit_explicit : ComputableTidilyInPolyTime
+private theorem computableTidilyInPolyTime_monomialBit_explicit : ComputableTidilyInPolyTime
     (fun q : ((ℕ × ℕ) × ℕ) × ℕ =>
       monomialBit (degreePrimes q.1.1.1) (explicitPowerTables q.1.1.1) q.1.1.2 q.1.2 q.2)
     (encPair (encPair (encPair encUnary encUnary) encUnary) encUnary) encBool := by
@@ -426,7 +427,7 @@ theorem length_fieldMul (tab : List (List (List Bool))) (a b : List Bool) :
 
 /-- The powers `y ^ (2 ^ (k + 1) - 1)`, by `k` multiplications and squarings; every
 intermediate power has `n` coordinates. -/
-theorem computableTidilyInPolyTime_powerPred : ComputableTidilyInPolyTime
+private theorem computableTidilyInPolyTime_powerPred : ComputableTidilyInPolyTime
     (fun p : List (List (List Bool)) × List Bool × ℕ => powerPred p.1 p.2.1 p.2.2)
     (encPair encTable (encPair encBits encUnary)) encBits := by
   unfold powerPred
@@ -446,20 +447,20 @@ theorem computableTidilyInPolyTime_powerPred' {α : Type} {input : α ↪ List B
     computableTidilyInPolyTime_powerPred.comp (htab.prod (hy.prod hk))
 
 /-- One step of the dynamic program for the elementary symmetric polynomials. -/
-theorem computableTidilyInPolyTime_esymmStep : ComputableTidilyInPolyTime
+private theorem computableTidilyInPolyTime_esymmStep : ComputableTidilyInPolyTime
     (fun p : (List (List (List Bool)) × List (List Bool)) × List Bool =>
       esymmStep p.1.1 p.1.2 p.2)
     (encPair (encPair encTable (encList encBits)) encBits) (encList encBits) := by
   unfold esymmStep
   fun_prop
 
-theorem length_esymmStep (tab : List (List (List Bool))) (E : List (List Bool))
+private theorem length_esymmStep (tab : List (List (List Bool))) (E : List (List Bool))
     (z : List Bool) : (esymmStep tab E z).length = E.length := by
   simp [esymmStep]
 
 /-- **The elementary symmetric polynomial `e_t` in coordinates**: the dynamic program keeps `t`
 words of at most `n` coordinates. -/
-theorem computableTidilyInPolyTime_esymmCoords : ComputableTidilyInPolyTime
+private theorem computableTidilyInPolyTime_esymmCoords : ComputableTidilyInPolyTime
     (fun p : (List (List (List Bool)) × ℕ) × List (List Bool) => esymmCoords p.1.1 p.1.2 p.2)
     (encPair (encPair encTable encUnary) (encList encBits)) encBits := by
   have hsize : ComputableTidilyInPolyTime
@@ -503,7 +504,7 @@ theorem computableTidilyInPolyTime_esymmCoords' {α : Type} {input : α ↪ List
     computableTidilyInPolyTime_esymmCoords.comp ((htab.prod ht).prod hzs)
 
 /-- The traces of the basis elements, from the diagonals of the multiplication table. -/
-theorem computableTidilyInPolyTime_traceVector :
+private theorem computableTidilyInPolyTime_traceVector :
     ComputableTidilyInPolyTime traceVector encTable encBits := by
   unfold traceVector
   fun_prop
@@ -516,7 +517,7 @@ theorem computableTidilyInPolyTime_traceVector' {α : Type} {input : α ↪ List
   simpa only [Function.comp_def] using computableTidilyInPolyTime_traceVector.comp htab
 
 /-- The trace as a bit. -/
-theorem computableTidilyInPolyTime_traceBit : ComputableTidilyInPolyTime
+private theorem computableTidilyInPolyTime_traceBit : ComputableTidilyInPolyTime
     (fun p : List Bool × List Bool => traceBit p.1 p.2) (encPair encBits encBits) encBool := by
   unfold traceBit
   fun_prop
@@ -541,7 +542,7 @@ theorem computableTidilyInPolyTime_traceSymCoords : ComputableTidilyInPolyTime
 /-! ### The explicit disperser -/
 
 /-- **The program is polynomial-time.** -/
-theorem computableTidilyInPolyTime_explicitDisperserProgram :
+private theorem computableTidilyInPolyTime_explicitDisperserProgram :
     ComputableTidilyInPolyTime explicitDisperserProgram encBits encBool := by
   unfold explicitDisperserProgram
   simpa only [Function.comp_def] using computableTidilyInPolyTime_traceSymCoords.comp

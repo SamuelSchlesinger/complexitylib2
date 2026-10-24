@@ -74,7 +74,7 @@ theorem strictVerifier_eq_true_iff (enc : α ↪ List Bool) (p : Polynomial ℕ)
       w.length = p.eval (enc a).length ∧ V (a, w) = true := by
   simp [strictVerifier]
 
-theorem length_eq_of_strictVerifier_eq_true {enc : α ↪ List Bool} {p : Polynomial ℕ}
+private theorem length_eq_of_strictVerifier_eq_true {enc : α ↪ List Bool} {p : Polynomial ℕ}
     {V : α × List Bool → Bool} {a : α} {w : List Bool}
     (h : strictVerifier enc p V (a, w) = true) :
     w.length = p.eval (enc a).length :=

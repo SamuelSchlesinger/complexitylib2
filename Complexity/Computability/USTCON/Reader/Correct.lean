@@ -116,7 +116,7 @@ theorem Reaches.trans {q₁ q₂ q₃ : State} (h₁ : Reaches I q₁ q₂) (h�
   ⟨k₁ + k₂, by rw [Turing.ReadMachine.runFrom_add, hk₁, hk₂]⟩
 
 /-- One step without output. -/
-theorem Reaches.single {q q' : State} (hh : q.ctl ≠ .done)
+private theorem Reaches.single {q q' : State} (hh : q.ctl ≠ .done)
     (hs : step q (machine.readBit I.encode q) = (q', [])) : Reaches I q q' := fun o ↦
   ⟨1, by
     rw [Turing.ReadMachine.runFrom_one, Turing.ReadMachine.next_of_not_halt _ _
@@ -125,7 +125,7 @@ theorem Reaches.single {q q' : State} (hh : q.ctl ≠ .done)
     rw [hs, List.append_nil]⟩
 
 /-- Steps along a sequence of states. -/
-theorem reaches_iterate (f : ℕ → State) (m : ℕ) (h : ∀ i < m, Reaches I (f i) (f (i + 1))) :
+private theorem reaches_iterate (f : ℕ → State) (m : ℕ) (h : ∀ i < m, Reaches I (f i) (f (i + 1))) :
     Reaches I (f 0) (f m) := by
   induction m with
   | zero => exact .refl _
@@ -164,7 +164,7 @@ def headerState (I : USTCONInstance) : State :=
     len := 136240 }
 
 /-- **The header**: the machine counts the number of vertices, the source and the target. -/
-theorem reaches_header : Reaches I init (headerState I) := by
+private theorem reaches_header : Reaches I init (headerState I) := by
   -- the number of vertices
   have h₁ : Reaches I init { init with ctl := .hdrS, n := I.n } := by
     refine (reaches_iterate (fun i ↦ { init with cnt := i }) I.n
@@ -195,7 +195,7 @@ theorem reaches_header : Reaches I init (headerState I) := by
 
 /-- **The halvings**: halving `m` until it vanishes adds `16` to the depth and `4168` to the walk
 length for each of its binary digits. -/
-theorem reaches_size (q : State) (m d l : ℕ) :
+private theorem reaches_size (q : State) (m d l : ℕ) :
     Reaches I { q with ctl := .size, cnt := m, depth := d, len := l }
       { q with
         ctl := .start
@@ -261,7 +261,7 @@ private theorem inputRot_slotVal (v : Fin I.n × Fin I.n) (b : Label) :
 /-- **The evaluation of the rotation map**: from a frame for level `m ≥ 1`, freshly pushed with the
 label `a` above the registers of a vertex `x` of the `m`-th graph, the machine reaches the registers
 of the rotation of the `m`-th graph at `(x, a)`, with the label at the far end below the frames. -/
-theorem reaches_eval (q : State) (hc : q.ctl = .eval) (hn : q.n = I.n) (hs : q.s = I.s)
+private theorem reaches_eval (q : State) (hc : q.ctl = .eval) (hn : q.n = I.n) (hs : q.s = I.s)
     (ht : q.t = I.t) {m : ℕ} (hm : m ≠ 0) (x : ReingoldVertex (Fin I.n × Fin I.n) Label m)
     (a : Label)
     (hev : q.ev = (⟨(x.toList).1, (x.toList).2, [(.zig₀, a)]⟩ :
@@ -327,7 +327,7 @@ private theorem depth_ne_zero (a : ℕ) : depth a ≠ 0 := by
 /-- **The steps of a walk**: from the next step with the registers of `x`, the digits `w` and `j`
 steps left, the machine reaches the end of the walk with the registers of its last vertex and the
 digits `w / B ^ j` left. -/
-theorem reaches_walk {m : ℕ} (hm : m ≠ 0) (q : State) (hc : q.ctl = .next) (hn : q.n = I.n)
+private theorem reaches_walk {m : ℕ} (hm : m ≠ 0) (q : State) (hc : q.ctl = .next) (hn : q.n = I.n)
     (hs : q.s = I.s) (ht : q.t = I.t) (x : ReingoldVertex (Fin I.n × Fin I.n) Label m) (w j : ℕ)
     (hev : q.ev = ⟨slotVal x.root, (x.toList).2, []⟩) (hw : q.w = w) (hj : q.j = j) :
     Reaches I q { q with
@@ -392,7 +392,8 @@ theorem reaches_walk {m : ℕ} (hm : m ≠ 0) (q : State) (hc : q.ctl = .next) (
 
 /-- **A walk of a counter**: from the start of the walk of the counter `c`, the machine fills the
 labels of the start vertex `(⋯ ((s, s), 0) ⋯, 0)` and walks along the digits of `c`. -/
-theorem reaches_start {m : ℕ} (hm : m ≠ 0) (q : State) (hc : q.ctl = .start) (hn : q.n = I.n)
+private theorem reaches_start {m : ℕ} (hm : m ≠ 0) (q : State) (hc : q.ctl = .start)
+    (hn : q.n = I.n)
     (hs : q.s = I.s) (ht : q.t = I.t) (hd : q.depth = m) :
     Reaches I q { q with
       ctl := .check
@@ -444,14 +445,15 @@ def Outputs (q : State) (b : Bool) : Prop :=
     (machine.runFrom I.encode ⟨q, o⟩ k).out = o ++ [b]
 
 /-- Steps without output before halting with an output. -/
-theorem Reaches.outputs {q q' : State} {b : Bool} (h : Reaches I q q') (h' : Outputs I q' b) :
+private theorem Reaches.outputs {q q' : State} {b : Bool} (h : Reaches I q q')
+    (h' : Outputs I q' b) :
     Outputs I q b := fun o ↦
   let ⟨k₁, hk₁⟩ := h o
   let ⟨k₂, hk₂⟩ := h' o
   ⟨k₁ + k₂, by rw [Turing.ReadMachine.runFrom_add, hk₁]; exact hk₂⟩
 
 /-- Halting in one step with an output. -/
-theorem outputs_single {q q' : State} {b : Bool} (hh : q.ctl ≠ .done)
+private theorem outputs_single {q q' : State} {b : Bool} (hh : q.ctl ≠ .done)
     (hs : step q (machine.readBit I.encode q) = (q', [b])) (hq' : q'.ctl = .done) :
     Outputs I q b := fun o ↦
   ⟨1, by
@@ -489,7 +491,7 @@ open scoped Classical in
 /-- **The counters**: from the start of the walk of a counter `c ≤ B ^ T`, the machine halts with
 the output `[true]` if the walk of some counter between `c` and `B ^ T` succeeds, and `[false]`
 otherwise. -/
-theorem outputs_start {m T : ℕ} (hm : m ≠ 0) :
+private theorem outputs_start {m T : ℕ} (hm : m ≠ 0) :
     ∀ d (q : State), numLabels ^ T - q.c = d → q.c ≤ numLabels ^ T → q.ctl = .start →
       q.n = I.n → q.s = I.s → q.t = I.t → q.depth = m → q.len = T →
       Outputs I q (decide (∃ c', q.c ≤ c' ∧ c' < numLabels ^ T ∧ Success I m T c')) := by
@@ -573,7 +575,7 @@ private theorem walkLength_eq (a : ℕ) : 136240 + 4168 * a = walkLength a := by
 open scoped Classical in
 /-- **The machine decides undirected connectivity**: from the initial state, it halts with the
 output `[true]` if `t` is reachable from `s`, and `[false]` otherwise. -/
-theorem outputs_init : Outputs I init (decide (I ∈ USTCON)) := by
+private theorem outputs_init : Outputs I init (decide (I ∈ USTCON)) := by
   classical
   set a := Nat.size I.n
   have hstart := (reaches_header (I := I)).trans

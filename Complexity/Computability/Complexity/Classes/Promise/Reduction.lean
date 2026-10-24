@@ -92,7 +92,7 @@ def PolyTimeReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (X : P
 
 /-- Reductions of promise problems with a reduction computable tidily in polynomial time, the form
 in which proofs build reductions. -/
-theorem polyTimeReducible_iff_tidy : PolyTimeReducible encA encB X Y ↔
+private theorem polyTimeReducible_iff_tidy : PolyTimeReducible encA encB X Y ↔
     ∃ f : α → β, ComputableTidilyInPolyTime f encA encB ∧ Set.MapsTo f X.yes Y.yes ∧
       Set.MapsTo f X.no Y.no := by
   simp only [PolyTimeReducible, computableInPolyTime_iff_computableTidilyInPolyTime]

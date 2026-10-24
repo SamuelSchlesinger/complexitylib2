@@ -99,7 +99,7 @@ theorem after_query_bind_cons (m : List Bool) (next : List Bool → WordQueryCom
       if m' = m then after (next y) h else none := rfl
 
 /-- What remains after a concatenation is what remains of what remains. -/
-theorem after_append (p : WordQueryComp Unit α) (h e : History) :
+private theorem after_append (p : WordQueryComp Unit α) (h e : History) :
     after p (h ++ e) = (after p h).bind (after · e) := by
   induction h generalizing p with
   | nil => simp
@@ -132,7 +132,7 @@ def outcome (p : WordQueryComp Unit Bool) (h : History) : Outcome :=
   | some (.liftBind q _) => .ask q.2
 
 /-- A program that is still in play after a one-step extension sent its message. -/
-theorem outcome_eq_ask_of_after_append_singleton {p : WordQueryComp Unit Bool} {h : History}
+private theorem outcome_eq_ask_of_after_append_singleton {p : WordQueryComp Unit Bool} {h : History}
     {m y : List Bool} (hp : (after p (h ++ [(m, y)])).isSome) : outcome p h = .ask m := by
   rw [after_append] at hp
   unfold outcome
@@ -155,14 +155,14 @@ noncomputable def acceptFrom (P : Prover Unit) (s : P.State) :
 
 @[simp] theorem acceptFrom_none (P : Prover Unit) (s : P.State) : acceptFrom P s none = 0 := rfl
 
-theorem acceptFrom_pure (P : Prover Unit) (s : P.State) (b : Bool) :
+private theorem acceptFrom_pure (P : Prover Unit) (s : P.State) (b : Bool) :
     acceptFrom P s (some (pure b)) = if b then 1 else 0 := by
   simp only [acceptFrom, OracleComp.interpret_pure, StateT.run_pure,
     Probability.PMF.monad_pure_eq_pure, PMF.pure_map, PMF.pure_apply]
   cases b <;> simp
 
 /-- A message is answered by the prover, and what remains continues from its new state. -/
-theorem acceptFrom_query_bind (P : Prover Unit) (s : P.State) (m : List Bool)
+private theorem acceptFrom_query_bind (P : Prover Unit) (s : P.State) (m : List Bool)
     (next : List Bool → WordQueryComp Unit Bool) :
     acceptFrom P s (some (OracleComp.query ((), m) >>= next)) =
       ∑' ys : List Bool × P.State, (P.respond ((), m)).run s ys * acceptFrom P ys.2
@@ -220,7 +220,7 @@ theorem value_congr {h h' : History}
     simpa only [List.append_assoc, List.singleton_append] using hh r ((m, y) :: e)
 
 /-- Only the first `L` bits of a reply matter to the value. -/
-theorem value_take (hF : IsBounded F D L) (n : ℕ) (h : History) (m y : List Bool) :
+private theorem value_take (hF : IsBounded F D L) (n : ℕ) (h : History) (m y : List Bool) :
     value F L n (h ++ [(m, y)]) = value F L n (h ++ [(m, y.take L)]) :=
   value_congr (fun r e => by
     simpa only [List.append_assoc, List.singleton_append] using hF.reply r h m y e) n
@@ -265,7 +265,7 @@ theorem value_le_card (n : ℕ) (h : History) :
 
 /-- One round of a prover against a program: if the program has finished, it accepts or not; if
 it sends a message of length at most `L`, the prover answers and what remains continues. -/
-theorem acceptFrom_after_eq (P : Prover Unit) (s : P.State) (p : WordQueryComp Unit Bool)
+private theorem acceptFrom_after_eq (P : Prover Unit) (s : P.State) (p : WordQueryComp Unit Bool)
     (h : History) (hp : ∀ m, outcome p h = .ask m → m.length ≤ L) :
     acceptFrom P s (after p h) = (if outcome p h = .done true then 1 else 0) +
       ∑ m ∈ BitString.shortWords L, ∑' ys : List Bool × P.State,
@@ -288,7 +288,8 @@ theorem acceptFrom_after_eq (P : Prover Unit) (s : P.State) (p : WordQueryComp U
 /-- **No prover beats the value**, from any history it is in and any of its states: the
 probabilities that `P` makes what remains of the programs accept sum to at most the value, when
 the programs have at most `n` rounds to go. -/
-theorem sum_acceptFrom_after_le (hF : IsBounded F D L) (P : Prover Unit) (n : ℕ) (h : History)
+private theorem sum_acceptFrom_after_le (hF : IsBounded F D L) (P : Prover Unit) (n : ℕ)
+    (h : History)
     (hn : D ≤ h.length + n) (s : P.State) :
     ∑ r, acceptFrom P s (after (F r) h) ≤ value F L n h := by
   induction n generalizing h s with
@@ -352,13 +353,13 @@ noncomputable def bestReply (n : ℕ) (h : History) (m : List Bool) : List Bool 
   ((BitString.shortWords L).exists_max_image (fun y => value F L n (h ++ [(m, y)]))
     ⟨[], BitString.nil_mem_shortWords L⟩).choose
 
-theorem bestReply_mem (n : ℕ) (h : History) (m : List Bool) :
+private theorem bestReply_mem (n : ℕ) (h : History) (m : List Bool) :
     bestReply F L n h m ∈ BitString.shortWords L :=
   ((BitString.shortWords L).exists_max_image (fun y => value F L n (h ++ [(m, y)]))
     ⟨[], BitString.nil_mem_shortWords L⟩).choose_spec.1
 
 /-- The best reply attains the best value. -/
-theorem value_bestReply (n : ℕ) (h : History) (m : List Bool) :
+private theorem value_bestReply (n : ℕ) (h : History) (m : List Bool) :
     value F L n (h ++ [(m, bestReply F L n h m)]) =
       (BitString.shortWords L).sup fun y => value F L n (h ++ [(m, y)]) :=
   le_antisymm (Finset.le_sup (f := fun y => value F L n (h ++ [(m, y)]))
@@ -379,7 +380,7 @@ noncomputable def optimalProver (D : ℕ) : Prover Unit where
 variable {F L}
 
 /-- **The optimal prover attains the value** from every history it is in. -/
-theorem sum_acceptFrom_optimalProver_after (hF : IsBounded F D L) (n : ℕ) (h : History)
+private theorem sum_acceptFrom_optimalProver_after (hF : IsBounded F D L) (n : ℕ) (h : History)
     (hn : h.length + n = D) :
     ∑ r, acceptFrom (optimalProver F L D) h (after (F r) h) = value F L n h := by
   induction n generalizing h with

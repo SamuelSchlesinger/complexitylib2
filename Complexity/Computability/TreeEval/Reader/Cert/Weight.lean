@@ -37,11 +37,11 @@ open Turing MultiTapeTM ComputableTidilyInSpace
 /-! ### Half of a weight, over a counter -/
 
 /-- A factor of half of a weight, on `((p, k, o), x)` and the counter and product `(j, a)`. -/
-def halfStep (s : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ × ℕ) : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ × ℕ :=
+private def halfStep (s : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ × ℕ) : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ × ℕ :=
   (s.1, s.2.1 + 1, mulMod s.1.1.1 s.2.2
     (chi s.1.1.1 (s.1.1.2.1.testBit (s.1.1.2.2 + s.2.1)) (s.1.2.getD s.2.1 0)))
 
-theorem iterate_halfStep (p k o : ℕ) (x : List ℕ) (a : ℕ) (n : ℕ) :
+private theorem iterate_halfStep (p k o : ℕ) (x : List ℕ) (a : ℕ) (n : ℕ) :
     halfStep^[n] (((p, k, o), x), 0, a) = (((p, k, o), x), n, (List.range n).foldl
       (fun a j => mulMod p a (chi p (k.testBit (o + j)) (x.getD j 0))) a) := by
   induction n with
@@ -50,12 +50,12 @@ theorem iterate_halfStep (p k o : ℕ) (x : List ℕ) (a : ℕ) (n : ℕ) :
     rw [Function.iterate_succ_apply', ih, List.range_succ, List.foldl_append]
     rfl
 
-theorem weight_eq (p ℓ k : ℕ) (x y : List ℕ) :
+private theorem weight_eq (p ℓ k : ℕ) (x y : List ℕ) :
     weight p ℓ k x y = mulMod p (halfStep^[ℓ] (((p, k, 0), x), 0, 1 % p)).2.2
       (halfStep^[ℓ] (((p, k, ℓ), y), 0, 1 % p)).2.2 := by
   simp only [weight, iterate_halfStep, zero_add]
 
-theorem length_chi_le (p : ℕ) (b : Bool) (x : ℕ) :
+private theorem length_chi_le (p : ℕ) (b : Bool) (x : ℕ) :
     (encNat (chi p b x)).length ≤ (encNat p).length + (encNat x).length + 1 := by
   rcases Nat.eq_zero_or_pos p with rfl | hp
   · cases b
@@ -66,7 +66,7 @@ theorem length_chi_le (p : ℕ) (b : Bool) (x : ℕ) :
       (show chi p b x ≤ p by cases b <;> exact (Nat.mod_lt _ hp).le)
     omega
 
-theorem sum_length_getD_le (x : List ℕ) (j : ℕ) :
+private theorem sum_length_getD_le (x : List ℕ) (j : ℕ) :
     ∑ i ∈ Finset.range j, (encNat (x.getD i 0)).length ≤ (encList encNat x).length := by
   induction x generalizing j with
   | nil => simp
@@ -80,7 +80,7 @@ theorem sum_length_getD_le (x : List ℕ) (j : ℕ) :
       omega
 
 /-- For `p = 0`, the products of half of a weight are no longer than their factors together. -/
-theorem length_halfStep_zero_le (k o : ℕ) (x : List ℕ) (j : ℕ) :
+private theorem length_halfStep_zero_le (k o : ℕ) (x : List ℕ) (j : ℕ) :
     (encNat (halfStep^[j] (((0, k, o), x), 0, 1 % 0)).2.2).length ≤
       ∑ i ∈ Finset.range j, ((encNat (x.getD i 0)).length + 1) + 1 := by
   induction j with
@@ -97,7 +97,7 @@ theorem length_halfStep_zero_le (k o : ℕ) (x : List ℕ) (j : ℕ) :
 
 /-- **The products of half of a weight** are no longer than the prime, the register and the
 counter together. -/
-theorem length_halfStep_le (p k o : ℕ) (x : List ℕ) (j : ℕ) :
+private theorem length_halfStep_le (p k o : ℕ) (x : List ℕ) (j : ℕ) :
     (encNat (halfStep^[j] (((p, k, o), x), 0, 1 % p)).2.2).length ≤
       (encNat p).length + (encList encNat x).length + j + 1 := by
   rcases Nat.eq_zero_or_pos p with rfl | hp
@@ -118,10 +118,10 @@ theorem length_halfStep_le (p k o : ℕ) (x : List ℕ) (j : ℕ) :
       omega
 
 /-- The encoding of the states of `halfStep`. -/
-abbrev encHalf : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ × ℕ ↪ List Bool :=
+private abbrev encHalf : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ × ℕ ↪ List Bool :=
   encPair (encPair encNat3 (encList encNat)) (encPair encNat encNat)
 
-theorem halfStep_inSpace :
+private theorem halfStep_inSpace :
     ComputableTidilyInSpace halfStep encHalf encHalf fun s => (encHalf s).length + 1 := by
   have hl : (fun s => (encHalf s).length) ≼ fun s => (encHalf s).length + 1 :=
     .of_le fun _ => by omega
@@ -145,11 +145,11 @@ theorem halfStep_inSpace :
   exact budget_prod hpar (budget_prod hsucc hm)
 
 /-- The encoding of the arguments of half of a weight. -/
-abbrev encHalfIn : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ ↪ List Bool :=
+private abbrev encHalfIn : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ ↪ List Bool :=
   encPair (encPair encNat3 (encList encNat)) encNat
 
 /-- **Half of a weight**, from `(((p, k, o), x), n)`. -/
-theorem half_inSpace :
+private theorem half_inSpace :
     ComputableTidilyInSpace
       (fun h : ((ℕ × ℕ × ℕ) × List ℕ) × ℕ => (halfStep^[h.2] (h.1, 0, 1 % h.1.1.1)).2.2)
       encHalfIn encNat fun h => 256 * ((encHalfIn h).length + h.2 + 1) := by
