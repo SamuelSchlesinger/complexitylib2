@@ -304,8 +304,10 @@ theorem snd {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β�
     ComputableInPolyTime (fun p : β₁ × β₂ => p.2) (encPair enc₁ enc₂) enc₂ :=
   .of_tidy (ComputableTidilyInPolyTime.snd enc₁ enc₂)
 
+-- Keep this explicit application rule unregistered: it can fix a component's output encoding
+-- before discovering the source pair encoding. Primitive and encoding-aware projection rules
+-- provide the automatic routes; later migrations must preserve this registration choice.
 /-- Project the first component of a pair-valued function computable in polynomial time. -/
-@[fun_prop]
 theorem fst' {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
     {f : α → β₁ × β₂} (hf : ComputableInPolyTime f encIn (encPair enc₁ enc₂)) :
     ComputableInPolyTime (fun x => (f x).1) encIn enc₁ :=
