@@ -9,9 +9,9 @@ module
 
 public import Complexity.Computability.Complexity.Classes.PH
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
+import Complexity.Computability.Complexity.Classes.PH.Projection
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Cslib.Foundations.Data.Polynomial.Monotone
 
 /-!
 # Collapses of the polynomial hierarchy
@@ -23,19 +23,11 @@ polynomial hierarchy collapses to its level `k`: `PH = Σₖ`
 (`Cslib.Complexity.PH_eq_NP_of_coNP_subset_NP`) and `P = NP` collapses it to `P`
 (`Cslib.Complexity.PH_eq_P_of_NP_subset_P`).
 
-The collapse goes one level at a time (`Cslib.Complexity.SigmaP_succ_subset_SigmaP`). For a
-problem `A` in `Σₖ₊₁`, the pairs `(a, w₁)` of an instance and a first certificate from which the
-remaining `k` alternating quantifiers accept form a problem `B` in `Πₖ`, with respect to the
-encoding of pairs. Its blocks of certificates are lengths of the instance `a`, while `Πₖ` asks for
-polynomials in the length of the encoded pair; the verifier reads longer blocks and cuts each to
-its first bits (`Cslib.Complexity.truncateBlocks`), which does not change the quantifiers
-(`Cslib.Complexity.alternation_truncateBlocks`). Then `B` is in `Σₖ`, and the existential
-quantifier over `w₁` merges with the first quantifier of `B`, whose block lengths are polynomials
-in the length of the encoded pair `(a, w₁)`, hence in the length of `enc a`.
-
-## Main definitions
-
-* `Cslib.Complexity.truncateBlocks`: cut blocks of certificates to shorter blocks.
+The collapse goes one level at a time (`Cslib.Complexity.SigmaP_succ_subset_SigmaP`). A problem
+`A` in `Σₖ₊₁` is the projection of a problem `B` in `Πₖ` on pairs `(a, w₁)` of an instance and a
+first certificate (`Cslib.Complexity.exists_mem_PiP_of_mem_SigmaP_succ`). Then `B` is in `Σₖ`, and
+the existential quantifier over `w₁` merges with the first quantifier of `B`, whose block lengths
+are polynomials in the length of the encoded pair `(a, w₁)`, hence in the length of `enc a`.
 
 ## Main results
 
@@ -58,79 +50,6 @@ namespace Cslib.Complexity
 
 open Turing.MultiTapeTM
 
-/-! ### Cutting blocks of certificates -/
-
-/-- The blocks of `w` of lengths `p.eval m`, for the polynomials `p` of `ps` in order, each cut to
-its first `p.eval n` bits. -/
-def truncateBlocks : List (Polynomial ℕ) → ℕ → ℕ → List Bool → List Bool
-  | [], _, _, _ => []
-  | p :: ps, n, m, w => w.take (p.eval n) ++ truncateBlocks ps n m (w.drop (p.eval m))
-
-/-- **Cutting longer blocks does not change alternating quantifiers**: quantifying over blocks of
-lengths `p.eval m` and cutting each to `p.eval n ≤ p.eval m` bits quantifies over all blocks of
-lengths `p.eval n`. -/
-theorem alternation_truncateBlocks {ps : List (Polynomial ℕ)} {n m : ℕ} (h : n ≤ m) {q : Bool}
-    {P : List Bool → Prop} :
-    Alternation q (ps.map fun p => p.eval m) (fun w => P (truncateBlocks ps n m w)) ↔
-      Alternation q (ps.map fun p => p.eval n) P := by
-  induction ps generalizing q P with
-  | nil => simp [truncateBlocks]
-  | cons p ps ih =>
-    have hle := p.eval_mono h
-    -- a long block, appended to anything, cuts to its first `p.eval n` bits
-    have hcut (w v : List Bool) (hw : w.length = p.eval m) :
-        truncateBlocks (p :: ps) n m (w ++ v) = w.take (p.eval n) ++ truncateBlocks ps n m v := by
-      simp only [truncateBlocks, List.take_append_of_le_length (hw ▸ hle),
-        List.drop_left' hw]
-    have key (w : List Bool) (hw : w.length = p.eval m) {q : Bool} :
-        Alternation q (ps.map fun p => p.eval m)
-          (fun v => P (truncateBlocks (p :: ps) n m (w ++ v))) ↔
-        Alternation q (ps.map fun p => p.eval n) fun v => P (w.take (p.eval n) ++ v) :=
-      (alternation_congr fun v => by rw [hcut w v hw]).trans
-        (ih (P := fun v => P (w.take (p.eval n) ++ v)))
-    -- a short block is the cut of its padding
-    have hpad (w : List Bool) (hw : w.length = p.eval n) :
-        (w ++ List.replicate (p.eval m - p.eval n) false).length = p.eval m := by
-      simp only [List.length_append, List.length_replicate, hw]
-      omega
-    have htake (w : List Bool) (hw : w.length = p.eval n) :
-        (w ++ List.replicate (p.eval m - p.eval n) false).take (p.eval n) = w := by
-      rw [← hw, List.take_left]
-    have hlen (w : List Bool) (hw : w.length = p.eval m) : (w.take (p.eval n)).length = p.eval n :=
-      by rw [List.length_take, hw, Nat.min_eq_left hle]
-    cases q
-    · simp only [List.map_cons, alternation_false_cons]
-      constructor
-      · intro hP w hw
-        have := (key _ (hpad w hw)).mp (hP _ (hpad w hw))
-        rwa [htake w hw] at this
-      · intro hP w hw
-        exact (key w hw).mpr (hP _ (hlen w hw))
-    · simp only [List.map_cons, alternation_true_cons]
-      constructor
-      · rintro ⟨w, hw, hP⟩
-        exact ⟨_, hlen w hw, (key w hw).mp hP⟩
-      · rintro ⟨w, hw, hP⟩
-        refine ⟨_, hpad w hw, (key _ (hpad w hw)).mpr ?_⟩
-        rwa [htake w hw]
-
-/-- Cutting blocks is polynomial-time, for a fixed list of polynomials and lengths `n`, `m` computed
-in unary. -/
-theorem computableTidilyInPolyTime_truncateBlocks {γ : Type} {encIn : γ ↪ List Bool}
-    (ps : List (Polynomial ℕ)) {N M : γ → ℕ}
-    (hN : ComputableTidilyInPolyTime N encIn encUnary)
-    (hM : ComputableTidilyInPolyTime M encIn encUnary) {W : γ → List Bool}
-    (hW : ComputableTidilyInPolyTime W encIn encBits) :
-    ComputableTidilyInPolyTime (fun x => truncateBlocks ps (N x) (M x) (W x)) encIn encBits := by
-  induction ps generalizing W with
-  | nil => exact .const []
-  | cons p ps ih =>
-    exact ComputableTidilyInPolyTime.bitsAppend
-      (ComputableTidilyInPolyTime.bitsTakeWithInput hW
-        ((ComputableTidilyInPolyTime.unary_eval p).comp hN))
-      (ih (ComputableTidilyInPolyTime.bitsDropWithInput hW
-        ((ComputableTidilyInPolyTime.unary_eval p).comp hM)))
-
 /-! ### One level of the collapse -/
 
 variable {α : Type} {enc : α ↪ List Bool}
@@ -152,27 +71,9 @@ quantifier. -/
 theorem SigmaP_succ_subset_SigmaP {k : ℕ} (hk : 1 ≤ k)
     (h : PiP k (encPair enc encBits) ⊆ SigmaP k (encPair enc encBits)) :
     SigmaP (k + 1) enc ⊆ SigmaP k enc := by
-  rintro A ⟨ps, V, hlen, hV, hA⟩
-  obtain ⟨p, ps, rfl⟩ := List.exists_cons_of_length_eq_add_one hlen
-  have hlen' : ps.length = k := by simpa using hlen
-  -- the last `k` quantifiers, on pairs of an instance and a first certificate
-  let B : Set (α × List Bool) := {y | Alternation false
-    (ps.map fun r => r.eval (enc y.1).length) fun w => V (y.1, y.2 ++ w) = true}
-  have hle (y : α × List Bool) : (enc y.1).length ≤ (encPair enc encBits y).length := by
-    simp only [length_encPair]
-    omega
-  have hB : B ∈ PiP k (encPair enc encBits) := by
-    refine ⟨ps, fun z => V (z.1.1, z.1.2 ++ truncateBlocks ps (enc z.1.1).length
-      (encPair enc encBits z.1).length z.2), hlen', ?_, fun y => ?_⟩
-    · have hfst := (ComputableTidilyInPolyTime.fst (encPair enc encBits) encBits)
-      exact .of_tidy <| hV.tidy.comp (((ComputableTidilyInPolyTime.fst _ _).comp hfst).prod
-        (ComputableTidilyInPolyTime.bitsAppend ((ComputableTidilyInPolyTime.snd _ _).comp hfst)
-          (computableTidilyInPolyTime_truncateBlocks ps
-            ((ComputableTidilyInPolyTime.encoding_length enc).comp
-              ((ComputableTidilyInPolyTime.fst _ _).comp hfst))
-            ((ComputableTidilyInPolyTime.encoding_length _).comp hfst) (.snd _ _))))
-    · exact (alternation_truncateBlocks (hle y)
-        (P := fun w => V (y.1, y.2 ++ w) = true)).symm
+  intro A hA
+  -- the pairs of an instance and a first certificate from which the last `k` quantifiers accept
+  obtain ⟨p, B, hB, hA⟩ := exists_mem_PiP_of_mem_SigmaP_succ hA
   obtain ⟨rs, V', hrs, hV', hB'⟩ := h hB
   obtain ⟨r, rs, rfl⟩ := List.exists_cons_of_length_eq_add_one
     (show rs.length = (k - 1) + 1 by omega)
@@ -198,7 +99,7 @@ theorem SigmaP_succ_subset_SigmaP {k : ℕ} (hk : 1 ≤ k)
     rw [exists_length_add_iff]
     refine exists_congr fun w => and_congr_right fun hw => ?_
     have hmem := hB' (a, w)
-    simp only [Set.mem_ofPred_eq, B, List.map_cons, alternation_true_cons, hL a w hw] at hmem
+    simp only [List.map_cons, alternation_true_cons, hL a w hw] at hmem
     rw [hmem]
     refine exists_congr fun v => and_congr_right fun hv => alternation_congr fun u => ?_
     simp [hw, List.append_assoc]

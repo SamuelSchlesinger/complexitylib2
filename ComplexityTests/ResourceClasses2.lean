@@ -5,9 +5,10 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.PH.Collapse
+import Complexity.Computability.Complexity.Classes.PH.Projection
 
 /-! Collapses of the polynomial hierarchy, with concrete instances of cutting blocks of
-certificates. -/
+certificates and of peeling off the first quantifier of `Σₖ₊₁`. -/
 
 namespace ComplexityTests.ResourceClasses2
 
@@ -31,6 +32,20 @@ example (P : List Bool → Prop) :
         (fun w => P (truncateBlocks [.X, 1] 1 3 w)) ↔
       Alternation true ([Polynomial.X, 1].map fun p => p.eval 1) P :=
   alternation_truncateBlocks (by norm_num)
+
+/-- A problem in `Σ₂` is the projection of a `coNP` problem on pairs of an instance and a word. -/
+example {α : Type} {enc : α ↪ List Bool} {A : Set α} (hA : A ∈ SigmaP 2 enc) :
+    ∃ (p : Polynomial ℕ) (B : Set (α × List Bool)), B ∈ coNP (encPair enc encBits) ∧
+      ∀ a, a ∈ A ↔ ∃ w : List Bool, w.length = p.eval (enc a).length ∧ (a, w) ∈ B := by
+  obtain ⟨p, B, hB, hA⟩ := exists_mem_PiP_of_mem_SigmaP_succ hA
+  exact ⟨p, B, PiP_one_eq_coNP ▸ hB, hA⟩
+
+/-- At the first level, an `NP` problem is the projection of a `P` problem on pairs. -/
+example {α : Type} {enc : α ↪ List Bool} {A : Set α} (hA : A ∈ NP enc) :
+    ∃ (p : Polynomial ℕ) (B : Set (α × List Bool)), B ∈ P (encPair enc encBits) ∧
+      ∀ a, a ∈ A ↔ ∃ w : List Bool, w.length = p.eval (enc a).length ∧ (a, w) ∈ B := by
+  obtain ⟨p, B, hB, hA⟩ := exists_mem_PiP_of_mem_SigmaP_succ (k := 0) (SigmaP_one ▸ hA)
+  exact ⟨p, B, PiP_zero ▸ hB, hA⟩
 
 example {α : Type} (enc : α ↪ List Bool) {k : ℕ} (hk : 1 ≤ k)
     (h : ∀ {β : Type} (encB : β ↪ List Bool), PiP k encB ⊆ SigmaP k encB) :
@@ -74,6 +89,13 @@ example {α : Type} (enc : α ↪ List Bool)
     simpa only [zero_add, SigmaP_one, SigmaP_zero] using h encB
 
 /-! ### Axioms -/
+
+/--
+info: 'Cslib.Complexity.exists_mem_PiP_of_mem_SigmaP_succ' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.exists_mem_PiP_of_mem_SigmaP_succ
 
 /--
 info: 'Cslib.Complexity.SigmaP_succ_subset_SigmaP' depends on axioms:
