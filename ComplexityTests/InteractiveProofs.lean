@@ -50,18 +50,22 @@ example : ((([], []), ([3], [])) : Graph × Graph) ∈ GraphNonIsomorphism := by
 
 /-! ### `GraphIsomorphism ∈ NP` -/
 
--- The certificate mapping positions `0, 1, 2` of `path` to positions `0, 1, 2` of `path'`
--- (vertices `7, 5, 9`) is accepted.
+-- The certificate decoding `[7, 5, 9]` (positions `0, 1, 2` of `path'.1 = [7, 5, 9, 5]` in unary
+-- blocks of width `4`) maps positions `0, 1, 2` of `path` to `7, 5, 9` and is accepted.
 example : GraphIsomorphism.verifier ((path, path'),
-    [true, false, false, false, true, false, false, false, true]) = true := by decide
+    [false, false, false, false, true, false, false, false, true, true, false, false]) = true := by
+  decide
 
--- Mapping the end vertex `0` to the middle vertex `5` breaks an edge and is rejected.
+-- Mapping the end vertex `0` to the middle vertex `5` (`[5, 7, 9]`) breaks an edge and is rejected.
 example : GraphIsomorphism.verifier ((path, path'),
-    [false, true, false, true, false, false, false, false, true]) = false := by decide
+    [true, false, false, false, false, false, false, false, true, true, false, false]) = false := by
+  decide
 
--- A map that is not injective is rejected.
+-- A decoded list with a duplicate vertex (`[7, 7, 9]`) is rejected.
 example : GraphIsomorphism.verifier ((path, path'),
-    [true, false, false, true, false, false, false, false, true]) = false := by decide
+    [false, false, false, false, false, false, false, false, true, true, false, false]) =
+      false := by
+  decide
 
 -- Graphs with different numbers of distinct vertices are rejected.
 example : GraphIsomorphism.verifier (((([1, 2], []), ([1], [])) : Graph × Graph), []) = false := by

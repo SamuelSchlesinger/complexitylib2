@@ -146,7 +146,7 @@ private theorem mem_split_snd_iff {G : Graph} {a b : ℕ} :
 
 private theorem adj_split_iff {G : Graph} {a b : ℕ} :
     G.split.toSimpleGraph.Adj a b ↔ a ≠ b ∧ ((a, b) ∈ G.split.2 ∨ (b, a) ∈ G.split.2) :=
-  SimpleGraph.fromRel_adj _ _ _
+  toSimpleGraph_adj
 
 private theorem adj_in_mid {G : Graph} {v : ℕ} (hv : v ∈ G.1) :
     G.split.toSimpleGraph.Adj (G.splitVertex v 0) (G.splitVertex v 1) := by

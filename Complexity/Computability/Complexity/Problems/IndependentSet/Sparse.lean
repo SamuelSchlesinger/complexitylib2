@@ -186,13 +186,13 @@ theorem mem_conflictEdges {e : ℕ × ℕ} : e ∈ conflictEdges φ ↔ ∃ (i :
 
 private theorem adj_of_mem {u v : ℕ} (huv : u ≠ v) (h : (u, v) ∈ edges φ) :
     (toSparseIndependentSet φ).1.toSimpleGraph.Adj u v := by
-  simp only [toSparseIndependentSet, Graph.toSimpleGraph, SimpleGraph.fromRel_adj]
+  simp only [toSparseIndependentSet, Graph.toSimpleGraph_adj]
   exact ⟨huv, Or.inl h⟩
 
 private theorem mem_edges_of_adj {u v : ℕ}
     (h : (toSparseIndependentSet φ).1.toSimpleGraph.Adj u v) :
     (u, v) ∈ edges φ ∨ (v, u) ∈ edges φ := by
-  simp only [toSparseIndependentSet, Graph.toSimpleGraph, SimpleGraph.fromRel_adj] at h
+  simp only [toSparseIndependentSet, Graph.toSimpleGraph_adj] at h
   exact h.2
 
 /-! ### Correctness -/

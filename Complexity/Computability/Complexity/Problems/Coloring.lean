@@ -492,11 +492,11 @@ theorem toThreeColoring_mem_iff (φ : CNF ℕ) : toThreeColoring φ ∈ ThreeCol
     refine satisfiable_of_coloring (c := c) fun e he => ?_
     obtain ⟨h₁, h₂⟩ := mem_endpoints he
     refine ⟨hadj _ h₁ _ h₂ ?_, hlt _ h₁, hlt _ h₂⟩
-    simp only [toThreeColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj]
+    simp only [toThreeColoring, Graph.toSimpleGraph_adj]
     exact ⟨ne_of_mem_coloringEdges he, Or.inl he⟩
   · rintro ⟨σ, hσ⟩
     refine ⟨gadgetColoring φ σ, fun v _ => gadgetColoring_lt v, fun u _ v _ huv => ?_⟩
-    · simp only [toThreeColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj] at huv
+    · simp only [toThreeColoring, Graph.toSimpleGraph_adj] at huv
       rcases huv.2 with h | h
       · exact gadgetColoring_ne hσ _ h
       · exact (gadgetColoring_ne hσ _ h).symm
@@ -628,7 +628,7 @@ theorem toKColoring_mem_iff (m : ℕ) (φ : CNF ℕ) :
   rw [mem_KColoring_iff]
   have hadj_of : ∀ {e : ℕ × ℕ}, e ∈ kColoringEdges m φ → e.1 ≠ e.2 →
       (toKColoring m φ).toSimpleGraph.Adj e.1 e.2 := fun he hne => by
-    simp only [toKColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj]
+    simp only [toKColoring, Graph.toSimpleGraph_adj]
     exact ⟨hne, Or.inl he⟩
   have hU : ∀ {r v : ℕ}, v ∈ (coloringEdges φ).flatMap (fun e => [e.1, e.2]) →
       universalVertex r ≠ v := fun hv h => by
@@ -710,7 +710,7 @@ theorem toKColoring_mem_iff (m : ℕ) (φ : CNF ℕ) :
       rcases hv with rfl | rfl
       · exact (hEc e he).2.1
       · exact (hEc e he).2.2
-    · simp only [toKColoring, Graph.toSimpleGraph, SimpleGraph.fromRel_adj] at huv
+    · simp only [toKColoring, Graph.toSimpleGraph_adj] at huv
       rcases huv.2 with h | h
       · exact (hEc _ h).1
       · exact (hEc _ h).1.symm
