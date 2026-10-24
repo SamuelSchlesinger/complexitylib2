@@ -408,6 +408,7 @@ import ComplexityTests.SeedFixing
 import ComplexityTests.SeededEvaluator
 import ComplexityTests.SensitivitySeparation
 import ComplexityTests.ShannonSynthesis
+import ComplexityTests.SharpPLowness
 import ComplexityTests.ShortWords
 import ComplexityTests.SignQueries
 import ComplexityTests.SipserLautemann
