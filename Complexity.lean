@@ -1051,6 +1051,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.T
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy.Redirect
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Degree
+public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Polynomial
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.SingleTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Space

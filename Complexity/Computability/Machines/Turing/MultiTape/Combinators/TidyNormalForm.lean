@@ -18,6 +18,7 @@ public import Mathlib.Data.Fin.Tuple.Embedding
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.ExtendTapesView
 import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
+public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Polynomial
 import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Basic
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
@@ -415,6 +416,20 @@ theorem ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace {α β : 
     Nat.mul_le_mul_right _ (by generalize 4 * k * k = m; omega)
   rw [e₁, e₂]
   exact Nat.add_le_add this (by generalize 4 * k * k = m; omega)
+
+
+/-- `f` is tidily computable within time and space bounded by a polynomial in the length of the
+encoded input. -/
+public def ComputableTidilyInPolyTime {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) : Prop :=
+  ∃ t s, PolyBounded (fun a => (encIn a).length) t ∧ PolyBounded (fun a => (encIn a).length) s ∧
+    ComputableTidilyInTimeAndSpace f encIn encOut t s
+
+
+
+-- Transitional registration while the remaining topic providers are being cut over.
+attribute [fun_prop] ComputableTidilyInPolyTime
+
 
 end Turing.MultiTapeTM
 
