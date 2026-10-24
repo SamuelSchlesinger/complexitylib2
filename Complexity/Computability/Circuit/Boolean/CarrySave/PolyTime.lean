@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.CarrySave
 public import Complexity.Computability.Circuit.Boolean.CodeTemplate
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
@@ -32,8 +33,8 @@ charge the full code and hold uniformly at every width, including zero.
 
 * `Cslib.Circuits.Boolean.csa3to2Code_eq_code`,
   `Cslib.Circuits.Boolean.csa4to2Code_eq_code`: exact agreement with the existing circuits.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_csa3to2`,
-  `Cslib.Circuits.Boolean.computableTidilyInPolyTime_csa4to2`: uniform native constructors.
+* `Cslib.Circuits.Boolean.computableInPolyTime_csa3to2`,
+  `Cslib.Circuits.Boolean.computableInPolyTime_csa4to2`: uniform native constructors.
 
 ## References
 
@@ -115,16 +116,19 @@ theorem csa3to2Code_eq_code (w : ℕ) : csa3to2Code w = (csa3to2 w).code := by
   rfl
 
 /-- The actual three-to-two reducer has a uniform native generator on unary widths. -/
-@[fun_prop] theorem computableTidilyInPolyTime_csa3to2 :
-    ComputableTidilyInPolyTime (fun w => (csa3to2 w).code) encUnary encCode := by
+@[fun_prop] theorem computableInPolyTime_csa3to2 :
+    ComputableInPolyTime (fun w => (csa3to2 w).code) encUnary encCode := by
+  refine .of_tidy ?_
   have hw : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1)
       (encPair encUnary encUnary) encNat := unary_to_binary.comp (fst _ _)
   have hi : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.2)
       (encPair encUnary encUnary) encNat := unary_to_binary.comp (snd _ _)
   have hs : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => csaSumCode p.1 p.2)
       (encPair encUnary encUnary) encCode := by
-    apply computableTidilyInPolyTime_formulaCode _ (by fun_prop)
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_formulaCode _ (.of_tidy (by fun_prop))
     intro j
+    apply ComputableInPolyTime.of_tidy
     fin_cases j
     · exact hi
     · change ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1 + p.2) _ encNat
@@ -135,8 +139,10 @@ theorem csa3to2Code_eq_code (w : ℕ) : csa3to2Code w = (csa3to2 w).code := by
       (fun p : ℕ × ℕ => formulaCode (p.1 + (p.1 + p.1)) (maj3Formula (0 : Fin 3) 1 2)
         ![p.2 - 1, p.1 + (p.2 - 1), p.1 + (p.1 + (p.2 - 1))])
       (encPair encUnary encUnary) encCode := by
-    apply computableTidilyInPolyTime_formulaCode _ (by fun_prop)
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_formulaCode _ (.of_tidy (by fun_prop))
     intro j
+    apply ComputableInPolyTime.of_tidy
     fin_cases j
     · change ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.2 - 1) _ encNat
       fun_prop
@@ -150,9 +156,9 @@ theorem csa3to2Code_eq_code (w : ℕ) : csa3to2Code w = (csa3to2 w).code := by
     fun_prop
   have hw' := unary_to_binary
   have hn : ComputableTidilyInPolyTime (fun w : ℕ => w + (w + w)) encUnary encNat := by fun_prop
-  have h := computableTidilyInPolyTime_appendCode hn
-    (computableTidilyInPolyTime_appendCodes hn (mapWith hs id' range))
-    (computableTidilyInPolyTime_appendCodes hn (mapWith hc id' range))
+  have h := (computableInPolyTime_appendCode (.of_tidy hn)
+    (computableInPolyTime_appendCodes (.of_tidy hn) (.of_tidy (mapWith hs id' range)))
+    (computableInPolyTime_appendCodes (.of_tidy hn) (.of_tidy (mapWith hc id' range)))).tidy
   simpa only [← csa3to2Code_eq_code, csa3to2Code] using h
 
 private theorem csa4to2FirstIn_val (w : ℕ) (i : Fin (w + (w + w))) :
@@ -196,8 +202,9 @@ theorem csa4to2Code_eq_code (w : ℕ) : csa4to2Code w = (csa4to2 w).code := by
   rfl
 
 /-- The actual four-to-two reducer has a uniform native generator on unary widths. -/
-@[fun_prop] theorem computableTidilyInPolyTime_csa4to2 :
-    ComputableTidilyInPolyTime (fun w => (csa4to2 w).code) encUnary encCode := by
+@[fun_prop] theorem computableInPolyTime_csa4to2 :
+    ComputableInPolyTime (fun w => (csa4to2 w).code) encUnary encCode := by
+  refine .of_tidy ?_
   have hw := unary_to_binary
   have hn : ComputableTidilyInPolyTime
       (fun w : ℕ => (w + w) + (w + w)) encUnary encNat := by fun_prop
@@ -216,10 +223,10 @@ theorem csa4to2Code_eq_code (w : ℕ) : csa4to2Code w = (csa4to2 w).code := by
       (fun p : ℕ × ℕ => (p.1 + p.1) + (p.1 + p.2)) (encPair encUnary encUnary) encNat
       from by fun_prop))
   have h3 : ComputableTidilyInPolyTime csa3to2Code encUnary encCode := by
-    simpa only [← csa3to2Code_eq_code] using computableTidilyInPolyTime_csa3to2
-  have h := computableTidilyInPolyTime_compCode hn h3
-    (computableTidilyInPolyTime_appendCode hn hlast
-      (computableTidilyInPolyTime_compCode hn h3 hfirst))
+    simpa only [← csa3to2Code_eq_code] using computableInPolyTime_csa3to2.tidy
+  have h := (computableInPolyTime_compCode (.of_tidy hn) (.of_tidy h3)
+    (computableInPolyTime_appendCode (.of_tidy hn) (.of_tidy hlast)
+      (computableInPolyTime_compCode (.of_tidy hn) (.of_tidy h3) (.of_tidy hfirst)))).tidy
   simpa only [← csa4to2Code_eq_code, csa4to2Code] using h
 
 end Cslib.Circuits.Boolean

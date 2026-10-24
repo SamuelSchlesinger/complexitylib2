@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Balanced
 public import Complexity.Computability.Circuit.Boolean.CodeComposition
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
@@ -18,6 +19,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LinearSpace
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 import Mathlib.Data.List.GetD
 import Mathlib.Data.List.TakeDrop
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Native codes for the existing half-split balanced circuit
@@ -33,7 +35,7 @@ The loop count is the length of the complete leaf-code list, never a binary arit
 ## Main results
 
 * `Cslib.Circuits.Boolean.balancedCode_eq_code`: exact agreement with `Circuit.balanced`.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_balancedCode`: uniform construction from
+* `Cslib.Circuits.Boolean.computableInPolyTime_balancedCode`: uniform construction from
   binary input arity and native generators of the complete operator, fallback and leaf codes.
 
 The resource proof counts all gates, gate arguments and outputs, including dead gates, and
@@ -307,6 +309,7 @@ private theorem computedGetD {α β : Type} {encIn : α ↪ List Bool} {enc : β
   simpa only [Function.comp_def, List.head?_drop, List.getD_eq_getElem?_getD] using
     optionGetDWithInput hhead hf
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 private theorem computable_intervalRow {α : Type} {enc : α ↪ List Bool}
     {n : α → ℕ} {op unit : α → Code} {leaves : α → List Code}
     {rows : α → List (List Code)}
@@ -553,14 +556,19 @@ theorem balancedCode_eq_code {n r : ℕ} (op : Circuit signature (r + r) r)
 /-- Uniform native generation from the binary shared-input count and the complete operator,
 fallback and leaf codes. The derived bound charges every interval row and its list framing;
 no well-formedness, fixed arity or assumed construction-runtime bound is required. -/
-@[fun_prop] theorem computableTidilyInPolyTime_balancedCode {α : Type} {enc : α ↪ List Bool}
+@[fun_prop] theorem computableInPolyTime_balancedCode {α : Type} {enc : α ↪ List Bool}
     {n : α → ℕ} {op unit : α → Code} {leaves : α → List Code}
-    (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hop : ComputableTidilyInPolyTime op enc encCode)
-    (hu : ComputableTidilyInPolyTime unit enc encCode)
-    (hl : ComputableTidilyInPolyTime leaves enc (encList encCode)) :
-    ComputableTidilyInPolyTime (fun a => balancedCode (n a) (op a) (unit a) (leaves a))
+    (hn : ComputableInPolyTime n enc encNat)
+    (hop : ComputableInPolyTime op enc encCode)
+    (hu : ComputableInPolyTime unit enc encCode)
+    (hl : ComputableInPolyTime leaves enc (encList encCode)) :
+    ComputableInPolyTime (fun a => balancedCode (n a) (op a) (unit a) (leaves a))
       enc encCode := by
+  have hn := hn.tidy
+  have hop := hop.tidy
+  have hu := hu.tidy
+  have hl := hl.tidy
+  refine .of_tidy ?_
   let rowsEnc := encList (encList encCode)
   let init (a : α) := [List.replicate ((leaves a).length + 1) (unit a)]
   let step (a : α) (rows : List (List Code)) :=

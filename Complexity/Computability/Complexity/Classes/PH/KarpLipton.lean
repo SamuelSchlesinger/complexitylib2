@@ -152,9 +152,9 @@ theorem computableTidilyInPolyTime_evalAdvice {γ : Type} {encIn : γ ↪ List B
     ComputableTidilyInPolyTime (fun a => evalAdvice (s a) (width a) (w a) (x a)) encIn
       encBool := by
   have hm : ComputableTidilyInPolyTime (fun a => (x a).length) encIn encUnary := length_bits.comp hx
-  have hc := computableTidilyInPolyTime_readCertificate hm hs
-    (bitsDropWithInput hw (unary_mul.comp (hm.prod hwidth)))
-  exact computableTidilyInPolyTime_evalOutput hx hc.fst' hc.snd'
+  have hc := (computableInPolyTime_readCertificate (.of_tidy hm) (.of_tidy hs)
+    (.of_tidy (bitsDropWithInput hw (unary_mul.comp (hm.prod hwidth))))).tidy
+  exact (computableInPolyTime_evalOutput (.of_tidy hx) (.of_tidy hc.fst') (.of_tidy hc.snd')).tidy
 
 end Cslib.Circuits.Boolean
 

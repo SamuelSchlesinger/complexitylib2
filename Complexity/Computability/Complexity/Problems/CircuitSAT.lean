@@ -100,6 +100,7 @@ private theorem verifier_eq_evalOutput (p : (Σ n, Circuit signature n 1) × Lis
   rw [verifier, Circuit.eval_eq_evalOutput, h]
   rfl
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- The `CircuitSAT` verifier is polynomial-time, on certificates of arbitrary length. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_verifier :
@@ -112,7 +113,8 @@ theorem computableTidilyInPolyTime_verifier :
       (fun r : (ℕ × (List (Op × List ℕ) × List ℕ)) × List Bool =>
         evalOutput ((List.range r.1.1).map fun i => r.2.getD i false) r.1.2.1 (r.1.2.2.headD 0))
       (encPair (encPair encUnary encCode) encBits) encBool := by
-    fun_prop
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_evalOutput <;> exact .of_tidy (by fun_prop)
   rw [funext verifier_eq_evalOutput]
   exact hout.comp hraw
 

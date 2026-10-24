@@ -49,14 +49,14 @@ This module expresses that per-point pipeline directly on the list-of-rows table
   `ExecutableGenerator.normalized`, and `encodeTuple`.
 * `Cslib.Circuits.Rational.pointWord_eq`, `Cslib.Circuits.Rational.pointWords_eq`: `pointWord` and
   `pointWords` agree with `ExecutableGenerator.atPoint` composed with `encodeTuple`.
-* `Cslib.Circuits.Rational.computableTidilyInPolyTime_cramerRows`,
-  `Cslib.Circuits.Rational.computableTidilyInPolyTime_matrixEntryWord`,
-  `Cslib.Circuits.Rational.computableTidilyInPolyTime_matrixWord`,
-  `Cslib.Circuits.Rational.computableTidilyInPolyTime_tupleWord`,
+* `Cslib.Circuits.Rational.computableInPolyTime_cramerRows`,
+  `Cslib.Circuits.Rational.computableInPolyTime_matrixEntryWord`,
+  `Cslib.Circuits.Rational.computableInPolyTime_matrixWord`,
+  `Cslib.Circuits.Rational.computableInPolyTime_tupleWord`,
   `Cslib.Circuits.Rational.pointWordOfTables_polytime`,
   `Cslib.Circuits.Rational.pointWordsOfTables_polytime`,
-  `Cslib.Circuits.Rational.computableTidilyInPolyTime_pointWord`,
-  `Cslib.Circuits.Rational.computableTidilyInPolyTime_pointWords`,
+  `Cslib.Circuits.Rational.computableInPolyTime_pointWord`,
+  `Cslib.Circuits.Rational.computableInPolyTime_pointWords`,
   `Cslib.Circuits.Rational.pointWord_polytime`: polynomial-time certificates for the per-point
   pipeline.
 
@@ -232,7 +232,7 @@ private theorem intBin_isZero' {z : α → ℤ}
 private theorem computableTidilyInPolyTime_detRows {A : α → List (List ℤ)}
     (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin))) :
     ComputableTidilyInPolyTime (fun x => detRows (A x)) encIn encIntBin :=
-  detRows_polytime.comp hA
+  detRows_polytime.tidy.comp hA
 
 @[local fun_prop]
 private theorem listTail' {β : Type} {encB : β ↪ List Bool} {l : α → List β}
@@ -240,99 +240,116 @@ private theorem listTail' {β : Type} {encB : β ↪ List Bool} {l : α → List
     ComputableTidilyInPolyTime (fun x => (l x).tail) encIn (encList encB) :=
   (listTail encB).comp hl
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Column replacement `cramerRows` is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_cramerRows {A B : α → List (List ℤ)} {colA colB : α → ℕ}
-    (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
-    (hB : ComputableTidilyInPolyTime B encIn (encList (encList encIntBin)))
-    (hcolA : ComputableTidilyInPolyTime colA encIn encUnary)
-    (hcolB : ComputableTidilyInPolyTime colB encIn encUnary) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_cramerRows {A B : α → List (List ℤ)} {colA colB : α → ℕ}
+    (hA : ComputableInPolyTime A encIn (encList (encList encIntBin)))
+    (hB : ComputableInPolyTime B encIn (encList (encList encIntBin)))
+    (hcolA : ComputableInPolyTime colA encIn encUnary)
+    (hcolB : ComputableInPolyTime colB encIn encUnary) :
+    ComputableInPolyTime
       (fun x => cramerRows (A x) (B x) (colA x) (colB x))
       encIn (encList (encList encIntBin)) := by
   unfold cramerRows
-  fun_prop
+  apply computableInPolyTime_tabulateRows
+  · exact .of_tidy ((ComputableTidilyInPolyTime.length_list _).comp hA.tidy)
+  · apply ComputableInPolyTime.of_tidy
+    fun_prop
 
 /-- Encoding one normalized rational entry via Cramer's rule and `detRows` is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_matrixEntryWord {A B : α → List (List ℤ)} {den : α → ℤ}
+theorem computableInPolyTime_matrixEntryWord {A B : α → List (List ℤ)} {den : α → ℤ}
     {i j : α → ℕ}
-    (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
-    (hB : ComputableTidilyInPolyTime B encIn (encList (encList encIntBin)))
-    (hden : ComputableTidilyInPolyTime den encIn encIntBin)
-    (hi : ComputableTidilyInPolyTime i encIn encUnary)
-    (hj : ComputableTidilyInPolyTime j encIn encUnary) :
-    ComputableTidilyInPolyTime
+    (hA : ComputableInPolyTime A encIn (encList (encList encIntBin)))
+    (hB : ComputableInPolyTime B encIn (encList (encList encIntBin)))
+    (hden : ComputableInPolyTime den encIn encIntBin)
+    (hi : ComputableInPolyTime i encIn encUnary)
+    (hj : ComputableInPolyTime j encIn encUnary) :
+    ComputableInPolyTime
       (fun x => matrixEntryWord (A x) (B x) (den x) (i x) (j x))
       encIn encBits := by
   unfold matrixEntryWord
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Encoding a full normalized rational matrix is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_matrixWord {A B : α → List (List ℤ)} {den : α → ℤ}
-    (hA : ComputableTidilyInPolyTime A encIn (encList (encList encIntBin)))
-    (hB : ComputableTidilyInPolyTime B encIn (encList (encList encIntBin)))
-    (hden : ComputableTidilyInPolyTime den encIn encIntBin) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_matrixWord {A B : α → List (List ℤ)} {den : α → ℤ}
+    (hA : ComputableInPolyTime A encIn (encList (encList encIntBin)))
+    (hB : ComputableInPolyTime B encIn (encList (encList encIntBin)))
+    (hden : ComputableInPolyTime den encIn encIntBin) :
+    ComputableInPolyTime
       (fun x => matrixWord (A x) (B x) (den x))
       encIn encBits := by
+  have hA := hA.tidy
+  have hB := hB.tidy
+  have hden := hden.tidy
+  refine .of_tidy ?_
   unfold matrixWord
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Encoding a tuple of normalized rational matrices from `tables` and `den` is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_tupleWord {tables : α → List (List (List ℤ))} {den : α → ℤ}
-    (htables : ComputableTidilyInPolyTime tables encIn (encList (encList (encList encIntBin))))
-    (hden : ComputableTidilyInPolyTime den encIn encIntBin) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_tupleWord {tables : α → List (List (List ℤ))} {den : α → ℤ}
+    (htables : ComputableInPolyTime tables encIn (encList (encList (encList encIntBin))))
+    (hden : ComputableInPolyTime den encIn encIntBin) :
+    ComputableInPolyTime
       (fun x => tupleWord (tables x) (den x))
       encIn encBits := by
+  have htables := htables.tidy
+  have hden := hden.tidy
+  refine .of_tidy ?_
   unfold tupleWord
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Singularity-tested tuple encoding on a list of integer tables is polynomial-time. -/
 @[fun_prop]
 theorem pointWordOfTables_polytime :
-    ComputableTidilyInPolyTime pointWordOfTables
+    ComputableInPolyTime pointWordOfTables
       (encList (encList (encList encIntBin))) encBits := by
+  refine .of_tidy ?_
   unfold pointWordOfTables
   fun_prop
 
 /-- Compositional polynomial-time certificate for `pointWordOfTables`. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_pointWordOfTables {tables : α → List (List (List ℤ))}
-    (htables : ComputableTidilyInPolyTime tables encIn (encList (encList (encList encIntBin)))) :
-    ComputableTidilyInPolyTime (fun x => pointWordOfTables (tables x)) encIn encBits :=
+theorem computableInPolyTime_pointWordOfTables {tables : α → List (List (List ℤ))}
+    (htables : ComputableInPolyTime tables encIn (encList (encList (encList encIntBin)))) :
+    ComputableInPolyTime (fun x => pointWordOfTables (tables x)) encIn encBits :=
   pointWordOfTables_polytime.comp htables
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Singularity-tested singleton-or-empty tuple encoding on a list of integer tables is
 polynomial-time. -/
 @[fun_prop]
 theorem pointWordsOfTables_polytime :
-    ComputableTidilyInPolyTime pointWordsOfTables
+    ComputableInPolyTime pointWordsOfTables
       (encList (encList (encList encIntBin))) (encList encBits) := by
+  refine .of_tidy ?_
   unfold pointWordsOfTables
   fun_prop
 
 /-- Compositional polynomial-time certificate for `pointWordsOfTables`. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_pointWordsOfTables {tables : α → List (List (List ℤ))}
-    (htables : ComputableTidilyInPolyTime tables encIn (encList (encList (encList encIntBin)))) :
-    ComputableTidilyInPolyTime (fun x => pointWordsOfTables (tables x)) encIn (encList encBits) :=
+theorem computableInPolyTime_pointWordsOfTables {tables : α → List (List (List ℤ))}
+    (htables : ComputableInPolyTime tables encIn (encList (encList (encList encIntBin)))) :
+    ComputableInPolyTime (fun x => pointWordsOfTables (tables x)) encIn (encList encBits) :=
   pointWordsOfTables_polytime.comp htables
 
 /-- Computing the encoded normalized tuple at a grid point is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_pointWord {n N M Dg t p r : α → ℕ}
-    (hn : ComputableTidilyInPolyTime n encIn encUnary)
-    (hN : ComputableTidilyInPolyTime N encIn encUnary)
-    (hM : ComputableTidilyInPolyTime M encIn encUnary)
-    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
-    (ht : ComputableTidilyInPolyTime t encIn encUnary)
-    (hp : ComputableTidilyInPolyTime p encIn encUnary)
-    (hr : ComputableTidilyInPolyTime r encIn encUnary) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_pointWord {n N M Dg t p r : α → ℕ}
+    (hn : ComputableInPolyTime n encIn encUnary)
+    (hN : ComputableInPolyTime N encIn encUnary)
+    (hM : ComputableInPolyTime M encIn encUnary)
+    (hDg : ComputableInPolyTime Dg encIn encUnary)
+    (ht : ComputableInPolyTime t encIn encUnary)
+    (hp : ComputableInPolyTime p encIn encUnary)
+    (hr : ComputableInPolyTime r encIn encUnary) :
+    ComputableInPolyTime
       (fun x => pointWord (n x) (N x) (M x) (Dg x) (t x) (p x) (r x))
       encIn encBits := by
   unfold pointWord
@@ -340,15 +357,15 @@ theorem computableTidilyInPolyTime_pointWord {n N M Dg t p r : α → ℕ}
 
 /-- Computing the singleton-or-empty list of encoded tuples at a grid point is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_pointWords {n N M Dg t p r : α → ℕ}
-    (hn : ComputableTidilyInPolyTime n encIn encUnary)
-    (hN : ComputableTidilyInPolyTime N encIn encUnary)
-    (hM : ComputableTidilyInPolyTime M encIn encUnary)
-    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
-    (ht : ComputableTidilyInPolyTime t encIn encUnary)
-    (hp : ComputableTidilyInPolyTime p encIn encUnary)
-    (hr : ComputableTidilyInPolyTime r encIn encUnary) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_pointWords {n N M Dg t p r : α → ℕ}
+    (hn : ComputableInPolyTime n encIn encUnary)
+    (hN : ComputableInPolyTime N encIn encUnary)
+    (hM : ComputableInPolyTime M encIn encUnary)
+    (hDg : ComputableInPolyTime Dg encIn encUnary)
+    (ht : ComputableInPolyTime t encIn encUnary)
+    (hp : ComputableInPolyTime p encIn encUnary)
+    (hr : ComputableInPolyTime r encIn encUnary) :
+    ComputableInPolyTime
       (fun x => pointWords (n x) (N x) (M x) (Dg x) (t x) (p x) (r x))
       encIn (encList encBits) := by
   unfold pointWords
@@ -357,7 +374,7 @@ theorem computableTidilyInPolyTime_pointWords {n N M Dg t p r : α → ℕ}
 /-- Standalone polynomial-time certificate for `pointWord` on a 7-tuple of unary naturals. -/
 @[fun_prop]
 theorem pointWord_polytime :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun q : ℕ × ℕ × ℕ × ℕ × ℕ × ℕ × ℕ =>
         pointWord q.1 q.2.1 q.2.2.1 q.2.2.2.1 q.2.2.2.2.1 q.2.2.2.2.2.1 q.2.2.2.2.2.2)
       (encPair encUnary (encPair encUnary (encPair encUnary (encPair encUnary

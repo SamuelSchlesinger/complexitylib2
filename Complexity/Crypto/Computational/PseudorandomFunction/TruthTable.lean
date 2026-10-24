@@ -177,7 +177,7 @@ theorem exists_complexity_restriction_le {family : List Bool → List Bool → L
       complexity interpretation (single (restriction (family key) key.length m)) ≤
         c * (3 * key.length + 2) ^ c + 2 := by
   obtain ⟨L, hL, hg⟩ := PPoly.exists_of_polyTime
-    ((ComputableTidilyInPolyTime.headD (encA := encBool) false).comp hfamily)
+    (.of_tidy ((ComputableTidilyInPolyTime.headD (encA := encBool) false).comp hfamily))
   obtain ⟨c, hc⟩ := mem_PPoly_iff_exists_mem_SIZE.1 hL
   refine ⟨c, fun key m hm => ?_⟩
   set t : List (Fin m ⊕ Bool) :=

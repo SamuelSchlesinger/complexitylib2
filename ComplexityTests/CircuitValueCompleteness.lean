@@ -19,6 +19,32 @@ open Cslib Cslib.Complexity Cslib.Circuits Cslib.Circuits.Boolean Turing Turing.
 variable {k : ℕ} {State : Type} [Fintype State] [DecidableEq State]
   (tm : MultiTapeTM k Bool State)
 
+/-! The canonical space APIs retain the full input-dependent budget telescope. -/
+
+section PlainTableauBudgets
+variable {k : ℕ} {State : Type} [Fintype State] [DecidableEq State]
+  {α : Type} {encIn : α ↪ List Bool} {Bs : α → ℕ} {n T g : α → ℕ}
+
+-- Same arbitrary input encoding, bound, time function and finite state family.
+example (hT : ComputableInSpace T encIn encNat Bs)
+    (hin : (fun x => (encIn x).length) ≼ Bs) :
+    ComputableInSpace (fun x => Tableau.gfStart k State (T x)) encIn encNat Bs :=
+  Tableau.gfStart_inSpace hT hin
+
+example (hT : ComputableInSpace T encIn encNat Bs)
+    (hin : (fun x => (encIn x).length) ≼ Bs) :
+    ComputableInSpace (fun x => Tableau.blockSize k State (T x)) encIn encNat Bs :=
+  Tableau.blockSize_inSpace hT hin
+
+example (tm : MultiTapeTM k Bool State)
+    (hn : ComputableInSpace n encIn encNat Bs)
+    (hT : ComputableInSpace T encIn encNat Bs)
+    (hin : (fun x => (encIn x).length) ≼ Bs)
+    (hg : ComputableInSpace g encIn encNat Bs) :
+    ComputableInSpace (fun x => Tableau.gateCode tm (n x) (T x) (g x)) encIn encGate Bs :=
+  Tableau.gateCode_inSpace tm hn hT hin hg
+end PlainTableauBudgets
+
 /-- The tableau is the code of a program, for every machine, input length and time bound. -/
 example (n T : ℕ) : Program.IsCodeFrom signature n 0 (Tableau.gates tm n T) :=
   Tableau.isCodeFrom_gates tm n T

@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.Boolean.CarryLookahead.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Carry-lookahead arithmetic and uniform generation clients
@@ -96,22 +97,22 @@ example (w : ℕ) : Circuit.ofCode (σ := signature) (w + w + 1) (w + 1) (carryL
 theorem growingWidth_polynomialTime :
     ComputableTidilyInPolyTime (fun k : ℕ => (carryLookahead (2 * k + 1)).code)
       encUnary encCode :=
-  computableTidilyInPolyTime_carryLookahead.comp (by fun_prop)
+  computableInPolyTime_carryLookahead.tidy.comp (by fun_prop)
 
 /-- The modular and carry-save finishing generators are also uniform in the unary width. -/
 theorem modularAndFinish_polynomialTime :
     ComputableTidilyInPolyTime (fun w => ((carryLookaheadAdd w).code,
       (carryLookaheadFinish w).code)) encUnary (encPair encCode encCode) :=
-  computableTidilyInPolyTime_carryLookaheadAdd.prod
-    computableTidilyInPolyTime_carryLookaheadFinish
+  computableInPolyTime_carryLookaheadAdd.tidy.prod
+    computableInPolyTime_carryLookaheadFinish.tidy
 
 /-- Distances are binary and need not be polynomially bounded as natural numbers. -/
 theorem arbitraryDistance_polynomialTime :
     ComputableTidilyInPolyTime
       (fun p : ℕ × ℕ => Cslib.Circuits.Boolean.CarryLookahead.stepCode p.1 p.2)
       (encPair encUnary encNat) encCode :=
-  Cslib.Circuits.Boolean.CarryLookahead.computableTidilyInPolyTime_stepCode
-    (fst _ _) (snd _ _)
+  (Cslib.Circuits.Boolean.CarryLookahead.computableInPolyTime_stepCode
+    (.of_tidy (fst _ _)) (.of_tidy (snd _ _))).tidy
 
 /-- info: 'Cslib.Circuits.Boolean.val_eval_carryLookahead' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
@@ -130,20 +131,20 @@ theorem arbitraryDistance_polynomialTime :
  Quot.sound] -/
 #guard_msgs in
 #print axioms Cslib.Circuits.Boolean.pairVal_eval_carryLookaheadFinish_csa4to2_mod
-/-- info: 'Cslib.Circuits.Boolean.computableTidilyInPolyTime_carryLookahead' depends on axioms: [propext,
+/-- info: 'Cslib.Circuits.Boolean.computableInPolyTime_carryLookahead' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.computableTidilyInPolyTime_carryLookahead
-/-- info: 'Cslib.Circuits.Boolean.computableTidilyInPolyTime_carryLookaheadAdd' depends on axioms: [propext,
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.computableInPolyTime_carryLookahead
+/-- info: 'Cslib.Circuits.Boolean.computableInPolyTime_carryLookaheadAdd' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.computableTidilyInPolyTime_carryLookaheadAdd
-/-- info: 'Cslib.Circuits.Boolean.computableTidilyInPolyTime_carryLookaheadFinish' depends on axioms: [propext,
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.computableInPolyTime_carryLookaheadAdd
+/-- info: 'Cslib.Circuits.Boolean.computableInPolyTime_carryLookaheadFinish' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.computableTidilyInPolyTime_carryLookaheadFinish
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.computableInPolyTime_carryLookaheadFinish
 
 end ComplexityTests.CarryLookahead

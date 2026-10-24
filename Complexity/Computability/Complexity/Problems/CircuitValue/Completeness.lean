@@ -187,7 +187,7 @@ omit [DecidableEq State] in
 theorem numGates_inSpace {T : α → ℕ} (hT : ComputableTidilyInSpace T encIn encNat Bs) :
     ComputableTidilyInSpace (fun x => numGates k State (T x)) encIn encNat Bs :=
   budget_natAdd (budget_const 2 hin) (budget_natMul (budget_natAdd hT (budget_const 1 hin))
-    (blockSize_inSpace (k := k) (State := State) hT hin))
+    (blockSize_inSpace (k := k) (State := State) (.of_tidy hT) hin).tidy)
 
 private theorem gateChunk_inSpace {n i : α → ℕ} (hn : ComputableTidilyInSpace n encIn encNat Bs)
     (hi : ComputableTidilyInSpace i encIn encNat Bs) :
@@ -197,7 +197,8 @@ private theorem gateChunk_inSpace {n i : α → ℕ} (hn : ComputableTidilyInSpa
     of_inO (.of_linear (.of_frame fun _ => rfl))
   exact budget_comp_linear doubled_inSpace (budget_comp_linear doubled_inSpace
     (budget_comp_linear (g := fun g => frame (encGate g)) hframe
-      (gateCode_inSpace tm hn (timeBound_inSpace C d hin hn) hin hi)))
+      (gateCode_inSpace tm (.of_tidy hn) (.of_tidy (timeBound_inSpace C d hin hn)) hin
+        (.of_tidy hi)).tidy))
 
 omit [DecidableEq State] in
 private theorem trailer_inSpace {n : α → ℕ} (hn : ComputableTidilyInSpace n encIn encNat Bs) :
@@ -206,8 +207,9 @@ private theorem trailer_inSpace {n : α → ℕ} (hn : ComputableTidilyInSpace n
   have ho : ComputableTidilyInSpace (fun x => outWire k State (n x) (timeBound C d (n x)))
       encIn encNat Bs :=
     budget_natAdd (budget_natAdd (budget_natAdd hn (budget_const 2 hin))
-      (budget_natMul hT (blockSize_inSpace (k := k) (State := State) hT hin)))
-      (budget_natAdd (gfStart_inSpace (k := k) (State := State) hT hin) (budget_const _ hin))
+      (budget_natMul hT (blockSize_inSpace (k := k) (State := State) (.of_tidy hT) hin).tidy))
+      (budget_natAdd (gfStart_inSpace (k := k) (State := State) (.of_tidy hT) hin).tidy
+        (budget_const _ hin))
   have hframe : ComputableTidilyInSpace (fun m => frame (encNat m)) encNat encBits
       fun m => (encNat m).length :=
     of_inO (.of_linear (.of_frame fun _ => rfl))

@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Circuit.Boolean.Layered.Padding.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 Concrete clients of layered padding, including empty schedules, zero-width rows, repeated
@@ -52,6 +53,7 @@ example : padTo 2 0 shared = shared := by decide +kernel
 -- Huge invalid binary references retain their existing false fallback through padding.
 example : eval [] (padTo 0 3 [[.copy (2 ^ 100)]]) = [false] := by decide +kernel
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- The certificate is uniform in both unary parameters and the complete raw schedule.
 example : ComputableTidilyInPolyTime
     (fun p : ℕ × ℕ × List (List Node) => padTo p.1 p.2.1 p.2.2)
@@ -71,10 +73,10 @@ info: 'Cslib.Circuits.Boolean.Layered.WellFormed.padTo' depends on axioms: [prop
 #print axioms WellFormed.padTo
 
 /--
-info: 'Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_padTo' depends on axioms:
+info: 'Cslib.Circuits.Boolean.Layered.computableInPolyTime_padTo' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms computableTidilyInPolyTime_padTo
+#print axioms computableInPolyTime_padTo
 
 end ComplexityTests.CircuitLayerPadding

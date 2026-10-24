@@ -136,7 +136,7 @@ theorem BPP_subset_P_of_isAverageCaseHard {L : Language Bool} {c : ℕ}
     funext y
     rw [Bool.eq_iff_iff, Language.slice_eq_true_iff, ← hgL]
     rfl
-  obtain ⟨L', hL', hVL'⟩ := PPoly.exists_of_polyTime hV.tidy
+  obtain ⟨L', hL', hVL'⟩ := PPoly.exists_of_polyTime hV
   -- the size of the verifier as a circuit in its random string, and the budget `B`
   set Tc : ℕ → ℕ := fun N =>
     complexity interpretation (single (L'.slice (2 * N + 1 + p.eval N))) with hTc

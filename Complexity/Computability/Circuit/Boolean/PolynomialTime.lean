@@ -57,8 +57,9 @@ open Turing Turing.MultiTapeTM MachineSimulation
 /-- The instances on which a Boolean function computable in polynomial time is true are the
 preimage, under the encoding, of a language in `P/poly`. -/
 theorem PPoly.exists_of_polyTime {α : Type*} {enc : α ↪ List Bool} {f : α → Bool}
-    (hf : ComputableTidilyInPolyTime f enc encBool) :
+    (hf : ComputableInPolyTime f enc encBool) :
     ∃ L ∈ PPoly, ∀ a, f a = true ↔ enc a ∈ L := by
+  have hf := hf.tidy
   obtain ⟨t, s, ht, -, k, State, hfin, tm, htm⟩ := hf
   obtain ⟨c, d, ht⟩ := ht.exists_le
   have := Fintype.ofFinite State
@@ -75,7 +76,7 @@ under `enc` of a language in `P/poly`. -/
 theorem PPoly.exists_of_mem_P {α : Type*} {enc : α ↪ List Bool} {A : Set α}
     (hA : A ∈ Complexity.P enc) : ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L := by
   obtain ⟨f, hf, hA⟩ := hA
-  obtain ⟨L, hL, h⟩ := PPoly.exists_of_polyTime hf.tidy
+  obtain ⟨L, hL, h⟩ := PPoly.exists_of_polyTime hf
   exact ⟨L, hL, fun a => (hA a).trans (h a)⟩
 
 /-- **P ⊆ P/poly** for languages over `Bool`, with words encoded as themselves. -/
@@ -172,7 +173,7 @@ preimage under `enc` of a language in `P/poly`. -/
 theorem PPoly.exists_of_mem_BPP {A : Set α} (hA : A ∈ Complexity.BPP enc) :
     ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L := by
   obtain ⟨p, V, hV, hdec⟩ := hA
-  obtain ⟨L', hL', hVL⟩ := PPoly.exists_of_polyTime hV.tidy
+  obtain ⟨L', hL', hVL⟩ := PPoly.exists_of_polyTime hV
   obtain ⟨L, hL, hLg⟩ := PPoly.exists_of_boundedError (fun n => framedSlice L' n (p.eval n))
     (polynomiallyBounded_complexity_framedSlice hL' (by fun_prop)) (encodes enc)
     (encodesMember enc A) fun n x ⟨a, ha⟩ => by
@@ -194,7 +195,7 @@ under `enc` of a language in `P/poly`. -/
 theorem PPoly.exists_of_mem_RP {A : Set α} (hA : A ∈ Complexity.RP enc) :
     ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L := by
   obtain ⟨p, V, hV, hdec⟩ := hA
-  obtain ⟨L', hL', hVL⟩ := PPoly.exists_of_polyTime hV.tidy
+  obtain ⟨L', hL', hVL⟩ := PPoly.exists_of_polyTime hV
   obtain ⟨L, hL, hLg⟩ := PPoly.exists_of_oneSidedError (fun n => framedSlice L' n (p.eval n))
     (polynomiallyBounded_complexity_framedSlice hL' (by fun_prop)) (encodes enc)
     (encodesMember enc A) (fun n x ⟨a, ha⟩ hx => by

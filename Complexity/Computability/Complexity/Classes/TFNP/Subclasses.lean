@@ -699,7 +699,7 @@ theorem computableTidilyInPolyTime_evalCircuitOutputs {encIn : α ↪ List Bool}
     ComputableTidilyInPolyTime (fun a => evalCircuitOutputs (code a) (u a)) encIn encBits := by
   have hvals : ComputableTidilyInPolyTime
       (fun a => evalCode interpretation false (u a) (code a).1) encIn encBits :=
-    computableTidilyInPolyTime_evalCode hu hcode.fst'
+    (computableInPolyTime_evalCode (.of_tidy hu) (.of_tidy hcode.fst')).tidy
   exact listToBits.comp (mapWith
     (listGetD_binary false (fst encBits encNat) (snd encBits encNat)) hvals hcode.snd')
 

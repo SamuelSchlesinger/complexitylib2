@@ -86,12 +86,12 @@ example :
 example :
     ComputableTidilyInPolyTime pointWordOfTables
       (encList (encList (encList encIntBin))) encBits :=
-  pointWordOfTables_polytime
+  pointWordOfTables_polytime.tidy
 
 example :
     ComputableTidilyInPolyTime pointWordsOfTables
       (encList (encList (encList encIntBin))) (encList encBits) :=
-  pointWordsOfTables_polytime
+  pointWordsOfTables_polytime.tidy
 
 example :
     ComputableTidilyInPolyTime
@@ -100,7 +100,7 @@ example :
       (encPair encUnary (encPair encUnary (encPair encUnary (encPair encUnary
         (encPair encUnary (encPair encUnary encUnary))))))
       encBits :=
-  pointWord_polytime
+  pointWord_polytime.tidy
 
 /-! ### Axioms -/
 

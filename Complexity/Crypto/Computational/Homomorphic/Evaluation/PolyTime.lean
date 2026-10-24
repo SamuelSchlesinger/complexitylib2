@@ -11,6 +11,7 @@ public import Complexity.Crypto.Computational.Homomorphic.Evaluation
 public import Complexity.Computability.Circuit.Boolean.Layered.Compile.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.Layered.PolyTime
 import Complexity.Computability.Probabilistic.PPT.Capture
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Polynomial-time encrypted evaluation of ordinary circuits
@@ -59,7 +60,8 @@ theorem isPPTOn_evaluateCircuit (D : DecryptionCircuits E secretWidth ciphertext
     IsPPTOn input (encList encBits)
       (fun a => evaluateCircuit D (n a) (publicKeys a) (encryptedKeys a) (inputs a)
         (inputCount a) (code a)) := by
-  have hcompiled := Boolean.Layered.computableTidilyInPolyTime_compile hcount hcode
+  have hcompiled := (Boolean.Layered.computableInPolyTime_compile (.of_tidy hcount) (.of_tidy
+    hcode)).tidy
   apply (isPPTOn_evaluateLayers D hencrypt hevaluate hD hn hpks heks hinputs
     hcompiled.fst').map_with
   apply ComputableTidilyInPolyTime.mapWithInput

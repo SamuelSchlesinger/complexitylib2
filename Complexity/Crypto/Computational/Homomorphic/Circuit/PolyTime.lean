@@ -72,6 +72,7 @@ private theorem code_augmentNand {n : ℕ} (D : Circuit signature n 1) :
     code_wiring_left, code_wiring_right]
   rfl
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 private theorem computableTidilyInPolyTime_augmentCode {α : Type} {enc : α ↪ List Bool}
     {n : α → ℕ} {code : α → List (Op × List ℕ) × List ℕ}
     (hn : ComputableTidilyInPolyTime n enc encUnary)
@@ -82,8 +83,19 @@ private theorem computableTidilyInPolyTime_augmentCode {α : Type} {enc : α ↪
       enc (encList encNat) := by
     simpa only [Function.comp_def, List.map_id'] using
       unary_to_binary.map.comp (range.comp hn)
+  have hleft : ComputableTidilyInPolyTime (fun a => ([], List.range (n a)))
+      enc encCode := (const []).prod hindices
+  have hright : ComputableTidilyInPolyTime
+      (fun a => ([], (List.range (n a)).map (fun i => n a + i))) enc encCode := by
+    apply ComputableTidilyInPolyTime.prod (const [])
+    apply mapWithInput hindices
+    fun_prop
   unfold augmentCode
-  fun_prop
+  apply ComputableInPolyTime.tidy
+  apply computableInPolyTime_compCode (.of_tidy (by fun_prop)) (.of_tidy (const _))
+  apply computableInPolyTime_appendCode (.of_tidy (by fun_prop))
+  · exact computableInPolyTime_compCode (.of_tidy (by fun_prop)) (.of_tidy hcode) (.of_tidy hleft)
+  · exact computableInPolyTime_compCode (.of_tidy (by fun_prop)) (.of_tidy hcode) (.of_tidy hright)
 
 /-- Generate the concrete NAND augmentation in uniform polynomial time. The input arity and
 all gates, wire indices and output references are read and written through `encCircuit 1`. -/

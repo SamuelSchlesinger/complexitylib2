@@ -141,6 +141,12 @@ theorem evaluatedBit_poly : ComputableTidilyInPolyTime
           List Bool => (p.1.1, p.2))
         (encPair (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))) encBits)
         (encPair encBits encBits) by fun_prop)
+  have heval : ComputableTidilyInPolyTime
+      (fun p : List Bool × (Σ n, Circuit Boolean.signature n 1) × List (List Bool) =>
+        p.2.1.2.eval Boolean.interpretation (BitString.ofList p.2.1.1 (p.2.2.map (decode p.1))) 0)
+      (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))) encBool := by
+    apply ComputableInPolyTime.tidy
+    exact Boolean.computableInPolyTime_evalCircuit (.of_tidy (by fun_prop)) (.of_tidy hdecoded)
   unfold evaluatedBit
   fun_prop
 

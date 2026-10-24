@@ -13,6 +13,7 @@ public import Complexity.Crypto.Computational.Homomorphic.Evaluation.PolyTime
 public import Complexity.Computability.Circuit.Boolean.Layered.Padding.PolyTime
 public import Complexity.Computability.Circuit.Boolean.EvaluationTime
 import Complexity.Computability.Probabilistic.PPT.Capture
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Uniform native certificates for the depth-budgeted scheme
@@ -115,8 +116,8 @@ theorem computableTidilyInPolyTime_decrypt
   have hendpoints := secretKeyDecoder.computableTidilyInPolyTime.comp hsk
   have hhead := (ComputableTidilyInPolyTime.headD (encA := encBool) false).comp hc
   have hsecret := hhead.cond hendpoints.snd' hendpoints.fst'
-  exact Boolean.computableTidilyInPolyTime_evalCircuit (hD.comp hn)
-    (hsecret.bitsAppend (ComputableTidilyInPolyTime.bitsTail.comp hc))
+  exact (Boolean.computableInPolyTime_evalCircuit (.of_tidy (hD.comp hn))
+    (.of_tidy (hsecret.bitsAppend (ComputableTidilyInPolyTime.bitsTail.comp hc)))).tidy
 
 variable (hevaluate : IsPPTOn
     (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
@@ -138,10 +139,11 @@ theorem isPPTOn_evaluateCircuit {inputCount : α → ℕ}
     IsPPTOn input (encList encBits)
       (fun a => evaluateCircuit D (n a) (budget a) (publicKeys a) (links a) (inputs a)
         (inputCount a) (code a)) := by
-  have hcompiled := Boolean.Layered.computableTidilyInPolyTime_compile hcount hcode
-  have hpadded := Boolean.Layered.computableTidilyInPolyTime_padTo hcount
-    (show ComputableTidilyInPolyTime (fun a => 2 * budget a) input encUnary by fun_prop)
-    hcompiled.fst'
+  have hcompiled := (Boolean.Layered.computableInPolyTime_compile (.of_tidy hcount) (.of_tidy
+    hcode)).tidy
+  have hpadded := (Boolean.Layered.computableInPolyTime_padTo (.of_tidy hcount)
+    (.of_tidy (show ComputableTidilyInPolyTime (fun a => 2 * budget a) input encUnary by fun_prop))
+    (.of_tidy hcompiled.fst')).tidy
   apply (Scheme.isPPTOn_evaluateLayers D hencrypt hevaluate hD hn hpks hlinks hinputs
     hpadded).map_with
   apply ComputableTidilyInPolyTime.mapWithInput

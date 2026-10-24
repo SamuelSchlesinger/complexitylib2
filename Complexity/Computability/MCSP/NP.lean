@@ -214,7 +214,8 @@ theorem computableTidilyInPolyTime_tableVerifier : ComputableTidilyInPolyTime ta
       (encPair (encPair encBits encNat) encBits) encUnary := by
     refine binary_to_unary_bounded ?_ hB fun _ => Nat.min_le_right _ _
     simpa only [Nat.min_def] using ite_decide (binary_le' (by fun_prop) hB') (by fun_prop) hB'
-  have hc := computableTidilyInPolyTime_readCertificate hn hS (snd _ _)
+  have hc := (computableInPolyTime_readCertificate (.of_tidy hn) (.of_tidy hS) (.of_tidy (snd _
+    _))).tidy
   have henum : ComputableTidilyInPolyTime (fun r : (List Bool × ℕ) × List Bool =>
       BitString.enumList (Nat.log 2 r.1.1.length))
       (encPair (encPair encBits encNat) encBits) (encList encBits) := by
@@ -251,10 +252,11 @@ theorem computableTidilyInPolyTime_tableVerifier : ComputableTidilyInPolyTime ta
       unfold tableValue
       exact bitsGetDWithInput htable (bitsBoundedBinaryValueWithInput (length_bits.comp htable)
         (bitsReverse.comp (snd _ _))) false
-    exact beq (computableTidilyInPolyTime_evalOutput (snd _ _) (hc.comp (fst _ _)).fst'
-      (hc.comp (fst _ _)).snd') hvalue
+    exact beq (computableInPolyTime_evalOutput (.of_tidy (snd _ _)) (.of_tidy (hc.comp (fst _
+      _)).fst')
+      (.of_tidy (hc.comp (fst _ _)).snd')).tidy hvalue
   unfold tableVerifier
-  exact bool_and' (bool_and' (computableTidilyInPolyTime_codeCheck hn hc.fst')
+  exact bool_and' (bool_and' (computableInPolyTime_codeCheck (.of_tidy hn) (.of_tidy hc.fst')).tidy
     (binary_lt' hc.snd' (unary_to_binary.comp (unary_add.comp
       (hn.prod ((length_list encGate).comp hc.fst')))))) (allWithInput henum htest)
 

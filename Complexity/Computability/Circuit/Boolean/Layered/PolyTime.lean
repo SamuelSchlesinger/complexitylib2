@@ -9,7 +9,9 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Layered
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Polynomial-time operations on layered Boolean circuits
@@ -20,13 +22,13 @@ the specified fallback without running for time proportional to the numerical in
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_nodeCode`: read a node's code.
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_nodeConst`,
-  `computableTidilyInPolyTime_nodeCopy`, `computableTidilyInPolyTime_nodeNand`: construct nodes.
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_nodeEval`: evaluate one node.
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_evalLayer`: evaluate one layer.
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_select`: select ordered outputs.
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_outputWidth`: compute the final
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_nodeCode`: read a node's code.
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_nodeConst`,
+  `computableInPolyTime_nodeCopy`, `computableInPolyTime_nodeNand`: construct nodes.
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_nodeEval`: evaluate one node.
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_evalLayer`: evaluate one layer.
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_select`: select ordered outputs.
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_outputWidth`: compute the final
   row width in unary, retaining the input width for an empty schedule.
 -/
 
@@ -38,30 +40,32 @@ open Turing.MultiTapeTM
 
 /-- Read the two tag bits and two binary wire indices without changing the encoding. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_nodeCode :
-    ComputableTidilyInPolyTime Node.code encNode
+theorem computableInPolyTime_nodeCode :
+    ComputableInPolyTime Node.code encNode
       (encPair (encPair encBool encBool) (encPair encNat encNat)) :=
   .of_eq fun _ => rfl
 
 /-- Construct a constant node. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_nodeConst :
-    ComputableTidilyInPolyTime Node.const encBool encNode :=
+theorem computableInPolyTime_nodeConst :
+    ComputableInPolyTime Node.const encBool encNode :=
   .of_finite _
 
 /-- Construct a copy node, preserving the binary wire index. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_nodeCopy :
-    ComputableTidilyInPolyTime Node.copy encNat encNode := by
+theorem computableInPolyTime_nodeCopy :
+    ComputableInPolyTime Node.copy encNat encNode := by
+  refine .of_tidy ?_
   have h : ComputableTidilyInPolyTime (fun i : ℕ => ((true, false), i, 0)) encNat
       (encPair (encPair encBool encBool) (encPair encNat encNat)) := by fun_prop
   exact h.of_enc_eq fun _ => rfl
 
 /-- Construct a NAND node, preserving both binary wire indices. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_nodeNand :
-    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => Node.nand p.1 p.2)
+theorem computableInPolyTime_nodeNand :
+    ComputableInPolyTime (fun p : ℕ × ℕ => Node.nand p.1 p.2)
       (encPair encNat encNat) encNode := by
+  refine .of_tidy ?_
   have h : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => ((true, true), p))
       (encPair encNat encNat) (encPair (encPair encBool encBool) (encPair encNat encNat)) := by
     fun_prop
@@ -69,12 +73,15 @@ theorem computableTidilyInPolyTime_nodeNand :
 
 /-- Node evaluation is polynomial in the encoded input, including invalid binary wire indices. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_nodeEval {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_nodeEval {α : Type} {input : α ↪ List Bool}
     {node : α → Node} {inputs : α → List Bool}
-    (hnode : ComputableTidilyInPolyTime node input encNode)
-    (hinputs : ComputableTidilyInPolyTime inputs input encBits) :
-    ComputableTidilyInPolyTime (fun a => (node a).eval (inputs a)) input encBool := by
-  have hcode := computableTidilyInPolyTime_nodeCode.comp hnode
+    (hnode : ComputableInPolyTime node input encNode)
+    (hinputs : ComputableInPolyTime inputs input encBits) :
+    ComputableInPolyTime (fun a => (node a).eval (inputs a)) input encBool := by
+  refine .of_tidy ?_
+  have hnode := hnode.tidy
+  have hinputs := hinputs.tidy
+  have hcode := computableInPolyTime_nodeCode.tidy.comp hnode
   have hfirst : ComputableTidilyInPolyTime
       (fun a => (inputs a).getD (node a).code.2.1 false) input encBool :=
     ComputableTidilyInPolyTime.listGetD_binary (encA := encBool) false hinputs (by fun_prop)
@@ -99,33 +106,43 @@ theorem computableTidilyInPolyTime_nodeEval {α : Type} {input : α ↪ List Boo
 
 /-- Evaluate a computed layer, preserving the raw bit-string output encoding. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_evalLayer {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_evalLayer {α : Type} {input : α ↪ List Bool}
     {layer : α → List Node} {inputs : α → List Bool}
-    (hlayer : ComputableTidilyInPolyTime layer input (encList encNode))
-    (hinputs : ComputableTidilyInPolyTime inputs input encBits) :
-    ComputableTidilyInPolyTime (fun a => evalLayer (inputs a) (layer a)) input encBits := by
+    (hlayer : ComputableInPolyTime layer input (encList encNode))
+    (hinputs : ComputableInPolyTime inputs input encBits) :
+    ComputableInPolyTime (fun a => evalLayer (inputs a) (layer a)) input encBits := by
+  have hlayer := hlayer.tidy
+  have hinputs := hinputs.tidy
+  refine .of_tidy ?_
   apply ComputableTidilyInPolyTime.listToBits.comp
   apply ComputableTidilyInPolyTime.mapWithInput hlayer
-  apply computableTidilyInPolyTime_nodeEval <;> fun_prop
+  apply ComputableInPolyTime.tidy
+  apply computableInPolyTime_nodeEval <;> exact .of_tidy (by fun_prop)
 
 /-- Free output selection is polynomial even for malformed binary indices. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_select {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_select {α : Type} {input : α ↪ List Bool}
     {inputs : α → List Bool} {outputs : α → List ℕ}
-    (hinputs : ComputableTidilyInPolyTime inputs input encBits)
-    (houtputs : ComputableTidilyInPolyTime outputs input (encList encNat)) :
-    ComputableTidilyInPolyTime (fun a => select (inputs a) (outputs a)) input encBits := by
+    (hinputs : ComputableInPolyTime inputs input encBits)
+    (houtputs : ComputableInPolyTime outputs input (encList encNat)) :
+    ComputableInPolyTime (fun a => select (inputs a) (outputs a)) input encBits := by
+  have hinputs := hinputs.tidy
+  have houtputs := houtputs.tidy
+  refine .of_tidy ?_
   apply ComputableTidilyInPolyTime.listToBits.comp
   apply ComputableTidilyInPolyTime.mapWithInput houtputs
   exact ComputableTidilyInPolyTime.listGetD_binary false (by fun_prop) (by fun_prop)
 
 /-- Read the last layer's length, or retain the computed input width for an empty schedule. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_outputWidth {α : Type} {input : α ↪ List Bool}
+theorem computableInPolyTime_outputWidth {α : Type} {input : α ↪ List Bool}
     {inputCount : α → ℕ} {layers : α → List (List Node)}
-    (hn : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hlayers : ComputableTidilyInPolyTime layers input (encList (encList encNode))) :
-    ComputableTidilyInPolyTime (fun a => outputWidth (inputCount a) (layers a)) input encUnary := by
+    (hn : ComputableInPolyTime inputCount input encUnary)
+    (hlayers : ComputableInPolyTime layers input (encList (encList encNode))) :
+    ComputableInPolyTime (fun a => outputWidth (inputCount a) (layers a)) input encUnary := by
+  have hn := hn.tidy
+  have hlayers := hlayers.tidy
+  refine .of_tidy ?_
   have heq (n : ℕ) (ls : List (List Node)) :
       outputWidth n ls = ((n :: ls.map List.length).reverse).headD 0 := by
     induction ls using List.reverseRecOn with

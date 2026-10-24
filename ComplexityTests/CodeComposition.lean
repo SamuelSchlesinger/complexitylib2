@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Circuit.Boolean.CodeComposition
 import Complexity.Computability.Circuit.Boolean.CarrySave
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-! Tests of shared-input code append, including original input references, shifted gate
 references, repeated outputs, zero-input constants and empty circuits. -/
@@ -43,7 +44,8 @@ theorem constructor_polynomialTime :
       (fun p : ℕ × (List (Op × List ℕ) × List ℕ) × (List (Op × List ℕ) × List ℕ) =>
         appendCode p.1 p.2.1 p.2.2)
       (encPair encNat (encPair encCode encCode)) encCode :=
-  computableTidilyInPolyTime_appendCode (fst _ _) (snd _ _).fst' (snd _ _).snd'
+  (computableInPolyTime_appendCode (.of_tidy (fst _ _)) (.of_tidy (snd _ _).fst') (.of_tidy (snd
+    _ _).snd')).tidy
 
 /-- The typed correspondence and resource theorem apply at zero dimensions. -/
 example (c d : Circuit signature 0 0) :
@@ -90,6 +92,7 @@ example : (appendCodes 0 [([], [0]), ([(.const true, [])], [0])]).2.map
 example : [evalOutput [] [] 0, evalOutput [] [(.const true, [])] 0] =
     [false, true] := by decide
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Varying-size construction is certified uniformly on all raw codes and binary input counts. -/
 theorem varying_bundler_polynomialTime :
     ComputableTidilyInPolyTime
@@ -119,7 +122,8 @@ theorem bundler_polynomialTime :
       (fun p : (ℕ × ℕ) × List (List (Op × List ℕ) × List ℕ) =>
         bundleCode p.1.1 p.1.2 p.2)
       (encPair (encPair encNat encNat) (encList encCode)) encCode :=
-  computableTidilyInPolyTime_bundleCode (fst _ _).fst' (fst _ _).snd' (snd _ _)
+  (computableInPolyTime_bundleCode (.of_tidy (fst _ _).fst') (.of_tidy (fst _ _).snd') (.of_tidy
+    (snd _ _))).tidy
 
 /-- The typed family corollary includes an empty output family at zero input dimension. -/
 example (cs : Fin 0 → Circuit signature 0 1) :

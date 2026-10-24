@@ -47,7 +47,8 @@ example : balancedCode (2 ^ 128) opCode unitCode [] = unitCode := by decide
 /-- Binary arity stays binary even when it is far larger than all supplied programs. -/
 theorem binary_arity_generator : ComputableTidilyInPolyTime
     (fun n : ℕ => balancedCode n opCode unitCode [a, b, c]) encNat encCode := by
-  exact computableTidilyInPolyTime_balancedCode id' (const _) (const _) (const _)
+  exact (computableInPolyTime_balancedCode (.of_tidy id') (.of_tidy (const _)) (.of_tidy (const
+    _)) (.of_tidy (const _))).tidy
 
 private def largerLeaf (w : ℕ) :=
   (csa4to2 w).comp ((csa3to2 w).append (csa3to2 w))
@@ -58,9 +59,9 @@ private theorem largerLeaf_native : ComputableTidilyInPolyTime
     have hw := unary_to_binary
     fun_prop
   simpa only [largerLeaf, appendCode_code, compCode_code] using
-    computableTidilyInPolyTime_compCode hn computableTidilyInPolyTime_csa4to2
-      (computableTidilyInPolyTime_appendCode hn computableTidilyInPolyTime_csa3to2
-        computableTidilyInPolyTime_csa3to2)
+    (computableInPolyTime_compCode (.of_tidy hn) computableInPolyTime_csa4to2
+      (computableInPolyTime_appendCode (.of_tidy hn) computableInPolyTime_csa3to2
+        computableInPolyTime_csa3to2)).tidy
 
 private def growingLeaves (p : ℕ × ℕ) :=
   List.replicate p.1 (csa3to2 p.2) ++ [largerLeaf p.2]
@@ -86,7 +87,7 @@ theorem growing_generator : ComputableTidilyInPolyTime
       largerLeaf_native.comp (snd encUnary encUnary)
     have hsmall : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => (csa3to2 p.2).code)
         (encPair encUnary encUnary) encCode :=
-      computableTidilyInPolyTime_csa3to2.comp (snd encUnary encUnary)
+      computableInPolyTime_csa3to2.tidy.comp (snd encUnary encUnary)
     have hrep : ComputableTidilyInPolyTime
         (fun p : ℕ × ℕ => List.replicate p.1 (csa3to2 p.2).code)
         (encPair encUnary encUnary) (encList encCode) := replicate (fst _ _) hsmall
@@ -95,9 +96,9 @@ theorem growing_generator : ComputableTidilyInPolyTime
       cons' hlarge (const [])
     exact listAppend' hrep htail
   simpa only [Function.comp_def, balancedCode_eq_code] using
-    computableTidilyInPolyTime_balancedCode hn
-      (computableTidilyInPolyTime_csa4to2.comp (snd _ _))
-      (computableTidilyInPolyTime_csa3to2.comp (snd _ _)) hl
+    (computableInPolyTime_balancedCode (.of_tidy hn)
+      (.of_tidy (computableInPolyTime_csa4to2.tidy.comp (snd _ _)))
+      (.of_tidy (computableInPolyTime_csa3to2.tidy.comp (snd _ _))) (.of_tidy hl)).tidy
 
 example (w count : ℕ) :
     balancedCode (w + (w + w)) (csa4to2 w).code (csa3to2 w).code
@@ -109,11 +110,11 @@ example : balancedCode 0 (csa4to2 0).code (zeroPairCircuit 0 0).code [] =
     (zeroPairCircuit 0 0).code := by decide
 example : (balancedCode 0 (csa4to2 0).code (zeroPairCircuit 0 0).code []).1.length = 1 := by decide
 
-/-- info: 'Cslib.Circuits.Boolean.computableTidilyInPolyTime_balancedCode' depends on axioms: [propext,
+/-- info: 'Cslib.Circuits.Boolean.computableInPolyTime_balancedCode' depends on axioms: [propext,
  Classical.choice,
  Quot.sound] -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.computableTidilyInPolyTime_balancedCode
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.computableInPolyTime_balancedCode
 
 /-- info: 'Cslib.Circuits.Boolean.balancedCode_eq_code' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Circuit.Boolean.Layered.Compile.Correctness
 import Complexity.Computability.Circuit.Boolean.Layered.Compile.PolyTime
 import Complexity.Computability.Circuit.Boolean.Layered.Compile.Size
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 These instances exercise the actual raw compiler, together with typed correctness and native
@@ -93,6 +94,7 @@ example : evalCode interpretation false [true] [(.not, [])] = [true, true] := by
 example : select (eval [true] (compile 1 ([(.not, [])], [1])).1)
     (compile 1 ([(.not, [])], [1])).2 = [false] := by decide +kernel
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- One actual native compiler handles varying input and output counts, including invalid code.
 example : ComputableTidilyInPolyTime
     (fun p : ℕ × (List (Op × List ℕ) × List ℕ) => compile p.1 p.2)
@@ -141,10 +143,10 @@ info: 'Cslib.Circuits.Boolean.Layered.length_encCompiled_compile_le' depends on 
 #print axioms length_encCompiled_compile_le
 
 /--
-info: 'Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_compile' depends on axioms:
+info: 'Cslib.Circuits.Boolean.Layered.computableInPolyTime_compile' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms computableTidilyInPolyTime_compile
+#print axioms computableInPolyTime_compile
 
 end ComplexityTests.CircuitLayering

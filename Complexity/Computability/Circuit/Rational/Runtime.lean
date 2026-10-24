@@ -55,14 +55,14 @@ and `w = inputWord n s` (and `none` otherwise), and `hittingGenerator` emits
   `Cslib.Circuits.Rational.hittingListWord_eq`: agreement with `ExecutableGenerator.output` and
   `encodeOutput (hittingList n s)`.
 * `Cslib.Circuits.Rational.hittingList_polytime`: `(n, s) ↦ encodeOutput (hittingList n s)` is
-  computable tidily in polynomial time from unary `(n, s)`.
+  computable in polynomial time from unary `(n, s)`.
 * `Cslib.Circuits.Rational.parseInput_eq_some_iff`, `Cslib.Circuits.Rational.parseInput_inputWord`,
   `Cslib.Circuits.Rational.parseInput_eq_none_iff`: exact characterization of `parseInput`.
 * `Cslib.Circuits.Rational.hittingGenerator_inputWord`,
   `Cslib.Circuits.Rational.hittingGenerator_eq_nil`,
   `Cslib.Circuits.Rational.hittingGenerator_eq_nil_of_parseInput_eq_none`: behavior of
   `hittingGenerator` on valid and malformed inputs.
-* `Cslib.Circuits.Rational.hittingGenerator_polytime`: `hittingGenerator` is computable tidily in
+* `Cslib.Circuits.Rational.hittingGenerator_polytime`: `hittingGenerator` is computable in
   polynomial time over `encBits`.
 * `Cslib.Circuits.Rational.hittingGenerator_spec`: packaged end-to-end polynomial-time,
   dimension-bound, encoding-length, and hitting specification for `hittingGenerator`.
@@ -220,7 +220,7 @@ variable {α : Type} {encIn : α ↪ List Bool}
 private theorem encodeNat_of_unary {f : α → ℕ}
     (hf : ComputableTidilyInPolyTime f encIn encUnary) :
     ComputableTidilyInPolyTime (fun x => encodeNat (f x)) encIn encBits :=
-  encodeNat_polytime.comp (unary_to_binary.comp hf)
+  encodeNat_polytime.tidy.comp (unary_to_binary.comp hf)
 
 @[local fun_prop]
 private theorem bitsReplicate' {n : α → ℕ}
@@ -256,107 +256,130 @@ private theorem length_list_comp {β : Type} {encB : β ↪ List Bool} {l : α �
 
 /-- Enumerating the encoded tuples across the `{1, …, H}³` grid is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_gridPointWords {n N M Dg H : α → ℕ}
-    (hn : ComputableTidilyInPolyTime n encIn encUnary)
-    (hN : ComputableTidilyInPolyTime N encIn encUnary)
-    (hM : ComputableTidilyInPolyTime M encIn encUnary)
-    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
-    (hH : ComputableTidilyInPolyTime H encIn encUnary) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_gridPointWords {n N M Dg H : α → ℕ}
+    (hn : ComputableInPolyTime n encIn encUnary)
+    (hN : ComputableInPolyTime N encIn encUnary)
+    (hM : ComputableInPolyTime M encIn encUnary)
+    (hDg : ComputableInPolyTime Dg encIn encUnary)
+    (hH : ComputableInPolyTime H encIn encUnary) :
+    ComputableInPolyTime
       (fun x => gridPointWords (n x) (N x) (M x) (Dg x) (H x))
       encIn (encList encBits) := by
+  refine .of_tidy ?_
+  have hn := hn.tidy
+  have hN := hN.tidy
+  have hM := hM.tidy
+  have hDg := hDg.tidy
+  have hH := hH.tidy
   unfold gridPointWords
-  fun_prop
+  apply flatMapWithInput (range.comp hH)
+  apply flatMapWithInput (range.comp (by fun_prop))
+  apply flatMapWithInput (range.comp (by fun_prop))
+  apply ComputableInPolyTime.tidy
+  apply computableInPolyTime_pointWords <;> exact .of_tidy (by fun_prop)
 
 /-- Computing the complete output encoding `outputWord` is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_outputWord {n N M Dg H : α → ℕ}
-    (hn : ComputableTidilyInPolyTime n encIn encUnary)
-    (hN : ComputableTidilyInPolyTime N encIn encUnary)
-    (hM : ComputableTidilyInPolyTime M encIn encUnary)
-    (hDg : ComputableTidilyInPolyTime Dg encIn encUnary)
-    (hH : ComputableTidilyInPolyTime H encIn encUnary) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_outputWord {n N M Dg H : α → ℕ}
+    (hn : ComputableInPolyTime n encIn encUnary)
+    (hN : ComputableInPolyTime N encIn encUnary)
+    (hM : ComputableInPolyTime M encIn encUnary)
+    (hDg : ComputableInPolyTime Dg encIn encUnary)
+    (hH : ComputableInPolyTime H encIn encUnary) :
+    ComputableInPolyTime
       (fun x => outputWord (n x) (N x) (M x) (Dg x) (H x))
       encIn encBits := by
-  have hwords := computableTidilyInPolyTime_gridPointWords hn hN hM hDg hH
+  have hn := hn.tidy
+  have hN := hN.tidy
+  have hM := hM.tidy
+  have hDg := hDg.tidy
+  have hH := hH.tidy
+  refine .of_tidy ?_
+  have hwords := (computableInPolyTime_gridPointWords (.of_tidy hn) (.of_tidy hN) (.of_tidy hM)
+    (.of_tidy hDg) (.of_tidy hH)).tidy
   have hdim := encodeNat_of_unary (unary_mul.comp (hM.prod hDg))
   have hlen := encodeNat_of_unary ((length_list encBits).comp hwords)
   exact (hdim.bitsAppend hlen).bitsAppend (bitsFlatten hwords)
 
 /-- Computing `hittingListWord` from unary `(n, s)` is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_hittingListWord {n s : α → ℕ}
-    (hn : ComputableTidilyInPolyTime n encIn encUnary)
-    (hs : ComputableTidilyInPolyTime s encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => hittingListWord (n x) (s x)) encIn encBits :=
-  computableTidilyInPolyTime_outputWord hn
-    (computableTidilyInPolyTime_truncation hn hs)
-    (computableTidilyInPolyTime_ambientDimension hn hs)
-    (computableTidilyInPolyTime_degree hn hs)
-    (computableTidilyInPolyTime_gridSize hn hs)
+theorem computableInPolyTime_hittingListWord {n s : α → ℕ}
+    (hn : ComputableInPolyTime n encIn encUnary)
+    (hs : ComputableInPolyTime s encIn encUnary) :
+    ComputableInPolyTime (fun x => hittingListWord (n x) (s x)) encIn encBits :=
+  computableInPolyTime_outputWord hn
+    (computableInPolyTime_truncation hn hs)
+    (computableInPolyTime_ambientDimension hn hs)
+    (computableInPolyTime_degree hn hs)
+    (computableInPolyTime_gridSize hn hs)
 
 attribute [local irreducible] encodeOutput hittingList hittingListWord
 
 /-- The encoded rational hitting list `(n, s) ↦ encodeOutput (hittingList p.1 p.2)` is computable
-tidily in polynomial time from unary `(n, s)`. -/
+in polynomial time from unary `(n, s)`. -/
 theorem hittingList_polytime :
-    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => encodeOutput (hittingList p.1 p.2))
+    ComputableInPolyTime (fun p : ℕ × ℕ => encodeOutput (hittingList p.1 p.2))
       (encPair encUnary encUnary) encBits := by
+  refine .of_tidy ?_
   have h : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => hittingListWord p.1 p.2)
       (encPair encUnary encUnary) encBits :=
-    computableTidilyInPolyTime_hittingListWord (fst encUnary encUnary) (snd encUnary encUnary)
+    (computableInPolyTime_hittingListWord (.of_tidy (fst encUnary encUnary)) (.of_tidy (snd
+      encUnary encUnary))).tidy
   exact h.of_enc_eq fun p => congrArg encBits (hittingListWord_eq p.1 p.2).symm
 
 /-- Compositional polynomial-time certificate for `encodeOutput (hittingList (n x) (s x))`. -/
-theorem computableTidilyInPolyTime_hittingList {n s : α → ℕ}
-    (hn : ComputableTidilyInPolyTime n encIn encUnary)
-    (hs : ComputableTidilyInPolyTime s encIn encUnary) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_hittingList {n s : α → ℕ}
+    (hn : ComputableInPolyTime n encIn encUnary)
+    (hs : ComputableInPolyTime s encIn encUnary) :
+    ComputableInPolyTime
       (fun x => encodeOutput (hittingList (n x) (s x)))
       encIn encBits :=
   hittingList_polytime.comp (hn.prod hs)
 
 /-- Constructing the unary input word `inputWord` is polynomial-time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_inputWord {n s : α → ℕ}
-    (hn : ComputableTidilyInPolyTime n encIn encUnary)
-    (hs : ComputableTidilyInPolyTime s encIn encUnary) :
-    ComputableTidilyInPolyTime (fun x => inputWord (n x) (s x)) encIn encBits := by
+theorem computableInPolyTime_inputWord {n s : α → ℕ}
+    (hn : ComputableInPolyTime n encIn encUnary)
+    (hs : ComputableInPolyTime s encIn encUnary) :
+    ComputableInPolyTime (fun x => inputWord (n x) (s x)) encIn encBits := by
+  refine .of_tidy ?_
+  have hn := hn.tidy
+  have hs := hs.tidy
   unfold inputWord
   fun_prop
 
 /-- Parsing a unary input word with `parseInput` is polynomial-time. -/
 @[fun_prop]
 theorem parseInput_polytime :
-    ComputableTidilyInPolyTime parseInput encBits (encOption (encPair encUnary encUnary)) := by
-  unfold parseInput
+    ComputableInPolyTime parseInput encBits (encOption (encPair encUnary encUnary)) := by
+  refine .of_tidy ?_
+  unfold parseInput inputWord
   fun_prop
 
 /-- Compositional polynomial-time certificate for `parseInput`. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_parseInput {w : α → List Bool}
-    (hw : ComputableTidilyInPolyTime w encIn encBits) :
-    ComputableTidilyInPolyTime (fun x => parseInput (w x))
+theorem computableInPolyTime_parseInput {w : α → List Bool}
+    (hw : ComputableInPolyTime w encIn encBits) :
+    ComputableInPolyTime (fun x => parseInput (w x))
       encIn (encOption (encPair encUnary encUnary)) :=
   parseInput_polytime.comp hw
 
-/-- The standalone rational hitting-list generator `hittingGenerator` is computable tidily in
+/-- The standalone rational hitting-list generator `hittingGenerator` is computable in
 polynomial time on a multi-tape Turing machine. -/
 @[fun_prop]
 theorem hittingGenerator_polytime :
-    ComputableTidilyInPolyTime hittingGenerator encBits encBits :=
-  optionElimWithInput parseInput_polytime (const [])
-    (hittingList_polytime.comp (snd encBits (encPair encUnary encUnary)))
+    ComputableInPolyTime hittingGenerator encBits encBits :=
+  .of_tidy (optionElimWithInput parseInput_polytime.tidy (const [])
+    (hittingList_polytime.tidy.comp (snd encBits (encPair encUnary encUnary))))
 
 /-- End-to-end specification of the polynomial-time rational hitting-list generator:
-`hittingGenerator` is computable tidily in polynomial time on a multi-tape Turing machine, and on
+`hittingGenerator` is computable in polynomial time on a multi-tape Turing machine, and on
 every unary input `inputWord n s` with `1 ≤ n` and `1 ≤ s` it emits the canonical binary encoding
 of `hittingList n s`, which has dimension at most `256 * (n + s + 1) ^ 10`, encoding length at
 most `outputConstant * (n + s + 1) ^ 104`, and hits every admissible nonzero formula in `n`
 variables with at most `s` nodes. -/
 theorem hittingGenerator_spec :
-    ComputableTidilyInPolyTime hittingGenerator encBits encBits ∧
+    ComputableInPolyTime hittingGenerator encBits encBits ∧
       ∀ n s : ℕ, 1 ≤ n → 1 ≤ s →
         hittingGenerator (inputWord n s) = encodeOutput (hittingList n s) ∧
           (hittingList n s).dimension ≤ 256 * (n + s + 1) ^ 10 ∧

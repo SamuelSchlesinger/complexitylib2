@@ -175,18 +175,18 @@ info: 'Cslib.Circuits.Circuit.eval_eq_getD' depends on axioms: [propext, Classic
 #print axioms Cslib.Circuits.Circuit.eval_eq_getD
 
 /--
-info: 'Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalCode' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.computableInPolyTime_evalCode' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalCode
+#print axioms Cslib.Circuits.Boolean.computableInPolyTime_evalCode
 
 /--
-info: 'Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalOutput' depends on axioms: [propext,
+info: 'Cslib.Circuits.Boolean.computableInPolyTime_evalOutput' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]
 -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalOutput
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.computableInPolyTime_evalOutput
 
 /--
 info: 'Cslib.Circuits.Boolean.readCertificate_certificate_append' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -195,12 +195,12 @@ info: 'Cslib.Circuits.Boolean.readCertificate_certificate_append' depends on axi
 #print axioms Cslib.Circuits.Boolean.readCertificate_certificate_append
 
 /--
-info: 'Cslib.Circuits.Boolean.computableTidilyInPolyTime_readCertificate' depends on axioms: [propext,
+info: 'Cslib.Circuits.Boolean.computableInPolyTime_readCertificate' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]
 -/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.computableTidilyInPolyTime_readCertificate
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Circuits.Boolean.computableInPolyTime_readCertificate
 
 /--
 info: 'Cslib.Complexity.CircuitValue.mem_P' depends on axioms: [propext, Classical.choice, Quot.sound]

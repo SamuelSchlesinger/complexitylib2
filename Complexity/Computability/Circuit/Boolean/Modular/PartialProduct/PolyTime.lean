@@ -96,8 +96,10 @@ theorem computableInPolyTime_partialProductCode :
       formulaCode (p.1.1 + p.1.1)
         ((Formula.input (n := 2) 0).and (.input 1)) ![p.2 - p.1.2, p.1.1 + p.1.2])
       (encPair (encPair encUnary encUnary) encUnary) encCode := by
-    apply computableTidilyInPolyTime_formulaCode _ (by fun_prop)
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_formulaCode _ (.of_tidy (by fun_prop))
     intro k
+    apply ComputableInPolyTime.of_tidy
     fin_cases k
     · change ComputableTidilyInPolyTime (fun p : (ℕ × ℕ) × ℕ => p.2 - p.1.2) _ encNat
       fun_prop
@@ -108,7 +110,7 @@ theorem computableInPolyTime_partialProductCode :
       (encPair (encPair encUnary encUnary) encUnary) encCode := by
     unfold partialProductBitCode
     fun_prop
-  exact computableTidilyInPolyTime_appendCodes (by fun_prop)
-    (mapWith hb id' (range.comp (fst _ _)))
+  exact (computableInPolyTime_appendCodes (.of_tidy (by fun_prop))
+    (.of_tidy (mapWith hb id' (range.comp (fst _ _))))).tidy
 
 end Cslib.Circuits.Boolean.Modular

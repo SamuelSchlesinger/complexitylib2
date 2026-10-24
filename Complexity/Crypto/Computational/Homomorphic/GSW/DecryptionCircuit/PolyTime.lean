@@ -180,8 +180,10 @@ private theorem native_decoderCode :
   have ht : ComputableTidilyInPolyTime (fun w : ℕ =>
       formulaCode w ((Formula.input (n := 2) 0).xor (.input 1)) ![w - 1, w - 2])
       encUnary encCode := by
-    apply computableTidilyInPolyTime_formulaCode _ hw
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_formulaCode _ (.of_tidy hw)
     intro i
+    apply ComputableInPolyTime.of_tidy
     fin_cases i
     · change ComputableTidilyInPolyTime (fun w : ℕ => w - 1) _ encNat
       fun_prop
@@ -204,10 +206,11 @@ private theorem native_code :
     simpa only [Modular.subtractCode_eq_code, Function.comp_def] using
       Modular.computableInPolyTime_subtract.tidy.comp (snd _ _)
   have hd := native_decoderCode.comp (snd encUnary encUnary)
-  have hbody := computableTidilyInPolyTime_compCode hn hd
-    (computableTidilyInPolyTime_compCode hn hs
-      (computableTidilyInPolyTime_appendCode hn native_rowCode
-        (computableTidilyInPolyTime_compCode hn hi native_productInputsCode)))
+  have hbody := (computableInPolyTime_compCode (.of_tidy hn) (.of_tidy hd)
+    (computableInPolyTime_compCode (.of_tidy hn) (.of_tidy hs)
+      (computableInPolyTime_appendCode (.of_tidy hn) (.of_tidy native_rowCode)
+        (computableInPolyTime_compCode (.of_tidy hn) (.of_tidy hi) (.of_tidy
+          native_productInputsCode))))).tidy
   change ComputableTidilyInPolyTime (fun p : ℕ × ℕ =>
     if p.2 = 0 then ([(Op.const false, [])], [inputWidth p.1 p.2])
     else compCode (inputWidth p.1 p.2) (decoderCode p.2)
@@ -248,6 +251,6 @@ theorem computableInPolyTime_layeredAugment :
       (fun D : Σ m, Circuit signature m 1 => (D.1, D.2.code))
       (encCircuit 1) (encPair encUnary encCode) := .of_eq fun _ => rfl
   have hv := hview.comp ha
-  exact (Layered.computableTidilyInPolyTime_compile hv.fst' hv.snd').computableInPolyTime
+  exact (Layered.computableInPolyTime_compile (.of_tidy hv.fst') (.of_tidy hv.snd'))
 
 end Cslib.Crypto.Homomorphic.GSW.DecryptionCircuit

@@ -15,6 +15,7 @@ import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 import Mathlib.Data.List.GetD
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Uniform polynomial-time evaluation of encrypted layers
@@ -76,7 +77,7 @@ theorem isPPTOn_evaluateNode
     (hnode : ComputableTidilyInPolyTime node input Boolean.Layered.encNode) :
     IsPPTOn input encBits
       (fun a => evaluateNode D (n a) (pk a) (encryptedKey a) (inputs a) (node a)) := by
-  have hcode := Boolean.Layered.computableTidilyInPolyTime_nodeCode.comp hnode
+  have hcode := Boolean.Layered.computableInPolyTime_nodeCode.tidy.comp hnode
   have hfirst : ComputableTidilyInPolyTime
       (fun a => (inputs a).getD (node a).code.2.1 []) input encBits :=
     ComputableTidilyInPolyTime.listGetD_binary (encA := encBits) [] hinputs (by fun_prop)
