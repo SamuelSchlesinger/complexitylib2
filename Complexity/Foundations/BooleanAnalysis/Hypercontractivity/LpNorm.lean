@@ -84,29 +84,16 @@ theorem lpNorm_two_sq (f : (ι → Bool) → ℝ) : lpNorm 2 f ^ 2 = 𝔼 x, f x
 
 /-! ### Renaming and splitting the coordinates -/
 
-/-- Renaming the coordinates preserves uniform averages on the cube. -/
-theorem expect_comp_arrowCongr {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] (e : ι ≃ κ)
-    (h : (κ → Bool) → M) : 𝔼 x : ι → Bool, h (fun j => x (e.symm j)) = 𝔼 y, h y :=
-  Fintype.expect_equiv (e.arrowCongr (Equiv.refl Bool)) _ _ fun _ => rfl
-
 /-- Renaming the coordinates preserves the `L^p` norm. -/
 theorem lpNorm_comp_arrowCongr (e : ι ≃ κ) (p : ℝ) (f : (κ → Bool) → ℝ) :
     lpNorm p (fun x : ι → Bool => f fun j => x (e.symm j)) = lpNorm p f := by
-  rw [lpNorm, expect_comp_arrowCongr e fun y => |f y| ^ p, lpNorm]
-
-/-- The uniform average on the cube over `ι ⊕ κ` is the average, over the bits in `ι`, of the
-averages over the bits in `κ`. -/
-theorem expect_sumElim {M : Type*} [AddCommMonoid M] [Module ℚ≥0 M] (h : (ι ⊕ κ → Bool) → M) :
-    𝔼 x, h x = 𝔼 x₁ : ι → Bool, 𝔼 x₂ : κ → Bool, h (Sum.elim x₁ x₂) := by
-  rw [← Fintype.expect_prod_type fun y : (ι → Bool) × (κ → Bool) => h (Sum.elim y.1 y.2)]
-  exact Fintype.expect_equiv (Equiv.sumArrowEquivProdArrow ι κ Bool) _ _ fun x =>
-    congrArg h (Sum.elim_comp_inl_inr x).symm
+  rw [lpNorm, Fintype.expect_comp_arrowCongr e fun y => |f y| ^ p, lpNorm]
 
 /-- **The `L^p` norm over a disjoint union of coordinates is the iterated norm**: the norm over
 the bits in `ι` of the norms over the bits in `κ`. -/
 theorem lpNorm_sumElim {p : ℝ} (hp : p ≠ 0) (f : (ι ⊕ κ → Bool) → ℝ) :
     lpNorm p f = lpNorm p fun x₁ => lpNorm p fun x₂ => f (Sum.elim x₁ x₂) := by
-  rw [lpNorm, expect_sumElim, lpNorm]
+  rw [lpNorm, Fintype.expect_sumElim, lpNorm]
   congr 1
   refine expect_congr rfl fun x₁ _ => ?_
   rw [abs_of_nonneg (lpNorm_nonneg _ _), lpNorm_rpow hp]

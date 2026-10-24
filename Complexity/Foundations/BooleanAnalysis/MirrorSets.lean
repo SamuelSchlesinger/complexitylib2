@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Foundations.BooleanAnalysis.Fibers
 public import Complexity.Foundations.BooleanAnalysis.CoordinateSampling
 public import Complexity.Foundations.BooleanAnalysis.LightPatterns
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 
@@ -223,7 +224,7 @@ private theorem fiber_completion_density_union (X : Finset (ι → Bool)) (P Q x
   have ht := fiber_completion_density X S x (coordinateFiber_nonempty S hx) R hk hd hl
   rw [hq] at ht
   simp_rw [coordinateDensity_resample_union X P Q x, resample_eq_completePattern]
-  rw [expect_restrict_coordinates
+  rw [Fintype.expect_restrict_coordinates
     (fun u => if coordinateDensity X Q (completePattern S x u) <
       (2 : ℝ) ^ (-194 * k) then (1 : ℝ) else 0)]
   exact ht

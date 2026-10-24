@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNorm
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Logic.Equiv.Fin.Basic
 
@@ -52,24 +53,7 @@ open scoped BigOperators
 
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
 
-/-! ### The noise operator on renamed and split coordinates -/
-
-/-- **Random masks on a disjoint union of coordinates are pairs of independent masks**: the
-expectation over a mask on `ι ⊕ κ` is the iterated expectation over a mask on `ι` and one on
-`κ`. -/
-theorem bernoulliAverage_sumElim (p : ℝ) (h : (ι ⊕ κ → Bool) → ℝ) :
-    bernoulliAverage p h =
-      bernoulliAverage p fun P₁ => bernoulliAverage p fun P₂ => h (Sum.elim P₁ P₂) := by
-  have hw (P₁ : ι → Bool) (P₂ : κ → Bool) :
-      bernoulliWeight p (Sum.elim P₁ P₂) = bernoulliWeight p P₁ * bernoulliWeight p P₂ := by
-    rw [bernoulliWeight, Fintype.prod_sum_type]
-    rfl
-  simp only [bernoulliAverage, mul_sum, ← mul_assoc, ← hw]
-  rw [← Fintype.sum_prod_type fun P : (ι → Bool) × (κ → Bool) =>
-    bernoulliWeight p (Sum.elim P.1 P.2) * h (Sum.elim P.1 P.2)]
-  exact Fintype.sum_equiv (Equiv.sumArrowEquivProdArrow ι κ Bool) _ _ fun P => by
-    rw [← Sum.elim_comp_inl_inr P]
-    rfl
+/-! ### The noise operator on split coordinates -/
 
 /-- **The noise operator on a disjoint union of coordinates** applies the noise operator on the
 bits in `κ` and then the noise operator on the bits in `ι`. -/
@@ -82,19 +66,6 @@ theorem noiseOp_sumElim (ρ : ℝ) (g : (ι ⊕ κ → Bool) → ℝ) (x₁ : ι
     cases i <;> rfl
   simp only [noiseOp, bernoulliAverage_sumElim, h]
 
-/-- The noise operator commutes with renaming the coordinates. -/
-theorem noiseOp_comp_arrowCongr (e : ι ≃ κ) (ρ : ℝ) (g : (κ → Bool) → ℝ) (x : ι → Bool) :
-    noiseOp ρ (fun y : ι → Bool => g fun j => y (e.symm j)) x =
-      noiseOp ρ g fun j => x (e.symm j) :=
-  bernoulliAverage_reindex e _ fun Q => g ((fun j => x (e.symm j)) + Q)
-
-/-- On the cube over no coordinates, a single point, the noise operator is the identity. -/
-theorem noiseOp_of_isEmpty [IsEmpty ι] (ρ : ℝ) (g : (ι → Bool) → ℝ) (x : ι → Bool) :
-    noiseOp ρ g x = g x := by
-  have h : (fun P : ι → Bool => g (x + P)) = fun _ => g x :=
-    funext fun P => congrArg g (Subsingleton.elim _ _)
-  rw [noiseOp, h, bernoulliAverage_const]
-
 /-! ### Tensorization -/
 
 /-- A two-function inequality transfers along a renaming of the coordinates. -/
@@ -103,7 +74,7 @@ private theorem expect_mul_noiseOp_le_of_equiv {p q ρ : ℝ} (e : ι ≃ κ)
     (f g : (κ → Bool) → ℝ) : 𝔼 x, f x * noiseOp ρ g x ≤ lpNorm p f * lpNorm q g := by
   have h' := h (fun x => f fun j => x (e.symm j)) (fun x => g fun j => x (e.symm j))
   simp only [noiseOp_comp_arrowCongr, lpNorm_comp_arrowCongr] at h'
-  rwa [expect_comp_arrowCongr e fun y => f y * noiseOp ρ g y] at h'
+  rwa [Fintype.expect_comp_arrowCongr e fun y => f y * noiseOp ρ g y] at h'
 
 /-- A two-function inequality holds on the cube over no coordinates. -/
 private theorem expect_mul_noiseOp_le_of_isEmpty [IsEmpty ι] {p q ρ : ℝ} (hp : p ≠ 0)
@@ -130,7 +101,7 @@ private theorem expect_mul_noiseOp_le_sum {p q ρ : ℝ} (hp : p ≠ 0) (hq : q 
   calc 𝔼 x, f x * noiseOp ρ g x
       = 𝔼 x₁, 𝔼 x₂, f (Sum.elim x₁ x₂) *
           noiseOp ρ (fun y₁ => noiseOp ρ (fun y₂ => g (Sum.elim y₁ y₂)) x₂) x₁ := by
-        rw [expect_sumElim]
+        rw [Fintype.expect_sumElim]
         simp only [noiseOp_sumElim]
     _ = 𝔼 x₁, bernoulliAverage ((1 - ρ) / 2) fun P => 𝔼 x₂, f (Sum.elim x₁ x₂) *
           noiseOp ρ (fun y₂ => g (Sum.elim (x₁ + P) y₂)) x₂ := by

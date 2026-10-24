@@ -14,6 +14,7 @@ public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Order.UpperLower.Basic
 public import Mathlib.Algebra.Order.Group.Indicator
+import Complexity.Foundations.Order.UpperLower
 import Mathlib.Data.Bool.Basic
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Tactic.FieldSimp
@@ -46,6 +47,9 @@ power `h` (`bernoulliAverage_lowerSet_pow_le`). This transference principle appe
 ## Main results
 
 * `Cslib.BitString.bernoulliAverage_prod`: the coordinates of a random mask are independent.
+* `Cslib.BitString.bernoulliAverage_reindex`, `Cslib.BitString.bernoulliAverage_sumElim`,
+  `Cslib.BitString.bernoulliAverage_restrict`: reindexing, splitting over a disjoint union, and
+  restricting the coordinates of a random mask.
 * `Cslib.BitString.bernoulliAverage_coordinate`,
   `Cslib.BitString.bernoulliAverage_nonempty`, `Cslib.BitString.bernoulliAverage_hits`,
   `Cslib.BitString.bernoulliAverage_weight`: the probability that a coordinate is selected,
@@ -128,6 +132,24 @@ theorem bernoulliAverage_reindex {ι κ : Type*} [Fintype ι] [Fintype κ]
   change bernoulliWeight p x * f (fun j => x (e.symm j)) =
     bernoulliWeight p (fun j => x (e.symm j)) * f (fun j => x (e.symm j))
   rw [bernoulliWeight_reindex]
+
+/-- **Random masks on a disjoint union of coordinates are pairs of independent masks**: the
+expectation over a mask on `ι ⊕ κ` is the iterated expectation over a mask on `ι` and one on
+`κ`. -/
+theorem bernoulliAverage_sumElim {ι κ : Type*} [Fintype ι] [Fintype κ]
+    [DecidableEq ι] [DecidableEq κ] (p : ℝ) (h : (ι ⊕ κ → Bool) → ℝ) :
+    bernoulliAverage p h =
+      bernoulliAverage p fun P₁ => bernoulliAverage p fun P₂ => h (Sum.elim P₁ P₂) := by
+  have hw (P₁ : ι → Bool) (P₂ : κ → Bool) :
+      bernoulliWeight p (Sum.elim P₁ P₂) = bernoulliWeight p P₁ * bernoulliWeight p P₂ := by
+    rw [bernoulliWeight, Fintype.prod_sum_type]
+    rfl
+  simp only [bernoulliAverage, mul_sum, ← mul_assoc, ← hw]
+  rw [← Fintype.sum_prod_type fun P : (ι → Bool) × (κ → Bool) =>
+    bernoulliWeight p (Sum.elim P.1 P.2) * h (Sum.elim P.1 P.2)]
+  exact Fintype.sum_equiv (Equiv.sumArrowEquivProdArrow ι κ Bool) _ _ fun P => by
+    rw [← Sum.elim_comp_inl_inr P]
+    rfl
 
 private theorem bernoulliWeight_split {ι : Type*} [Fintype ι] (p : ℝ) (s x : ι → Bool) :
     bernoulliWeight p x = bernoulliWeight p (fun i : {i // s i = true} => x i) *
@@ -315,18 +337,6 @@ theorem bernoulliAverage_hits (p : ℝ) (s : ι → Bool) :
       simpa only [f, Fintype.card_subtype, BitString.weight] using
         bernoulliAverage_nonempty (ι := {i // s i = true}) p
 
-/-- A form of Bernoulli's inequality: `(1 - p) ^ n (1 + n p) ≤ 1` for `p ≤ 1`. It bounds the
-probability `(1 - p) ^ n` that a mask of rate `p` misses `n` given coordinates. -/
-theorem one_sub_pow_mul_one_add_mul_le_one {p : ℝ} (hp : p ≤ 1) (n : ℕ) :
-    (1 - p) ^ n * (1 + (n : ℝ) * p) ≤ 1 := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-    rw [pow_succ, Nat.cast_succ]
-    have hnon := mul_nonneg (pow_nonneg (sub_nonneg.mpr hp) n)
-      (mul_nonneg (show (0 : ℝ) ≤ n + 1 by positivity) (sq_nonneg p))
-    nlinarith
-
 /-! ### Unions of independent masks -/
 
 /-- **Coordinatewise images of two independent masks**: the expectation of `f` at the image
@@ -403,16 +413,6 @@ theorem bernoulliAverage_bias_antitone {f : (ι → Bool) → ℝ} (hf : Antiton
     _ = f P := bernoulliAverage_const s _
 
 /-! ### Transference for lower sets -/
-
-/-- The indicator of a lower set is antitone. -/
-theorem _root_.IsLowerSet.antitone_indicator_one {α : Type*} [Preorder α] {A : Set α}
-    (hA : IsLowerSet A) : Antitone (A.indicator (1 : α → ℝ)) := by
-  intro r s hrs
-  by_cases hs : s ∈ A
-  · rw [Set.indicator_of_mem hs, Set.indicator_of_mem (hA hrs hs)]
-    exact le_rfl
-  · rw [Set.indicator_of_notMem hs]
-    exact Set.indicator_nonneg (fun _ _ => zero_le_one) r
 
 /-- The union of independent masks of rates `p` and `q` lies in a lower set only if both masks do,
 so the probability of a lower set at rate `p + q - p q` is at most the product of its
