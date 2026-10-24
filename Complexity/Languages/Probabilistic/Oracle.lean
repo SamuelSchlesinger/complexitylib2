@@ -7,8 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Languages.Probabilistic.Sum
-public import Complexity.Languages.Probabilistic.Simulation
+public import Complexity.Languages.Probabilistic.Semantics
 
 /-!
 # Private randomness with typed oracle calls

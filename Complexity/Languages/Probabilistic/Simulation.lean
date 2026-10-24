@@ -38,13 +38,6 @@ There is one oracle specification and one interpreter; stateful execution uses `
 * `Cslib.OracleComp.run_interpret_lift`: lifted effects preserve the complete private state.
 * `Cslib.OracleComp.run_interpret_run_interpret`: a stateful handler whose effects are oracle
   calls, followed by a stateful oracle for those calls, is one handler on the joint state.
-* `Cslib.ProbComp.isMonadHom_eval`: `ProbComp.eval` is a monad morphism into `PMF`.
-* `Cslib.ProbComp.eval_interpret`: evaluating an interpreted oracle program interprets each call
-  by its evaluated sampler.
-* `Cslib.ProbComp.mem_support_eval_pure_iff`, `Cslib.ProbComp.mem_support_eval_bind_iff`,
-  `Cslib.ProbComp.mem_support_eval_map_iff`, `Cslib.ProbComp.mem_support_eval_uniform`,
-  `Cslib.ProbComp.mem_support_eval_uniform_iff`: support of evaluated closed probabilistic
-  programs.
 -/
 
 @[expose] public section
@@ -253,54 +246,5 @@ theorem run_interpret_run_interpret {κ : Type w} {target : OracleSpec.{w, v} κ
       ih result.1.1 result.1.2 result.2
 
 end OracleComp
-
-namespace ProbComp
-
-open Probability
-
-variable {α β : Type}
-
-/-- Evaluating a closed probabilistic program is a monad morphism into `PMF`. -/
-theorem isMonadHom_eval : IsMonadHom ProbComp PMF (@eval) :=
-  PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) unifOracle
-
-/-- Evaluating an interpreted oracle program is interpreting each call by its evaluated
-sampler. -/
-theorem eval_interpret {ι : Type} {spec : ι → Type}
-    (handler : (q : ι) → ProbComp (spec q)) (program : OracleComp spec α) :
-    eval (OracleComp.interpret handler program) =
-      OracleComp.interpret (fun q => eval (handler q)) program :=
-  OracleComp.interpret_interpret handler unifOracle program
-
-/-- A returned value is the only supported outcome of `pure a`. -/
-theorem mem_support_eval_pure_iff {a x : α} :
-    x ∈ (eval (pure a)).support ↔ x = a := by
-  simp
-
-/-- An outcome is supported by `program >>= next` iff it is supported by `next a` for some
-supported outcome `a` of `program`. -/
-theorem mem_support_eval_bind_iff {program : ProbComp α}
-    {next : α → ProbComp β} {b : β} :
-    b ∈ (eval (program >>= next)).support ↔
-      ∃ a ∈ (eval program).support, b ∈ (eval (next a)).support := by
-  simp
-
-/-- An outcome is supported by `f <$> program` iff it is the image under `f` of a supported
-outcome of `program`. -/
-theorem mem_support_eval_map_iff {f : α → β} {program : ProbComp α} {b : β} :
-    b ∈ (eval (f <$> program)).support ↔ ∃ a ∈ (eval program).support, f a = b := by
-  simp
-
-/-- Every element of a nonempty finite type is in the support of `uniform α`. -/
-theorem mem_support_eval_uniform [Fintype α] [Nonempty α] (a : α) :
-    a ∈ (eval (uniform α)).support := by
-  simp
-
-/-- Membership in the support of `uniform α` is unconditionally true. -/
-theorem mem_support_eval_uniform_iff [Fintype α] [Nonempty α] {a : α} :
-    a ∈ (eval (uniform α)).support ↔ True := by
-  simp
-
-end ProbComp
 
 end Cslib

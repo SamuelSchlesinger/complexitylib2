@@ -21,7 +21,8 @@ answers:
   independent sample of `h q : PMF (spec q)`. It is `OracleComp.interpret` into `PMF`.
 * `OracleComp.supportWith possible program` is the set of results reached when each call `q` may be
   answered by any element of `possible q`. It is defined by recursion on the tree of calls, so it
-  needs no distribution on the replies.
+  needs no distribution on the replies. With every reply possible it is `OracleComp.support`, the
+  results at the leaves of the tree.
 * `OracleComp.runWith oracle program s` is the joint law of the result and the final state when
   each call is answered by a stateful probabilistic oracle
   `oracle : (q : ι) → StateT σ PMF (spec q)` from the state `s`. It is `OracleComp.interpret` into
@@ -36,12 +37,10 @@ with the state unchanged (`runWith_lift`). On the sum `spec₁ ⊕ₒ spec₂`, 
 
 The library's semantics are instances. `ProbComp.eval` is `evalWith ProbComp.unifOracle`
 (`ProbComp.eval_eq_evalWith`), and since every uniform reply has positive probability, the
-possible results of a closed program are its results for any replies
-(`ProbComp.support_eval_eq_supportWith`). A program with private coins and external calls,
-`ProbOracleComp spec`, is a program over `unifSpec ⊕ₒ spec`: its run against a stateful oracle is
-`runWith` of the sum of the lifted uniform handler and that oracle, and its possible results are
-`supportWith` of all replies (`ProbOracleComp.runWith_eq_runWith_sumHandler`,
-`ProbOracleComp.support_eq_supportWith`).
+possible results of a closed program are its results for any replies (`ProbComp.support_eval`).
+A program with private coins and external calls, `ProbOracleComp spec`, is a program over
+`unifSpec ⊕ₒ spec`: its run against a stateful oracle is `runWith` of the sum of the lifted uniform
+handler and that oracle (`ProbOracleComp.runWith`), and its possible results are `support`.
 
 ## Algorithms are programs
 
@@ -57,6 +56,7 @@ about `evalWith`.
 
 * `Cslib.OracleComp.evalWith`: the output distribution for independent answers.
 * `Cslib.OracleComp.supportWith`: the results for answers in given sets.
+* `Cslib.OracleComp.support`: the results for any answers.
 * `Cslib.OracleComp.runWith`: the joint law of the result and final state of a stateful oracle.
 
 ## Main results
@@ -69,8 +69,12 @@ about `evalWith`.
 * `Cslib.OracleComp.support_evalWith`: evaluation and support agree.
 * `Cslib.OracleComp.mem_supportWith_of_mem_support_runWith`: stateful runs reach possible results.
 * `Cslib.OracleComp.runWith_lift`: memoryless oracles leave the state unchanged.
-* `Cslib.ProbComp.eval_eq_evalWith`, `Cslib.ProbComp.support_eval_eq_supportWith`: closed
+* `Cslib.OracleComp.support_liftLeft`, `.support_liftRight`: embedding into a sum keeps the
+  possible results.
+* `Cslib.ProbComp.eval_eq_evalWith`, `Cslib.ProbComp.support_eval`: closed
   probabilistic programs are the instance with uniform answers.
+* `Cslib.ProbComp.isMonadHom_eval`, `Cslib.ProbComp.eval_interpret`: the instances of
+  `isMonadHom_evalWith` and `evalWith_interpret`.
 
 ## References
 
@@ -229,6 +233,16 @@ theorem supportWith_interpret {κ : Type u} {target : OracleSpec.{u, v} κ}
     ext b
     simp only [interpret_bind, interpret_query, mem_supportWith_bind_iff, supportWith_query, ih]
 
+/-- A returned value is the only possible result. -/
+theorem eq_of_mem_supportWith_pure {possible : (q : ι) → Set (spec q)} {a b : α}
+    (h : b ∈ supportWith possible (pure a : OracleComp spec α)) : b = a :=
+  h
+
+/-- The results of `program` for any replies to its calls: the results at the leaves of its tree
+of calls. It is `supportWith` with every reply possible, and the rules of `supportWith` apply. -/
+abbrev support (program : OracleComp spec α) : Set α :=
+  supportWith (fun _ => Set.univ) program
+
 /-! ### Evaluation and support -/
 
 /-- The results with positive probability are the results reached along answers with positive
@@ -354,6 +368,24 @@ theorem support_sumHandler (left : (q : ι₁) → PMF (spec₁ q))
   funext q
   exact supportWith_query _ _
 
+/-- An embedded left program has the same possible results for any replies. -/
+@[simp] theorem support_liftLeft (program : OracleComp spec₁ α) :
+    support (liftLeft (spec₂ := spec₂) program) = support program := by
+  have huniv : (fun _ => Set.univ : (q : ι₁ ⊕ ι₂) → Set ((spec₁ ⊕ₒ spec₂) q)) =
+      sumHandler (fun _ => Set.univ) (fun _ => Set.univ) := by
+    funext q
+    cases q <;> rfl
+  rw [support, huniv, supportWith_sumHandler_liftLeft]
+
+/-- An embedded right program has the same possible results for any replies. -/
+@[simp] theorem support_liftRight (program : OracleComp spec₂ α) :
+    support (liftRight (spec₁ := spec₁) program) = support program := by
+  have huniv : (fun _ => Set.univ : (q : ι₁ ⊕ ι₂) → Set ((spec₁ ⊕ₒ spec₂) q)) =
+      sumHandler (fun _ => Set.univ) (fun _ => Set.univ) := by
+    funext q
+    cases q <;> rfl
+  rw [support, huniv, supportWith_sumHandler_liftRight]
+
 /-- An embedded left program is run by the left oracle alone, which keeps the whole state. -/
 @[simp] theorem runWith_sumHandler_liftLeft {σ : Type v}
     (left : (q : ι₁) → StateT σ PMF (spec₁ q)) (right : (q : ι₂) → StateT σ PMF (spec₂ q))
@@ -383,12 +415,24 @@ theorem eval_eq_evalWith (program : ProbComp α) :
 
 /-- The possible results of a closed probabilistic program are its results for any replies, since
 every uniform reply has positive probability. -/
-theorem support_eval_eq_supportWith (program : ProbComp α) :
-    (eval program).support = OracleComp.supportWith (fun _ => Set.univ) program := by
+theorem support_eval (program : ProbComp α) :
+    (eval program).support = OracleComp.support program := by
   rw [eval_eq_evalWith, OracleComp.support_evalWith]
   congr 1
   funext n
   exact Set.eq_univ_of_forall fun a => by simp [unifOracle, PMF.mem_support_iff]
+
+/-- Evaluating a closed probabilistic program is a monad morphism into `PMF`. -/
+theorem isMonadHom_eval : IsMonadHom ProbComp PMF (@eval) :=
+  OracleComp.isMonadHom_evalWith unifOracle
+
+/-- Evaluating an interpreted oracle program is interpreting each call by its evaluated
+sampler. -/
+theorem eval_interpret {ι : Type} {spec : ι → Type} (handler : (q : ι) → ProbComp (spec q))
+    (program : OracleComp spec α) :
+    eval (OracleComp.interpret handler program) =
+      OracleComp.interpret (fun q => eval (handler q)) program :=
+  OracleComp.evalWith_interpret handler unifOracle program
 
 end ProbComp
 

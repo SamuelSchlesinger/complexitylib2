@@ -73,7 +73,7 @@ theorem IsOraclePPTOn.run_interpret_preprocess {Operation α β Caller State : T
     (handler := fun a request state => ProbOracleComp.sample (handler a request state))
     hprepare hhandler.isOraclePPTOn hinitial invariant hinit hresources
     fun a request state hstate result hresult => hpreserve a request state hstate result
-      (ProbOracleComp.support_sample_subset _ hresult)).congr fun a _ _ _ => ?_).isPPTOn
+      ((ProbOracleComp.support_sample _).subset hresult)).congr fun a _ _ _ => ?_).isPPTOn
   rw [ProbOracleComp.sample_run_interpret]
 
 end Cslib.Probability

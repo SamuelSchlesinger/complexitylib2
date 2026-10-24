@@ -156,18 +156,18 @@ theorem IsTidyOraclePPTOn.runOracle [Finite Operation] [Finite Control]
       cases hstate : cfg.tapes.state with
       | none =>
         simp only [step, MultiTapeMachine.finiteStep, hstate] at hnext
-        exact (ProbOracleComp.eq_of_mem_support_pure hnext) ▸
+        exact (OracleComp.eq_of_mem_supportWith_pure hnext) ▸
           hcfg.mono le_rfl (Nat.le_succ i) le_rfl
       | some control =>
         simp only [step, MultiTapeMachine.finiteStep, hstate] at hnext
-        obtain ⟨action, _, hnext⟩ := ProbOracleComp.mem_support_bind hnext
+        obtain ⟨action, _, hnext⟩ := OracleComp.mem_supportWith_bind_iff.mp hnext
         cases action with
         | step action symbol move =>
-          exact (ProbOracleComp.eq_of_mem_support_pure hnext) ▸ hcfg.step action symbol move
+          exact (OracleComp.eq_of_mem_supportWith_pure hnext) ▸ hcfg.step action symbol move
         | query channel control =>
-          obtain ⟨answer, hanswer, hnext⟩ := ProbOracleComp.mem_support_bind hnext
-          obtain ⟨reply, _, rfl⟩ := ProbOracleComp.mem_support_map hanswer
-          exact (ProbOracleComp.eq_of_mem_support_pure hnext) ▸
+          obtain ⟨answer, hanswer, hnext⟩ := OracleComp.mem_supportWith_bind_iff.mp hnext
+          obtain ⟨reply, _, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hanswer
+          exact (OracleComp.eq_of_mem_supportWith_pure hnext) ▸
             hcfg.receive channel control _ (List.length_take_le _ _))
     (size := fun word => cf * (word.length + clock word + clock word + 1))
     ((PolyBounded.const cf).mul

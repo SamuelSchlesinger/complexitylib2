@@ -9,7 +9,7 @@ module
 
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Foundations.Control.Monad.Memoize
-import Complexity.Languages.Probabilistic.Simulation
+import Complexity.Languages.Probabilistic.Semantics
 
 /-!
 # Evaluating memoized probabilistic programs

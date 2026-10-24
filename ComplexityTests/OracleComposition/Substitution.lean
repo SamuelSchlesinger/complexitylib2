@@ -69,7 +69,7 @@ private theorem twoLevel_isOraclePPTOn :
   intro n request cache hcache result hresult
   obtain ⟨hreply, hcache', hgrowth⟩ := ProbOracleComp.memoize_call_size_le encBits encBits
     _ request.2 cache n hcache (fun value hvalue => by
-      obtain ⟨reply, _, rfl⟩ := ProbOracleComp.mem_support_map hvalue
+      obtain ⟨reply, _, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hvalue
       exact List.length_take_le _ _) hresult
   exact ⟨hcache', by simpa only [encBits_apply] using hreply.trans (by lia), by
     simpa only [encBits_apply, Nat.add_assoc] using hgrowth⟩
@@ -157,7 +157,7 @@ example : IsOraclePPTOn encUnary encBits repeatHead := by
   refine IsOraclePPTOn.iterate_of_bounded_growth (count := fun n => n) (initial := fun _ => [])
     ComputableTidilyInPolyTime.id' (.const []) (by fun_prop) (growth := 1) ?_
   intro _ next hnext
-  obtain ⟨reply, _, rfl⟩ := ProbOracleComp.mem_support_map hnext
+  obtain ⟨reply, _, rfl⟩ := OracleComp.mem_supportWith_map_iff.mp hnext
   simp only [encBits, Function.Embedding.coe_refl, id_eq]
   exact (List.length_take_le _ _).trans (Nat.le_add_left _ _)
 
