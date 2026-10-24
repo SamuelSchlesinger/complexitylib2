@@ -135,4 +135,44 @@ example (callback : List Bool → List Bool) (h : PlainContract callback) :
     IsPPTOn encBits encBits (consume callback) := by
   ppt
 
+/-- A reducible client wrapper keeps the actual iteration operation visible to dispatch. -/
+abbrev wrappedIterate {State : Type} (count : ℕ) (step : State → ProbComp State)
+    (initial : State) : ProbComp State :=
+  OracleComp.iterate count step initial
+
+example (step : List Bool → ProbComp (List Bool))
+    (hstep : IsPPTOn encBits encBits step)
+    (hshrink : ∀ state next, next ∈ (ProbComp.eval (step state)).support →
+      next.length ≤ state.length) :
+    IsPPTOn encBits encBits (fun word => OracleComp.iterate word.length step word) := by
+  fail_if_success (clear hstep; ppt)
+  fail_if_success (clear hshrink; ppt)
+  ppt
+
+example (step : List Bool → ProbComp (List Bool))
+    (hstep : IsPPTOn encBits encBits step)
+    (hshrink : ∀ state next, next ∈ (ProbComp.eval (step state)).support →
+      next.length ≤ state.length) :
+    IsPPTOn encBits encBits (fun word => wrappedIterate word.length step word) := by
+  ppt
+
+example (step : List Bool → ProbComp (List Bool))
+    (hstep : IsPPTOn encBits encBits step) (growth : ℕ)
+    (hgrowth : ∀ state next, next ∈ (ProbComp.eval (step state)).support →
+      next.length ≤ state.length + growth) :
+    IsPPTOn encBits encBits (fun word => OracleComp.iterate word.length step word) := by
+  fail_if_success (clear hgrowth; ppt)
+  ppt
+
+example (step : List Bool → List Bool → ProbComp (List Bool))
+    (hstep : IsPPTOn (encPair encBits encBits) encBits (fun pair => step pair.1 pair.2))
+    (growth : List Bool → ℕ) (hpoly : PolyBounded List.length growth)
+    (hgrowth : ∀ word state next, next ∈ (ProbComp.eval (step word state)).support →
+      next.length ≤ state.length + growth word) :
+    IsPPTOn encBits encBits (fun word => wrappedIterate word.length (step word) word) := by
+  fail_if_success (clear hstep; ppt)
+  fail_if_success (clear hpoly; ppt)
+  fail_if_success (clear hgrowth; ppt)
+  ppt
+
 end ComplexityTests.PPTPlainSource
