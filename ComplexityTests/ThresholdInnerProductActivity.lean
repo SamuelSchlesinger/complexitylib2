@@ -16,16 +16,16 @@ namespace ThresholdInnerProductActivity
 
 -- With no coordinates or gates, the constant false readout genuinely computes inner product.
 example : 1 ≤ (attainableTranscripts (Program.empty : Program signature 0 0)).card ^ 2 :=
-  two_pow_le_card_attainableTranscripts_sq_of_hadamardCode Program.empty
+  two_pow_le_card_attainableTranscripts_sq_of_dotProduct Program.empty
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm (fun _ => false)
     (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 -- At positive dimension, zero input-reading activity cannot compute inner product.
 example {n g : ℕ} (p : Program signature n g) (split : Fin n ≃ Fin 1 ⊕ Fin 1)
     (readout : (Fin g → Bool) → Bool) (he : inputActivity p = 0) :
-    ¬ ∀ x y, readout (p.eval interpretation (inputOfSplit split x y)) = hadamardCode x y := by
+    ¬ ∀ x y, readout (p.eval interpretation (inputOfSplit split x y)) = x ⬝ᵥ y := by
   intro h
-  have := two_pow_le_sum_choose_sq_of_hadamardCode p split readout h
+  have := two_pow_le_sum_choose_sq_of_dotProduct p split readout h
   simp [he] at this
 
 private abbrev andCircuit : Circuit signature 2 1 :=
@@ -33,25 +33,25 @@ private abbrev andCircuit : Circuit signature 2 1 :=
 
 private theorem andCircuit_computes (x y : Fin 1 → Bool) :
     andCircuit.eval interpretation
-      (inputOfSplit (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm x y) 0 = hadamardCode x y := by
+      (inputOfSplit (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm x y) 0 = x ⬝ᵥ y := by
   change (Program.empty.gate _).eval interpretation _ (Fin.last 0) = _
   rw [Program.eval_gate_last]
   cases hx : x 0 <;> cases hy : y 0 <;>
     dsimp only [Line.eval, interpretation, Function.comp_apply, Wire.elim] <;>
     norm_num [Fin.sum_univ_two, inputOfSplit, finSumFinEquiv, Fin.addCases,
-      hadamardCode_apply, dotProduct, Bool.mul_eq_and, hx, hy]
+      dotProduct, Bool.mul_eq_and, hx, hy]
 
 -- The single gate at threshold two supplies a nonconstant circuit computing one-bit inner product.
 example : 2 ≤
     (∑ j ∈ range (inputActivity andCircuit.program + 1),
       (inputGates andCircuit.program).card.choose j) ^ 2 :=
-  two_pow_le_sum_choose_sq_of_circuit_hadamardCode andCircuit
+  two_pow_le_sum_choose_sq_of_circuit_dotProduct andCircuit
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm
     ⟨0, rfl⟩ andCircuit_computes
 
 -- The pattern theorem also applies directly to the underlying native program.
 example : 2 ≤ (attainableTranscripts andCircuit.program).card ^ 2 := by
-  apply two_pow_le_card_attainableTranscripts_sq_of_hadamardCode andCircuit.program
+  apply two_pow_le_card_attainableTranscripts_sq_of_dotProduct andCircuit.program
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm (fun z => z 0)
   intro x y
   simpa only [andCircuit, Circuit.eval, Function.comp_apply, Program.trace_gateWire,
@@ -59,7 +59,7 @@ example : 2 ≤ (attainableTranscripts andCircuit.program).card ^ 2 := by
 
 -- Total activity yields the same kind of exact bound on a genuine nonconstant example.
 example : 2 ≤ (∑ j ∈ range (gateActivity andCircuit.program + 1), Nat.choose 1 j) ^ 2 :=
-  two_pow_le_sum_choose_gateActivity_sq_of_circuit_hadamardCode andCircuit
+  two_pow_le_sum_choose_gateActivity_sq_of_circuit_dotProduct andCircuit
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm ⟨0, rfl⟩ andCircuit_computes
 
 -- Appending an unused active gate preserves the output but increases the total gate count.
@@ -67,7 +67,7 @@ private abbrev paddedAndCircuit : Circuit signature 2 1 :=
   ⟨andCircuit.program.gate ⟨⟨0, Fin.elim0, 0⟩, Fin.elim0⟩, fun _ => .gate 0⟩
 
 example : 2 ≤ (∑ j ∈ range (gateActivity paddedAndCircuit.program + 1), Nat.choose 2 j) ^ 2 := by
-  apply two_pow_le_sum_choose_gateActivity_sq_of_circuit_hadamardCode paddedAndCircuit
+  apply two_pow_le_sum_choose_gateActivity_sq_of_circuit_dotProduct paddedAndCircuit
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm ⟨0, rfl⟩
   intro x y
   change (andCircuit.program.gate _).eval interpretation _ (Fin.castSucc 0) = _
@@ -77,7 +77,7 @@ example : 2 ≤ (∑ j ∈ range (gateActivity paddedAndCircuit.program + 1), Na
 -- The all-gate inequality also includes zero-dimensional inner product with no gates.
 example : 1 ≤ (∑ j ∈ range (gateActivity (Program.empty : Program signature 0 0) + 1),
     Nat.choose 0 j) ^ 2 :=
-  two_pow_le_sum_choose_gateActivity_sq_of_hadamardCode Program.empty
+  two_pow_le_sum_choose_gateActivity_sq_of_dotProduct Program.empty
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm (fun _ => false)
     (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
@@ -85,7 +85,7 @@ example : 1 ≤ (∑ j ∈ range (gateActivity (Program.empty : Program signatur
 example (v : inputGates andCircuit.program → Bool) :
     2 ≤ (∑ j ∈ range (inputActivityFrom andCircuit.program v + 1),
       (inputGates andCircuit.program).card.choose j) ^ 2 := by
-  apply two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode andCircuit.program
+  apply two_pow_le_sum_choose_inputActivityFrom_sq_of_dotProduct andCircuit.program
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm v (fun z => z 0)
   intro x y
   simpa only [andCircuit, Circuit.eval, Function.comp_apply, Program.trace_gateWire,
@@ -93,7 +93,7 @@ example (v : inputGates andCircuit.program → Bool) :
 
 example (v : Fin 1 → Bool) :
     2 ≤ (∑ j ∈ range (gateActivityFrom andCircuit.program v + 1), Nat.choose 1 j) ^ 2 := by
-  apply two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode andCircuit.program
+  apply two_pow_le_sum_choose_gateActivityFrom_sq_of_dotProduct andCircuit.program
     (finSumFinEquiv : Fin 1 ⊕ Fin 1 ≃ Fin 2).symm v (fun z => z 0)
   intro x y
   simpa only [andCircuit, Circuit.eval, Function.comp_apply, Program.trace_gateWire,

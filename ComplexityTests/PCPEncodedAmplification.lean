@@ -91,9 +91,9 @@ example : (powered exampleGraph).edges.length = 16 := by decide
 example : (exampleGraph.powerPreprocessEdge evalConstraint false rotateReflection 1 2
     ((0, false), (fun _ => cloud), (fun _ => 1))).constraint
       (fun _ => false) (fun _ => true) = false := by
-  have hkill : RotationMap.killTime (fun _ : Fin 1 => (1 : Fin 2)) = 1 :=
-    le_antisymm (RotationMap.killTime_le _) (Nat.succ_le_iff.mpr
-      ((RotationMap.lt_killTime_iff _ (by decide)).mpr (by decide)))
+  have hkill : killTime (fun _ : Fin 1 => (1 : Fin 2)) = 1 :=
+    le_antisymm (killTime_le _) (Nat.succ_le_iff.mpr
+      ((lt_killTime_iff _ (by decide)).mpr (by decide)))
   simp [Graph.powerPreprocessEdge, RegularConstraintGraph.powerRelationWithInput, hkill,
     Graph.preprocessRelation, cloud, List.finRange_succ, List.finRange_zero]
 

@@ -87,8 +87,12 @@ theorem isPPTOn_sampleDyadicCoin {α : Type} {input : α ↪ List Bool}
     (hbound : ComputableTidilyInPolyTime bound input encUnary)
     (hnumerator : ComputableTidilyInPolyTime numerator input encUnary) :
     IsPPTOn input encBool (fun a => sampleDyadicCoin (bound a) (numerator a)) := by
-  unfold sampleDyadicCoin
-  ppt
+  have hcallback : ComputableInPolyTime
+      (fun p : α × ℕ => decide (p.2 < numerator p.1)) (encPair input encUnary) encBool := by
+    apply ComputableInPolyTime.of_tidy
+    fun_prop
+  simpa only [sampleDyadicCoin, bind_pure_comp] using
+    (isPPTOn_sampleDyadicIndex hbound).map_with hcallback
 
 /-- An efficiently supplied unary bound gives a strict PPT capped index sampler. -/
 @[program_certificate]
@@ -121,6 +125,7 @@ theorem isPPTOn_sampleModNat {α : Type} {input : α ↪ List Bool} {width modul
     IsPPTOn input encNat (fun a => sampleModNat (width a) (modulus a)) := by
   unfold sampleModNat
   exact (ComputableTidilyInPolyTime.sampleBinaryNat hwidth.tidy).map_with
-    (ComputableTidilyInPolyTime.binary_mod' (by fun_prop) (hmodulus.tidy.comp (by fun_prop)))
+    (.of_tidy (ComputableTidilyInPolyTime.binary_mod' (by fun_prop)
+      (hmodulus.tidy.comp (by fun_prop))))
 
 end Cslib.Probability

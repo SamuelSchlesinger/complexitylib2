@@ -95,7 +95,7 @@ theorem mul_sub_distributionalError_le (h : Corrupted ν f z α δ) (hα : 0 ≤
   have hleaves : (#{i | p.leafOutput i = z} : ℝ) * δ ≤ 2 ^ p.depth * δ := by
     gcongr
     · exact h.nonneg
-    · exact_mod_cast (card_le_univ _).trans (by simpa using p.leaves_le_two_pow_depth)
+    · exact_mod_cast (card_le_univ _).trans (by simpa using p.leafCount_le_two_pow_depth)
   -- The masses involved, as sums over all pairs of inputs.
   set E := p.distributionalError ν (fun x y b => f x y = b)
   have hE : E = ∑ q : X × Y, if f q.1 q.2 = p.run q.1 q.2 then 0 else (ν q).toReal := by

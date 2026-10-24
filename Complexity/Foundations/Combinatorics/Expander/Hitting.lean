@@ -34,8 +34,9 @@ the walk operator with multiplication by the weights (`Cslib.RotationMap.weighte
 `Cslib.RotationMap.expect_prod_walkAt`). For indicator weights, each step multiplies the second
 moment of a function supported on a set of density at most `μ` by at most
 `((1 - λ) μ + λ) ^ 2`: the walk operator is `(1 - λ)` times the projection onto the constants plus
-an operator of norm at most `λ`, and the projection of a function supported on a small set is small
-(`Cslib.RotationMap.expect_ite_mem_walk_sq_le`).
+an operator of norm at most `λ`
+(`Cslib.RotationMap.expect_walk_sub_one_sub_spectralExpansion_sq_le`), and the projection of a
+function supported on a small set is small (`Cslib.RotationMap.expect_ite_mem_walk_sq_le`).
 
 ## Main definitions
 
@@ -45,6 +46,8 @@ an operator of norm at most `λ`, and the projection of a function supported on 
 
 * `Cslib.RotationMap.expect_prod_walkAt`: the expected product of weights along a walk from a
   vertex is the weighted walk.
+* `Cslib.RotationMap.expect_walk_sub_one_sub_spectralExpansion_sq_le`: subtracting `(1 - λ)` times
+  the mean from `G.walk x` leaves second moment at most `λ ^ 2` times the second moment of `x`.
 * `Cslib.RotationMap.expect_ite_mem_walk_sq_le`: one step of a walk restricted to a small set.
 * `Cslib.RotationMap.dens_filter_forall_walkAt_mem_le`: the hitting property.
 * `Cslib.RotationMap.dens_filter_forall_walkAt_mem_le_pow`: the usual power bound for remaining
@@ -125,7 +128,53 @@ end WeightedWalk
 
 section Hitting
 
-variable [Fintype V] [Fintype D] [DecidableEq V]
+variable [Fintype V] [Fintype D]
+
+/-- By the second moment method (`Fintype.sq_expect_le_dens_mul_expect_sq`), the squared average
+of a function vanishing outside `C` is at most the density of `C` times its second moment. -/
+private theorem sq_expect_le_dens_mul_expect_sq {C : Finset V} {x : V → ℝ}
+    (hx : ∀ v ∉ C, x v = 0) :
+    (𝔼 v, x v) ^ 2 ≤ dens C * 𝔼 v, x v ^ 2 := by
+  classical
+  refine (Fintype.sq_expect_le_dens_mul_expect_sq x).trans ?_
+  have hsub : ({v : V | x v ≠ 0} : Finset V) ⊆ C := fun v hv =>
+    by_contra fun hvC => (mem_filter.mp hv).2 (hx v hvC)
+  exact mul_le_mul_of_nonneg_right (by exact_mod_cast dens_le_dens hsub)
+    (expect_nonneg fun _ _ => sq_nonneg _)
+
+/-- Subtracting `(1 - λ(G))` times the mean from `G.walk x` leaves second moment at most
+`λ(G) ^ 2` times the second moment of `x`. -/
+theorem expect_walk_sub_one_sub_spectralExpansion_sq_le [Nonempty V] [Nonempty D]
+    (x : V → ℝ) :
+    𝔼 v, (G.walk x v - (1 - G.spectralExpansion) * 𝔼 u, x u) ^ 2 ≤
+      G.spectralExpansion ^ 2 * 𝔼 v, x v ^ 2 := by
+  set ℓ := G.spectralExpansion
+  set α := 𝔼 v, x v
+  set w : V → ℝ := G.walk (fun v => x v - α)
+  have hw₀ : 𝔼 v, (x v - α) = 0 := Fintype.expect_balance x
+  have hw : 𝔼 v, w v = 0 := G.expect_walk_eq_zero hw₀
+  have hw₂ : 𝔼 v, w v ^ 2 ≤ ℓ ^ 2 * 𝔼 v, (x v - α) ^ 2 :=
+    expect_walk_sq_le_spectralExpansion_sq_mul hw₀
+  have hyw (v : V) : G.walk x v - (1 - ℓ) * α = ℓ * α + w v := by
+    have : G.walk x = (fun _ => α) + w := by
+      rw [← G.walk_const α, ← map_add]
+      exact congrArg G.walk (funext fun _ => by simp)
+    simp only [this, Pi.add_apply]
+    ring
+  have hvar : 𝔼 v, (x v - α) ^ 2 = 𝔼 v, x v ^ 2 - α ^ 2 := by
+    have : ∀ v, (x v - α) ^ 2 = x v ^ 2 - 2 * α * x v + α ^ 2 := fun _ => by ring
+    simp only [this, expect_add_distrib, expect_sub_distrib, ← mul_expect, Fintype.expect_const]
+    ring
+  calc 𝔼 v, (G.walk x v - (1 - ℓ) * α) ^ 2
+      = ℓ ^ 2 * α ^ 2 + 2 * (ℓ * α) * 𝔼 v, w v + 𝔼 v, w v ^ 2 := by
+        have : ∀ v, (G.walk x v - (1 - ℓ) * α) ^ 2 =
+            ℓ ^ 2 * α ^ 2 + 2 * (ℓ * α) * w v + w v ^ 2 := fun v => by rw [hyw]; ring
+        simp only [this, expect_add_distrib, ← mul_expect, Fintype.expect_const]
+    _ ≤ ℓ ^ 2 * α ^ 2 + 2 * (ℓ * α) * 0 + ℓ ^ 2 * (𝔼 v, x v ^ 2 - α ^ 2) := by
+        rw [hw, ← hvar]; gcongr
+    _ = ℓ ^ 2 * 𝔼 v, x v ^ 2 := by ring
+
+variable [DecidableEq V]
 
 /-- One step of a walk restricted to a small set: if `x` vanishes outside a set `C`, and `B` and `C`
 have density at most `μ`, then restricting `G.walk x` to `B` gives second moment at most
@@ -141,44 +190,7 @@ theorem expect_ite_mem_walk_sq_le [Nonempty D] {B C : Finset V} {μ : ℝ} (hB :
   have hℓ₁ := G.spectralExpansion_le_one
   have hμ : 0 ≤ μ := (by positivity : (0 : ℝ) ≤ dens B).trans hB
   set α := 𝔼 v, x v
-  -- the average of a function supported on `C` is small
-  have hα : α ^ 2 ≤ dens C * 𝔼 v, x v ^ 2 := by
-    have h := expect_mul_sq_le_sq_mul_sq univ (fun v => if v ∈ C then (1 : ℝ) else 0) x
-    have h₁ : 𝔼 v, (if v ∈ C then (1 : ℝ) else 0) * x v = α :=
-      expect_congr rfl fun v _ => by by_cases hv : v ∈ C <;> simp [hv, hx]
-    have h₂ : 𝔼 v, (if v ∈ C then (1 : ℝ) else 0) ^ 2 = dens C :=
-      Fintype.expect_boole_mem_sq C
-    rwa [h₁, h₂] at h
-  -- the walk operator is `(1 - λ)` times the average plus an operator of norm at most `λ`
   set y : V → ℝ := fun v => G.walk x v - (1 - ℓ) * α
-  have hy : 𝔼 v, y v ^ 2 ≤ ℓ ^ 2 * 𝔼 v, x v ^ 2 := by
-    set w : V → ℝ := G.walk (fun v => x v - α)
-    have hw₀ : 𝔼 v, (x v - α) = 0 := Fintype.expect_balance x
-    have hw : 𝔼 v, w v = 0 := G.expect_walk_eq_zero hw₀
-    have hw₂ : 𝔼 v, w v ^ 2 ≤ ℓ ^ 2 * 𝔼 v, (x v - α) ^ 2 :=
-      expect_walk_sq_le_spectralExpansion_sq_mul hw₀
-    have hyw (v : V) : y v = ℓ * α + w v := by
-      have : G.walk x = (fun _ => α) + w := by
-        rw [← G.walk_const α, ← map_add]
-        congr 1
-        funext v
-        simp
-      simp only [y, this, Pi.add_apply]
-      ring
-    have hvar : 𝔼 v, (x v - α) ^ 2 = 𝔼 v, x v ^ 2 - α ^ 2 := by
-      have : ∀ v, (x v - α) ^ 2 = x v ^ 2 - 2 * α * x v + α ^ 2 := fun v => by ring
-      simp only [this, expect_add_distrib, expect_sub_distrib, ← mul_expect,
-        Fintype.expect_const]
-      ring
-    calc 𝔼 v, y v ^ 2 = ℓ ^ 2 * α ^ 2 + 2 * (ℓ * α) * 𝔼 v, w v + 𝔼 v, w v ^ 2 := by
-          have : ∀ v, y v ^ 2 = ℓ ^ 2 * α ^ 2 + 2 * (ℓ * α) * w v + w v ^ 2 := fun v => by
-            rw [hyw]; ring
-          simp only [this, expect_add_distrib, ← mul_expect, Fintype.expect_const]
-      _ ≤ ℓ ^ 2 * α ^ 2 + 2 * (ℓ * α) * 0 + ℓ ^ 2 * (𝔼 v, x v ^ 2 - α ^ 2) := by
-          rw [hw, ← hvar]
-          gcongr
-      _ = ℓ ^ 2 * 𝔼 v, x v ^ 2 := by ring
-  -- so the restriction to `B` is the restriction of `(1 - λ) α` plus a function of norm `λ ‖x‖`
   have hsplit (v : V) : (if v ∈ B then G.walk x v else 0) =
       (1 - ℓ) * (if v ∈ B then α else 0) + 1 * (if v ∈ B then y v else 0) := by
     split_ifs <;> simp [y]
@@ -191,10 +203,46 @@ theorem expect_ite_mem_walk_sq_le [Nonempty D] {B C : Finset V} {μ : ℝ} (hB :
       _ ≤ μ * (μ * 𝔼 v, x v ^ 2) := by
           have := expect_nonneg (s := (univ : Finset V)) fun v _ => sq_nonneg (x v)
           gcongr
-          exact hα.trans (by gcongr)
+          exact (sq_expect_le_dens_mul_expect_sq hx).trans (by gcongr)
       _ = μ ^ 2 * 𝔼 v, x v ^ 2 := by ring
-  · refine le_trans (expect_le_expect fun v _ => ?_) hy
-    split_ifs <;> simp [sq_nonneg]
+  · refine le_trans (expect_le_expect fun v _ => ?_)
+      (G.expect_walk_sub_one_sub_spectralExpansion_sq_le x)
+    by_cases hv : v ∈ B <;> simp [hv, y, ℓ, α, sq_nonneg]
+
+omit [Fintype V] in
+/-- The indicator-weighted walk vanishes outside `B 0`. -/
+private theorem weightedWalk_ite_eq_zero_of_notMem (t : ℕ) (B : ℕ → Finset V) {v : V}
+    (hv : v ∉ B 0) :
+    G.weightedWalk t (fun i v => if v ∈ B i then (1 : ℝ) else 0) v = 0 := by
+  obtain ⟨c, hc⟩ := G.weightedWalk_eq_mul t (fun i v => if v ∈ B i then (1 : ℝ) else 0) v
+  simp [hc, hv]
+
+/-- The second moment of the indicator-weighted walk decays by `((1 - λ(G)) μ + λ(G)) ^ 2` at each
+step when every set `B i` has density at most `μ`. -/
+private theorem expect_weightedWalk_ite_sq_le [Nonempty D] {μ : ℝ} (t : ℕ) :
+    ∀ B : ℕ → Finset V, (∀ i, (dens (B i) : ℝ) ≤ μ) →
+      𝔼 v, G.weightedWalk t (fun i v => if v ∈ B i then (1 : ℝ) else 0) v ^ 2 ≤
+        ((1 - G.spectralExpansion) * μ + G.spectralExpansion) ^ (2 * t) * μ := by
+  set c := (1 - G.spectralExpansion) * μ + G.spectralExpansion
+  induction t with
+  | zero =>
+    intro B hB
+    rw [weightedWalk_zero, Fintype.expect_boole_mem_sq]
+    simpa using hB 0
+  | succ t ih =>
+    intro B hB
+    have hstep := G.expect_ite_mem_walk_sq_le (hB 0) (hB 1) fun _ =>
+      G.weightedWalk_ite_eq_zero_of_notMem t (fun i => B (i + 1))
+    have heq (v : V) : G.weightedWalk (t + 1) (fun i v => if v ∈ B i then (1 : ℝ) else 0) v =
+        if v ∈ B 0 then G.walk (G.weightedWalk t
+          (fun i v => if v ∈ B (i + 1) then (1 : ℝ) else 0)) v else 0 := by
+      rw [weightedWalk_succ, Pi.mul_apply]
+      split_ifs <;> simp
+    simp only [heq]
+    calc _ ≤ c ^ 2 * 𝔼 v, G.weightedWalk t
+            (fun i v => if v ∈ B (i + 1) then (1 : ℝ) else 0) v ^ 2 := hstep
+      _ ≤ c ^ 2 * (c ^ (2 * t) * μ) := by gcongr; exact ih _ fun i => hB (i + 1)
+      _ = c ^ (2 * (t + 1)) * μ := by ring
 
 /-- **The hitting property of expander walks**, following [Vadhan, Theorem 4.17][Vadhan2012]
 (the sharp bound is due to [Kahale][Kahale1995]), with varying sets and the initial density
@@ -213,57 +261,16 @@ theorem dens_filter_forall_walkAt_mem_le [Nonempty D] {B : ℕ → Finset V} {μ
     have := G.spectralExpansion_nonneg
     positivity
   set h : ℕ → V → ℝ := fun i v => if v ∈ B i then 1 else 0
-  -- the weighted walk of the indicators vanishes outside the first set
-  have hsupp (t : ℕ) (B : ℕ → Finset V) (v : V) (hv : v ∉ B 0) :
-      G.weightedWalk t (fun i v => if v ∈ B i then (1 : ℝ) else 0) v = 0 := by
-    obtain ⟨c, hc⟩ := G.weightedWalk_eq_mul t (fun i v => if v ∈ B i then (1 : ℝ) else 0) v
-    simp [hc, hv]
-  -- and its second moment decays by `c ^ 2` with every step
-  have hmoment (t : ℕ) : ∀ B : ℕ → Finset V, (∀ i, (dens (B i) : ℝ) ≤ μ) →
-      𝔼 v, G.weightedWalk t (fun i v => if v ∈ B i then (1 : ℝ) else 0) v ^ 2 ≤
-        c ^ (2 * t) * μ := by
-    induction t with
-    | zero =>
-      intro B hB
-      simp only [weightedWalk_zero, pow_zero, mul_zero, one_mul]
-      calc 𝔼 v, (if v ∈ B 0 then (1 : ℝ) else 0) ^ 2 = dens (B 0) :=
-            Fintype.expect_boole_mem_sq (B 0)
-        _ ≤ μ := hB 0
-    | succ t ih =>
-      intro B hB
-      have hstep := G.expect_ite_mem_walk_sq_le (hB 0) (hB 1) (hsupp t (fun i => B (i + 1)))
-      have heq (v : V) : G.weightedWalk (t + 1) (fun i v => if v ∈ B i then (1 : ℝ) else 0) v =
-          if v ∈ B 0 then G.walk (G.weightedWalk t
-            (fun i v => if v ∈ B (i + 1) then (1 : ℝ) else 0)) v else 0 := by
-        rw [weightedWalk_succ, Pi.mul_apply]
-        split_ifs <;> simp
-      simp only [heq]
-      calc _ ≤ c ^ 2 * 𝔼 v, G.weightedWalk t
-              (fun i v => if v ∈ B (i + 1) then (1 : ℝ) else 0) v ^ 2 := hstep
-        _ ≤ c ^ 2 * (c ^ (2 * t) * μ) := by gcongr; exact ih _ fun i => hB (i + 1)
-        _ = c ^ (2 * (t + 1)) * μ := by ring
-  -- the probability is the average of the weighted walk, which is small by Cauchy–Schwarz
   have hprob : (dens {p : V × (Fin t → D) | ∀ i ≤ t, G.walkAt p i ∈ B i} : ℝ) =
       𝔼 v, G.weightedWalk t h v := by
     rw [expect_weightedWalk, ← Fintype.expect_boole]
     refine expect_congr rfl fun p _ => ?_
     simp only [h, prod_ite_zero, prod_const_one, mem_range, Nat.lt_succ_iff]
   rw [hprob]
-  have hCS := expect_mul_sq_le_sq_mul_sq univ (fun v => if v ∈ B 0 then (1 : ℝ) else 0)
-    (G.weightedWalk t h)
-  have h₁ : 𝔼 v, (if v ∈ B 0 then (1 : ℝ) else 0) * G.weightedWalk t h v =
-      𝔼 v, G.weightedWalk t h v :=
-    expect_congr rfl fun v _ => by
-      by_cases hv : v ∈ B 0
-      · simp [hv]
-      · simp only [hv, ↓reduceIte, zero_mul]
-        exact (hsupp t B v hv).symm
-  have h₂ : 𝔼 v, (if v ∈ B 0 then (1 : ℝ) else 0) ^ 2 = dens (B 0) :=
-    Fintype.expect_boole_mem_sq (B 0)
-  rw [h₁, h₂] at hCS
   have hbound : (𝔼 v, G.weightedWalk t h v) ^ 2 ≤ (μ * c ^ t) ^ 2 :=
-    hCS.trans <| (mul_le_mul (hB 0) (hmoment t B hB) (expect_nonneg fun _ _ => sq_nonneg _)
-      hμ).trans_eq (by ring)
+    (sq_expect_le_dens_mul_expect_sq fun _ => G.weightedWalk_ite_eq_zero_of_notMem t B).trans <|
+      (mul_le_mul (hB 0) (G.expect_weightedWalk_ite_sq_le t B hB)
+        (expect_nonneg fun _ _ => sq_nonneg _) hμ).trans_eq (by ring)
   calc 𝔼 v, G.weightedWalk t h v ≤ μ * c ^ t := (abs_le_of_sq_le_sq' hbound (by positivity)).2
     _ = μ * (μ + ℓ * (1 - μ)) ^ t := by ring
 

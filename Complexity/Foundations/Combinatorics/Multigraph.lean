@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Mathlib.Combinatorics.Graph.Connected.EdgeCut
 public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 public import Mathlib.Data.Fintype.Card
 public import Mathlib.Order.Lattice.Nat
@@ -31,6 +32,7 @@ of resolution refutations of Tseitin formulas.
 
 ## Main definitions
 
+* `Cslib.Multigraph.toGraph`: the multigraph as a Mathlib `Graph`.
 * `Cslib.Multigraph.toSimpleGraph`: the simple graph underlying a multigraph.
 * `Cslib.Multigraph.incidence`: the edges at a vertex other than self-loops.
 * `Cslib.Multigraph.edgeCut`: the edges between a set of vertices and its complement.
@@ -38,6 +40,8 @@ of resolution refutations of Tseitin formulas.
 
 ## Main results
 
+* `Cslib.Multigraph.incidenceSet_toGraph`, `Cslib.Multigraph.coe_edgeCut_eq_toGraph_edgeCut`:
+  incidence sets and edge cuts match those of Mathlib's `Graph`.
 * `Cslib.Multigraph.edgeSet_toSimpleGraph`: the edges of the underlying simple graph.
 * `Cslib.Multigraph.connected_toSimpleGraph_iff`: connectivity as a cut condition.
 * `Cslib.Multigraph.le_minBalancedCut_iff`: the characterization of `e(G)`.
@@ -55,6 +59,41 @@ namespace Cslib.Multigraph
 open Finset
 
 variable {V E E' : Type*} (ends : E → Sym2 V)
+
+/-- A multigraph given by `ends : E → Sym2 V` as a Mathlib `Graph` whose vertex set and edge set
+are everything. -/
+def toGraph : Graph V E where
+  vertexSet := Set.univ
+  edgeSet := Set.univ
+  IsLink e x y := ends e = s(x, y)
+  isLink_symm _ _ := ⟨fun _ _ h => h.trans Sym2.eq_swap⟩
+  eq_or_eq_of_isLink_of_isLink _ _ _ _ _ h h' := by
+    rcases Sym2.eq_iff.mp (h.symm.trans h') with ⟨rfl, -⟩ | ⟨rfl, -⟩
+    · exact Or.inl rfl
+    · exact Or.inr rfl
+  edge_mem_iff_exists_isLink e :=
+    iff_of_true (Set.mem_univ e) (by obtain ⟨x, y⟩ := ends e; exact ⟨x, y, rfl⟩)
+  left_mem_of_isLink _ _ _ _ := Set.mem_univ _
+
+variable {ends} in
+@[simp] theorem toGraph_isLink {e : E} {x y : V} :
+    (toGraph ends).IsLink e x y ↔ ends e = s(x, y) :=
+  Iff.rfl
+
+/-- The incident edges of `v` in `toGraph ends` are those having `v` as an endpoint. -/
+@[simp] theorem incidenceSet_toGraph (v : V) :
+    (toGraph ends).incidenceSet v = {e | v ∈ ends e} := by
+  ext e
+  obtain ⟨x, y, he⟩ : ∃ x y, ends e = s(x, y) := by obtain ⟨x, y⟩ := ends e; exact ⟨x, y, rfl⟩
+  simp only [Graph.incidenceSet, Graph.Inc, toGraph_isLink, he, Sym2.eq_iff, Sym2.mem_iff,
+    Set.mem_ofPred_eq]
+  constructor
+  · rintro ⟨z, ⟨rfl, -⟩ | ⟨-, rfl⟩⟩
+    · exact Or.inl rfl
+    · exact Or.inr rfl
+  · rintro (rfl | rfl)
+    · exact ⟨y, Or.inl ⟨rfl, rfl⟩⟩
+    · exact ⟨x, Or.inr ⟨rfl, rfl⟩⟩
 
 /-- The simple graph underlying the multigraph `ends`: distinct vertices are adjacent when an edge
 joins them. Self-loops are dropped and parallel edges merged. -/
@@ -102,6 +141,18 @@ theorem card_incidence_comp [Fintype E'] (f : E' ≃ E) (v : V) :
     #(incidence (ends ∘ f) v) = #(incidence ends v) :=
   card_equiv f fun _ => by simp
 
+/-- The edges at `v` other than self-loops are the non-loop incident edges of `toGraph ends`. -/
+theorem coe_incidence_eq_incidenceSet_toGraph (v : V) :
+    (incidence ends v : Set E) = (toGraph ends).incidenceSet v \ {e | (ends e).IsDiag} := by
+  ext e
+  simp [incidenceSet_toGraph]
+
+/-- Every non-loop incident edge of `v` is in the incidence set of `toGraph ends`. -/
+theorem coe_incidence_subset_toGraph_incidenceSet (v : V) :
+    (incidence ends v : Set E) ⊆ (toGraph ends).incidenceSet v := by
+  rw [coe_incidence_eq_incidenceSet_toGraph]
+  exact Set.sdiff_subset
+
 variable [Fintype V]
 
 /-- The edges between `S` and its complement. -/
@@ -113,6 +164,19 @@ variable {ends} in
 theorem mem_edgeCut {S : Finset V} {e : E} :
     e ∈ edgeCut ends S ↔ ∃ v ∈ S, ∃ w ∈ Sᶜ, ends e = s(v, w) := by
   simp only [edgeCut, mem_filter, mem_univ, true_and]
+
+/-- The edge cuts of `ends` are those of Mathlib's `Graph`. -/
+theorem coe_edgeCut_eq_toGraph_edgeCut (S : Finset V) :
+    (edgeCut ends S : Set E) = (toGraph ends).edgeCut S := by
+  ext e
+  obtain ⟨x, y, he⟩ : ∃ x y, ends e = s(x, y) := by obtain ⟨x, y⟩ := ends e; exact ⟨x, y, rfl⟩
+  rw [Finset.mem_coe, mem_edgeCut, (show (toGraph ends).IsLink e x y from he).mem_edgeCut_iff]
+  simp only [he, Sym2.eq_iff, Finset.mem_coe, Finset.mem_compl]
+  constructor
+  · rintro ⟨v, hv, w, hw, ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩⟩ <;> tauto
+  · rintro (⟨hx, hy⟩ | ⟨hy, hx⟩)
+    · exact ⟨x, hx, y, hy, Or.inl ⟨rfl, rfl⟩⟩
+    · exact ⟨y, hy, x, hx, Or.inr ⟨rfl, rfl⟩⟩
 
 /-- The edges between a set and its complement are those between the complement and the set. -/
 theorem edgeCut_compl (S : Finset V) : edgeCut ends Sᶜ = edgeCut ends S := by

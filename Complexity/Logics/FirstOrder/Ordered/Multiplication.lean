@@ -174,6 +174,55 @@ private theorem packedFormula_sound (v : Fin 3 → Fin n)
   · intro t hts
     simpa [a] using (ht t hts).1
 
+omit [Fact (2 ≤ n)] in
+private theorem exists_local_carries (v : Fin 3 → Fin n) {h s j : ℕ} {g : Fin 8 → Fin n}
+    (hp : 2 ^ h < n) (hspace : 16 * h < n) (hcap : (s + 1) * s ≤ 16 * h)
+    (hspos : 0 < s) (hcwidth : h + 1 < 2 ^ s) (hx : (v 0).val < 2 ^ (h + 1))
+    (hprod : (v 0).val * (v 1).val = (v 2).val)
+    (hgj : BitString.readPackedField h (fun r => (g r).val) j s =
+      BitString.mulCarry (v 0).val (v 1).val j)
+    (hgj' : BitString.readPackedField h (fun r => (g r).val) (j + s) s =
+      BitString.mulCarry (v 0).val (v 1).val (j + s)) :
+    ∃ w : Fin 16 → Fin n,
+      let c := fun t => BitString.readPackedField h (fun r => (w r).val) (t * s) s
+      c 0 = BitString.readPackedField h (fun r => (g r).val) j s ∧
+      c s = BitString.readPackedField h (fun r => (g r).val) (j + s) s ∧
+      ∀ t < s,
+        c t + BitString.mulColumn (v 0).val (v 1).val (j + t) =
+          ((v 2).val.testBit (j + t)).toNat + 2 * c (t + 1) ∧
+        c t + BitString.mulColumn (v 0).val (v 1).val (j + t) < n := by
+  let c := BitString.mulCarry (v 0).val (v 1).val
+  have hc (t : ℕ) : c t ≤ h + 1 := BitString.mulCarry_le hx _ _
+  let w : Fin 16 → Fin n := fun r =>
+    ⟨BitString.packWords (fun b => (c (j + b / s)).testBit (b % s)) h 16 r,
+      lt_trans (BitString.packWords_lt ..) hp⟩
+  have hw (t : ℕ) (ht : t ≤ s) :
+      BitString.readPackedField h (fun r => (w r).val) (t * s) s = c (j + t) :=
+    BitString.readPackedField_fields (fun t => c (j + t)) hspos
+      (by nlinarith) (lt_of_le_of_lt (hc _) hcwidth)
+  refine ⟨w, ?_, ?_, ?_⟩
+  · change BitString.readPackedField h (fun r => (w r).val) (0 * s) s =
+      BitString.readPackedField h (fun r => (g r).val) j s
+    rw [hw 0 (by lia), hgj, Nat.add_zero]
+  · change BitString.readPackedField h (fun r => (w r).val) (s * s) s =
+      BitString.readPackedField h (fun r => (g r).val) (j + s) s
+    rw [hw s (le_refl _), hgj']
+  · intro t ht
+    change BitString.readPackedField h (fun r => (w r).val) (t * s) s +
+        BitString.mulColumn (v 0).val (v 1).val (j + t) =
+          ((v 2).val.testBit (j + t)).toNat +
+            2 * BitString.readPackedField h (fun r => (w r).val) ((t + 1) * s) s ∧
+      BitString.readPackedField h (fun r => (w r).val) (t * s) s +
+        BitString.mulColumn (v 0).val (v 1).val (j + t) < n
+    rw [hw t (by lia), hw (t + 1) (by lia)]
+    constructor
+    · have heq := BitString.mulCarry_add_column (v 0).val (v 1).val (j + t)
+      rw [hprod] at heq
+      simpa only [c, Nat.add_assoc] using heq
+    · have := hc (j + t)
+      have := BitString.mulColumn_le hx (v 1).val (j + t)
+      lia
+
 private theorem packedFormula_complete (v : Fin 3 → Fin n) (hn : 257 ≤ n)
     (hprod : (v 0).val * (v 1).val = (v 2).val) : (packedFormula L).Realize v := by
   obtain ⟨h, e, m, hlo, hhi, hh, hspace, hem, hsh, hcwidth, hkw, hks, hcap⟩ :=
@@ -238,43 +287,12 @@ private theorem packedFormula_complete (v : Fin 3 → Fin n) (hn : 257 ≤ n)
       (by simpa [u] using hwidth) (by simpa [u] using hspace)]
     simp only [Term.realize_var, Term.realize_relabel, Function.comp_def,
       Sum.elim_inl, Sum.elim_inr]
-    let w : Fin 16 → Fin n := fun r =>
-      ⟨BitString.packWords (fun b => (c ((a 1).val + b / s)).testBit (b % s)) h 16 r,
-        lt_trans (BitString.packWords_lt ..) hp⟩
-    have hw (t : ℕ) (ht : t ≤ s) :
-        BitString.readPackedField h (fun r => (w r).val) (t * s) s = c ((a 1).val + t) :=
-      BitString.readPackedField_fields (fun t => c ((a 1).val + t)) hspos
-        (by nlinarith) (lt_of_le_of_lt (hc _) hcwidth)
-    have hgj : BitString.readPackedField h (fun r => (g r).val) (a 1).val s = c (a 1).val := by
-      rw [← haj]
+    refine exists_local_carries v (h := h) (s := s) (j := (a 1).val) (g := g)
+      hp hspace hcap hspos hcwidth (hinput 0) hprod ?_ ?_
+    · rw [← haj]
       exact hg (a 0).val (by rw [haj]; lia)
-    have hgj' : BitString.readPackedField h (fun r => (g r).val) ((a 1).val + s) s =
-        c ((a 1).val + s) := by
-      have ht := hg ((a 0).val + 1) (by rw [Nat.add_mul, Nat.one_mul, haj]; lia)
+    · have ht := hg ((a 0).val + 1) (by rw [Nat.add_mul, Nat.one_mul, haj]; lia)
       simpa only [Nat.add_mul, Nat.one_mul, haj] using ht
-    refine ⟨w, ?_, ?_, ?_⟩
-    · change BitString.readPackedField h (fun r => (w r).val) (0 * s) s =
-        BitString.readPackedField h (fun r => (g r).val) (a 1).val s
-      rw [hw 0 (by lia), hgj, Nat.add_zero]
-    · change BitString.readPackedField h (fun r => (w r).val) (s * s) s =
-        BitString.readPackedField h (fun r => (g r).val) ((a 1).val + s) s
-      rw [hw s (le_refl _), hgj']
-    · intro t ht
-      change t < s at ht
-      change BitString.readPackedField h (fun r => (w r).val) (t * s) s +
-          BitString.mulColumn (v 0).val (v 1).val ((a 1).val + t) =
-            ((v 2).val.testBit ((a 1).val + t)).toNat +
-              2 * BitString.readPackedField h (fun r => (w r).val) ((t + 1) * s) s ∧
-        BitString.readPackedField h (fun r => (w r).val) (t * s) s +
-          BitString.mulColumn (v 0).val (v 1).val ((a 1).val + t) < n
-      rw [hw t (by lia), hw (t + 1) (by lia)]
-      constructor
-      · have heq := BitString.mulCarry_add_column (v 0).val (v 1).val ((a 1).val + t)
-        rw [hprod] at heq
-        simpa only [c, Nat.add_assoc] using heq
-      · have := hc ((a 1).val + t)
-        have := BitString.mulColumn_le (hinput 0) (v 1).val ((a 1).val + t)
-        lia
 
 end Multiplication
 

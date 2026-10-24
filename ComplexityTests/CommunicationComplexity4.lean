@@ -28,7 +28,7 @@ private def small : Protocol Bool Bool (Fin 3) :=
 example : small.swapPlayers = .bob id (.output 0) (.alice id (.output 1) (.output 2)) := rfl
 example : small.swapPlayers.run true false = small.run false true := rfl
 example : (small.map Fin.val).run true true = 2 := rfl
-example : (small.map Fin.val).leaves = 3 := rfl
+example : (small.map Fin.val).leafCount = 3 := rfl
 
 /-! ### Trivial upper bounds -/
 
@@ -54,8 +54,8 @@ example {n : ℕ} (hn : 0 < n) :
   rw [ecomplexityFun_not_equality (by rw [BitString.card]; exact Nat.one_lt_two_pow hn.ne'),
     BitString.card, Nat.clog_pow _ _ one_lt_two]
 
-example (p : Protocol (Fin 3) (Fin 3) Bool) (hp : p.run = equality) : 5 ≤ p.leaves := by
-  simpa using card_add_two_le_leaves_of_run_eq_equality (by decide) hp
+example (p : Protocol (Fin 3) (Fin 3) Bool) (hp : p.run = equality) : 5 ≤ p.leafCount := by
+  simpa using card_add_two_le_leafCount_of_run_eq_equality (by decide) hp
 
 /-! ### Intersection and inclusion -/
 
@@ -129,10 +129,10 @@ example (w : Fin 3 → Bool) (hw : w ≠ 0) :
 #guard_msgs in
 #print axioms ecomplexityFun_equality
 
-/-- info: 'Cslib.Communication.card_add_two_le_leaves_of_run_eq_equality' depends on axioms:
+/-- info: 'Cslib.Communication.card_add_two_le_leafCount_of_run_eq_equality' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms card_add_two_le_leaves_of_run_eq_equality
+#print axioms card_add_two_le_leafCount_of_run_eq_equality
 
 /-- info: 'Cslib.Communication.ecomplexityFun_decide_le' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/

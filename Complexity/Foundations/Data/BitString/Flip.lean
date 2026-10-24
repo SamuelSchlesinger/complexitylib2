@@ -19,7 +19,6 @@ one bit is `Function.update x i (!x i)` (`BitString.flipOn_singleton`), and flip
 same positions changes nothing (`BitString.flipOn_flipOn`). Flips are the moves of sensitivity and
 block sensitivity, and they span the subcubes of the Boolean cube.
 
-On `Fin n`, `flipOn` is definitionally equal to CSLib's `BitString.flipBlock`.
 Sensitivity and certificate measures use CSLib's `Computability.QueryComplexity.Measures`.
 
 An input `x` of a Boolean function `g` is *isolated* when flipping any one of its bits changes the
@@ -33,6 +32,7 @@ each isolated true input, and parity has only isolated inputs.
 
 ## Main results
 
+* `Cslib.BitString.flipOn_apply`: coordinatewise evaluation of `flipOn`.
 * `Cslib.BitString.flipOn_singleton`: flipping one bit.
 * `Cslib.BitString.flipOn_flipOn`, `Cslib.BitString.flipOn_involutive`: flipping is an involution.
 
@@ -52,6 +52,11 @@ variable {ι : Type*} [DecidableEq ι] {T U : Finset ι} {x : ι → Bool} {i : 
 /-- Flip the bits of `x` at the positions in `T`. -/
 def flipOn (T : Finset ι) (x : ι → Bool) : ι → Bool :=
   fun i => if i ∈ T then !x i else x i
+
+/-- Coordinatewise, `flipOn T x` negates the bits in `T` and keeps the others. -/
+theorem flipOn_apply (T : Finset ι) (x : ι → Bool) (i : ι) :
+    flipOn T x i = if i ∈ T then !x i else x i :=
+  rfl
 
 /-- `flipOn T x` is `x` with its bits at the positions in `T` replaced by their negations. -/
 theorem flipOn_eq_piecewise (T : Finset ι) (x : ι → Bool) :

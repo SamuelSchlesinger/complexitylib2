@@ -117,7 +117,7 @@ under `ν`. -/
 theorem abs_sum_mul_signVal_le [Fintype X] [Fintype Y] (p : Protocol X Y Bool) (ν : PMF (X × Y))
     (f : X → Y → Bool) :
     |∑ x, ∑ y, (ν (x, y)).toReal * signVal (f x y) * signVal (p.run x y)| ≤
-      p.leaves * discrepancy ν f := by
+      p.leafCount * discrepancy ν f := by
   classical
   rw [p.sum_eq_sum_leaves]
   calc |∑ i, ∑ x with x ∈ p.leafAlice i, ∑ y with y ∈ p.leafBob i,
@@ -135,11 +135,11 @@ theorem abs_sum_mul_signVal_le [Fintype X] [Fintype Y] (p : Protocol X Y Bool) (
     _ ≤ ∑ i, |signVal (p.leafOutput i) * ∑ x with x ∈ p.leafAlice i,
           ∑ y with y ∈ p.leafBob i, (ν (x, y)).toReal * signVal (f x y)| :=
         abs_sum_le_sum_abs _ _
-    _ ≤ ∑ _i : Fin p.leaves, discrepancy ν f := by
+    _ ≤ ∑ _i : Fin p.leafCount, discrepancy ν f := by
         refine sum_le_sum fun i _ => ?_
         rw [abs_mul, abs_signVal, one_mul]
         exact abs_sum_le_discrepancy ν f _ _
-    _ = p.leaves * discrepancy ν f := by simp
+    _ = p.leafCount * discrepancy ν f := by simp
 
 /-- The correlation under `ν` of `f` with the output of a protocol is `1 - 2 ε`, where `ε` is the
 probability that the protocol errs on inputs drawn from `ν`. -/
@@ -167,10 +167,10 @@ theorem two_mul_le_two_pow_mul_discrepancy [Finite X] [Finite Y] (p : Protocol X
   have := Fintype.ofFinite Y
   have h := p.abs_sum_mul_signVal_le ν f
   rw [p.sum_mul_signVal_eq] at h
-  have hleaves : (p.leaves : ℝ) ≤ 2 ^ p.depth := by exact_mod_cast p.leaves_le_two_pow_depth
+  have hleaves : (p.leafCount : ℝ) ≤ 2 ^ p.depth := by exact_mod_cast p.leafCount_le_two_pow_depth
   calc 2 * γ ≤ |1 - 2 * p.distributionalError ν (fun x y b => f x y = b)| :=
         le_trans (by linarith) (le_abs_self _)
-    _ ≤ p.leaves * discrepancy ν f := h
+    _ ≤ p.leafCount * discrepancy ν f := h
     _ ≤ 2 ^ p.depth * discrepancy ν f := mul_le_mul_of_nonneg_right hleaves discrepancy_nonneg
 
 end Protocol

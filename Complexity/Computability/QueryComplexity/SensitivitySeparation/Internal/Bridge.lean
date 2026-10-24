@@ -23,6 +23,7 @@ the empty block never changes the value of a function.
 
 ## Main results
 
+* `Cslib.BitString.flipOn_eq_flipBlock`: on `Fin n`, `BitString.flipOn` is `BitString.flipBlock`.
 * `Internal.flip_eq_flipOn`: the internal flip is `BitString.flipOn`.
 * `Internal.sensitivity_eq_bitString_sensitivity`: the internal sensitivity is
   `BitString.sensitivity`.
@@ -43,6 +44,11 @@ open Finset
 
 variable {n : ℕ}
 
+/-- On `Fin n`, `BitString.flipOn` is CSLib's `BitString.flipBlock`. -/
+@[simp] theorem _root_.Cslib.BitString.flipOn_eq_flipBlock (T : Finset (Fin n)) (x : BitString n) :
+    BitString.flipOn T x = BitString.flipBlock T x :=
+  rfl
+
 /-- The internal flip is `BitString.flipOn`, for any decidable equality on the coordinates. -/
 theorem flip_eq_flipOn {I : Type} [DecidableEq I] (x : I → Bool) (B : Finset I) :
     flip x B = BitString.flipOn B x := by
@@ -53,7 +59,7 @@ theorem flip_eq_flipOn {I : Type} [DecidableEq I] (x : I → Bool) (B : Finset I
 /-- On `Fin n`, the internal flip is CSLib's `BitString.flipBlock`. -/
 private theorem flip_eq_flipBlock (x : BitString n) (B : Finset (Fin n)) :
     flip x B = BitString.flipBlock B x :=
-  flip_eq_flipOn x B
+  (flip_eq_flipOn x B).trans (BitString.flipOn_eq_flipBlock B x)
 
 /-- On `Fin n`, the internal pointwise sensitivity is `BitString.sensitivityAt`. -/
 private theorem sensitivityAt_eq_bitString_sensitivityAt (f : BooleanFunction n) (x : BitString n) :

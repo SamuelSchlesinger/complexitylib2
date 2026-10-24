@@ -281,6 +281,27 @@ theorem run_interpret_answer_complete [DecidableEq Query]
   simpa only [PMF.monad_map_eq_map] using OracleComp.run_interpret_readOnly
     (fun q (table : (q : Query) → Response q) => PMF.pure (table q)) program table
 
+/-- Marginalizing a joint result-and-table completion identity over the completed table gives
+equality of the eager and lazy result distributions. -/
+theorem pi_bind_eq_map_fst_of_complete_eq (distribution : (q : Query) → PMF (Response q))
+    {lazy : PMF (α × Cache Response)} {eager : ((q : Query) → Response q) → PMF α}
+    (h : (do
+      let (result, cache') ← lazy
+      (complete distribution cache').map (result, ·)) =
+        (do
+          let table ← complete distribution (fun _ => none)
+          (eager table).map (·, table))) :
+    (do
+      let table ← PMF.pi distribution
+      eager table) = lazy.map Prod.fst := by
+  have hfst := congrArg (PMF.map Prod.fst) h.symm
+  simp only [PMF.monad_bind_eq_bind, complete_empty, PMF.map_bind, PMF.map_comp,
+    Function.comp_def] at hfst
+  change ((PMF.pi distribution).bind fun a => (eager a).map id) =
+    lazy.bind fun a => (complete distribution a.2).map (Function.const _ a.1) at hfst
+  simp only [PMF.map_id, PMF.map_const] at hfst
+  exact hfst
+
 /-- Lazy evaluation from an empty cache agrees with sampling the entire independent function
 in advance, even for adaptive programs with repeated queries. -/
 theorem interpret_eq_lazy [DecidableEq Query] (distribution : (q : Query) → PMF (Response q))
@@ -289,12 +310,9 @@ theorem interpret_eq_lazy [DecidableEq Query] (distribution : (q : Query) → PM
       let table ← PMF.pi distribution
       OracleComp.interpret (fun q => PMF.pure (table q)) program) =
         ((OracleComp.interpret (answer distribution) program).run (fun _ => none)).map
-          Prod.fst := by
-  have h := congrArg (PMF.map Prod.fst)
+          Prod.fst :=
+  pi_bind_eq_map_fst_of_complete_eq distribution
     (run_interpret_answer_complete distribution program (fun _ => none))
-  simpa only [PMF.monad_bind_eq_bind, complete_empty, PMF.map_bind, PMF.map_comp, PMF.map,
-    Function.comp_def,
-    PMF.bind_const, PMF.bind_pure, PMF.bind_bind, PMF.pure_bind] using h.symm
 
 /-- A uniformly sampled function can be replaced by a consistent lazy uniform oracle. -/
 theorem uniform_interpret_eq_lazy [DecidableEq Query] [∀ q, Fintype (Response q)]

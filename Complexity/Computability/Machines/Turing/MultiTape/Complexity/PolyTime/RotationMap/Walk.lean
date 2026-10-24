@@ -195,24 +195,24 @@ theorem rotationMap_killedPowRotWithInput (T q : ℕ) [NeZero q] (signal : Fin q
       (encPair input (encPair vertex (encPair (encPi label) (encPi signal))))
       (encPair vertex (encPair (encPi label) (encPi signal))) := by
     have hprefix : ComputableTidilyInPolyTime
-        (fun k : Fin T → D => Fin.take _ (RotationMap.killTime_le c) k)
+        (fun k : Fin T → D => Fin.take _ (killTime_le c) k)
         (encPi label) (encPi label) :=
-      pi fun i : Fin (RotationMap.killTime c) =>
-        pi_apply label (⟨i.val, i.isLt.trans_le (RotationMap.killTime_le c)⟩ : Fin T)
+      pi fun i : Fin (killTime c) =>
+        pi_apply label (⟨i.val, i.isLt.trans_le (killTime_le c)⟩ : Fin T)
     have hwalk : ComputableTidilyInPolyTime
         (fun p : P × (V × ((Fin T → D) × (Fin T → Fin q))) =>
-          RotationMap.powRotWithInput rotate (RotationMap.killTime c)
-            (p.1, p.2.1, Fin.take _ (RotationMap.killTime_le c) p.2.2.1))
+          RotationMap.powRotWithInput rotate (killTime c)
+            (p.1, p.2.1, Fin.take _ (killTime_le c) p.2.2.1))
         (encPair input (encPair vertex (encPair (encPi label) (encPi signal))))
         (encPair vertex (encPi label)) :=
-      (rotationMap_powRotWithInput hrotate (RotationMap.killTime c)).comp
+      (rotationMap_powRotWithInput hrotate (killTime c)).comp
         ((fst _ _).prod (((snd _ _).fst').prod (hprefix.comp ((snd _ _).snd'.fst'))))
     dsimp only [RotationMap.killedPowRotWithInput]
     apply hwalk.fst'.prod
     apply prod ?_ (const c)
     apply pi
     intro i
-    by_cases hi : i.val < RotationMap.killTime c
+    by_cases hi : i.val < killTime c
     · simpa only [dite_eq_left hi, Function.comp_def] using
         (pi_apply label ⟨i.val, hi⟩).comp hwalk.snd'
     · simpa only [dite_eq_right hi, Function.comp_def] using

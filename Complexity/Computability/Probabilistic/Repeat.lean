@@ -63,7 +63,7 @@ theorem IsPPTOn.replicate {α β : Type} {input : α ↪ List Bool} {output : β
     (ComputableTidilyInPolyTime.fst input encBits) hrows
   have hcoins := (ComputableTidilyInPolyTime.unary_mul.comp (hcount.prod hbudget)).sampleList
   apply (hcoins.map_with (f := fun a coins =>
-    (BitString.listRows (count a) (budget a) coins).map (evaluate a)) hmap).congr
+    (BitString.listRows (count a) (budget a) coins).map (evaluate a)) (.of_tidy hmap)).congr
   intro a
   simpa only [ProbComp.eval_map, BitString.eval_sampleList, Function.comp_def] using
     (ProbComp.eval_replicate_of_uniformList (count a) (budget a)

@@ -54,24 +54,24 @@ example (T selected : ℕ) (v : ℕ × Bool) (k : Fin T → Bool) :
 example : RotationMap.killedPowRotWithInput rotate 4 2
     (4, (4, false), ![false, false, true, false], ![1, 1, 1, 0]) =
     ((4, true), ![false, true, true, false], ![1, 1, 1, 0]) := by
-  have hkill : RotationMap.killTime (![1, 1, 1, 0] : Fin 4 → Fin 2) = 3 :=
-    (RotationMap.killTime_eq_iff _ (by decide)).mpr (by decide)
+  have hkill : killTime (![1, 1, 1, 0] : Fin 4 → Fin 2) = 3 :=
+    (killTime_eq_iff _ (by decide)).mpr (by decide)
   rw [RotationMap.killedPowRotWithInput_of_killTime rotate _ (by decide) hkill]
   decide
 
 example : RotationMap.killedPowRotWithInput rotate 3 2
     (4, (4, false), ![false, false, true], ![0, 1, 1]) =
     ((4, false), ![false, false, true], ![0, 1, 1]) := by
-  have hkill : RotationMap.killTime (![0, 1, 1] : Fin 3 → Fin 2) = 0 :=
-    (RotationMap.killTime_eq_iff _ (by decide)).mpr (by decide)
+  have hkill : killTime (![0, 1, 1] : Fin 3 → Fin 2) = 0 :=
+    (killTime_eq_iff _ (by decide)).mpr (by decide)
   rw [RotationMap.killedPowRotWithInput_of_killTime rotate _ (by decide) hkill]
   decide
 
 example : RotationMap.killedPowRotWithInput rotate 2 1
     (4, (4, false), ![true, false], ![0, 0]) =
     ((4, false), ![true, false], ![0, 0]) := by
-  have hkill : RotationMap.killTime (![0, 0] : Fin 2 → Fin 1) = 0 :=
-    (RotationMap.killTime_eq_iff _ (by decide)).mpr (by decide)
+  have hkill : killTime (![0, 0] : Fin 2 → Fin 1) = 0 :=
+    (killTime_eq_iff _ (by decide)).mpr (by decide)
   rw [RotationMap.killedPowRotWithInput_of_killTime rotate _ (by decide) hkill]
   decide
 

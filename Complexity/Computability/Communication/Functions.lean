@@ -11,6 +11,7 @@ public import Complexity.Computability.Communication.FoolingSet
 public import Complexity.Foundations.Data.BitString.Basic
 public import Mathlib.Data.Matrix.Mul
 import Complexity.Foundations.BooleanAnalysis.HadamardRectangles
+import Complexity.Foundations.Data.Code.Hadamard
 import Mathlib.Tactic.Linarith
 
 /-!
@@ -33,9 +34,9 @@ Equality, greater-than and disjointness have fooling sets of `2 ^ n` pairs: the 
 `(x, x)` for equality and greater-than (`isFoolingSet_equality`, `isFoolingSet_greaterThan`) and
 the complementary pairs `(x, !x)` for disjointness (`isFoolingSet_disjointness`). For the inner
 product, a rectangle on which it is constant has at most `2 ^ n` entries
-(`BitString.card_mul_le_two_pow_of_hadamardCode_eq`, from Lindsey's lemma), while it is `false` on
+(`BitString.card_mul_le_two_pow_of_dotProduct_eq`, from Lindsey's lemma), while it is `false` on
 `2 ^ (n - 1) (2 ^ n + 1)` pairs and `true` on `2 ^ (n - 1) (2 ^ n - 1)` pairs; the area bound then
-forces more than `2 ^ n` leaves (`two_pow_lt_leaves_of_run_eq_dotProduct`).
+forces more than `2 ^ n` leaves (`two_pow_lt_leafCount_of_run_eq_dotProduct`).
 
 ## Main definitions
 
@@ -220,21 +221,21 @@ private theorem two_mul_card_dotProduct_eq_true_add_two_pow [DecidableEq ι] :
 
 /-- **The inner product needs more than `2 ^ k` leaves**: a protocol computing the inner product
 modulo two of two `k`-bit strings, for `0 < k`, has more than `2 ^ k` leaves. -/
-theorem two_pow_lt_leaves_of_run_eq_dotProduct [Nonempty ι]
+theorem two_pow_lt_leafCount_of_run_eq_dotProduct [Nonempty ι]
     {p : Protocol (ι → Bool) (ι → Bool) Bool} (hp : p.run = fun x y => x ⬝ᵥ y) :
-    2 ^ Fintype.card ι < p.leaves := by
+    2 ^ Fintype.card ι < p.leafCount := by
   classical
   set N := 2 ^ Fintype.card ι with hN
   obtain ⟨M, hM⟩ : ∃ M, N = 2 * M :=
     ⟨2 ^ (Fintype.card ι - 1), by rw [hN, ← pow_succ', Nat.sub_add_cancel Fintype.card_pos]⟩
   have hK (b : Bool) (A B : Finset (ι → Bool)) (h : ∀ x ∈ A, ∀ y ∈ B, x ⬝ᵥ y = b) :
       #A * #B ≤ N :=
-    BitString.card_mul_le_two_pow_of_hadamardCode_eq A B b h
+    BitString.card_mul_le_two_pow_of_dotProduct_eq A B b h
   have hT := Protocol.card_filter_le_mul hp true (hK true)
   have hF := Protocol.card_filter_le_mul hp false (hK false)
   set T := #{i | p.leafOutput i = true}
   set F := #{i | p.leafOutput i = false}
-  have hleaves : T + F = p.leaves := by
+  have hleaves : T + F = p.leafCount := by
     have := card_filter_add_card_filter_not (s := univ) fun i => p.leafOutput i = true
     simpa [T, F] using this
   have hpairs : #{q : (ι → Bool) × (ι → Bool) | q.1 ⬝ᵥ q.2 = true} +
@@ -255,8 +256,8 @@ theorem ecomplexity_dotProduct (hn : 0 < n) :
   have : Nonempty (Fin n) := ⟨⟨0, hn⟩⟩
   refine le_antisymm (Protocol.ecomplexityFun_le_succ _)
     (Protocol.le_ecomplexity_iff.mpr fun p hp => ?_)
-  have h := (two_pow_lt_leaves_of_run_eq_dotProduct (Protocol.solves_univ_iff.mp hp)).trans_le
-    p.leaves_le_two_pow_depth
+  have h := (two_pow_lt_leafCount_of_run_eq_dotProduct (Protocol.solves_univ_iff.mp hp)).trans_le
+    p.leafCount_le_two_pow_depth
   rw [Fintype.card_fin] at h
   exact_mod_cast (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp h
 

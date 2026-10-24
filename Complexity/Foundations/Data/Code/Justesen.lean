@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.Data.Code.AsymptoticallyGood
 public import Complexity.Foundations.Data.Code.Concatenation
 public import Complexity.Foundations.Data.Code.ReedSolomon
 public import Cslib.Foundations.Data.BitString
@@ -42,13 +43,15 @@ encodings are at distance at least `(q - K - V(r)) * (r + 1)` for every `r`
 
 With the binomial estimate `V(r) * 4 ^ (2 * b) ≤ 4 ^ r * 5 ^ (2 * b)`
 (`Cslib.Code.sum_range_choose_mul_four_pow_le`), this shows that Justesen codes are
-*asymptotically good*: for `b = 16 * s` and `K = 2 ^ (16 * s - 1)`, the Justesen code is a binary
-code of length `n = 32 * s * (2 ^ (16 * s) - 1)` with `2 ^ k` codewords, where `n ≤ 4 * k`, and
-minimum distance at least `n / 128` (`Cslib.Code.justesenCode_asymptoticallyGood`); the lengths
-grow without bound with `s`, while the rate stays at least `1 / 4` and the relative distance at
-least `1 / 128`. These constants are not optimized: estimating `V(r)` by the binary entropy
-function `H` instead gives relative distance approaching `(1 - 2 R) H⁻¹(1 / 2) ≈ 0.11 * (1 - 2 R)`
-at rate `R < 1 / 2` [GuruswamiRudraSudan2019]; this is not formalized here.
+*asymptotically good* (`Cslib.Code.IsAsymptoticallyGood`): for `b = 16 * s` and
+`K = 2 ^ (16 * s - 1)`, the Justesen code is a binary code of length
+`n = 32 * s * (2 ^ (16 * s) - 1)` with `2 ^ k` codewords, where `n ≤ 4 * k`, and minimum distance
+at least `n / 128` (`Cslib.Code.card_le_mul_minDist_justesenCode`,
+`Cslib.Code.isAsymptoticallyGood_justesenCode`); the lengths grow without bound with `s`, while the
+rate stays at least `1 / 4` and the relative distance at least `1 / 128`. These constants are not
+optimized: estimating `V(r)` by the binary entropy function `H` instead gives relative distance
+approaching `(1 - 2 R) H⁻¹(1 / 2) ≈ 0.11 * (1 - 2 R)` at rate `R < 1 / 2`
+[GuruswamiRudraSudan2019]; this is not formalized here.
 
 ## Main definitions
 
@@ -62,7 +65,9 @@ at rate `R < 1 / 2` [GuruswamiRudraSudan2019]; this is not formalized here.
 * `Cslib.Code.sub_card_mul_le_sum_hammingNorm`: many distinct words have large total weight.
 * `Cslib.Code.le_minDist_justesenCode`: the minimum distance of Justesen codes.
 * `Cslib.Code.card_justesenCode`: the number of codewords.
-* `Cslib.Code.justesenCode_asymptoticallyGood`: Justesen codes are asymptotically good.
+* `Cslib.Code.card_le_mul_minDist_justesenCode`: the relative distance of Justesen codes at rate at
+  least `1 / 4`.
+* `Cslib.Code.isAsymptoticallyGood_justesenCode`: Justesen codes are asymptotically good.
 
 ## References
 
@@ -248,34 +253,24 @@ theorem card_justesenCode (φ : F ≃+ BitString b) {K : ℕ} (hK : K ≤ Fintyp
     Module.card_eq_pow_finrank (K := F),
     finrank_reedSolomon Units.val_injective (by rwa [Fintype.card_units]), hq, ← pow_mul]
 
-/-- **Justesen codes are asymptotically good** [Justesen1972]. Let `s ≥ 1` and let `F` be a field
-written as `b = 16 * s` bits, which then has `2 ^ (16 * s)` elements. The Justesen code of outer
-dimension `K = 2 ^ (16 * s - 1)` is a binary code of length `n = 32 * s * (2 ^ (16 * s) - 1)` with
-`2 ^ k` codewords, where `k = 16 * s * 2 ^ (16 * s - 1)` satisfies `n ≤ 4 * k`, and its minimum
-distance `d` satisfies `n ≤ 128 * d`: rate at least `1 / 4` and relative distance at least
-`1 / 128`, at lengths that grow without bound. -/
-theorem justesenCode_asymptoticallyGood {s : ℕ} (hs : 1 ≤ s) (φ : F ≃+ BitString (16 * s)) :
-    Fintype.card (Fˣ × (Fin 2 × Fin (16 * s))) = 32 * s * (2 ^ (16 * s) - 1) ∧
-      Nat.card (justesenCode φ (2 ^ (16 * s - 1))) = 2 ^ (16 * s * 2 ^ (16 * s - 1)) ∧
-      32 * s * (2 ^ (16 * s) - 1) ≤ 4 * (16 * s * 2 ^ (16 * s - 1)) ∧
-      ((32 * s * (2 ^ (16 * s) - 1) : ℕ) : ℕ∞) ≤
-        128 * minDist (justesenCode φ (2 ^ (16 * s - 1))) := by
+/-- **The relative distance of Justesen codes at rate at least `1 / 4`** [Justesen1972]. Let `s ≥ 1`
+and let `F` be a field written as `b = 16 * s` bits, which then has `2 ^ (16 * s)` elements. The
+Justesen code of outer dimension `K = 2 ^ (16 * s - 1)` is a binary code of length
+`n = 32 * s * (2 ^ (16 * s) - 1)` whose minimum distance `d` satisfies `n ≤ 128 * d`. -/
+theorem card_le_mul_minDist_justesenCode {s : ℕ} (hs : 1 ≤ s) (φ : F ≃+ BitString (16 * s)) :
+    (Fintype.card (Fˣ × (Fin 2 × Fin (16 * s))) : ℕ∞) ≤
+      128 * minDist (justesenCode φ (2 ^ (16 * s - 1))) := by
   have hq : Fintype.card F = 2 ^ (16 * s) := by
     rw [Fintype.card_congr φ.toEquiv, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin]
   have hpow : 2 ^ (16 * s) = 2 * 2 ^ (16 * s - 1) := by
     rw [← pow_succ']
     congr 1
     omega
-  have hK : 2 ^ (16 * s - 1) ≤ Fintype.card F - 1 := by
-    have := Nat.one_le_two_pow (n := 16 * s - 1)
-    omega
-  refine ⟨?_, card_justesenCode φ hK, ?_, ?_⟩
-  · rw [Fintype.card_prod, Fintype.card_units, hq, Fintype.card_prod, Fintype.card_fin,
+  have hlen : Fintype.card (Fˣ × (Fin 2 × Fin (16 * s))) = 32 * s * (2 ^ (16 * s) - 1) := by
+    rw [Fintype.card_prod, Fintype.card_units, hq, Fintype.card_prod, Fintype.card_fin,
       Fintype.card_fin]
     ring
-  · rw [hpow]
-    have := Nat.sub_le (2 * 2 ^ (16 * s - 1)) 1
-    nlinarith
+  rw [hlen]
   -- the ball of radius `s` has at most `2 ^ (16 * s - 2)` words
   have hball : ∑ j ∈ range (s + 1), (2 * (16 * s)).choose j ≤ 2 ^ (16 * s - 2) := by
     have h := sum_range_choose_mul_four_pow_le (2 * (16 * s)) s
@@ -317,5 +312,51 @@ theorem justesenCode_asymptoticallyGood {s : ℕ} (hs : 1 ≤ s) (φ : F ≃+ Bi
     _ ≤ 128 * minDist (justesenCode φ (2 ^ (16 * s - 1))) := by
         gcongr
         exact le_minDist_justesenCode φ _ s
+
+/-- **Justesen codes are asymptotically good** [Justesen1972]. Given for each `s` a field `F s`
+written as `16 * (s + 1)` bits through `φ s : F s ≃+ BitString (16 * (s + 1))`, the Justesen codes
+`justesenCode (φ s) (2 ^ (16 * (s + 1) - 1))` form an asymptotically good family of binary codes:
+their lengths `32 * (s + 1) * (2 ^ (16 * (s + 1)) - 1)` grow without bound, with rate at least
+`1 / 4` and relative distance at least `1 / 128`. -/
+theorem isAsymptoticallyGood_justesenCode
+    {F : ℕ → Type*} [∀ s, Field (F s)] [∀ s, Fintype (F s)] [∀ s, DecidableEq (F s)]
+    (φ : ∀ s, F s ≃+ BitString (16 * (s + 1))) :
+    IsAsymptoticallyGood fun s => justesenCode (φ s) (2 ^ (16 * (s + 1) - 1)) where
+  exists_le_card N := by
+    refine ⟨N, ?_⟩
+    have hq : Fintype.card (F N) = 2 ^ (16 * (N + 1)) := by
+      rw [Fintype.card_congr (φ N).toEquiv, Fintype.card_fun, Fintype.card_bool, Fintype.card_fin]
+    rw [Fintype.card_prod, Fintype.card_units, hq, Fintype.card_prod, Fintype.card_fin,
+      Fintype.card_fin]
+    have hpow : 1 ≤ 2 ^ (16 * (N + 1)) - 1 := by
+      have : 2 ≤ 2 ^ (16 * (N + 1)) :=
+        calc 2 = 2 ^ 1 := rfl
+          _ ≤ 2 ^ (16 * (N + 1)) := Nat.pow_le_pow_right (by norm_num) (by omega)
+      omega
+    calc N ≤ 1 * (2 * (16 * (N + 1))) := by omega
+      _ ≤ (2 ^ (16 * (N + 1)) - 1) * (2 * (16 * (N + 1))) := Nat.mul_le_mul_right _ hpow
+  exists_rate := by
+    refine ⟨4, by norm_num, fun s => ⟨16 * (s + 1) * 2 ^ (16 * (s + 1) - 1), ?_, ?_⟩⟩
+    · have hq : Fintype.card (F s) = 2 ^ (16 * (s + 1)) := by
+        rw [Fintype.card_congr (φ s).toEquiv, Fintype.card_fun, Fintype.card_bool,
+          Fintype.card_fin]
+      have hpow : 2 ^ (16 * (s + 1)) = 2 * 2 ^ (16 * (s + 1) - 1) := by
+        rw [← pow_succ', Nat.sub_add_cancel (by omega)]
+      rw [Fintype.card_prod, Fintype.card_units, hq, Fintype.card_prod, Fintype.card_fin,
+        Fintype.card_fin, hpow]
+      have := Nat.sub_le (2 * 2 ^ (16 * (s + 1) - 1)) 1
+      nlinarith
+    · have hq : Fintype.card (F s) = 2 ^ (16 * (s + 1)) := by
+        rw [Fintype.card_congr (φ s).toEquiv, Fintype.card_fun, Fintype.card_bool,
+          Fintype.card_fin]
+      have hpow : 2 ^ (16 * (s + 1)) = 2 * 2 ^ (16 * (s + 1) - 1) := by
+        rw [← pow_succ', Nat.sub_add_cancel (by omega)]
+      have hK : 2 ^ (16 * (s + 1) - 1) ≤ Fintype.card (F s) - 1 := by
+        have := Nat.one_le_two_pow (n := 16 * (s + 1) - 1)
+        omega
+      rw [Fintype.card_bool, card_justesenCode (φ s) hK]
+  exists_minDist :=
+    ⟨128, by norm_num, fun s => by
+      simpa using card_le_mul_minDist_justesenCode (Nat.succ_pos s) (φ s)⟩
 
 end Cslib.Code

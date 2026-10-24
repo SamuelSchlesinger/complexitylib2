@@ -18,7 +18,7 @@ theorems.
 
 namespace ComplexityTests.ProofComplexity.Resolution
 
-open Cslib Cslib.Logic.PL
+open Cslib Cslib.Logic Cslib.Logic.InferenceSystem Cslib.Logic.PL
 
 /-! ### Width -/
 
@@ -106,6 +106,20 @@ private theorem findsFalsifiedClause_dpllTree : dpllTree.FindsFalsifiedClause ψ
 
 example : ∃ d : ψ.Derivation [], d.size + 1 ≤ 6 :=
   findsFalsifiedClause_dpllTree.exists_derivation
+
+/-! ### CSLib `InferenceSystem` bridge -/
+
+private def inferenceRefutation : ⇓(ψ, ([] : Clause ℕ)) := treeRefutation
+
+private def setRefutation : {d // d ∈ ψ}⇓([] : Clause ℕ) := treeRefutation
+
+example : InferenceSystem.Derivable (ψ, ([] : Clause ℕ)) := ⟨inferenceRefutation⟩
+
+example : InferenceSystem.DerivableIn {d | d ∈ ψ} ([] : Clause ℕ) := ⟨setRefutation⟩
+
+example : ψ.Derives [] := CNF.derives_iff_derivable.2 ⟨inferenceRefutation⟩
+
+example : ψ.Derives [] := CNF.derives_iff_derivableIn.2 ⟨setRefutation⟩
 
 /-! ### The size–width tradeoff -/
 
@@ -204,5 +218,23 @@ info: 'Cslib.DecisionTree.FindsFalsifiedClause.exists_derivation' depends on axi
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.DecisionTree.FindsFalsifiedClause.exists_derivation
+
+/--
+info: 'Cslib.Logic.PL.CNF.derives_iff_nonempty_derivation' does not depend on any axioms
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.derives_iff_nonempty_derivation
+
+/--
+info: 'Cslib.Logic.PL.CNF.derives_iff_derivableIn' does not depend on any axioms
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.derives_iff_derivableIn
+
+/--
+info: 'Cslib.Logic.PL.CNF.derives_iff_derivable' does not depend on any axioms
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Logic.PL.CNF.derives_iff_derivable
 
 end ComplexityTests.ProofComplexity.Resolution

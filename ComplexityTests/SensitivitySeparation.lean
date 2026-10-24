@@ -29,6 +29,17 @@ example {n : ℕ} (f : BooleanFunction n) :
     SensitivitySeparation.Internal.blockSensitivity f = blockSensitivity f :=
   SensitivitySeparation.Internal.blockSensitivity_eq_queryComplexity_blockSensitivity f
 
+-- `flipOn` agrees with CSLib's `flipBlock` on `BitString n`.
+example {n : ℕ} (S : Finset (Fin n)) (x : BitString n) : flipOn S x = flipBlock S x :=
+  flipOn_eq_flipBlock S x
+
+/--
+info: 'Cslib.BitString.flipOn_eq_flipBlock' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.flipOn_eq_flipBlock
+
 /--
 info: 'Cslib.QueryComplexity.exists_two_pow_div_le_blockSensitivityAt_div_sensitivity_sq' depends on
 axioms: [propext, Classical.choice, Quot.sound]
