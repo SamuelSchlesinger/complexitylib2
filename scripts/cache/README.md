@@ -60,13 +60,15 @@ available.
 
 `scripts/worktree.sh create` and `scripts/worktree.sh seed` run `scripts/cache/ensure.sh` in the
 worktree and link `.lake/packages` by default to a read-only, pin-keyed shared directory
-(`.worktrees/.shared/packages-cslib-<rev>`, or an existing `.shared/packages-cslib-<rev>` alongside
-the worktree) rather than copying dependency build outputs into every worktree. When the `cslib`
-pin in `lake-manifest.json` moves, `scripts/worktree.sh` creates a new `packages-cslib-<rev>`
-directory and never updates an existing shared directory in place. It never points a worktree at
-the primary checkout, and refuses targets or symlinks that do. Pass `--copy-cslib` for a writable
-copy of `cslib` (with other packages still shared) or `--copy-packages` for writable copies of all
-packages.
+(`.worktrees/.shared/packages-cslib-<rev>-<state>` or `.worktrees/.shared/packages-cslib-<rev>`,
+with both files and directories made read-only, or an existing `.shared/packages-cslib-...`
+alongside the worktree) rather than copying dependency build outputs into every worktree. When any
+dependency pin in `lake-manifest.json` or `lean-toolchain` moves, `scripts/worktree.sh` creates a
+new shared directory and never updates an existing shared directory in place. It never points a
+worktree at the primary checkout, refuses targets or symlinks that do, and materializes any
+package symlink whose target is absolute or escapes the package directory. Pass `--copy-cslib` for
+a writable copy of `cslib` (with other packages still shared) or `--copy-packages` for writable
+copies of all packages.
 
 ## Trust and privacy
 

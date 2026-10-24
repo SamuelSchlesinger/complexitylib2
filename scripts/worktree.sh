@@ -22,14 +22,18 @@
 #
 # Cache seeding and bootstrap note:
 #   By default, `.lake/packages` in a worktree is linked to a read-only, pin-keyed shared directory
-#   (`.worktrees/.shared/packages-cslib-<rev>`, or an existing `.shared/packages-cslib-<rev>`
-#   alongside the worktree). When the pin in `lake-manifest.json` changes, a new
-#   `packages-cslib-<rev>` directory is created; an existing shared directory is never updated in
-#   place. A worktree is never pointed at the primary checkout, and seeding refuses the primary
-#   checkout or any symlink into it. `--copy-cslib` creates a writable copy of `cslib` while
-#   linking the other packages to the shared directory; `--copy-packages` creates writable copies
-#   of all packages. After seeding, `create` and `seed` run `scripts/cache/ensure.sh` (or
-#   `scripts/cache/get.sh`) when present in the worktree unless `COMPLEXITYLIB_CACHE_AUTO=0`.
+#   (`.worktrees/.shared/packages-cslib-<rev>[-<state>]`, or a verified existing
+#   `.shared/packages-cslib-<rev>` alongside the worktree). Both files and directories in the
+#   shared pool are read-only so neither in-place writes nor atomic file replacements can mutate
+#   shared artifacts across workers. When any dependency pin in `lake-manifest.json` or
+#   `lean-toolchain` changes, a new shared directory is created; an existing shared directory is
+#   never updated in place. A worktree is never pointed at the primary checkout, and seeding
+#   refuses the primary checkout or any symlink into it (and dereferences any package source
+#   symlink that would escape the isolated package tree). `--copy-cslib` creates a writable copy of
+#   `cslib` while linking the other packages to the shared directory; `--copy-packages` creates
+#   writable copies of all packages. After seeding, `create` and `seed` run
+#   `scripts/cache/ensure.sh` (or `scripts/cache/get.sh`) when present in the worktree unless
+#   `COMPLEXITYLIB_CACHE_AUTO=0`.
 #
 # Pruning considers registered worktrees directly under `.worktrees/`, retaining locked,
 # symlinked, dirty and unmerged worktrees. Git removes eligible worktrees and their caches.
@@ -41,7 +45,10 @@ GIT_COMMON_DIR="$(git -C "$SCRIPT_DIR" rev-parse --path-format=absolute --git-co
 ROOT="$(cd "$GIT_COMMON_DIR/.." && pwd)"
 cd "$ROOT"
 
-# seed_package <source> <destination> <copy_sources>. Copy caches without first hard-linking them.
+# seed_package <source> <destination> <copy_sources>. Copy caches without first hard-linking them,
+# and materialize any source symlink whose raw target is absolute or resolves outside <destination>
+# so no link in the destination package tree can point back into the primary checkout or an
+# external directory.
 seed_package() (
   local source="$1" destination="$2" copy_sources="$3" entry
   mkdir -p "$destination"
@@ -55,11 +62,64 @@ seed_package() (
       cp -al "$entry" "$destination/"
     fi
   done
+  find "$destination" -type d -exec chmod u+w {} +
+  python3 - "$source" "$destination" <<'PY'
+import os
+from pathlib import Path
+import shutil
+import stat
+import sys
+
+src_root = Path(sys.argv[1])
+dst_root = Path(sys.argv[2]).resolve()
+
+
+def copy_target(src_target: Path, dst_path: Path) -> None:
+    st = src_target.stat()
+    if stat.S_ISDIR(st.st_mode):
+        shutil.copytree(src_target, dst_path, symlinks=False)
+    else:
+        shutil.copy2(src_target, dst_path, follow_symlinks=True)
+
+
+for dirpath, dirnames, filenames in os.walk(dst_root, followlinks=False):
+    current = Path(dirpath)
+    for name in list(dirnames) + list(filenames):
+        candidate = current / name
+        if not candidate.is_symlink():
+            continue
+        raw = os.readlink(candidate)
+        raw_path = Path(raw)
+        keep_relative = False
+        if not raw_path.is_absolute():
+            try:
+                resolved = (candidate.parent / raw_path).resolve()
+                if resolved.is_relative_to(dst_root):
+                    keep_relative = True
+            except OSError:
+                keep_relative = False
+        if keep_relative:
+            continue
+        rel = candidate.relative_to(dst_root)
+        src_candidate = src_root / rel
+        if not src_candidate.exists():
+            print(
+                f"Refusing broken escaping package symlink: {src_candidate} -> {raw}",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        src_target = src_candidate.resolve()
+        candidate.unlink()
+        copy_target(src_target, candidate)
+        if candidate.is_dir():
+            for sub_dir, _, _ in os.walk(candidate, followlinks=False):
+                Path(sub_dir).chmod(stat.S_IMODE(Path(sub_dir).stat().st_mode) | 0o700)
+PY
 )
 
 # resolve_shared_packages_dir <worktree_path>: print the path to the pin-keyed shared packages
-# directory (e.g. `.worktrees/.shared/packages-cslib-<rev>`), or fail if
-# COMPLEXITYLIB_SHARED_PACKAGES_ROOT points into the primary checkout.
+# directory, keyed by cslib revision and the full manifest/toolchain/git dependency state, or fail
+# if COMPLEXITYLIB_SHARED_PACKAGES_ROOT points into the primary checkout.
 resolve_shared_packages_dir() {
   local wt_path="$1"
   python3 - "$ROOT" "$wt_path" <<'PY'
@@ -79,43 +139,98 @@ def in_primary_checkout(p: Path) -> bool:
     return p == root or (p.is_relative_to(root) and not p.is_relative_to(worktrees_root))
 
 
+def git_head(repo: Path) -> str | None:
+    if not (repo / ".git").exists():
+        return None
+    try:
+        rev = subprocess.check_output(
+            ["git", "-C", str(repo), "rev-parse", "HEAD"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+        return rev or None
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def revs_match(a: str, b: str) -> bool:
+    n = min(len(a), len(b), 8)
+    return n > 0 and a[:n] == b[:n]
+
+
 manifest = wt_path / "lake-manifest.json"
 if not manifest.is_file():
     manifest = root / "lake-manifest.json"
 
-pin_name = None
+toolchain_file = wt_path / "lean-toolchain"
+if not toolchain_file.is_file():
+    toolchain_file = root / "lean-toolchain"
+toolchain = (
+    toolchain_file.read_text(encoding="utf-8").strip()
+    if toolchain_file.is_file()
+    else None
+)
+
+manifest_pkgs: dict[str, str] = {}
 if manifest.is_file():
     try:
         data = json.loads(manifest.read_text(encoding="utf-8"))
         for pkg in data.get("packages", []):
-            if isinstance(pkg, dict) and pkg.get("name") == "cslib":
-                rev = pkg.get("rev") or ""
-                if isinstance(rev, str) and rev:
-                    pin_name = f"packages-cslib-{rev[:8]}"
-                    break
+            if isinstance(pkg, dict):
+                name = pkg.get("name")
+                rev = pkg.get("rev")
+                if isinstance(name, str) and name and isinstance(rev, str) and rev:
+                    manifest_pkgs[name] = rev
     except (OSError, ValueError, TypeError):
         pass
 
-if pin_name is None:
-    cslib_dir = root / ".lake/packages/cslib"
-    if (cslib_dir / ".git").exists():
-        try:
-            rev = subprocess.check_output(
-                ["git", "-C", str(cslib_dir), "rev-parse", "--short=8", "HEAD"],
-                text=True,
-                stderr=subprocess.DEVNULL,
-            ).strip()
-            if rev:
-                pin_name = f"packages-cslib-{rev}"
-        except (OSError, subprocess.CalledProcessError):
-            pass
+git_heads: dict[str, str] = {}
+pkgs_dir = root / ".lake/packages"
+if pkgs_dir.is_dir():
+    for child in sorted(pkgs_dir.iterdir()):
+        if child.is_dir():
+            h = git_head(child)
+            if h:
+                git_heads[child.name] = h
 
-if pin_name is None:
-    if manifest.is_file():
-        digest = hashlib.sha256(manifest.read_bytes()).hexdigest()[:8]
-        pin_name = f"packages-manifest-{digest}"
+cslib_rev = manifest_pkgs.get("cslib") or git_heads.get("cslib") or ""
+cslib_short = cslib_rev[:8] if cslib_rev else None
+
+# Build a full dependency/toolchain state fingerprint whenever anything beyond a single cslib entry
+# is present (e.g. mathlib or other package pins, lean-toolchain, or package git checkouts).
+other_manifest_pkgs = {k: v for k, v in manifest_pkgs.items() if k != "cslib"}
+other_git_heads = {k: v for k, v in git_heads.items() if k != "cslib" and k not in manifest_pkgs}
+
+if cslib_short:
+    if not other_manifest_pkgs and not other_git_heads and toolchain is None:
+        pin_name = f"packages-cslib-{cslib_short}"
     else:
-        pin_name = "packages-cslib-default"
+        merged_pkgs = dict(git_heads)
+        merged_pkgs.update(manifest_pkgs)
+        state = {"packages": sorted(merged_pkgs.items()), "toolchain": toolchain}
+        digest = hashlib.sha256(json.dumps(state, sort_keys=True).encode()).hexdigest()[:8]
+        pin_name = f"packages-cslib-{cslib_short}-{digest}"
+elif manifest.is_file() or toolchain is not None or git_heads:
+    raw = manifest.read_bytes() if manifest.is_file() else b""
+    state_bytes = raw + b"\0" + json.dumps({"git": sorted(git_heads.items()), "tc": toolchain}, sort_keys=True).encode()
+    digest = hashlib.sha256(state_bytes).hexdigest()[:8]
+    pin_name = f"packages-manifest-{digest}"
+else:
+    pin_name = "packages-cslib-default"
+
+
+def legacy_dir_matches_manifest(cand: Path) -> bool:
+    if not cand.is_dir() or not manifest_pkgs:
+        return False
+    for name, want_rev in manifest_pkgs.items():
+        pkg_dir = cand / name
+        if not pkg_dir.is_dir():
+            return False
+        actual = git_head(pkg_dir)
+        if not actual or not revs_match(actual, want_rev):
+            return False
+    return True
+
 
 env_shared = os.environ.get("COMPLEXITYLIB_SHARED_PACKAGES_ROOT", "")
 if env_shared:
@@ -129,20 +244,31 @@ if env_shared:
     print(shared_root / pin_name)
     raise SystemExit(0)
 
-candidates = []
+shared_roots = []
 try:
     wt_parent = wt_path.resolve().parent
     if not in_primary_checkout(wt_parent) and wt_parent != worktrees_root:
-        candidates.append(wt_parent / ".shared" / pin_name)
+        shared_roots.append(wt_parent / ".shared")
 except OSError:
     pass
-candidates.append(worktrees_root / ".shared" / pin_name)
-candidates.append(Path(f"{root}-wt") / ".shared" / pin_name)
+shared_roots.append(worktrees_root / ".shared")
+shared_roots.append(Path(f"{root}-wt") / ".shared")
 
-for cand in candidates:
+for sroot in shared_roots:
+    cand = sroot / pin_name
     if cand.is_dir() and not in_primary_checkout(cand.resolve()):
         print(cand)
         raise SystemExit(0)
+    if cslib_short:
+        legacy = sroot / f"packages-cslib-{cslib_short}"
+        if (
+            legacy != cand
+            and legacy.is_dir()
+            and not in_primary_checkout(legacy.resolve())
+            and legacy_dir_matches_manifest(legacy)
+        ):
+            print(legacy)
+            raise SystemExit(0)
 
 print(worktrees_root / ".shared" / pin_name)
 PY
@@ -233,8 +359,8 @@ elif pkg_link.is_dir():
 PY
 }
 
-# root_packages_match_manifest <worktree_path>: return 0 unless both the target manifest pins a
-# cslib git revision and $ROOT/.lake/packages/cslib is a git checkout at a different revision.
+# root_packages_match_manifest <worktree_path>: return 0 unless the target manifest/toolchain
+# disagrees with $ROOT's manifest/toolchain or any package git checkout under $ROOT/.lake/packages.
 root_packages_match_manifest() {
   local wt_path="$1"
   python3 - "$ROOT" "$wt_path" <<'PY'
@@ -245,40 +371,68 @@ import sys
 
 root = Path(sys.argv[1]).resolve()
 wt_path = Path(sys.argv[2])
-cslib_git = root / ".lake/packages/cslib/.git"
-manifest = wt_path / "lake-manifest.json"
-if not manifest.is_file():
-    manifest = root / "lake-manifest.json"
-if not cslib_git.exists() or not manifest.is_file():
-    raise SystemExit(0)
 
-try:
-    data = json.loads(manifest.read_text(encoding="utf-8"))
-    manifest_rev = None
-    for pkg in data.get("packages", []):
-        if isinstance(pkg, dict) and pkg.get("name") == "cslib":
-            manifest_rev = pkg.get("rev")
-            break
-    if not manifest_rev:
-        raise SystemExit(0)
-    actual_rev = subprocess.check_output(
-        ["git", "-C", str(cslib_git.parent), "rev-parse", "HEAD"],
-        text=True,
-        stderr=subprocess.DEVNULL,
-    ).strip()
-    if actual_rev and not actual_rev.startswith(manifest_rev[:8]) and not manifest_rev.startswith(actual_rev[:8]):
+
+def revs_match(a: str, b: str) -> bool:
+    n = min(len(a), len(b), 8)
+    return n > 0 and a[:n] == b[:n]
+
+
+def load_pkgs(path: Path) -> dict[str, str]:
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        out: dict[str, str] = {}
+        for pkg in data.get("packages", []):
+            if isinstance(pkg, dict):
+                name = pkg.get("name")
+                rev = pkg.get("rev")
+                if isinstance(name, str) and name and isinstance(rev, str) and rev:
+                    out[name] = rev
+        return out
+    except (OSError, ValueError, TypeError):
+        return {}
+
+
+wt_tc = wt_path / "lean-toolchain"
+root_tc = root / "lean-toolchain"
+if wt_tc.is_file() and root_tc.is_file():
+    if wt_tc.read_text(encoding="utf-8").strip() != root_tc.read_text(encoding="utf-8").strip():
         print(
-            f"Root .lake/packages/cslib ({actual_rev[:8]}) does not match manifest pin ({manifest_rev[:8]}); skipping mismatched package seed.",
+            "Root lean-toolchain does not match worktree lean-toolchain; skipping mismatched package seed.",
             file=sys.stderr,
         )
         raise SystemExit(1)
-except (OSError, ValueError, TypeError, subprocess.CalledProcessError):
-    pass
+
+wt_manifest = wt_path / "lake-manifest.json"
+root_manifest = root / "lake-manifest.json"
+target_pkgs = load_pkgs(wt_manifest if wt_manifest.is_file() else root_manifest)
+root_pkgs = load_pkgs(root_manifest)
+
+for name, want_rev in target_pkgs.items():
+    pkg_git = root / ".lake/packages" / name / ".git"
+    if pkg_git.exists():
+        try:
+            actual_rev = subprocess.check_output(
+                ["git", "-C", str(pkg_git.parent), "rev-parse", "HEAD"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            ).strip()
+            if actual_rev and not revs_match(actual_rev, want_rev):
+                print(
+                    f"Root .lake/packages/{name} ({actual_rev[:8]}) does not match manifest pin ({want_rev[:8]}); skipping mismatched package seed.",
+                    file=sys.stderr,
+                )
+                raise SystemExit(1)
+        except (OSError, subprocess.CalledProcessError):
+            pass
 PY
 }
 
 # ensure_shared_packages <worktree_path> <shared_pkg_dir>: create <shared_pkg_dir> once as an
-# isolated read-only copy of $ROOT/.lake/packages when not already present; never update in place.
+# isolated read-only copy of $ROOT/.lake/packages (protecting both files and directories against
+# modification or atomic replacement) when not already present; never update in place.
 ensure_shared_packages() {
   local wt_path="$1"
   local shared_pkg_dir="$2"
@@ -298,28 +452,49 @@ ensure_shared_packages() {
   for pkg in "$ROOT"/.lake/packages/*; do
     [ -d "$pkg" ] || continue
     name="$(basename "$pkg")"
-    seed_package "$pkg" "$staging/$name" "true"
+    if ! seed_package "$pkg" "$staging/$name" "true"; then
+      chmod -R u+w "$staging" 2>/dev/null || true
+      rm -rf "$staging"
+      return 1
+    fi
   done
-  find "$staging" -type f -exec chmod a-w {} +
+  chmod -R a-w "$staging"
   if ! python3 - "$staging" "$shared_pkg_dir" <<'PY'
 import os
 from pathlib import Path
 import shutil
+import stat
 import sys
 
 staging = Path(sys.argv[1])
 target = Path(sys.argv[2])
+
+
+def make_writable_and_remove(path: Path) -> None:
+    if not path.exists():
+        return
+    for dirpath, dirnames, filenames in os.walk(path, followlinks=False):
+        p = Path(dirpath)
+        p.chmod(stat.S_IMODE(p.stat().st_mode) | 0o700)
+        for fname in filenames:
+            fp = p / fname
+            if not fp.is_symlink():
+                fp.chmod(stat.S_IMODE(fp.stat().st_mode) | 0o600)
+    shutil.rmtree(path)
+
+
 if target.exists():
-    shutil.rmtree(staging)
+    make_writable_and_remove(staging)
 else:
     try:
         os.rename(staging, target)
     except OSError:
-        shutil.rmtree(staging)
+        make_writable_and_remove(staging)
         if not target.exists():
             raise
 PY
   then
+    chmod -R u+w "$staging" 2>/dev/null || true
     rm -rf "$staging"
     return 1
   fi
