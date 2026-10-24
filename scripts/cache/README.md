@@ -52,10 +52,21 @@ scripts/cache/ensure.sh --refresh             # retry now, e.g. after clearing c
 COMPLEXITYLIB_CACHE_AUTO=0 scripts/build.sh    # skip automatic downloads deliberately
 ```
 
-The opt-out also applies to `scripts/check.sh` and direct bootstrap calls. It leaves existing
-build outputs and Lake's local cache in place. `scripts/cache/get.sh` remains the explicit,
-unstamped fetch command. Cache misses and download failures are optional: builds compile what
-is missing, and the bootstrap never claims that all requested artifacts were available.
+The opt-out also applies to `scripts/check.sh`, `scripts/worktree.sh` and direct bootstrap calls.
+It leaves existing build outputs and Lake's local cache in place. `scripts/cache/get.sh` remains
+the explicit, unstamped fetch command. Cache misses and download failures are optional: builds
+compile what is missing, and the bootstrap never claims that all requested artifacts were
+available.
+
+`scripts/worktree.sh create` and `scripts/worktree.sh seed` run `scripts/cache/ensure.sh` in the
+worktree and link `.lake/packages` by default to a read-only, pin-keyed shared directory
+(`.worktrees/.shared/packages-cslib-<rev>`, or an existing `.shared/packages-cslib-<rev>` alongside
+the worktree) rather than copying dependency build outputs into every worktree. When the `cslib`
+pin in `lake-manifest.json` moves, `scripts/worktree.sh` creates a new `packages-cslib-<rev>`
+directory and never updates an existing shared directory in place. It never points a worktree at
+the primary checkout, and refuses targets or symlinks that do. Pass `--copy-cslib` for a writable
+copy of `cslib` (with other packages still shared) or `--copy-packages` for writable copies of all
+packages.
 
 ## Trust and privacy
 

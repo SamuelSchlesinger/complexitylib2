@@ -124,11 +124,13 @@ the root checkout and, when `<branch>` exists only on `origin`, checks it out tr
 forbidden proof tokens, and `set_option` justifications (pass `--check-simp` to also run the
 heuristic check for non-terminal bare `simp` calls in candidate modules).
 
-The helper hard-links package sources by default, but copies root and dependency build caches
-with independent files, including symlink targets. Do not edit shared package sources; use
-`--copy-cslib` or `--copy-packages` when those sources must change. Seeding preserves existing
-destination caches and does not repair worktrees created with shared dependency caches by an
-older helper; use a fresh worktree for isolated validation.
+The helper links `.lake/packages` by default to a read-only, pin-keyed shared directory
+(`.worktrees/.shared/packages-cslib-<rev>`, created on a pin change and never updated in place),
+copies root build/config caches with independent files, and runs `scripts/cache/ensure.sh`
+(`scripts/cache/get.sh`) before the first build. It never points a worktree at the primary checkout
+and refuses targets or symlinks that do. Use `--copy-cslib` (which copies `cslib` writably while
+sharing other packages) or `--copy-packages` when package sources must change. Seeding preserves
+existing destination caches.
 
 Coordinate with a run's owner before rescheduling it, preserve completed artifacts, and record
 an interrupted run as incomplete. A fresh run must pass all six strict checks on the final revision.

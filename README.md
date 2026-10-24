@@ -71,7 +71,7 @@ From a checkout:
 scripts/build.sh --wfail --iofail
 ```
 
-The wrapper restores Mathlib, CSLib and Complexitylib caches before invoking `lake build`, then
+The wrapper restores Mathlib and Complexitylib caches before invoking `lake build`, then
 compiles changed or missing modules. It forwards Lake arguments and its exit status.
 `scripts/check.sh` also restores caches before validation. Before using Lean through MCP or
 another editor, run `scripts/cache/ensure.sh`; bare `lake` and MCP commands do not call it.
