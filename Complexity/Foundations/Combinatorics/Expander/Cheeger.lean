@@ -46,9 +46,10 @@ bounds the variation of `φ²` along the darts from below by the edges leaving t
 and the Cauchy–Schwarz inequality turns this into `h(G)² 𝔼 φ² ≤ d² 𝔼 (φ u - φ w)²`.
 
 Edge expansion bounds `λ₂(G)` but not `λ(G)`: a bipartite graph can be a good edge expander, yet
-`-1` is an eigenvalue of its walk operator. The lazy walk `(f + G.walk f) / 2`, which stays put
-with probability `1 / 2`, is positive semidefinite, so a rotation map with this walk operator has
-spectral expansion at most `1 - h(G)² / (4 d²)`.
+`-1` is an eigenvalue of its walk operator. The lazy walk `(f + G.walk f) / 2` of the lazy graph
+`Cslib.RotationMap.lazy`, which stays put with probability `1 / 2`, is positive semidefinite, so
+its spectral expansion is at most `1 - h(G)² / (4 d²)`
+(`Cslib.RotationMap.spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div`).
 
 ## Main definitions
 
@@ -64,15 +65,14 @@ spectral expansion at most `1 - h(G)² / (4 d²)`.
 * `Cslib.RotationMap.abs_secondEigenvalue_le_spectralExpansion`: `|λ₂(G)| ≤ λ(G)`.
 * `Cslib.RotationMap.spectralExpansion_eq_secondEigenvalue_of_nonneg`: `λ(G) = λ₂(G)` when the
   walk operator is positive semidefinite.
-* `Cslib.RotationMap.card_mul_one_sub_secondEigenvalue_div_two_le_edgeExpansion`: the easy half
-  of Cheeger's inequality.
+* `Cslib.RotationMap.card_mul_one_sub_secondEigenvalue_div_two_le_edgeExpansion`,
+  `Cslib.RotationMap.le_edgeExpansion_of_spectralExpansion_le`: the easy half of Cheeger's
+  inequality.
 * `Cslib.RotationMap.expect_mul_walk_le_of_mul_card_le_card_interedges_compl`: the hard half of
   Cheeger's inequality in one-sided form, from any lower bound on the edges leaving small sets.
 * `Cslib.RotationMap.edgeExpansion_le_card_mul_sqrt`,
   `Cslib.RotationMap.secondEigenvalue_le_one_sub_edgeExpansion_sq_div`: the hard half of
   Cheeger's inequality.
-* `Cslib.RotationMap.spectralExpansion_le_one_sub_edgeExpansion_sq_div`: edge expansion bounds
-  the spectral expansion of the lazy walk.
 
 ## References
 
@@ -185,7 +185,7 @@ theorem neg_one_le_secondEigenvalue : -1 ≤ G.secondEigenvalue :=
 
 /-- The correlation of any function with its image under the walk operator is at most its second
 moment in absolute value. -/
-private theorem abs_expect_mul_walk_le_expect_sq (f : V → ℝ) :
+theorem abs_expect_mul_walk_le_expect_sq (f : V → ℝ) :
     |𝔼 v, f v * G.walk f v| ≤ 𝔼 v, f v ^ 2 := by
   refine abs_le_of_sq_le_sq ?_ (expect_nonneg fun _ _ ↦ sq_nonneg _)
   calc
@@ -417,6 +417,16 @@ theorem card_mul_one_sub_secondEigenvalue_div_two_le_edgeExpansion [Nontrivial V
   rw [div_mul_eq_mul_div, div_le_div_iff₀ two_pos hn]
   nlinarith [mul_le_mul_of_nonneg_left hc hA]
 
+variable {G} in
+/-- By the easy half of Cheeger's inequality, a regular multigraph on at least two vertices of
+spectral expansion at most `μ` has edge expansion at least `|D| (1 - μ) / 2`. -/
+theorem le_edgeExpansion_of_spectralExpansion_le [Nontrivial V] {μ : ℝ}
+    (hG : G.spectralExpansion ≤ μ) :
+    Fintype.card D * (1 - μ) / 2 ≤ G.edgeExpansion := by
+  refine le_trans ?_ G.card_mul_one_sub_secondEigenvalue_div_two_le_edgeExpansion
+  have := G.secondEigenvalue_le_spectralExpansion.trans hG
+  gcongr
+
 /-- **The co-area inequality.** If `ψ ≥ 0` vanishes outside `T` and at least `c |S|` edges leave
 every `S ⊆ T`, then the variation `∑ |ψ u - ψ w|` of `ψ` over the darts `(u, w)` is at least
 `2 c ∑ ψ`. Writing `ψ` as its least value `μ` on `T` times the indicator of `T` plus a function
@@ -614,47 +624,5 @@ theorem edgeExpansion_le_card_mul_sqrt :
   exact (le_abs_self _).trans (Real.abs_le_sqrt G.edgeExpansion_sq_le)
 
 end Cheeger
-
-section Lazy
-
-/-- **The spectral expansion of the lazy walk**: if `H.walk f v = (f v + G.walk f v) / 2` for all
-`f` and `v`, so that the walk on `H` stays put with probability `1 / 2` and otherwise takes a step
-of the walk on `G`, then `λ(H) ≤ (1 + λ₂(G)) / 2`. The walk operator of `H` is positive
-semidefinite, so its spectral expansion is its second eigenvalue. -/
-theorem spectralExpansion_le_one_add_secondEigenvalue_div_two {E : Type*} [Fintype E]
-    (H : RotationMap V E) (hH : ∀ f v, H.walk f v = (f v + G.walk f v) / 2) :
-    H.spectralExpansion ≤ (1 + G.secondEigenvalue) / 2 := by
-  have hQ (f : V → ℝ) :
-      𝔼 v, f v * H.walk f v = (𝔼 v, f v ^ 2 + 𝔼 v, f v * G.walk f v) / 2 := by
-    rw [← expect_add_distrib, expect_div]
-    exact expect_congr rfl fun v _ ↦ by rw [hH]; ring
-  rw [H.spectralExpansion_eq_secondEigenvalue_of_nonneg fun f ↦ ?_]
-  · rcases subsingleton_or_nontrivial V with hV | hV
-    · rw [H.secondEigenvalue_eq_zero_of_subsingleton, G.secondEigenvalue_eq_zero_of_subsingleton]
-      norm_num
-    refine H.secondEigenvalue_le_iff.2 fun f hf ↦ ?_
-    rw [hQ]
-    have := G.expect_mul_walk_le_secondEigenvalue_mul hf
-    linarith
-  · rw [hQ]
-    have := neg_abs_le (𝔼 v, f v * G.walk f v)
-    have := G.abs_expect_mul_walk_le_expect_sq f
-    linarith
-
-/-- **Edge expansion bounds the spectral expansion of the lazy walk**: if
-`H.walk f v = (f v + G.walk f v) / 2` for all `f` and `v`, then
-`λ(H) ≤ 1 - h(G) ^ 2 / (4 |D| ^ 2)`. -/
-theorem spectralExpansion_le_one_sub_edgeExpansion_sq_div [DecidableEq V] {E : Type*}
-    [Fintype E] (H : RotationMap V E) (hH : ∀ f v, H.walk f v = (f v + G.walk f v) / 2) :
-    H.spectralExpansion ≤ 1 - G.edgeExpansion ^ 2 / (4 * Fintype.card D ^ 2) := by
-  refine (G.spectralExpansion_le_one_add_secondEigenvalue_div_two H hH).trans ?_
-  have h := G.secondEigenvalue_le_one_sub_edgeExpansion_sq_div
-  have h4 : G.edgeExpansion ^ 2 / (4 * Fintype.card D ^ 2) =
-      G.edgeExpansion ^ 2 / (2 * Fintype.card D ^ 2) / 2 := by
-    rw [div_div]
-    ring
-  linarith
-
-end Lazy
 
 end Cslib.RotationMap

@@ -30,7 +30,7 @@ To reach a prescribed label type `B`, the labels are extended along an embedding
 labels carry self-loops (`Cslib.RotationMap.extendLabels`). This keeps the simple graph of the
 rotation map (`toSimpleGraph_extendLabels`), and when `B` has at least twice as many elements as
 `D`, at least half of the edges at every vertex are self-loops
-(`card_le_two_mul_card_filter_neighbor_extendLabels_eq`), which is what makes connected components
+(`card_le_two_mul_edgeCount_extendLabels`), which is what makes connected components
 spectral expanders (`Cslib.RotationMap.spectralExpansion_le_of_preconnected`).
 
 ## Main definitions
@@ -45,7 +45,7 @@ spectral expanders (`Cslib.RotationMap.spectralExpansion_le_of_preconnected`).
 
 * `Cslib.RotationMap.toSimpleGraph_extendLabels`: extending the labels does not change the
   simple graph.
-* `Cslib.RotationMap.card_le_two_mul_card_filter_neighbor_extendLabels_eq`: enough new labels
+* `Cslib.RotationMap.card_le_two_mul_edgeCount_extendLabels`: enough new labels
   make at least half of the edges self-loops.
 * `Cslib.RotationMap.reachable_slotGraph_iff`: the slot graph has the connectivity of the
   simple graph.
@@ -149,9 +149,9 @@ theorem toSimpleGraph_extendLabels : (G.extendLabels enc).toSimpleGraph = G.toSi
 
 /-- If `B` has at least twice as many elements as `D`, at least half of the edges at every vertex of
 `G.extendLabels enc` are self-loops. -/
-theorem card_le_two_mul_card_filter_neighbor_extendLabels_eq [Fintype B] [DecidableEq V]
+theorem card_le_two_mul_edgeCount_extendLabels [Fintype B] [DecidableEq V]
     (hB : 2 * Fintype.card D ≤ Fintype.card B) (v : V) :
-    Fintype.card B ≤ 2 * #{b | (G.extendLabels enc).neighbor v b = v} := by
+    Fintype.card B ≤ 2 * (G.extendLabels enc).edgeCount v v := by
   have hsub : (univ.map enc)ᶜ ⊆ ({b | (G.extendLabels enc).neighbor v b = v} : Finset B) := by
     intro b hb
     rw [mem_compl, mem_map] at hb
@@ -160,6 +160,7 @@ theorem card_le_two_mul_card_filter_neighbor_extendLabels_eq [Fintype B] [Decida
       G.neighbor_extendLabels_of_forall_ne enc v fun i hi ↦ hb ⟨i, mem_univ i, hi⟩⟩
   have hcard := card_le_card hsub
   rw [card_compl, card_map, card_univ] at hcard
+  rw [edgeCount]
   omega
 
 end ExtendLabels

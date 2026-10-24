@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.Expander.Cheeger
 public import Complexity.Foundations.Combinatorics.Expander.Loops
+import Mathlib.Algebra.Order.BigOperators.Expect
 
 /-!
 # The lazy graph
@@ -47,6 +48,7 @@ eigenvalue `-1`.
 namespace Cslib.RotationMap
 
 open Finset
+open scoped BigOperators
 
 variable {V D : Type*}
 
@@ -102,16 +104,36 @@ theorem spectralExpansion_lazy_le_one_add_secondEigenvalue_div_two :
   · have : G.lazy.spectralExpansion ≤ 0 :=
       spectralExpansion_le le_rfl fun f _ ↦ by simp [walk_apply]
     linarith [G.neg_one_le_secondEigenvalue]
-  · exact G.spectralExpansion_le_one_add_secondEigenvalue_div_two G.lazy G.walk_lazy_apply
+  have hQ (f : V → ℝ) :
+      𝔼 v, f v * G.lazy.walk f v = (𝔼 v, f v ^ 2 + 𝔼 v, f v * G.walk f v) / 2 := by
+    rw [← expect_add_distrib, expect_div]
+    exact expect_congr rfl fun v _ ↦ by rw [G.walk_lazy_apply]; ring
+  rw [G.lazy.spectralExpansion_eq_secondEigenvalue_of_nonneg fun f ↦ ?_]
+  · rcases subsingleton_or_nontrivial V with hV | hV
+    · rw [G.lazy.secondEigenvalue_eq_zero_of_subsingleton,
+        G.secondEigenvalue_eq_zero_of_subsingleton]
+      norm_num
+    refine G.lazy.secondEigenvalue_le_iff.2 fun f hf ↦ ?_
+    rw [hQ]
+    have := G.expect_mul_walk_le_secondEigenvalue_mul hf
+    linarith
+  · rw [hQ]
+    have := neg_abs_le (𝔼 v, f v * G.walk f v)
+    have := G.abs_expect_mul_walk_le_expect_sq f
+    linarith
 
 /-- **Edge expansion bounds the spectral expansion of the lazy graph**
 [Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]:
 `λ(G.lazy) ≤ 1 - h(G)² / (4 |D|²)`. -/
 theorem spectralExpansion_lazy_le_one_sub_edgeExpansion_sq_div [DecidableEq V] :
     G.lazy.spectralExpansion ≤ 1 - G.edgeExpansion ^ 2 / (4 * Fintype.card D ^ 2) := by
-  rcases isEmpty_or_nonempty D with hD | hD
-  · simpa [Fintype.card_eq_zero] using G.lazy.spectralExpansion_le_one
-  · exact G.spectralExpansion_le_one_sub_edgeExpansion_sq_div G.lazy G.walk_lazy_apply
+  refine G.spectralExpansion_lazy_le_one_add_secondEigenvalue_div_two.trans ?_
+  have h := G.secondEigenvalue_le_one_sub_edgeExpansion_sq_div
+  have h4 : G.edgeExpansion ^ 2 / (4 * Fintype.card D ^ 2) =
+      G.edgeExpansion ^ 2 / (2 * Fintype.card D ^ 2) / 2 := by
+    rw [div_div]
+    ring
+  linarith
 
 /-- **Edge expansion bounds the spectral expansion of the lazy graph**
 [Hoory, Linial and Wigderson, Theorem 2.4][HooryLinialWigderson2006]: on at least two vertices, if
