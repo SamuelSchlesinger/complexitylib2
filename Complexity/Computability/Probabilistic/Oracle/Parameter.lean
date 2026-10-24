@@ -11,6 +11,8 @@ public import Complexity.Computability.Probabilistic.OracleSimulation
 public import Complexity.Computability.Probabilistic.Oracle.Substitution
 public import Complexity.Computability.Probabilistic.QueryBounds
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Uniform oracle PPT with a security parameter
 
@@ -95,13 +97,13 @@ theorem IsOraclePPT.run_interpret_preprocess {Caller State : Type} [Finite Opera
     {handler : Caller → Operation × List Bool → State → ProbComp (List Bool × State)}
     {prepare : Caller → ℕ × List Bool} {initial : Caller → State}
     {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPT output program)
-    (hprepare : ComputableTidilyInPolyTime prepare input (encPair encUnary encBits))
+    (hprepare : ComputableInPolyTime prepare input (encPair encUnary encBits))
     (hhandler : IsPPTOn
       (encPair input (encPair (encPair (encFinite Operation) encBits) stateEncoding))
       (encPair encBits stateEncoding) (fun pair => handler pair.1 pair.2.1 pair.2.2))
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
+    (hresources : ComputableInPolyTime (fun pair => resources pair.1 pair.2)
       (encPair input encBits) encUnary)
     (hpreserve : ∀ a request state, invariant a state →
       ∀ result ∈ (ProbComp.eval (handler a request state)).support,
@@ -111,8 +113,8 @@ theorem IsOraclePPT.run_interpret_preprocess {Caller State : Type} [Finite Opera
       (OracleComp.interpret
         (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifFin n)) (handler a))
           (program (prepare a).1 (prepare a).2)).run (initial a)) :=
-  hprogram.on.run_interpret_preprocess hprepare hhandler hinitial invariant hinit
-    hresources hpreserve
+  hprogram.on.run_interpret_preprocess hprepare.tidy hhandler hinitial.tidy invariant hinit
+    hresources.tidy hpreserve
 
 /-- Supply a stateful handler with its own external calls to a parameterized oracle program. The
 result retains the handler's final state and every external oracle's state, and a local
@@ -124,13 +126,13 @@ theorem IsOraclePPT.run_interpret_preprocess_open {External Caller State : Type}
       WordOracleComp External (List Bool × State)}
     {prepare : Caller → ℕ × List Bool} {initial : Caller → State}
     {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPT output program)
-    (hprepare : ComputableTidilyInPolyTime prepare input (encPair encUnary encBits))
+    (hprepare : ComputableInPolyTime prepare input (encPair encUnary encBits))
     (hhandler : IsOraclePPTOn
       (encPair input (encPair (encPair (encFinite Operation) encBits) stateEncoding))
       (encPair encBits stateEncoding) (fun pair => handler pair.1 pair.2.1 pair.2.2))
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
     (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
+    (hresources : ComputableInPolyTime (fun pair => resources pair.1 pair.2)
       (encPair input encBits) encUnary)
     (hpreserve : ∀ a request state, invariant a state →
       ∀ result ∈ ProbOracleComp.support (handler a request state),
@@ -141,7 +143,7 @@ theorem IsOraclePPT.run_interpret_preprocess_open {External Caller State : Type}
         (ProbOracleComp.handler
           (fun n => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin n))) (handler a))
           (program (prepare a).1 (prepare a).2)).run (initial a)) :=
-  hprogram.on.run_interpret_preprocess_open hprepare hhandler hinitial invariant hinit
-    hresources hpreserve
+  hprogram.on.run_interpret_preprocess_open hprepare.tidy hhandler hinitial.tidy invariant hinit
+    hresources.tidy hpreserve
 
 end Cslib.Probability

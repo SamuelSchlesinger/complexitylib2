@@ -69,10 +69,10 @@ theorem IsPPT.congr (h : IsPPT output program)
 /-- Call a parameterized routine after efficiently preparing both input components. -/
 theorem IsPPT.preprocess {α : Type} {input : α ↪ List Bool}
     (h : IsPPT output program) {parameter : α → ℕ} {auxiliary : α → List Bool}
-    (hparameter : ComputableTidilyInPolyTime parameter input encUnary)
-    (hauxiliary : ComputableTidilyInPolyTime auxiliary input encBits) :
+    (hparameter : ComputableInPolyTime parameter input encUnary)
+    (hauxiliary : ComputableInPolyTime auxiliary input encBits) :
     IsPPTOn input output (fun a => program (parameter a) (auxiliary a)) :=
-  h.on.preprocess ((ComputableInPolyTime.of_tidy hparameter).prod (.of_tidy hauxiliary))
+  h.on.preprocess (hparameter.prod hauxiliary)
 
 end Cslib.Probability
 

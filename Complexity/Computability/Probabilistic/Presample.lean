@@ -13,6 +13,8 @@ import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Efficient oracle substitution with saved samples
 
@@ -49,15 +51,15 @@ theorem IsOraclePPTOn.run_interpret_withSampleList
     {oracle : Caller → Value → Operation × List Bool → State → ProbComp (List Bool × State)}
     {prepare : Caller → α} {initial : Caller → State} {values : Caller → List Value}
     {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPTOn source output program)
-    (fallback : Value) (hprepare : ComputableTidilyInPolyTime prepare input source)
+    (fallback : Value) (hprepare : ComputableInPolyTime prepare input source)
     (horacle : IsPPTOn
       (encPair (encPair input valueEncoding)
         (encPair (encPair (encFinite Operation) encBits) stateEncoding))
       (encPair encBits stateEncoding) (fun pair => oracle pair.1.1 pair.1.2 pair.2.1 pair.2.2))
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
-    (hvalues : ComputableTidilyInPolyTime values input (encList valueEncoding))
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
+    (hvalues : ComputableInPolyTime values input (encList valueEncoding))
     (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
+    (hresources : ComputableInPolyTime (fun pair => resources pair.1 pair.2)
       (encPair input encBits) encUnary)
     (hpreserve : ∀ a value request state, invariant a state →
       ∀ result ∈ (ProbComp.eval (oracle a value request state)).support,
@@ -80,9 +82,10 @@ theorem IsOraclePPTOn.run_interpret_withSampleList
           ((pair.1, pair.2.2.2.headD fallback), (pair.2.1, pair.2.2.1)))
         (by dsimp only [storage]; fun_prop)
     · dsimp only [storage]; fun_prop
-  refine hprogram.run_interpret_preprocess hprepare hwrapped (hinitial.prod hvalues)
+  refine hprogram.run_interpret_preprocess hprepare.tidy hwrapped (hinitial.prod hvalues).tidy
     (fun a state => invariant a state.1) hinit
-    (resources := fun a query => 2 * resources a query) (by fun_prop) ?_
+    (resources := fun a query => 2 * resources a query)
+    (ComputableInPolyTime.tidy (by fun_prop)) ?_
   intro a request state hstate result hresult
   simp only [OracleComp.withSampleList, ProbComp.eval_map, PMF.mem_support_map_iff] at hresult
   obtain ⟨⟨answer, next⟩, hresult, rfl⟩ := hresult
@@ -107,15 +110,15 @@ theorem IsOraclePPT.run_interpret_withSampleList
     {prepare : Caller → ℕ × List Bool} {initial : Caller → State} {values : Caller → List Value}
     {resources : Caller → List Bool → ℕ} (hprogram : IsOraclePPT output program)
     (fallback : Value)
-    (hprepare : ComputableTidilyInPolyTime prepare input (encPair encUnary encBits))
+    (hprepare : ComputableInPolyTime prepare input (encPair encUnary encBits))
     (horacle : IsPPTOn
       (encPair (encPair input valueEncoding)
         (encPair (encPair (encFinite Operation) encBits) stateEncoding))
       (encPair encBits stateEncoding) (fun pair => oracle pair.1.1 pair.1.2 pair.2.1 pair.2.2))
-    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
-    (hvalues : ComputableTidilyInPolyTime values input (encList valueEncoding))
+    (hinitial : ComputableInPolyTime initial input stateEncoding)
+    (hvalues : ComputableInPolyTime values input (encList valueEncoding))
     (invariant : Caller → State → Prop) (hinit : ∀ a, invariant a (initial a))
-    (hresources : ComputableTidilyInPolyTime (fun pair => resources pair.1 pair.2)
+    (hresources : ComputableInPolyTime (fun pair => resources pair.1 pair.2)
       (encPair input encBits) encUnary)
     (hpreserve : ∀ a value request state, invariant a state →
       ∀ result ∈ (ProbComp.eval (oracle a value request state)).support,
