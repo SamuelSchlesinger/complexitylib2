@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Data.Code.HintDecoding
 public import Complexity.Foundations.Data.Code.LocalDecoding
+import Complexity.Foundations.Combinatorics.Hypergeometric
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
 
@@ -153,6 +154,98 @@ private theorem card_seeds_mem_mem (A : Finset (Fin m → F)) {t t' : F} (htt : 
     obtain ⟨h₁, h₂⟩ := line_through hsub y y'
     exact Prod.ext h₁ h₂
 
+/-- The first moment of `lineAgree A` over `seeds m F`. -/
+private theorem sum_lineAgree_seeds (A : Finset (Fin m → F)) :
+    ∑ xu ∈ seeds m F, (lineAgree A xu.1 xu.2 : ℝ) =
+      Fintype.card F * (#A * ((Fintype.card F : ℝ) ^ m - 1)) := by
+  have hN (xu : (Fin m → F) × (Fin m → F)) :
+      (lineAgree A xu.1 xu.2 : ℝ) = ∑ t : F, if xu.1 + t • xu.2 ∈ A then (1 : ℝ) else 0 := by
+    simp [lineAgree, sum_boole]
+  simp only [hN]
+  rw [sum_comm]
+  simp only [sum_boole]
+  rw [sum_congr rfl fun t _ => by rw [card_seeds_mem A t], sum_const, card_univ, nsmul_eq_mul,
+    Nat.cast_mul, Nat.cast_sub (Nat.one_le_pow _ _ Fintype.card_pos)]
+  simp
+
+/-- The second moment of `lineAgree A` over `seeds m F`. -/
+private theorem sum_lineAgree_sq_seeds (A : Finset (Fin m → F)) :
+    ∑ xu ∈ seeds m F, (lineAgree A xu.1 xu.2 : ℝ) ^ 2 =
+      Fintype.card F * (#A * ((Fintype.card F : ℝ) ^ m - 1)) +
+        Fintype.card F * (Fintype.card F - 1) * (#A * #A - #A) := by
+  have hdiagN (t : F) : ∑ t' : F,
+      #{xu ∈ seeds m F | xu.1 + t • xu.2 ∈ A ∧ xu.1 + t' • xu.2 ∈ A} =
+        #A * (Fintype.card F ^ m - 1) + (Fintype.card F - 1) * (#A * #A - #A) := by
+    rw [← add_sum_erase _ _ (mem_univ t)]
+    simp only [and_self, card_seeds_mem A t]
+    rw [sum_congr rfl fun t' ht' => card_seeds_mem_mem A (Ne.symm (ne_of_mem_erase ht')),
+      sum_const, card_erase_of_mem (mem_univ _), card_univ, smul_eq_mul]
+  have hsq (xu : (Fin m → F) × (Fin m → F)) :
+      (lineAgree A xu.1 xu.2 : ℝ) ^ 2 = ∑ t : F, ∑ t' : F,
+        if xu.1 + t • xu.2 ∈ A ∧ xu.1 + t' • xu.2 ∈ A then (1 : ℝ) else 0 := by
+    have hN : (lineAgree A xu.1 xu.2 : ℝ) =
+        ∑ t : F, if xu.1 + t • xu.2 ∈ A then (1 : ℝ) else 0 := by simp [lineAgree, sum_boole]
+    rw [hN, sq, sum_mul_sum]
+    refine sum_congr rfl fun t _ => sum_congr rfl fun t' _ => ?_
+    split_ifs <;> simp_all
+  simp only [hsq]
+  rw [sum_comm]
+  refine (sum_congr rfl fun _ _ => sum_comm).trans ?_
+  simp only [sum_boole]
+  have hrow (t : F) : ∑ t' : F,
+      ((#{xu ∈ seeds m F | xu.1 + t • xu.2 ∈ A ∧ xu.1 + t' • xu.2 ∈ A} : ℕ) : ℝ) =
+        #A * ((Fintype.card F : ℝ) ^ m - 1) + (Fintype.card F - 1) * (#A * #A - #A) := by
+    rw [← Nat.cast_sum, hdiagN t, Nat.cast_add, Nat.cast_mul, Nat.cast_mul,
+      Nat.cast_sub (Nat.one_le_pow _ _ Fintype.card_pos), Nat.cast_sub Fintype.card_pos,
+      Nat.cast_sub (Nat.le_mul_self _)]
+    simp
+  rw [sum_congr rfl fun t _ => hrow t, sum_const, card_univ, nsmul_eq_mul]
+  ring
+
+/-- The centered second moment of `lineAgree A` over `seeds m F`. -/
+private theorem sum_lineAgree_sub_sq_le (A : Finset (Fin m → F)) :
+    ∑ xu ∈ seeds m F,
+        ((lineAgree A xu.1 xu.2 : ℝ) - Fintype.card F * #A / Fintype.card F ^ m) ^ 2 ≤
+      Fintype.card F * #A * (Fintype.card F ^ m - 1) := by
+  set q : ℝ := (Fintype.card F : ℝ)
+  set Q : ℝ := (Fintype.card F : ℝ) ^ m
+  set a : ℝ := (#A : ℝ)
+  set μ := q * a / Q
+  have hQpos : (0 : ℝ) < Q := by positivity
+  have haQ : a ≤ Q := by
+    have := card_le_univ A; rw [Fintype.card_fun, Fintype.card_fin] at this
+    simp only [a, Q]; exact_mod_cast this
+  have hq1 : (1 : ℝ) ≤ q := by simp only [q]; exact_mod_cast Fintype.card_pos
+  let N : (Fin m → F) × (Fin m → F) → ℝ := fun xu => lineAgree A xu.1 xu.2
+  have hcardS : (#(seeds m F) : ℝ) = Q * (Q - 1) := by
+    rw [card_seeds, Nat.cast_mul, Nat.cast_sub (Nat.one_le_pow _ _ Fintype.card_pos)]; simp [Q]
+  have hexp : ∑ xu ∈ seeds m F, (N xu - μ) ^ 2 =
+      ∑ xu ∈ seeds m F, N xu ^ 2 - 2 * μ * ∑ xu ∈ seeds m F, N xu + μ ^ 2 * #(seeds m F) := by
+    simp only [sub_sq, sum_add_distrib, sum_sub_distrib, sum_const, nsmul_eq_mul, ← sum_mul,
+      ← mul_sum]
+    ring
+  change ∑ xu ∈ seeds m F, (N xu - μ) ^ 2 ≤ q * a * (Q - 1)
+  rw [hexp, sum_lineAgree_seeds A, sum_lineAgree_sq_seeds A, hcardS]
+  change q * (a * (Q - 1)) + q * (q - 1) * (a * a - a) - 2 * μ * (q * (a * (Q - 1))) +
+      μ ^ 2 * (Q * (Q - 1)) ≤ q * a * (Q - 1)
+  simp only [μ]
+  rcases eq_or_lt_of_le (show (0 : ℝ) ≤ a by positivity) with ha0 | hapos
+  · rw [← ha0]; field_simp; nlinarith
+  have ha1 : 1 ≤ a := by
+    have : 0 < #A := by simp only [a] at hapos; exact_mod_cast hapos
+    simp only [a]; exact_mod_cast this
+  have h₀ : (q - 1) * (a - 1) * Q ≤ q * a * (Q - 1) := by nlinarith
+  have key : q * (q - 1) * (a * a - a) * Q ≤ q * q * a * a * (Q - 1) :=
+    calc q * (q - 1) * (a * a - a) * Q = q * a * ((q - 1) * (a - 1) * Q) := by ring
+      _ ≤ q * a * (q * a * (Q - 1)) := mul_le_mul_of_nonneg_left h₀ (by positivity)
+      _ = _ := by ring
+  have hfin : q * (q - 1) * (a * a - a) ≤ q * q * a * a * (Q - 1) / Q :=
+    (le_div_iff₀ hQpos).2 (by linarith)
+  have e1 : (q * a / Q) ^ 2 * (Q * (Q - 1)) = q * q * a * a * (Q - 1) / Q := by field_simp
+  have e2 : 2 * (q * a / Q) * (q * (a * (Q - 1))) = 2 * (q * q * a * a * (Q - 1) / Q) := by
+    field_simp
+  rw [e1, e2]; linarith
+
 /-- **Random lines sample a set well.** Over all points `x` and nonzero directions `u`, the
 number of pairs for which the line `t ↦ x + t • u` has at most `D` points in `A` is at most
 `q * a * (Q - 1) / (μ - D) ^ 2`, where `a = #A`, `Q = q ^ m` and `μ = q * a / Q > D` is the mean
@@ -162,113 +255,13 @@ theorem card_filter_lineAgree_le_mul_sq_le (A : Finset (Fin m → F)) {D : ℝ}
     (#{xu : (Fin m → F) × (Fin m → F) | xu.2 ≠ 0 ∧ (lineAgree A xu.1 xu.2 : ℝ) ≤ D} : ℝ) *
         (Fintype.card F * #A / Fintype.card F ^ m - D) ^ 2 ≤
       Fintype.card F * #A * (Fintype.card F ^ m - 1) := by
-  set q : ℝ := (Fintype.card F : ℝ)
-  set Q : ℝ := (Fintype.card F : ℝ) ^ m
-  set a : ℝ := (#A : ℝ)
-  set μ := q * a / Q
-  have hQpos : (0 : ℝ) < Q := by positivity
-  have hQ1 : (1 : ℝ) ≤ Q := one_le_pow₀ (by exact_mod_cast Fintype.card_pos)
-  have haQ : a ≤ Q := by
-    have := card_le_univ A
-    rw [Fintype.card_fun, Fintype.card_fin] at this
-    simp only [a, Q]
-    exact_mod_cast this
-  have hq1 : (1 : ℝ) ≤ q := by
-    simp only [q]
-    exact_mod_cast Fintype.card_pos
-  -- the number of points of a line in `A`, as a sum of indicators
-  let N : (Fin m → F) × (Fin m → F) → ℝ := fun xu => lineAgree A xu.1 xu.2
-  have hN : ∀ xu, N xu = ∑ t : F, if xu.1 + t • xu.2 ∈ A then (1 : ℝ) else 0 := fun xu => by
-    simp [N, lineAgree, sum_boole]
-  have hcardS : (#(seeds m F) : ℝ) = Q * (Q - 1) := by
-    rw [card_seeds, Nat.cast_mul, Nat.cast_sub (Nat.one_le_pow _ _ Fintype.card_pos)]
-    simp [Q]
-  -- the first moment
-  have h1 : ∑ xu ∈ seeds m F, N xu = q * (a * (Q - 1)) := by
-    simp only [hN]
-    rw [sum_comm]
-    simp only [sum_boole]
-    rw [sum_congr rfl fun t _ => by rw [card_seeds_mem A t], sum_const, card_univ, nsmul_eq_mul,
-      Nat.cast_mul, Nat.cast_sub (Nat.one_le_pow _ _ Fintype.card_pos)]
-    simp [q, a, Q]
-  -- the second moment
-  have hdiagN : ∀ t : F, ∑ t' : F,
-      #{xu ∈ seeds m F | xu.1 + t • xu.2 ∈ A ∧ xu.1 + t' • xu.2 ∈ A} =
-        #A * (Fintype.card F ^ m - 1) + (Fintype.card F - 1) * (#A * #A - #A) := by
-    intro t
-    rw [← add_sum_erase _ _ (mem_univ t)]
-    simp only [and_self, card_seeds_mem A t]
-    rw [sum_congr rfl fun t' ht' => card_seeds_mem_mem A (Ne.symm (ne_of_mem_erase ht')),
-      sum_const, card_erase_of_mem (mem_univ _), card_univ, smul_eq_mul]
-  have c1 : ((Fintype.card F ^ m - 1 : ℕ) : ℝ) = Q - 1 := by
-    rw [Nat.cast_sub (Nat.one_le_pow _ _ Fintype.card_pos)]
-    simp [Q]
-  have c2 : ((Fintype.card F - 1 : ℕ) : ℝ) = q - 1 := by
-    rw [Nat.cast_sub Fintype.card_pos]
-    simp [q]
-  have c3 : ((#A * #A - #A : ℕ) : ℝ) = a * a - a := by
-    rw [Nat.cast_sub (Nat.le_mul_self _)]
-    simp [a]
-  have h2 : ∑ xu ∈ seeds m F, N xu ^ 2 = q * (a * (Q - 1)) + q * (q - 1) * (a * a - a) := by
-    have hsq : ∀ xu, N xu ^ 2 = ∑ t : F, ∑ t' : F,
-        if xu.1 + t • xu.2 ∈ A ∧ xu.1 + t' • xu.2 ∈ A then (1 : ℝ) else 0 := fun xu => by
-      rw [hN, sq, sum_mul_sum]
-      refine sum_congr rfl fun t _ => sum_congr rfl fun t' _ => ?_
-      split_ifs <;> simp_all
-    simp only [hsq]
-    rw [sum_comm]
-    refine (sum_congr rfl fun t _ => sum_comm).trans ?_
-    simp only [sum_boole]
-    have : ∀ t : F, ∑ t' : F,
-        ((#{xu ∈ seeds m F | xu.1 + t • xu.2 ∈ A ∧ xu.1 + t' • xu.2 ∈ A} : ℕ) : ℝ) =
-          a * (Q - 1) + (q - 1) * (a * a - a) := fun t => by
-      rw [← Nat.cast_sum, hdiagN t, Nat.cast_add, Nat.cast_mul, Nat.cast_mul, c1, c2, c3]
-    rw [sum_congr rfl fun t _ => this t, sum_const, card_univ, nsmul_eq_mul]
-    ring
-  -- the variance
-  have hvar : ∑ xu ∈ seeds m F, (N xu - μ) ^ 2 ≤ q * a * (Q - 1) := by
-    have hexp : ∑ xu ∈ seeds m F, (N xu - μ) ^ 2 =
-        ∑ xu ∈ seeds m F, N xu ^ 2 - 2 * μ * ∑ xu ∈ seeds m F, N xu +
-          μ ^ 2 * #(seeds m F) := by
-      simp only [sub_sq, sum_add_distrib, sum_sub_distrib, sum_const, nsmul_eq_mul, ← sum_mul,
-        ← mul_sum]
-      ring
-    rw [hexp, h1, h2, hcardS]
-    simp only [μ]
-    rcases eq_or_lt_of_le (show (0 : ℝ) ≤ a by positivity) with ha0 | hapos
-    · rw [← ha0]
-      field_simp
-      nlinarith
-    have ha1 : 1 ≤ a := by
-      have : 0 < #A := by
-        simp only [a] at hapos
-        exact_mod_cast hapos
-      simp only [a]
-      exact_mod_cast this
-    have key : q * (q - 1) * (a * a - a) * Q ≤ q * q * a * a * (Q - 1) := by
-      have h₀ : (q - 1) * (a - 1) * Q ≤ q * a * (Q - 1) := by nlinarith
-      have h' := mul_le_mul_of_nonneg_left h₀ (show (0 : ℝ) ≤ q * a by positivity)
-      calc q * (q - 1) * (a * a - a) * Q = q * a * ((q - 1) * (a - 1) * Q) := by ring
-        _ ≤ q * a * (q * a * (Q - 1)) := h'
-        _ = _ := by ring
-    have hfin : q * (q - 1) * (a * a - a) ≤ q * q * a * a * (Q - 1) / Q := by
-      rw [le_div_iff₀ hQpos]
-      linarith
-    have e1 : (q * a / Q) ^ 2 * (Q * (Q - 1)) = q * q * a * a * (Q - 1) / Q := by
-      field_simp
-    have e2 : 2 * (q * a / Q) * (q * (a * (Q - 1))) = 2 * (q * q * a * a * (Q - 1) / Q) := by
-      field_simp
-    rw [e1, e2]
-    linarith
-  -- Chebyshev
-  have hcheb : (#{xu : (Fin m → F) × (Fin m → F) | xu.2 ≠ 0 ∧ (N xu : ℝ) ≤ D} : ℝ) *
-      (μ - D) ^ 2 ≤ ∑ xu ∈ seeds m F, (N xu - μ) ^ 2 := by
-    rw [← nsmul_eq_mul, ← sum_const]
-    refine (sum_le_sum fun xu hxu => ?_).trans (sum_le_sum_of_subset_of_nonneg
-      (fun xu hxu => ?_) fun _ _ _ => sq_nonneg _)
-    · exact (mem_filter.1 hxu).2.2 |> fun h => by nlinarith [sq_nonneg (N xu - μ)]
-    · exact mem_filter.2 ⟨mem_univ _, (mem_filter.1 hxu).2.1⟩
-  exact hcheb.trans hvar
+  have hfilter : ({xu : (Fin m → F) × (Fin m → F) |
+      xu.2 ≠ 0 ∧ (lineAgree A xu.1 xu.2 : ℝ) ≤ D} : Finset _) =
+      {xu ∈ seeds m F | (lineAgree A xu.1 xu.2 : ℝ) ≤ D} := by rw [seeds, filter_filter]
+  rw [hfilter]
+  refine (card_filter_mul_le_sum _ _ _ (fun _ _ => sq_nonneg _) fun xu _ hxu => ?_).trans
+    (sum_lineAgree_sub_sq_le A)
+  nlinarith [sq_nonneg ((lineAgree A xu.1 xu.2 : ℝ) - Fintype.card F * #A / Fintype.card F ^ m)]
 
 /-! ### The decoder -/
 
@@ -351,6 +344,106 @@ private theorem card_normDirs_mul_le :
   rwa [card_product, card_erase_of_mem (mem_univ _), card_erase_of_mem (mem_univ _), card_univ,
     card_univ, Fintype.card_fun, Fintype.card_fin] at h
 
+/-- For a fixed `x`, at most `#(normDirs m F) * (D - d)` points `z ≠ x` lie on a line through `x`
+with more than `D` agreements yet make `lineListDecode` fail at `x`. -/
+private theorem card_filter_lineListDecode_ne_of_lt_lineAgree_le {d D : ℕ} (hd : 1 ≤ d)
+    (hn : Fintype.card F < #(Sudan.monomials d D)) (hDq : D < Fintype.card F)
+    {p : (Fin m → F) → F} (hp : p ∈ reedMuller F m d) (g : (Fin m → F) → F) (x : Fin m → F) :
+    #{z | z ≠ x ∧ D < lineAgree {y | g y = p y} x (z - x) ∧
+      lineListDecode g d D z (p z) x ≠ p x} ≤ #(normDirs m F) * (D - d) := by
+  set A : Finset (Fin m → F) := {y | g y = p y}
+  let bad (v : Fin m → F) : Finset F :=
+    {τ | hintDecode id (fun t : F => g (x + t • v)) d D τ (p (x + τ • v)) ≠ p x}
+  calc #{z | z ≠ x ∧ D < lineAgree A x (z - x) ∧ lineListDecode g d D z (p z) x ≠ p x}
+      ≤ #(((normDirs m F).filter (fun v => D < lineAgree A x v)).sigma bad) := by
+        refine card_le_card_of_injOn
+          (fun z => ⟨(firstNonzero (z - x))⁻¹ • (z - x), firstNonzero (z - x)⟩)
+          (fun z hz => ?_) (fun z hz z' hz' heq => ?_)
+        · simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq] at hz
+          obtain ⟨hne, hD, hdec⟩ := hz
+          have hl : firstNonzero (z - x) ≠ 0 :=
+            firstNonzero_eq_zero_iff.not.2 (sub_ne_zero.2 hne)
+          simp only [coe_sigma, Set.mem_sigma_iff, mem_coe, mem_filter, normDirs, mem_univ,
+            true_and, bad]
+          rw [lineListDecode_eq g p d D hne] at hdec
+          exact ⟨⟨by rw [firstNonzero_smul, inv_mul_cancel₀ hl],
+            by rwa [lineAgree_smul A _ _ (inv_ne_zero hl)]⟩, hdec⟩
+        · simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq] at hz hz'
+          have e1 := firstNonzero_smul_inv_smul (sub_ne_zero.2 hz.1)
+          have e2 := firstNonzero_smul_inv_smul (sub_ne_zero.2 hz'.1)
+          have h1 := congrArg Sigma.fst heq
+          have h2 := congrArg Sigma.snd heq
+          simp only at h1 h2
+          have hsub : z - x = z' - x := by rw [← e1, h1, h2, e2]
+          exact sub_left_injective hsub
+    _ = ∑ v ∈ (normDirs m F).filter (fun v => D < lineAgree A x v), #(bad v) := card_sigma _ _
+    _ ≤ ∑ v ∈ (normDirs m F).filter (fun v => D < lineAgree A x v), (D - d) :=
+        sum_le_sum fun v hv => card_hintDecode_line_ne_le hd hn hDq hp g x v (mem_filter.1 hv).2
+    _ ≤ #(normDirs m F) * (D - d) := by
+        rw [sum_const, smul_eq_mul]
+        exact Nat.mul_le_mul_right _ (card_filter_le _ _)
+
+/-- Over all pairs `(x, z)`, the number of pairs where `lineListDecode` fails is at most the
+diagonal (`q ^ m`), plus the pairs on lines with at most `D` agreements, plus at most
+`q ^ m * #(normDirs m F) * (D - d)` pairs on good lines with a bad hint position. -/
+private theorem sum_card_filter_lineListDecode_ne_le {d D : ℕ} (hd : 1 ≤ d)
+    (hn : Fintype.card F < #(Sudan.monomials d D)) (hDq : D < Fintype.card F)
+    {p : (Fin m → F) → F} (hp : p ∈ reedMuller F m d) (g : (Fin m → F) → F) :
+    ∑ z : Fin m → F, #{x | lineListDecode g d D z (p z) x ≠ p x} ≤
+      Fintype.card F ^ m +
+        #{xu : (Fin m → F) × (Fin m → F) |
+          xu.2 ≠ 0 ∧ (lineAgree {y | g y = p y} xu.1 xu.2 : ℝ) ≤ (D : ℝ)} +
+        Fintype.card F ^ m * (#(normDirs m F) * (D - d)) := by
+  set A : Finset (Fin m → F) := {y | g y = p y}
+  have hswap : (∑ z : Fin m → F, #{x | lineListDecode g d D z (p z) x ≠ p x}) =
+      ∑ x : Fin m → F, #{z | lineListDecode g d D z (p z) x ≠ p x} := by
+    simp only [card_eq_sum_ones, sum_filter]; exact sum_comm
+  have hpt (x : Fin m → F) : #{z | lineListDecode g d D z (p z) x ≠ p x} ≤
+      1 + #{u : Fin m → F | u ≠ 0 ∧ (lineAgree A x u : ℝ) ≤ (D : ℝ)} +
+        #(normDirs m F) * (D - d) := by
+    have hsub : ({z | lineListDecode g d D z (p z) x ≠ p x} : Finset _) ⊆
+        ({x} : Finset _) ∪ ({z | z ≠ x ∧ lineAgree A x (z - x) ≤ D} : Finset _) ∪
+          ({z | z ≠ x ∧ D < lineAgree A x (z - x) ∧
+            lineListDecode g d D z (p z) x ≠ p x} : Finset _) := by
+      intro z hz
+      simp only [mem_filter, mem_univ, true_and, mem_union, mem_singleton] at hz ⊢
+      by_cases hzx : z = x; · exact Or.inl (Or.inl hzx)
+      by_cases hlow : lineAgree A x (z - x) ≤ D; · exact Or.inl (Or.inr ⟨hzx, hlow⟩)
+      exact Or.inr ⟨hzx, not_le.1 hlow, hz⟩
+    have hshift : #{z | z ≠ x ∧ lineAgree A x (z - x) ≤ D} =
+        #{u : Fin m → F | u ≠ 0 ∧ (lineAgree A x u : ℝ) ≤ (D : ℝ)} := by
+      simp only [card_eq_sum_ones, sum_filter]
+      exact Fintype.sum_equiv (Equiv.subRight x) _ _ fun z => by
+        simp [Equiv.subRight_apply, sub_ne_zero]
+    calc #{z | lineListDecode g d D z (p z) x ≠ p x}
+        ≤ #({x} : Finset _) + #{z | z ≠ x ∧ lineAgree A x (z - x) ≤ D} +
+            #{z | z ≠ x ∧ D < lineAgree A x (z - x) ∧ lineListDecode g d D z (p z) x ≠ p x} :=
+          (card_le_card hsub).trans
+            ((card_union_le _ _).trans (Nat.add_le_add_right (card_union_le _ _) _))
+      _ ≤ 1 + #{u : Fin m → F | u ≠ 0 ∧ (lineAgree A x u : ℝ) ≤ (D : ℝ)} +
+            #(normDirs m F) * (D - d) := by
+          rw [card_singleton, hshift]
+          exact Nat.add_le_add_left
+            (card_filter_lineListDecode_ne_of_lt_lineAgree_le hd hn hDq hp g x) _
+  have hS₂ : (∑ x : Fin m → F, #{u : Fin m → F | u ≠ 0 ∧ (lineAgree A x u : ℝ) ≤ (D : ℝ)}) =
+      #{xu : (Fin m → F) × (Fin m → F) | xu.2 ≠ 0 ∧ (lineAgree A xu.1 xu.2 : ℝ) ≤ (D : ℝ)} := by
+    simp only [card_eq_sum_ones, sum_filter, Fintype.sum_prod_type]
+  rw [hswap]; refine (sum_le_sum fun x _ => hpt x).trans ?_
+  simp only [sum_add_distrib, sum_const, card_univ, Fintype.card_fun, Fintype.card_fin, smul_eq_mul,
+    mul_one, hS₂, le_rfl]
+
+/-- In `ℝ`, the number of normalized directions is at most `(q ^ m - 1) / (q - 1)`. -/
+private theorem card_normDirs_le_real :
+    (#(normDirs m F) : ℝ) ≤ ((Fintype.card F : ℝ) ^ m - 1) / (Fintype.card F - 1) := by
+  have hq1 : (1 : ℝ) < Fintype.card F := by exact_mod_cast Fintype.one_lt_card
+  rw [le_div_iff₀ (by linarith)]
+  have h := card_normDirs_mul_le (m := m) (F := F)
+  have h1 : ((Fintype.card F - 1 : ℕ) : ℝ) = Fintype.card F - 1 := by
+    rw [Nat.cast_sub Fintype.card_pos, Nat.cast_one]
+  have h2 : ((Fintype.card F ^ m - 1 : ℕ) : ℝ) = (Fintype.card F : ℝ) ^ m - 1 := by
+    rw [Nat.cast_sub (Nat.one_le_pow _ _ Fintype.card_pos), Nat.cast_pow, Nat.cast_one]
+  rw [← h1, ← h2]; exact_mod_cast h
+
 /-- **Local list decoding of Reed–Muller codes**, a variant of [SudanTrevisanVadhan2001]. Let
 `p` be a codeword of the Reed–Muller code of degree `d ≥ 1` in `m` variables over a field with `q`
 elements, `Q = q ^ m`, and let `g` agree with `p` on `a` points. Let `D < q` be such that there
@@ -372,160 +465,37 @@ theorem exists_card_lineListDecode_ne_le {d D : ℕ} (hd : 1 ≤ d)
   set Q : ℝ := (Fintype.card F : ℝ) ^ m
   set μ := q * #A / Q
   have hQpos : (0 : ℝ) < Q := by positivity
-  have hq1 : (1 : ℝ) < q := by
-    simp only [q]
-    exact_mod_cast Fintype.one_lt_card
-  -- the bad hint positions on each line
-  let bad : (Fin m → F) → (Fin m → F) → Finset F := fun x v =>
-    {τ | hintDecode id (fun t : F => g (x + t • v)) d D τ (p (x + τ • v)) ≠ p x}
-  -- the three kinds of failing pairs
-  let S₁ : Finset ((Fin m → F) × (Fin m → F)) := univ.filter fun xz => xz.2 = xz.1
-  let S₂ : Finset ((Fin m → F) × (Fin m → F)) := univ.filter fun xz =>
-    xz.2 ≠ xz.1 ∧ lineAgree A xz.1 (xz.2 - xz.1) ≤ D
-  let S₃ : Finset ((Fin m → F) × (Fin m → F)) := univ.filter fun xz => xz.2 ≠ xz.1 ∧
-    D < lineAgree A xz.1 (xz.2 - xz.1) ∧
-    firstNonzero (xz.2 - xz.1) ∈ bad xz.1 ((firstNonzero (xz.2 - xz.1))⁻¹ • (xz.2 - xz.1))
-  let fail : Finset ((Fin m → F) × (Fin m → F)) :=
-    univ.filter fun xz => lineListDecode g d D xz.2 (p xz.2) xz.1 ≠ p xz.1
-  have hfail : fail ⊆ S₁ ∪ S₂ ∪ S₃ := by
-    rintro ⟨x, z⟩ hxz
-    simp only [fail, mem_filter, mem_univ, true_and] at hxz
-    simp only [S₁, S₂, S₃, mem_union, mem_filter, mem_univ, true_and]
-    by_cases hzx : z = x
-    · exact Or.inl (Or.inl hzx)
-    by_cases hlow : lineAgree A x (z - x) ≤ D
-    · exact Or.inl (Or.inr ⟨hzx, hlow⟩)
-    refine Or.inr ⟨hzx, not_le.1 hlow, ?_⟩
-    simp only [bad, mem_filter, mem_univ, true_and]
-    rwa [lineListDecode_eq g p d D hzx] at hxz
-  -- the diagonal
-  have hdiag : #S₁ = Fintype.card F ^ m := by
-    have : #S₁ = #(univ : Finset (Fin m → F)) := by
-      refine card_nbij' Prod.fst (fun x => (x, x)) (fun _ _ => mem_coe.2 (mem_univ _))
-        (fun x _ => by simp [S₁]) (fun xz hxz => ?_) (fun x _ => rfl)
-      simp only [S₁, coe_filter, mem_univ, true_and, Set.mem_ofPred_eq] at hxz
-      exact Prod.ext rfl hxz.symm
-    rw [this, card_univ, Fintype.card_fun, Fintype.card_fin]
-  -- the lines with few agreements
-  have hlow : (#S₂ : ℝ) * (μ - D) ^ 2 ≤ q * #A * (Q - 1) := by
-    have hcard : #S₂ =
-        #{xu : (Fin m → F) × (Fin m → F) | xu.2 ≠ 0 ∧ (lineAgree A xu.1 xu.2 : ℝ) ≤ D} := by
-      refine card_nbij' (fun xz => (xz.1, xz.2 - xz.1)) (fun xu => (xu.1, xu.2 + xu.1))
-        (fun xz h => ?_) (fun xu h => ?_) (fun xz _ => by simp) (fun xu _ => by simp)
-      · simp only [S₂, coe_filter, mem_univ, true_and, Set.mem_ofPred_eq] at h ⊢
-        exact ⟨sub_ne_zero.2 h.1, by exact_mod_cast h.2⟩
-      · simp only [S₂, coe_filter, mem_univ, true_and, Set.mem_ofPred_eq,
-          add_sub_cancel_right] at h ⊢
-        exact ⟨fun h' => h.1 (by simpa using h'), by exact_mod_cast h.2⟩
-    rw [hcard]
+  have hμD : 0 < μ - D := by linarith
+  have hlow : (#{xu : (Fin m → F) × (Fin m → F) |
+      xu.2 ≠ 0 ∧ (lineAgree A xu.1 xu.2 : ℝ) ≤ (D : ℝ)} : ℝ) ≤
+      q * #A * (Q - 1) / (μ - D) ^ 2 := by
+    rw [le_div_iff₀ (by positivity)]
     exact card_filter_lineAgree_le_mul_sq_le A hμ
-  -- the bad hint positions
-  have hfib : ∀ x : Fin m → F, #(S₃.filter fun xz => xz.1 = x) ≤ #(normDirs m F) * (D - d) := by
-    intro x
-    calc #(S₃.filter fun xz => xz.1 = x)
-        ≤ #(((normDirs m F).filter (fun v => D < lineAgree A x v)).sigma fun v => bad x v) := by
-          refine card_le_card_of_injOn
-            (fun xz => ⟨(firstNonzero (xz.2 - x))⁻¹ • (xz.2 - x), firstNonzero (xz.2 - x)⟩)
-            (fun xz hxz => ?_) (fun xz hxz xz' hxz' heq => ?_)
-          · simp only [S₃, coe_filter, mem_filter, mem_univ, true_and, Set.mem_ofPred_eq] at hxz
-            obtain ⟨⟨hne, hD, hb⟩, rfl⟩ := hxz
-            have hu : xz.2 - xz.1 ≠ 0 := sub_ne_zero.2 hne
-            have hl : firstNonzero (xz.2 - xz.1) ≠ 0 := firstNonzero_eq_zero_iff.not.2 hu
-            simp only [coe_sigma, Set.mem_sigma_iff, mem_coe, mem_filter, normDirs, mem_univ,
-              true_and]
-            refine ⟨⟨by rw [firstNonzero_smul, inv_mul_cancel₀ hl], ?_⟩, hb⟩
-            rw [lineAgree_smul A _ _ (inv_ne_zero hl)]
-            exact hD
-          · simp only [S₃, coe_filter, mem_filter, mem_univ, true_and,
-              Set.mem_ofPred_eq] at hxz hxz'
-            obtain ⟨⟨hne, -, -⟩, hx⟩ := hxz
-            obtain ⟨⟨hne', -, -⟩, hx'⟩ := hxz'
-            subst hx
-            have h1 := congrArg Sigma.fst heq
-            have h2 := congrArg Sigma.snd heq
-            simp only at h1 h2
-            rw [hx'] at hne'
-            have e1 := firstNonzero_smul_inv_smul (sub_ne_zero.2 hne)
-            have e2 := firstNonzero_smul_inv_smul (sub_ne_zero.2 hne')
-            have : xz.2 - xz.1 = xz'.2 - xz.1 := by rw [← e1, h1, h2, e2]
-            exact Prod.ext hx'.symm (sub_left_injective this)
-      _ = ∑ v ∈ (normDirs m F).filter (fun v => D < lineAgree A x v), #(bad x v) :=
-          card_sigma _ _
-      _ ≤ ∑ v ∈ (normDirs m F).filter (fun v => D < lineAgree A x v), (D - d) :=
-          sum_le_sum fun v hv => card_hintDecode_line_ne_le hd hn hDq hp g x v
-            (mem_filter.1 hv).2
-      _ ≤ #(normDirs m F) * (D - d) := by
-          rw [sum_const, smul_eq_mul]
-          exact Nat.mul_le_mul_right _ (card_filter_le _ _)
-  have hbad : (#S₃ : ℝ) ≤ Q * (#(normDirs m F) * (D - d : ℕ)) := by
-    rw [card_eq_sum_card_fiberwise (f := Prod.fst) (t := univ) fun _ _ => mem_univ _,
-      Nat.cast_sum]
-    calc (∑ x : Fin m → F, (#(S₃.filter fun xz => xz.1 = x) : ℝ))
-        ≤ ∑ _x : Fin m → F, ((#(normDirs m F) * (D - d) : ℕ) : ℝ) :=
-          sum_le_sum fun x _ => by exact_mod_cast hfib x
-      _ = Q * (#(normDirs m F) * (D - d : ℕ)) := by
-          rw [sum_const, card_univ, Fintype.card_fun, Fintype.card_fin, nsmul_eq_mul]
-          push_cast
-          rfl
-  have hnorm : (#(normDirs m F) : ℝ) ≤ (Q - 1) / (q - 1) := by
-    rw [le_div_iff₀ (by linarith)]
-    have h := card_normDirs_mul_le (m := m) (F := F)
-    have : ((Fintype.card F - 1 : ℕ) : ℝ) = q - 1 := by
-      rw [Nat.cast_sub Fintype.card_pos]
-      simp [q]
-    have h' : ((Fintype.card F ^ m - 1 : ℕ) : ℝ) = Q - 1 := by
-      rw [Nat.cast_sub (Nat.one_le_pow _ _ Fintype.card_pos)]
-      simp [Q]
-    rw [← this, ← h']
-    exact_mod_cast h
-  -- averaging over the advice point
+  have hbad : Q * (#(normDirs m F) * (D - d : ℕ)) ≤ Q * (Q - 1) * (D - d : ℕ) / (q - 1) := by
+    rw [mul_assoc, mul_div_assoc]
+    refine mul_le_mul_of_nonneg_left ?_ hQpos.le
+    rw [mul_div_right_comm]
+    exact mul_le_mul_of_nonneg_right (card_normDirs_le_real (m := m) (F := F)) (by positivity)
+  have htot : (∑ z : Fin m → F, (#{x | lineListDecode g d D z (p z) x ≠ p x} : ℝ)) ≤
+      Q + (#{xu : (Fin m → F) × (Fin m → F) |
+        xu.2 ≠ 0 ∧ (lineAgree A xu.1 xu.2 : ℝ) ≤ (D : ℝ)} : ℝ) +
+        Q * (#(normDirs m F) * (D - d : ℕ)) := by
+    have hle := Nat.cast_le (α := ℝ).2 (sum_card_filter_lineListDecode_ne_le hd hn hDq hp g)
+    simpa [Q] using hle
   have hsum : (∑ z : Fin m → F, (#{x | lineListDecode g d D z (p z) x ≠ p x} : ℝ)) ≤
       Q * (1 + (q * #A * (Q - 1) / (μ - D) ^ 2 +
         Q * (Q - 1) * (D - d : ℕ) / (q - 1)) / Q) := by
-    have hcount : (∑ z : Fin m → F, (#{x | lineListDecode g d D z (p z) x ≠ p x} : ℝ)) =
-        #fail := by
-      rw [← Nat.cast_sum]
-      congr 1
-      rw [card_eq_sum_card_fiberwise (f := Prod.snd) (t := univ) fun _ _ => mem_univ _]
-      refine sum_congr rfl fun z _ => ?_
-      refine card_nbij' (fun x => (x, z)) Prod.fst (fun x hx => ?_) (fun xz hxz => ?_)
-        (fun x _ => rfl) (fun xz hxz => ?_)
-      · simp_all [fail]
-      · simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq, fail, mem_filter] at hxz ⊢
-        rw [← hxz.2]
-        exact hxz.1
-      · simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq, fail, mem_filter] at hxz
-        exact Prod.ext rfl hxz.2.symm
-    rw [hcount]
-    have hμD : 0 < μ - D := by linarith
-    have hlow' : (#S₂ : ℝ) ≤ q * #A * (Q - 1) / (μ - D) ^ 2 := by
-      rw [le_div_iff₀ (by positivity)]
-      exact hlow
-    have hbad' : Q * (#(normDirs m F) * (D - d : ℕ)) ≤ Q * (Q - 1) * (D - d : ℕ) / (q - 1) := by
-      rw [mul_assoc, mul_div_assoc]
-      refine mul_le_mul_of_nonneg_left ?_ hQpos.le
-      rw [mul_div_right_comm]
-      exact mul_le_mul_of_nonneg_right hnorm (by positivity)
-    have hunion : (#fail : ℝ) ≤ #S₁ + #S₂ + #S₃ := by
-      exact_mod_cast (card_le_card hfail).trans
-        ((card_union_le _ _).trans (Nat.add_le_add_right (card_union_le _ _) _))
-    have hS₁ : (#S₁ : ℝ) = Q := by
-      rw [hdiag]
-      push_cast
-      rfl
-    calc (#fail : ℝ) ≤ Q + q * #A * (Q - 1) / (μ - D) ^ 2 +
-          Q * (Q - 1) * (D - d : ℕ) / (q - 1) := by linarith
+    calc (∑ z : Fin m → F, (#{x | lineListDecode g d D z (p z) x ≠ p x} : ℝ))
+        ≤ Q + q * #A * (Q - 1) / (μ - D) ^ 2 + Q * (Q - 1) * (D - d : ℕ) / (q - 1) := by linarith
       _ = Q * (1 + (q * #A * (Q - 1) / (μ - D) ^ 2 +
             Q * (Q - 1) * (D - d : ℕ) / (q - 1)) / Q) := by
-          rw [mul_add, mul_one, mul_div_cancel₀ _ hQpos.ne']
-          ring
+          rw [mul_add, mul_one, mul_div_cancel₀ _ hQpos.ne']; ring
   obtain ⟨z, -, hz⟩ := exists_le_of_sum_le (s := (univ : Finset (Fin m → F))) univ_nonempty
     (f := fun z => (#{x | lineListDecode g d D z (p z) x ≠ p x} : ℝ))
     (g := fun _ => 1 + (q * #A * (Q - 1) / (μ - D) ^ 2 +
       Q * (Q - 1) * (D - d : ℕ) / (q - 1)) / Q) (by
       rw [sum_const, card_univ, Fintype.card_fun, Fintype.card_fin, nsmul_eq_mul]
-      push_cast
-      exact hsum)
+      push_cast; exact hsum)
   exact ⟨z, hz⟩
 
 end Cslib.Code

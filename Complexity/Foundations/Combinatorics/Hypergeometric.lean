@@ -32,17 +32,42 @@ Chebyshev's inequality `X < m ≤ μ` with probability at most `μ / (μ - m)²`
 
 ## Main results
 
-* `Finset.sum_card_inter_powersetCard`, `Finset.sum_card_inter_mul_sub_one_powersetCard`: the
+* `Cslib.mul_card_filter_le_sum`, `Cslib.card_filter_mul_le_sum`: Markov's inequality for a
+  `Finset` sum.
+* `Cslib.sum_card_inter_powersetCard`, `Cslib.sum_card_inter_mul_sub_one_powersetCard`: the
   first two factorial moments of `#(U ∩ J)` over the `ℓ`-subsets `J`.
-* `Finset.sum_card_inter_sub_sq_le`: the variance is at most the mean.
-* `Finset.card_filter_card_inter_lt_mul_sq_le`: Chebyshev's inequality.
-* `Finset.two_mul_card_filter_card_inter_lt_le`: most `ℓ`-subsets meet `U` in at least half the
+* `Cslib.sum_card_inter_sub_sq_le`: the variance is at most the mean.
+* `Cslib.card_filter_card_inter_lt_mul_sq_le`: Chebyshev's inequality.
+* `Cslib.two_mul_card_filter_card_inter_lt_le`: most `ℓ`-subsets meet `U` in at least half the
   expected number of elements.
 -/
 
 @[expose] public section
 
-namespace Finset
+namespace Cslib
+
+open Finset
+
+/-- **Markov's inequality** for a `Finset` sum: if `m ≤ f x` whenever `x ∈ s` satisfies `p x`,
+then `m * #{x ∈ s | p x} ≤ ∑ x ∈ s, f x`. -/
+theorem mul_card_filter_le_sum {α : Type*} (s : Finset α) (p : α → Prop)
+    [DecidablePred p] (f : α → ℕ) {m : ℕ} (hm : ∀ x ∈ s, p x → m ≤ f x) :
+    m * #{x ∈ s | p x} ≤ ∑ x ∈ s, f x := by
+  rw [mul_comm, ← smul_eq_mul]
+  exact ((s.filter p).card_nsmul_le_sum f m fun x hx =>
+    hm x (mem_filter.mp hx).1 (mem_filter.mp hx).2).trans
+    (sum_le_sum_of_subset (filter_subset p s))
+
+/-- **Markov's inequality** for a nonnegative `Finset` sum: if `0 ≤ f x` on `s` and `m ≤ f x`
+whenever `x ∈ s` satisfies `p x`, then `#{x ∈ s | p x} * m ≤ ∑ x ∈ s, f x`. -/
+theorem card_filter_mul_le_sum {α R : Type*} [Semiring R] [PartialOrder R] [IsOrderedAddMonoid R]
+    (s : Finset α) (p : α → Prop) [DecidablePred p] (f : α → R) {m : R}
+    (hf : ∀ x ∈ s, 0 ≤ f x) (hm : ∀ x ∈ s, p x → m ≤ f x) :
+    (#{x ∈ s | p x} : R) * m ≤ ∑ x ∈ s, f x := by
+  rw [← nsmul_eq_mul]
+  exact ((s.filter p).card_nsmul_le_sum f m fun x hx =>
+    hm x (mem_filter.mp hx).1 (mem_filter.mp hx).2).trans
+    (sum_le_sum_of_subset_of_nonneg (filter_subset p s) fun x hx _ => hf x hx)
 
 variable {α : Type*} [DecidableEq α] {s U : Finset α} {ℓ : ℕ}
 
@@ -143,13 +168,55 @@ private theorem natCast_mul_natCast_sub_one (x : ℕ) :
   · push_cast [Nat.add_sub_cancel]
     ring
 
+/-- The second factorial moment of `#(U ∩ J)` is at most the square of the first moment:
+`(#s)² ∑_J #(U ∩ J) (#(U ∩ J) - 1) ≤ (#U)² ℓ² C(#s, ℓ)`. -/
+private theorem sq_card_mul_sum_card_inter_mul_sub_one_powersetCard_le (hU : U ⊆ s) :
+    (#s : ℝ) ^ 2 * ∑ J ∈ s.powersetCard ℓ, (#(U ∩ J) : ℝ) * ((#(U ∩ J) : ℝ) - 1) ≤
+      (#U : ℝ) ^ 2 * (ℓ : ℝ) ^ 2 * (#s).choose ℓ := by
+  set P := s.powersetCard ℓ
+  set X : Finset α → ℝ := fun J => (#(U ∩ J) : ℝ)
+  set c : ℝ := (#s : ℝ)
+  set a : ℝ := (#U : ℝ)
+  set b : ℝ := (ℓ : ℝ)
+  set M : ℝ := ((#s).choose ℓ : ℝ)
+  have hM : 0 ≤ M := by positivity
+  have hS₂ : c * (c - 1) * ∑ J ∈ P, X J * (X J - 1) = a * (a - 1) * (b * (b - 1)) * M := by
+    have h := congrArg (Nat.cast (R := ℝ))
+      (card_mul_sum_card_inter_mul_sub_one_powersetCard (ℓ := ℓ) hU)
+    simp only [Nat.cast_mul, Nat.cast_sum, natCast_mul_natCast_sub_one] at h
+    exact h
+  rcases Nat.lt_or_ge #s 2 with hs | hs
+  · rw [sum_eq_zero fun J _ => ?_]
+    · simp only [mul_zero]
+      positivity
+    have : #(U ∩ J) ≤ 1 := (card_le_card inter_subset_left).trans ((card_le_card hU).trans
+      (by omega))
+    rcases Nat.le_one_iff_eq_zero_or_eq_one.1 this with h | h <;> simp [h]
+  have hc : (2 : ℝ) ≤ c := by simp only [c]; exact_mod_cast hs
+  have hac : a ≤ c := by simp only [a, c]; exact_mod_cast card_le_card hU
+  have ha : 0 ≤ a := by positivity
+  have hb : 0 ≤ b := by positivity
+  -- `(c - 1) a² b² - c a (a - 1) b (b - 1) = a b ((c - a) (b - 1) + a (c - 1)) ≥ 0`
+  have hfac : 0 ≤ a * b * ((c - a) * (b - 1) + a * (c - 1)) := by
+    rcases Nat.eq_zero_or_pos ℓ with h | h
+    · simp [b, h]
+    have hb1 : (1 : ℝ) ≤ b := by simp only [b]; exact_mod_cast h
+    exact mul_nonneg (mul_nonneg ha hb) (add_nonneg (mul_nonneg (sub_nonneg.2 hac)
+      (sub_nonneg.2 hb1)) (mul_nonneg ha (by linarith)))
+  have h₁ : (c - 1) * (c ^ 2 * ∑ J ∈ P, X J * (X J - 1)) ≤ (c - 1) * (a ^ 2 * b ^ 2 * M) := by
+    have : (c - 1) * (c ^ 2 * ∑ J ∈ P, X J * (X J - 1)) =
+        c * (a * (a - 1) * (b * (b - 1)) * M) := by
+      rw [← hS₂]
+      ring
+    rw [this]
+    nlinarith [mul_nonneg hM hfac]
+  exact le_of_mul_le_mul_left h₁ (by linarith)
+
 /-- **The variance of `#(U ∩ J)` is at most its mean**: over the `ℓ`-subsets `J` of `s`, with
 `n = #s`, `∑_J (n #(U ∩ J) - #U ℓ)² ≤ n #U ℓ C(n, ℓ)`. -/
 theorem sum_card_inter_sub_sq_le (hU : U ⊆ s) :
     ∑ J ∈ s.powersetCard ℓ, ((#s : ℝ) * #(U ∩ J) - #U * ℓ) ^ 2 ≤
       #s * #U * ℓ * (#s).choose ℓ := by
-  rcases Nat.lt_or_ge #s ℓ with hℓs | hℓs
-  · simp [powersetCard_eq_empty.2 hℓs, Nat.choose_eq_zero_of_lt hℓs]
   set P := s.powersetCard ℓ
   set X : Finset α → ℝ := fun J => (#(U ∩ J) : ℝ)
   set c : ℝ := (#s : ℝ)
@@ -157,53 +224,18 @@ theorem sum_card_inter_sub_sq_le (hU : U ⊆ s) :
   set b : ℝ := (ℓ : ℝ)
   set M : ℝ := ((#s).choose ℓ : ℝ)
   have hP : (#P : ℝ) = M := by simp [P, M]
-  have hM : 0 ≤ M := by positivity
-  -- the factorial moments
   have hS₁ : c * ∑ J ∈ P, X J = a * b * M := by
     have h := congrArg (Nat.cast (R := ℝ)) (card_mul_sum_card_inter_powersetCard (ℓ := ℓ) hU)
     simp only [Nat.cast_mul, Nat.cast_sum] at h
     exact h
-  have hS₂ : c * (c - 1) * ∑ J ∈ P, X J * (X J - 1) = a * (a - 1) * (b * (b - 1)) * M := by
-    have h := congrArg (Nat.cast (R := ℝ))
-      (card_mul_sum_card_inter_mul_sub_one_powersetCard (ℓ := ℓ) hU)
-    simp only [Nat.cast_mul, Nat.cast_sum, natCast_mul_natCast_sub_one] at h
-    exact h
-  -- the sum of squares in terms of the factorial moments
   have hexp : ∑ J ∈ P, (c * X J - a * b) ^ 2 = c ^ 2 * ∑ J ∈ P, X J * (X J - 1) +
       (c - 2 * a * b) * (c * ∑ J ∈ P, X J) + #P * (a ^ 2 * b ^ 2) := by
     rw [sum_congr rfl fun J _ => show (c * X J - a * b) ^ 2 = c ^ 2 * (X J * (X J - 1)) +
       (c - 2 * a * b) * (c * X J) + a ^ 2 * b ^ 2 by ring]
     simp only [sum_add_distrib, ← mul_sum, sum_const, nsmul_eq_mul]
     ring
-  -- it remains to bound the second factorial moment
-  have hkey : c ^ 2 * ∑ J ∈ P, X J * (X J - 1) ≤ a ^ 2 * b ^ 2 * M := by
-    rcases Nat.lt_or_ge #s 2 with hs | hs
-    · -- `U ∩ J` has at most one element
-      rw [sum_eq_zero fun J _ => ?_]
-      · simp only [mul_zero]
-        positivity
-      have : #(U ∩ J) ≤ 1 := (card_le_card inter_subset_left).trans ((card_le_card hU).trans
-        (by omega))
-      rcases Nat.le_one_iff_eq_zero_or_eq_one.1 this with h | h <;> simp [X, h]
-    have hc : (2 : ℝ) ≤ c := by simp only [c]; exact_mod_cast hs
-    have hac : a ≤ c := by simp only [a, c]; exact_mod_cast card_le_card hU
-    have ha : 0 ≤ a := by positivity
-    have hb : 0 ≤ b := by positivity
-    -- `(c - 1) a² b² - c a (a - 1) b (b - 1) = a b ((c - a) (b - 1) + a (c - 1)) ≥ 0`
-    have hfac : 0 ≤ a * b * ((c - a) * (b - 1) + a * (c - 1)) := by
-      rcases Nat.eq_zero_or_pos ℓ with h | h
-      · simp [b, h]
-      have hb1 : (1 : ℝ) ≤ b := by simp only [b]; exact_mod_cast h
-      exact mul_nonneg (mul_nonneg ha hb) (add_nonneg (mul_nonneg (sub_nonneg.2 hac)
-        (sub_nonneg.2 hb1)) (mul_nonneg ha (by linarith)))
-    have h₁ : (c - 1) * (c ^ 2 * ∑ J ∈ P, X J * (X J - 1)) ≤ (c - 1) * (a ^ 2 * b ^ 2 * M) := by
-      have : (c - 1) * (c ^ 2 * ∑ J ∈ P, X J * (X J - 1)) =
-          c * (a * (a - 1) * (b * (b - 1)) * M) := by
-        rw [← hS₂]
-        ring
-      rw [this]
-      nlinarith [mul_nonneg hM hfac]
-    exact le_of_mul_le_mul_left h₁ (by linarith)
+  have hkey : c ^ 2 * ∑ J ∈ P, X J * (X J - 1) ≤ a ^ 2 * b ^ 2 * M :=
+    sq_card_mul_sum_card_inter_mul_sub_one_powersetCard_le hU
   change ∑ J ∈ P, (c * X J - a * b) ^ 2 ≤ c * a * b * M
   rw [hexp, hS₁, hP]
   nlinarith [hkey]
@@ -214,11 +246,9 @@ the mean), the `ℓ`-subsets `J` of `s` meeting `U` in fewer than `m` elements n
 theorem card_filter_card_inter_lt_mul_sq_le (hU : U ⊆ s) {m : ℕ} (hm : #s * m ≤ #U * ℓ) :
     (#{J ∈ s.powersetCard ℓ | #(U ∩ J) < m} : ℝ) * ((#U : ℝ) * ℓ - #s * m) ^ 2 ≤
       #s * #U * ℓ * (#s).choose ℓ := by
-  refine le_trans ?_ (sum_card_inter_sub_sq_le hU)
-  rw [← nsmul_eq_mul, ← sum_const]
-  refine (sum_le_sum fun J hJ => ?_).trans
-    (sum_le_sum_of_subset_of_nonneg (filter_subset _ _) fun _ _ _ => sq_nonneg _)
-  have hX : (#(U ∩ J) : ℝ) ≤ m := by exact_mod_cast (mem_filter.1 hJ).2.le
+  refine (card_filter_mul_le_sum _ _ _ (fun _ _ => sq_nonneg _) fun J _ hJ => ?_).trans
+    (sum_card_inter_sub_sq_le hU)
+  have hX : (#(U ∩ J) : ℝ) ≤ m := by exact_mod_cast hJ.le
   have hmR : (#s : ℝ) * m ≤ #U * ℓ := by exact_mod_cast hm
   have hcX : (#s : ℝ) * #(U ∩ J) ≤ #s * m := mul_le_mul_of_nonneg_left hX (by positivity)
   calc ((#U : ℝ) * ℓ - #s * m) ^ 2 ≤ (#U * ℓ - #s * #(U ∩ J)) ^ 2 :=
@@ -254,4 +284,4 @@ theorem two_mul_card_filter_card_inter_lt_le (hU : U ⊆ s) (hs : 0 < #s)
     le_of_mul_le_mul_right (by nlinarith : K * μ * μ ≤ 4 * c * M * μ) hμ0
   exact le_of_mul_le_mul_left (by nlinarith : 4 * c * (2 * K) ≤ 4 * c * M) (by linarith)
 
-end Finset
+end Cslib
