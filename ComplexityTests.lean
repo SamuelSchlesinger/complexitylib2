@@ -230,6 +230,7 @@ import ComplexityTests.MassProduction.Scheduler
 import ComplexityTests.MassProduction.Uhlig
 import ComplexityTests.MathlibTM2
 import ComplexityTests.MathlibTM2Space
+import ComplexityTests.MatrixPlainCutover
 import ComplexityTests.MemoizePPT
 import ComplexityTests.ModularGap
 import ComplexityTests.MonotoneCircuitValue

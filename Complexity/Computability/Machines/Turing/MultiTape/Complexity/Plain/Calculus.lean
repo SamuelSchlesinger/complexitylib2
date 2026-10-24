@@ -1248,22 +1248,6 @@ theorem stackTape_toList
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.stackTape_toList Symbol enc
 
-/-- Read a computed fixed-width matrix entry from an arbitrary word. Dimensions and indices use
-unary encodings; the result uses the binary natural encoding. -/
-@[fun_prop]
-theorem matrixBinaryEntry {α : Type} {input : α ↪ List Bool}
-    {cols width row col : α → ℕ} {word : α → List Bool}
-    (hcols : ComputableInPolyTime cols input encUnary)
-    (hwidth : ComputableInPolyTime width input encUnary)
-    (hword : ComputableInPolyTime word input encBits)
-    (hrow : ComputableInPolyTime row input encUnary)
-    (hcol : ComputableInPolyTime col input encUnary) :
-    ComputableInPolyTime
-      (fun a => Cslib.Matrix.binaryEntry (cols a) (width a) (word a) (row a) (col a))
-      input encNat := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact ComputableTidilyInPolyTime.matrixBinaryEntry hcols hwidth hword hrow hcol
-
 /-- A fixed-length stopped walk uses the joint certificate for its runtime graph and retains
 all unused labels and signals. The length and signal alphabet are fixed parameters. -/
 @[fun_prop]
