@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: local-only (test driver)
 
-public import Complexity.Foundations.Semantics.Stateful.OrderedSet
+public import Complexity.Foundations.Data.OrderedSet.Spec
 
 /-!
 # Representation-independent ordered-set clients
@@ -20,6 +20,45 @@ implementation or any cost theorem.
 
 @[expose] public section
 
+namespace Cslib.OrderedSet
+
+open Cslib.Stateful
+
+variable {α : Type} [LinearOrder α]
+
+/-- Insert a list in order, leaving representation and resource behavior to a realization. -/
+def insertAll : List α → (spec α).Client Unit
+  | [] => .pure ()
+  | x :: xs => .liftBind (.insert x) fun _ => insertAll xs
+
+/-- Batch insertion adds each key to the state, retaining every insertion in its original order. -/
+theorem insertAll_run (s : Finset α) (xs : List α) :
+    (spec α).runClient s (insertAll xs) = ((), s ∪ xs.toFinset, xs.map Op.insert) := by
+  induction xs generalizing s with
+  | nil =>
+    change ((), s, []) = ((), s ∪ ∅, [])
+    rw [Finset.union_empty]
+  | cons x xs ih =>
+    simp only [insertAll, Spec.runClient, spec, ih, List.toFinset_cons, List.map_cons]
+    simp [Finset.insert_union, Finset.union_insert]
+
+/-- Read the two smallest distinct keys. The successor argument comes from the minimum answer. -/
+def firstTwo : (spec α).Client (Option α × Option α) :=
+  .liftBind .minimum fun
+    | none => .pure (none, none)
+    | some x => .liftBind (.successor x) fun next => .pure (some x, next)
+
+/-- The chosen operation history visibly depends on whether the minimum query succeeded. -/
+theorem firstTwo_run (s : Finset α) :
+    (spec α).runClient s firstTwo =
+      match least s with
+      | none => ((none, none), s, [.minimum])
+      | some x => ((some x, least (s.filter (x < ·))), s, [.minimum, .successor x]) := by
+  simp only [firstTwo, Spec.runClient, spec]
+  cases least s <;> rfl
+
+end Cslib.OrderedSet
+
 namespace ComplexityTests.OrderedSet
 
 open Cslib.OrderedSet Cslib.Stateful
@@ -29,6 +68,7 @@ example : LeastResult (∅ : Finset (Fin 3)) none := rfl
 example : ¬ LeastResult ({1} : Finset (Fin 3)) none := by
   simp [LeastResult]
 example : least ({0, 2} : Finset (Fin 3)) = some 0 := by decide
+example (s : Finset (Fin 3)) : (least s : WithTop (Fin 3)) = s.min := least_eq_min s
 example : (spec (Fin 3)).step {0, 2} (.successor 1) = ({0, 2}, some 2) := by decide
 example : (spec (Fin 3)).step {0, 2} (.successor 2) = ({0, 2}, none) := by decide
 

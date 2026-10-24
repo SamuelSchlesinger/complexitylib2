@@ -25,6 +25,7 @@ independent of any tree, storage representation or cost model.
 
 * `Cslib.OrderedSet.least_spec`: the mathematical minimum satisfies the contract.
 * `Cslib.OrderedSet.LeastResult.eq_least`: any satisfying result equals that minimum.
+* `Cslib.OrderedSet.least_eq_min`: `least` agrees with `Finset.min`.
 
 ## References
 
@@ -75,5 +76,12 @@ theorem LeastResult.eq_least {s : Finset α} {a : Option α} (h : LeastResult s 
       simp only [he, LeastResult] at hs
       simp only [LeastResult] at h
       exact congrArg some (le_antisymm (h.2 b hs.1) (hs.2 _ h.1))
+
+/-- `least` agrees with `Finset.min` (`WithTop α` is `Option α`). -/
+@[simp] theorem least_eq_min (s : Finset α) : (least s : WithTop α) = s.min := by
+  unfold least
+  split_ifs with h
+  · exact Finset.coe_min' h
+  · exact (Finset.min_eq_top.mpr (Finset.not_nonempty_iff_eq_empty.mp h)).symm
 
 end Cslib.OrderedSet
