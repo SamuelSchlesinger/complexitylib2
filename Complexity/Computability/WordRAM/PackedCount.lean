@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.WordRAM.Notation
-public import Complexity.Foundations.Data.BitString.PackedCount
+public import Complexity.Foundations.Data.Nat.Bitwise.PackedCount
 
 /-!
 # Counting packed flags on the word RAM

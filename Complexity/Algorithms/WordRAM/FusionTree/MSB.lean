@@ -7,7 +7,7 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.PackedCount
+public import Complexity.Foundations.Data.Nat.Bitwise.PackedCount
 public import Complexity.Algorithms.Lean.FusionTree.Multiplier
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Data.Nat.Sqrt

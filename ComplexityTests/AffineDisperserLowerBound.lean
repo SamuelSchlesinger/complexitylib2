@@ -10,7 +10,7 @@ import Complexity.Computability.Circuit.Boolean.AffineDisperser
 # Tests for the `3.5 n - 7 d` lower bound for affine dispersers
 
 Non-vacuity and axiom checks for `Complexity.Computability.Circuit.Boolean.AffineDisperser` and
-`Complexity.Foundations.Data.BitString.AffineDisperser`: affine dispersers exist, so the
+`Complexity.Foundations.Combinatorics.AffineDisperser.Basic`: affine dispersers exist, so the
 hypothesis of Theorem 4.1 is satisfiable, and the theorem gives a concrete bound.
 -/
 

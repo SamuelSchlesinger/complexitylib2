@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.SemiCircuit
-public import Complexity.Foundations.Data.BitString.AffineDisperser
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Basic
 public import Mathlib.Data.Finset.Sort
 public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 

@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Foundations.Data.BitString.Sparse
+public import Complexity.Foundations.Data.Nat.Bitwise.Sparse
 public import Mathlib.Data.Fintype.Prod
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Data.Fintype.Card

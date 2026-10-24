@@ -200,13 +200,13 @@ agreement during upstream review.
 | `Computability/Machines/Turing/MultiTape/Encodings/NatPower` | Addition to the tidy branch's `Encodings/Nat`: `encNat (2 ^ n)` and its linear clock certificate. |
 | `Computability/Circuit/{Unfolding,MapOp}`, `Computability/Circuit/Encoding/MapOp` | Consider integrating into `Circuit/Formula`, `Circuit/Program`, and `Circuit/Encoding`, respectively. |
 | `Computability/Circuit/Boolean/FirstOrder` | Consider a descriptive-complexity directory. |
-| `Foundations/Data/BitString/{Agree,Block,Hoeffding}` | Add to CSLib's `Foundations/Data/BitString`. |
+| `Foundations/Data/BitString/{Agree,Block}` | Add to CSLib's `Foundations/Data/BitString`. |
 | `Foundations/Data/List/{Fold,Lookup,Counting,Append}` | Fold invariants, lookup and register-file bounds, predicate counts, and append identities including unary headers; `Basic` reexports these topics. Consider Mathlib's `Data/List/GetD` and `Data/List/Basic`. |
 | `Foundations/Relation/RelatesWithinSteps` | `Function.iterate_trans` and bounded reachability helpers; consider Mathlib's `Logic/Function/Iterate` and `Logic/Relation`. |
 | `Foundations/BooleanAnalysis/Fourier` | Consider Mathlib beside `Analysis/Fourier/FiniteAbelian`. |
 | `Foundations/BooleanAnalysis/{Bernoulli,CoordinateSampling,Fibers,HarmonicMean,LightPatterns,MirrorSets}`, `Foundations/Analysis/HarmonicMean` | Consider Mathlib probability APIs; generic finite-type `harmonicMean` is split into `Foundations/Analysis/HarmonicMean` (#317). |
 | `Foundations/BooleanAnalysis/HadamardTester` | Consider the PCP hierarchy. |
-| `Foundations/Combinatorics/{FiniteCover,Hypergeometric,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
+| `Foundations/Combinatorics/{FiniteCover,Hoeffding,Hypergeometric,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
 | `Foundations/Data/Finset/Expect` | Product-type expectation helpers extracted from `Foundations/Combinatorics/Expander/Products` (#317); Mathlib candidates. |
 | `Foundations/Data/Matrix/Permanent` | Mathlib candidate: Laplace expansion of the permanent along row and column 0, beside `LinearAlgebra/Matrix/Permanent` (mirroring `Matrix.det_succ_row_zero`). |
 | `Foundations/LinearAlgebra/{Rank,Matrix/CutRank,Matrix/Lindsey}` | Mathlib candidates: `LinearAlgebra/Dimension/LinearMap` and `LinearAlgebra/Matrix/Rank`; placement of Lindsey's lemma needs agreement. |

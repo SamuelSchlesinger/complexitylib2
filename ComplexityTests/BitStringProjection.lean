@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Erik Demaine
 -/
 
-import Complexity.Foundations.Data.BitString.Projection
+import Complexity.Foundations.Data.Nat.Bitwise.Projection
 
 /-! A foundation-only client for differences, projections, and prefix boundaries. -/
 

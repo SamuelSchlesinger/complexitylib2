@@ -8,8 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Algorithms.WordRAM.FusionTree.Packed
-public import Complexity.Foundations.Data.BitString.Sparse
-public import Complexity.Foundations.Data.BitString.PackedCount
+public import Complexity.Foundations.Data.Nat.Bitwise.Sparse
+public import Complexity.Foundations.Data.Nat.Bitwise.PackedCount
 public import Complexity.Computability.WordRAM.Notation
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 

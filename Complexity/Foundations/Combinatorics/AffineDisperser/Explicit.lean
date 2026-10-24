@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Foundations.Combinatorics.AffineDisperser.AffineSubspace
+public import Complexity.Foundations.Combinatorics.AffineDisperser.Basic
 public import Complexity.Foundations.Combinatorics.AffineDisperser.BinaryField
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Bits
 public import Complexity.Foundations.Data.Nat.Prime

@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Algorithms.Lean.FusionTree.Multiplier
-public import Complexity.Foundations.Data.BitString.Projection
+public import Complexity.Foundations.Data.Nat.Bitwise.Projection
 
 /-!
 # Comparing multiplication-based and perfect fusion sketches

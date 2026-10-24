@@ -30,6 +30,8 @@ by significance. Prefix boundaries replace the low bits with fixed masks.
 
 ## Main results
 
+* `Nat.testBit_eq_false_of_width`: all bits at or above the word width vanish.
+* `Nat.shiftRight_le_shiftRight`: deleting a fixed number of low bits preserves weak order.
 * `highestDiff_spec`: distinct bounded words differ at their highest differing position.
 * `projectBits_lt`: a selected highest differing position preserves strict order.
 * `projectBits_ofFn_eq_sum`: the positional numeric value of a projection.
@@ -55,7 +57,7 @@ def highestDiff (w x y : ℕ) : ℕ :=
   (differingBits w x y).sup id
 
 /-- All bits at or above the word width of a bounded natural number vanish. -/
-theorem testBit_eq_false_of_width {w x i : ℕ} (hx : x < 2 ^ w) (hi : w ≤ i) :
+theorem _root_.Nat.testBit_eq_false_of_width {w x i : ℕ} (hx : x < 2 ^ w) (hi : w ≤ i) :
     x.testBit i = false :=
   Nat.testBit_eq_false_of_lt (hx.trans_le (Nat.pow_le_pow_right (by decide) hi))
 
@@ -69,8 +71,8 @@ private theorem differingBits_nonempty {w x y : ℕ} (hx : x < 2 ^ w) (hy : y < 
   by_cases hi : i < w
   · by_contra hbit
     exact h ⟨i, Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hi, hbit⟩⟩
-  · rw [testBit_eq_false_of_width hx (by omega),
-      testBit_eq_false_of_width hy (by omega)]
+  · rw [Nat.testBit_eq_false_of_width hx (by omega),
+      Nat.testBit_eq_false_of_width hy (by omega)]
 
 /-- The highest differing bit is below the word width and really differs. -/
 theorem highestDiff_mem {w x y : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
@@ -87,8 +89,8 @@ theorem testBit_eq_of_highestDiff_lt {w x y i : ℕ} (hx : x < 2 ^ w)
       Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hiw, hbit⟩
     have := Finset.le_sup (f := id) hmem
     exact (not_le_of_gt hi) this
-  · rw [testBit_eq_false_of_width hx (by omega),
-      testBit_eq_false_of_width hy (by omega)]
+  · rw [Nat.testBit_eq_false_of_width hx (by omega),
+      Nat.testBit_eq_false_of_width hy (by omega)]
 
 /-- Unequal bounded words differ at `highestDiff` and share all more significant bits. -/
 theorem highestDiff_spec {w x y : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ w)
@@ -214,14 +216,15 @@ theorem sketch_lt_of_highestDiff_mem {w x y : ℕ} {positions : Finset ℕ}
     ((Finset.mem_sort _).mpr hmem) hxb hyb (fun _ => testBit_eq_of_highestDiff_lt hx hy)
 
 /-- Deleting a fixed number of low bits preserves weak order. -/
-theorem shiftRight_mono {x y : ℕ} (h : x ≤ y) (cut : ℕ) : x >>> cut ≤ y >>> cut := by
+theorem _root_.Nat.shiftRight_le_shiftRight {x y : ℕ} (h : x ≤ y) (cut : ℕ) :
+    x >>> cut ≤ y >>> cut := by
   simpa only [Nat.shiftRight_eq_div_pow] using Nat.div_le_div_right (c := 2 ^ cut) h
 
 /-- A prefix shared by the endpoints of an interval is shared by every word between them. -/
 theorem shiftRight_eq_of_between {x y z cut : ℕ} (hxy : x ≤ y) (hyz : y ≤ z)
     (hprefix : x >>> cut = z >>> cut) : y >>> cut = x >>> cut := by
-  have h₁ := shiftRight_mono hxy cut
-  have h₂ := shiftRight_mono hyz cut
+  have h₁ := Nat.shiftRight_le_shiftRight hxy cut
+  have h₂ := Nat.shiftRight_le_shiftRight hyz cut
   omega
 
 /-- Equal prefixes imply agreement at all positions retained by the prefix. -/
@@ -306,9 +309,9 @@ theorem lt_iff_shiftRight_lt_of_ne {x y cut : ℕ} (hne : x >>> cut ≠ y >>> cu
     x < y ↔ x >>> cut < y >>> cut := by
   constructor
   · intro h
-    exact lt_of_le_of_ne (shiftRight_mono h.le cut) hne
+    exact lt_of_le_of_ne (Nat.shiftRight_le_shiftRight h.le cut) hne
   · intro h
-    exact lt_of_not_ge (fun hle => not_le_of_gt h (shiftRight_mono hle cut))
+    exact lt_of_not_ge (fun hle => not_le_of_gt h (Nat.shiftRight_le_shiftRight hle cut))
 
 /-- Within a prefix block whose bit `p` is zero, the lower correction boundary has a sketch
 at least as large as every word in that block. -/
