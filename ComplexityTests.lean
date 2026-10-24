@@ -340,6 +340,7 @@ import ComplexityTests.Parameterized
 import ComplexityTests.PlainAutomationSupport
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeContracts
+import ComplexityTests.PolyTimeEncodedProjection
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimeMixes
 import ComplexityTests.PolyTimePlain
@@ -487,4 +488,3 @@ import ComplexityTests.WordRAMQueue
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy
-import ComplexityTests.PolyTimeEncodedProjection
