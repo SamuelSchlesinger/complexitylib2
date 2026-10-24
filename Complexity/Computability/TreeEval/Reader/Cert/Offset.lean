@@ -15,7 +15,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSp
 
 The offset of the node at a path is a fold over the path from the root: a step adds the length of
 a table and, to the right child, the length of the body of the left one. With the lengths computed
-by iteration, and the path read off the stack, it is tidily computable within work space linear in
+by iteration, and the path read off the stack, it is computable within work space linear in
 the encoded stack, the height and the value length.
 
 ## Main results
@@ -30,7 +30,7 @@ namespace Cslib.TreeEval
 
 namespace Reader
 
-open Turing MultiTapeTM ComputableTidilyInSpace Iter
+open Turing MultiTapeTM ComputableInSpace Iter
 
 private theorem bodyLength_add_tableLength_le (ℓ d : ℕ) :
     bodyLength ℓ d + tableLength ℓ ≤ 2 ^ d * (ℓ + tableLength ℓ) := by
@@ -107,12 +107,12 @@ private theorem iterate_mul_four (k : ℕ) : (fun x => x * 4)^[k] 1 = 4 ^ k := b
 
 /-- **The length of a table**, `4^ℓ * ℓ` from `ℓ`. -/
 theorem tableLength_inSpace :
-    ComputableTidilyInSpace tableLength encNat encNat fun ℓ => 4096 * (ℓ + 1) := by
+    ComputableInSpace tableLength encNat encNat fun ℓ => 4096 * (ℓ + 1) := by
   have hl : (fun ℓ => (encNat ℓ).length) ≼ fun ℓ => 1024 * (ℓ + 1) :=
     .of_le fun ℓ => by have := length_encNat_le_self ℓ; omega
-  have hid : ComputableTidilyInSpace (fun ℓ : ℕ => ℓ) encNat encNat fun ℓ => 1024 * (ℓ + 1) :=
+  have hid : ComputableInSpace (fun ℓ : ℕ => ℓ) encNat encNat fun ℓ => 1024 * (ℓ + 1) :=
     (of_inO (.of_linear (.of_eq (f := id) fun _ => rfl))).weaken hl
-  have hstep : ComputableTidilyInSpace (fun x : ℕ => x * 4) encNat encNat
+  have hstep : ComputableInSpace (fun x : ℕ => x * 4) encNat encNat
       fun x => 64 * ((encNat x).length + 1) :=
     (budget_comp_lin natMul (linear_mul _) (budget_prod
       (of_inO (.of_linear (.of_eq (f := id) fun _ => rfl)))
@@ -132,7 +132,7 @@ private theorem length_encNat_two_pow (k : ℕ) : (encNat (2 ^ k)).length ≤ k 
 
 private theorem length_bodyLength_le (ℓ k : ℕ) :
     (encNat (bodyLength ℓ k)).length ≤ k + 4 * ℓ + 4 := by
-  have h₁ := ComputableTidilyInO.length_encNat_mono
+  have h₁ := ComputableInO.length_encNat_mono
     ((Nat.le_add_right _ _).trans (bodyLength_add_tableLength_le ℓ k))
   have h₂ := length_encNat_mul_le (2 ^ k) (ℓ + tableLength ℓ)
   have h₃ := length_encNat_two_pow k
@@ -152,14 +152,14 @@ private theorem iterate_bodyStep (ℓ k : ℕ) :
 
 /-- **The length of the body of a subtree**, `bodyLength ℓ e` from `(ℓ, e)`. -/
 private theorem bodyLength_inSpace :
-    ComputableTidilyInSpace (fun q : ℕ × ℕ => bodyLength q.1 q.2) (encPair encNat encNat) encNat
+    ComputableInSpace (fun q : ℕ × ℕ => bodyLength q.1 q.2) (encPair encNat encNat) encNat
       fun q => 65536 * (q.1 + q.2 + 1) := by
   have hl : (fun q => (encPair encNat encNat q).length) ≼ fun q => 4096 * (q.1 + q.2 + 1) :=
     .of_le fun q => by
       have := length_encNat_le_self q.1
       have := length_encNat_le_self q.2
       simp only [length_encPair]; omega
-  have hstep : ComputableTidilyInSpace bodyStep (encPair encNat encNat) (encPair encNat encNat)
+  have hstep : ComputableInSpace bodyStep (encPair encNat encNat) (encPair encNat encNat)
       fun q => 64 * ((encPair encNat encNat q).length + 1) := by
     have hl₀ : (fun q => (encPair encNat encNat q).length) ≼
         fun q => 64 * ((encPair encNat encNat q).length + 1) := .of_le fun _ => by omega
@@ -196,14 +196,14 @@ theorem encFrame_apply (fr : Frame) : encFrame fr = encFrameTuple (Frame.equiv f
 
 /-- **A function of the finite fields of a frame.** -/
 theorem frameFinite_inSpace {β : Type} {encB : β ↪ List Bool} (g : Fin 4 × Bool × Fin 3 → β) :
-    ComputableTidilyInSpace (fun fr : Frame => g (Frame.equiv fr).2) encFrame encB
+    ComputableInSpace (fun fr : Frame => g (Frame.equiv fr).2) encFrame encB
       fun fr => (encFrame fr).length := by
   have h := budget_finite (encC := encB) g (snd encNat (encFinEnum (Fin 4 × Bool × Fin 3)))
   exact h.of_encIn_eq Frame.equiv fun _ => rfl
 
 /-- The round of a frame. -/
 theorem round_inSpace :
-    ComputableTidilyInSpace (fun fr : Frame => fr.round) encFrame encNat
+    ComputableInSpace (fun fr : Frame => fr.round) encFrame encNat
       fun fr => (encFrame fr).length :=
   (fst encNat (encFinEnum (Fin 4 × Bool × Fin 3))).of_encIn_eq Frame.equiv fun _ => rfl
 
@@ -226,11 +226,11 @@ private theorem length_encList_bools (l : List Bool) :
   | cons b l ih => rw [length_encList] at ih ⊢; simp; ring
 
 theorem dirs_inSpace :
-    ComputableTidilyInSpace (fun st : List Frame => st.foldl (fun acc fr => fr.dir :: acc) [])
+    ComputableInSpace (fun st : List Frame => st.foldl (fun acc fr => fr.dir :: acc) [])
       (encList encFrame) (encList encBool) fun st => 64 * ((encList encFrame st).length + 1) := by
   have hl : (fun st => (encList encFrame st).length) ≼
       fun st => 8 * ((encList encFrame st).length + 1) := .of_le fun _ => by omega
-  have hstep : ComputableTidilyInSpace (fun q : List Bool × Frame => q.2.dir :: q.1)
+  have hstep : ComputableInSpace (fun q : List Bool × Frame => q.2.dir :: q.1)
       (encPair (encList encBool) encFrame) (encList encBool)
       fun q => 2 * ((encPair (encList encBool) encFrame q).length + 1) := by
     have hl₀ : (fun q => (encPair (encList encBool) encFrame q).length) ≼
@@ -239,10 +239,10 @@ theorem dirs_inSpace :
       fun y : Fin 4 × Bool × Fin 3 => y.1.val % 2 == 1)
       ((snd (encList encBool) encFrame).weaken hl₀) (.of_le fun x => by
         simp only [length_encPair]; omega)
-    have hc : ComputableTidilyInSpace (fun p : Bool × List Bool => p.1 :: p.2)
+    have hc : ComputableInSpace (fun p : Bool × List Bool => p.1 :: p.2)
         (encPair encBool (encList encBool)) (encList encBool)
         fun p => (encPair encBool (encList encBool) p).length :=
-      of_inO (ComputableTidilyInDegree.cons encBool).inO_one
+      of_inO (ComputableInDegree.cons encBool).inO_one
     exact (budget_comp_linear hc (budget_prod hd ((fst (encList encBool) encFrame).weaken hl₀)))
       |>.of_enc_eq fun q => rfl
   have hlen (st : List Frame) (i : ℕ) :
@@ -273,7 +273,7 @@ private theorem foldl_pathStep' (ℓ : ℕ) (P : List Bool) (s : ℕ × ℕ) :
   | cons b P ih => rw [List.foldl_cons, List.foldl_cons, pathStep', ih]
 
 private theorem pathStep'_inSpace :
-    ComputableTidilyInSpace (fun q : (ℕ × ℕ × ℕ) × Bool => pathStep' q.1 q.2)
+    ComputableInSpace (fun q : (ℕ × ℕ × ℕ) × Bool => pathStep' q.1 q.2)
       (encPair encNat3 encBool) encNat3
       fun q => 2 ^ 20 * (q.1.1 + q.1.2.1 + (encPair encNat3 encBool q).length + 1) := by
   have hl : (fun q => (encPair encNat3 encBool q).length) ≼
@@ -298,12 +298,12 @@ private theorem pathStep'_inSpace :
 
 private theorem length_pathOffset_le (ℓ d : ℕ) (P : List Bool) :
     (encNat (pathOffset ℓ d P)).length ≤ d + 4 * ℓ + 4 :=
-  (ComputableTidilyInO.length_encNat_mono (pathOffset_le_bodyLength ℓ P d)).trans
+  (ComputableInO.length_encNat_mono (pathOffset_le_bodyLength ℓ P d)).trans
     (length_bodyLength_le ℓ d)
 
 /-- **The offset of the node at a path**, `pathOffset ℓ d P` from `((ℓ, d), P)`. -/
 theorem pathOffset_inSpace :
-    ComputableTidilyInSpace (fun q : (ℕ × ℕ) × List Bool => pathOffset q.1.1 q.1.2 q.2)
+    ComputableInSpace (fun q : (ℕ × ℕ) × List Bool => pathOffset q.1.1 q.1.2 q.2)
       (encPair (encPair encNat encNat) (encList encBool)) encNat
       fun q => 2 ^ 30 * (q.1.1 + q.1.2 +
         (encPair (encPair encNat encNat) (encList encBool) q).length + 1) := by
