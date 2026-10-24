@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
 public import Complexity.Languages.Probabilistic.LinearHash
 public import Complexity.Languages.Probabilistic.UniformNat
+import Complexity.Probability.PMF.Uniform
 import Complexity.Probability.HashIsolation
 import Complexity.Computability.Probabilistic.LinearHash
 import Complexity.Computability.Probabilistic.UniformNat

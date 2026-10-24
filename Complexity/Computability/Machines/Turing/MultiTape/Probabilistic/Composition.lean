@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.E
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.InputFromTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Composition
+import Complexity.Probability.PMF.Bind
 
 /-!
 # Composing closed probabilistic machines through a buffered word

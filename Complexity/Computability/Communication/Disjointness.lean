@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Communication.Corruption
 public import Complexity.Computability.Communication.Functions
+import Complexity.Probability.PMF.Event
 import Complexity.Computability.Communication.Amplification
 import Complexity.Foundations.Combinatorics.PowersetTail
 import Complexity.Probability.PMF

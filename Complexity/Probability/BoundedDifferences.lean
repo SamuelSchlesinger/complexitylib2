@@ -9,6 +9,7 @@ module
 
 public import Complexity.Probability.Product
 public import Mathlib.Probability.Moments.SubGaussian
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.PMF.Expect
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 

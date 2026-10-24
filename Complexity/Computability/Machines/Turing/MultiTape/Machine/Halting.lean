@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Program
+import Complexity.Probability.PMF.Bind
 
 /-!
 # Halting bounds for effectful machines

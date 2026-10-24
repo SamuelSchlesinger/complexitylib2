@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Program
+import Complexity.Probability.PMF.Event
 
 /-!
 # Correctness of the clocked boosting loop

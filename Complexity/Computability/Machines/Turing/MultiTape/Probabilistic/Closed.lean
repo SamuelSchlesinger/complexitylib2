@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sequential
+import Complexity.Probability.PMF.Bind
 
 /-!
 # Configuration laws for closed fair-coin programs

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.Basic
+import Complexity.Probability.PMF.Bind
 import Complexity.Foundations.Control.Monad.IsMonadHom.StateT
 
 /-!

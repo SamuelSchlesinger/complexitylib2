@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.Rewinding
+import Complexity.Probability.PMF.Uniform
 import Complexity.Probability.PMF
 import Mathlib.Algebra.Order.Chebyshev
 

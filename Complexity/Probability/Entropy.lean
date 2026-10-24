@@ -10,6 +10,7 @@ module
 public import Complexity.Probability.Conditioning
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
 public import Mathlib.Analysis.SpecialFunctions.Log.NegMulLog
+import Complexity.Probability.PMF.Bind
 import Complexity.Probability.PMF.Expect
 import Complexity.Probability.PMF.Map
 import Mathlib.Analysis.Convex.Jensen

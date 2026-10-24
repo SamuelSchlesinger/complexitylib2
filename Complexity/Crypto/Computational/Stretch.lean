@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Complexity.Crypto.Computational.Stretch.Quantitative
 public import Complexity.Languages.Probabilistic.UniformNat
+import Complexity.Probability.PMF.Bind
 import Complexity.Crypto.Game.Hybrid
 import Complexity.Computability.Probabilistic.UniformNat
 import Complexity.Probability.PMF.Map

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Communication.Distributional
 public import Complexity.Computability.Communication.Rectangle
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.PMF
 import Mathlib.Tactic.Linarith
 

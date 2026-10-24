@@ -11,6 +11,7 @@ public import Complexity.Computability.Communication.Protocol
 public import Cslib.Foundations.Data.BitString
 public import Cslib.Probability.PMF
 public import Mathlib.Basic.Real.Basic
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.Minimax
 import Complexity.Probability.PMF
 import Mathlib.Order.SuccPred.ENat

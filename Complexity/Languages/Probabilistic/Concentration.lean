@@ -9,6 +9,7 @@ module
 
 public import Complexity.Languages.Probabilistic.Repeat
 public import Mathlib.Analysis.SpecialFunctions.Exp
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.Concentration
 
 /-!

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.GoldreichLevin.Decoding
+import Complexity.Probability.PMF.Uniform
 import Complexity.Foundations.Data.BitString.Basic
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 

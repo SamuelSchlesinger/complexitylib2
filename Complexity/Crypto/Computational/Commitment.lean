@@ -13,6 +13,7 @@ public import Complexity.Crypto.Computational.OneWayToPRG
 public import Complexity.Crypto.Computational.Stretch
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Negligible.Basic
+import Complexity.Probability.PMF.Uniform
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Probability.BitString.List
 import Complexity.Tactic.PPT

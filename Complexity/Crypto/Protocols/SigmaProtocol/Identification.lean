@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Game
 public import Complexity.Crypto.Protocols.SigmaProtocol.Basic
 public import Complexity.Probability.IID
+import Complexity.Probability.PMF.Bind
 import Complexity.Probability.PMF
 import Complexity.Probability.Rewinding
 

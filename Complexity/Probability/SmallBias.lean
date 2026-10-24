@@ -10,6 +10,7 @@ module
 public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Complexity.Probability.Collision
 public import Mathlib.Data.Matrix.Mul
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.PMF.Expect
 
 /-!

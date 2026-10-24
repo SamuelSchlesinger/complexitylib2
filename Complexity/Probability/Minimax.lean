@@ -10,6 +10,7 @@ module
 public import Complexity.Probability.PMF
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Geometry.Convex.ConvexSpace.Defs
+import Complexity.Probability.PMF.Event
 import Mathlib.Analysis.Convex.Basic
 import Mathlib.Geometry.Convex.ConvexSpace.CompactSpaceStdSimplex
 import Mathlib.Topology.Algebra.Module.Basic

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.IP.TQBF.Protocol
+import Complexity.Probability.PMF.Bind
 import Mathlib.Algebra.Polynomial.Roots
 
 /-!

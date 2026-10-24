@@ -13,6 +13,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.I
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputToTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.RunsWords
 public import Cslib.Foundations.Data.Fin.Tuple
+import Complexity.Probability.PMF.Bind
 
 /-!
 # Tape extension and word-redirection combinators for probabilistic oracle machines

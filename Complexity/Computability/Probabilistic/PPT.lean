@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
+import Complexity.Probability.PMF.Event
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 
 /-!

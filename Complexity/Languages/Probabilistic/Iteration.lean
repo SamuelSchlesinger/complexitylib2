@@ -9,6 +9,8 @@ module
 
 public import Complexity.Languages.Probabilistic.Basic
 public import Mathlib.Data.List.OfFn
+import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Event
 
 /-!
 # Bounded adaptive probabilistic iteration

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Probability.PMF.Event
 import Complexity.Computability.Communication.Corruption
 import Complexity.Computability.Communication.Distributional
 import Complexity.Computability.Communication.Functions

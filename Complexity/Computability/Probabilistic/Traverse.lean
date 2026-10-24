@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Probabilistic.PPT
 public import Complexity.Languages.Probabilistic.Traverse
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Probabilistic.CoinTape
 import Complexity.Computability.Probabilistic.Sampling
 import Complexity.Computability.Probabilistic.PPT.Capture

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Languages.Probabilistic.QueryCount
 public import Mathlib.Probability.ProbabilityMassFunction.Monad
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.PMF
 
 /-!

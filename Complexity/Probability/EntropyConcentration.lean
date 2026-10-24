@@ -9,6 +9,7 @@ module
 
 public import Complexity.Probability.Concentration
 public import Complexity.Probability.Entropy
+import Complexity.Probability.PMF.Event
 
 /-!
 # Conditional information in independent samples

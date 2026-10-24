@@ -10,6 +10,7 @@ module
 public import Complexity.Foundations.BooleanAnalysis.SignApproximation
 public import Complexity.MachineLearning.UniformLearning.Basic
 public import Complexity.Probability.Concentration
+import Complexity.Probability.PMF.Event
 import Complexity.Foundations.BooleanAnalysis.LowDegree
 import Complexity.Probability.PMF
 import Mathlib.Analysis.SpecialFunctions.Log.Basic

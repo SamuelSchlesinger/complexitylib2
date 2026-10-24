@@ -11,6 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
 public import Complexity.Languages.Probabilistic.BitString
+import Complexity.Probability.PMF.Bind
 import Complexity.Crypto.Negligible.Basic
 import Complexity.Probability.PMF
 import Complexity.Tactic.PPT

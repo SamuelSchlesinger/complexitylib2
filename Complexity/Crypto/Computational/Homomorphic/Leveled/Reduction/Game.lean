@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Homomorphic.Leveled.Reduction
+import Complexity.Probability.PMF.Bind
 
 /-!
 # Exact chosen-message games of leveled encryption

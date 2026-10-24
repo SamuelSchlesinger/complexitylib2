@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.PMF
+import Complexity.Probability.PMF.Bind
 
 /-!
 # Relabeling discrete distributions
@@ -18,6 +19,7 @@ public import Complexity.Probability.PMF
 * `Cslib.Probability.PMF.map_congr_on_support`: only supported inputs need equal outputs.
 * `Cslib.Probability.PMF.map_apply_toReal`: finite fiber sums.
 * `Cslib.Probability.PMF.uniformOfFintype_map_apply`: uniform image masses from fiber sizes.
+* `Cslib.Probability.PMF.map_injective`: injective encodings preserve equality of distributions.
 
 ## References
 
@@ -74,5 +76,13 @@ theorem uniformOfFintype_map_apply [Fintype α] [Nonempty α] (f : α → β) (b
   simp only [PMF.map_bind, PMF.map_comp, Function.comp_def]
   change p.bind (fun a => (f a).map (Function.const β a)) = p
   simp only [PMF.map_const, PMF.bind_pure]
+
+/-- An injective representation of outcomes also embeds their complete probability laws. -/
+theorem map_injective {f : α → β} (hf : Function.Injective f) :
+    Function.Injective (PMF.map f) := by
+  classical
+  intro p q h
+  ext a
+  simpa only [PMF.map_apply, hf.eq_iff, tsum_ite_eq'] using congrArg (fun law => law (f a)) h
 
 end Cslib.Probability.PMF

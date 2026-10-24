@@ -13,6 +13,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.O
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sequential
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Machines.Turing.MultiTape.Machine.Simulation
 
 /-!

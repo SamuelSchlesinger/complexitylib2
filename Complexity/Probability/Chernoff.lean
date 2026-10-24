@@ -10,6 +10,7 @@ module
 public import Complexity.Probability.Product
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Mathlib.Probability.Moments.Basic
+import Complexity.Probability.PMF.Event
 import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 

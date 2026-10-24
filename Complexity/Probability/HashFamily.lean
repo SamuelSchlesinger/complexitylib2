@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Cslib.Probability.PMF
+import Complexity.Probability.PMF.Event
+import Complexity.Probability.PMF.Uniform
 import Complexity.Probability.PMF
 
 /-!

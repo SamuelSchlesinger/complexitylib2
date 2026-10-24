@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.GoldreichLevin.WordReduction
 public import Complexity.Crypto.Computational.HardCore
+import Complexity.Probability.PMF.Bind
 import Complexity.Crypto.Negligible.Basic
 import Complexity.Tactic.PPT
 

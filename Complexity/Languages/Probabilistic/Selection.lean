@@ -9,6 +9,7 @@ module
 
 public import Complexity.Languages.Probabilistic.Repeat
 public import Complexity.Languages.Probabilistic.Iteration
+import Complexity.Probability.PMF.Event
 import Complexity.Languages.Probabilistic.Concentration
 
 /-!
