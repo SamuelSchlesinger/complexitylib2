@@ -37,8 +37,7 @@ satisfying assignment once for every setting of the ignored bits. The counting v
 ## Main definitions
 
 * `Cslib.Complexity.SharpSAT`: the number of satisfying assignments.
-* `Cslib.Complexity.SharpSAT.isFirst`, `Cslib.Complexity.SharpSAT.firstPositions`: the positions of
-  first occurrences of variables.
+* `Cslib.Complexity.SharpSAT.isFirst`: testing for the first occurrence of a variable.
 * `Cslib.Complexity.SharpSAT.canonical`, `Cslib.Complexity.SharpSAT.verifier`: the canonical
   certificates and the counting verifier.
 
@@ -46,8 +45,6 @@ satisfying assignment once for every setting of the ignored bits. The counting v
 
 * `Cslib.Complexity.SharpSAT.mem_SAT_iff`, `Cslib.Complexity.SharpSAT.mem_USAT_iff`: `SAT` and
   `USAT` through `#SAT`.
-* `Cslib.Complexity.SharpSAT.length_firstPositions`: the number of first-occurrence positions is the
-  number of distinct occurring variables.
 * `Cslib.Complexity.SharpSAT.acceptCount_verifier`: the verifier accepts one certificate for each
   satisfying assignment.
 * `Cslib.Complexity.SharpSAT.computableTidilyInPolyTime_card_vars`: the number of occurring
@@ -88,10 +85,6 @@ theorem mem_USAT_iff {φ : CNF ℕ} : φ ∈ USAT ↔ SharpSAT φ = 1 :=
 def isFirst (φ : CNF ℕ) (i : ℕ) : Bool :=
   decide (i < φ.vars.length) && φ.vars.idxOf (φ.vars.getD i 0) == i
 
-/-- The positions in `φ.vars` of the first occurrences of the variables of `φ`. -/
-def firstPositions (φ : CNF ℕ) : List ℕ :=
-  (List.range φ.vars.length).filter (isFirst φ)
-
 /-- A certificate for `φ` is canonical when it is `false` at every position that is not the first
 occurrence of a variable. -/
 def canonical (φ : CNF ℕ) (w : List Bool) : Bool :=
@@ -110,23 +103,6 @@ private theorem getD_mem_of_isFirst {φ : CNF ℕ} {i : ℕ} (h : isFirst φ i =
     φ.vars.getD i 0 ∈ φ.vars ∧ φ.vars.idxOf (φ.vars.getD i 0) = i := by
   simp only [isFirst, Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq] at h
   exact ⟨by rw [List.getD_eq_getElem _ _ h.1]; exact List.getElem_mem h.1, h.2⟩
-
-/-- The number of first-occurrence positions is the number of distinct variables occurring in
-`φ`. -/
-theorem length_firstPositions (φ : CNF ℕ) :
-    (firstPositions φ).length = φ.vars.toFinset.card := by
-  unfold firstPositions
-  rw [← List.toFinset_card_of_nodup (List.Nodup.filter _ List.nodup_range)]
-  refine Finset.card_bij (fun i _ => φ.vars.getD i 0)
-    (fun i hi => ?_) (fun i₁ hi₁ i₂ hi₂ h => ?_) (fun v hv => ?_)
-  · simp only [List.mem_toFinset, List.mem_filter, List.mem_range] at hi
-    exact List.mem_toFinset.2 (getD_mem_of_isFirst hi.2).1
-  · simp only [List.mem_toFinset, List.mem_filter, List.mem_range] at hi₁ hi₂
-    rw [← (getD_mem_of_isFirst hi₁.2).2, ← (getD_mem_of_isFirst hi₂.2).2, h]
-  · have hv' := List.mem_toFinset.1 hv
-    refine ⟨φ.vars.idxOf v, ?_, List.getD_idxOf hv' 0⟩
-    simp only [List.mem_toFinset, List.mem_filter, List.mem_range]
-    exact ⟨List.idxOf_lt_length_iff.2 hv', isFirst_idxOf hv'⟩
 
 theorem canonical_eq_true_iff {φ : CNF ℕ} {w : List Bool} :
     canonical φ w = true ↔ ∀ i < w.length, w.getD i false = true → isFirst φ i = true := by
@@ -189,19 +165,11 @@ theorem computableTidilyInPolyTime_isFirst :
       (encPair encCNF encUnary) encBool := by
   fun_prop [isFirst]
 
-/-- Listing the first-occurrence positions is polynomial-time, with positions in unary. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_firstPositions :
-    ComputableTidilyInPolyTime firstPositions encCNF (encList encUnary) := by
-  unfold firstPositions
-  fun_prop
-
 /-- The number of distinct variables occurring in `φ` is computable in polynomial time in unary. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_card_vars :
-    ComputableTidilyInPolyTime (fun φ : CNF ℕ => φ.vars.toFinset.card) encCNF encUnary := by
-  simp only [← length_firstPositions]
-  fun_prop
+    ComputableTidilyInPolyTime (fun φ : CNF ℕ => φ.vars.toFinset.card) encCNF encUnary :=
+  (CNF.computableInPolyTime_numVars encNat).tidy
 
 /-- The counting verifier is polynomial-time, including on certificates of arbitrary length. -/
 @[fun_prop]

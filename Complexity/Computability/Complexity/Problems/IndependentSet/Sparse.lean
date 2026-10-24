@@ -8,8 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.IndependentSet
-public import Complexity.Computability.Complexity.Problems.SubsetSum
-import Complexity.Computability.Complexity.FineGrained.Assignment
+public import Complexity.Logics.Propositional.CNF.ModelCount
+import Complexity.Logics.Propositional.CNF.PolyTime
 import Complexity.Foundations.Data.List.Counting
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -70,22 +70,22 @@ namespace SparseIndependentSet
 /-! ### The graph -/
 
 /-- The vertex of the literal `l` of `φ`, its variable numbered by its position in
-`ThreeSAT.distinctVars φ`. -/
+`φ.distinctVars`. -/
 def literalVertex (φ : CNF ℕ) (l : Literal ℕ) : ℕ :=
-  Nat.pair 0 (Nat.pair ((ThreeSAT.distinctVars φ).idxOf l.1) l.2.toNat)
+  Nat.pair 0 (Nat.pair (φ.distinctVars.idxOf l.1) l.2.toNat)
 
 /-- The vertex of position `j` of clause `i`. -/
 def occurrenceVertex (i j : ℕ) : ℕ := Nat.pair 1 (Nat.pair i j)
 
 /-- The vertices: the two literals of every variable of `φ`, and every position of every clause. -/
 def vertices (φ : CNF ℕ) : List ℕ :=
-  (ThreeSAT.distinctVars φ).flatMap
+  φ.distinctVars.flatMap
       (fun x => [literalVertex φ (x, true), literalVertex φ (x, false)]) ++
     φ.zipIdx.flatMap fun c => (List.range c.1.length).map (occurrenceVertex c.2)
 
 /-- The edges between the two literals of each variable. -/
 def literalEdges (φ : CNF ℕ) : List (ℕ × ℕ) :=
-  (ThreeSAT.distinctVars φ).map fun x => (literalVertex φ (x, true), literalVertex φ (x, false))
+  φ.distinctVars.map fun x => (literalVertex φ (x, true), literalVertex φ (x, false))
 
 /-- The edges between any two positions of a clause. -/
 def cliqueEdges (φ : CNF ℕ) : List (ℕ × ℕ) :=
@@ -107,7 +107,7 @@ open SparseIndependentSet in
 Theorem 3.3][GareyJohnson1979]: the graph of `φ` with the target `n + m`, for `n` distinct
 variables and `m` clauses. -/
 def toSparseIndependentSet (φ : CNF ℕ) : Graph × ℕ :=
-  ((vertices φ, edges φ), (ThreeSAT.distinctVars φ).length + φ.length)
+  ((vertices φ, edges φ), φ.distinctVars.length + φ.length)
 
 namespace SparseIndependentSet
 
@@ -127,7 +127,7 @@ private theorem mem_vars {i j : ℕ} (hi : i < φ.length) (hj : j < φ[i].length
 theorem literalVertex_inj {x x' : ℕ} (hx : x ∈ φ.vars) {b b' : Bool} :
     literalVertex φ (x, b) = literalVertex φ (x', b') ↔ x = x' ∧ b = b' := by
   simp only [literalVertex, Nat.pair_eq_pair, true_and]
-  rw [List.idxOf_inj (ThreeSAT.mem_distinctVars.2 hx)]
+  rw [List.idxOf_inj (CNF.mem_distinctVars.2 hx)]
   cases b <;> cases b' <;> simp
 
 theorem literalVertex_ne_occurrenceVertex (l : Literal ℕ) (i j : ℕ) :
@@ -141,7 +141,7 @@ theorem occurrenceVertex_inj {i j i' j' : ℕ} :
 theorem mem_vertices {v : ℕ} : v ∈ vertices φ ↔ (∃ x ∈ φ.vars, ∃ b, v = literalVertex φ (x, b)) ∨
     ∃ (i : ℕ) (hi : i < φ.length), ∃ j < φ[i].length, v = occurrenceVertex i j := by
   simp only [vertices, List.mem_append, List.mem_flatMap, List.mem_cons, List.not_mem_nil,
-    or_false, List.mem_map, List.mem_range, ThreeSAT.mem_distinctVars, Prod.exists]
+    or_false, List.mem_map, List.mem_range, CNF.mem_distinctVars, Prod.exists]
   refine or_congr ⟨?_, ?_⟩ ⟨?_, ?_⟩
   · rintro ⟨x, hx, rfl | rfl⟩
     · exact ⟨x, hx, true, rfl⟩
@@ -158,7 +158,7 @@ theorem mem_vertices {v : ℕ} : v ∈ vertices φ ↔ (∃ x ∈ φ.vars, ∃ b
 
 theorem mem_literalEdges {e : ℕ × ℕ} : e ∈ literalEdges φ ↔
     ∃ x ∈ φ.vars, e = (literalVertex φ (x, true), literalVertex φ (x, false)) := by
-  simp only [literalEdges, List.mem_map, ThreeSAT.mem_distinctVars]
+  simp only [literalEdges, List.mem_map, CNF.mem_distinctVars]
   exact ⟨fun ⟨x, hx, he⟩ => ⟨x, hx, he.symm⟩, fun ⟨x, hx, he⟩ => ⟨x, hx, he.symm⟩⟩
 
 theorem mem_cliqueEdges {e : ℕ × ℕ} : e ∈ cliqueEdges φ ↔ ∃ (i : ℕ) (hi : i < φ.length),
@@ -202,7 +202,7 @@ private def block (v : ℕ) : ℕ ⊕ ℕ :=
   if v.unpair.1 = 0 then .inl v.unpair.2.unpair.1 else .inr v.unpair.2.unpair.1
 
 private theorem block_literalVertex (l : Literal ℕ) :
-    block (literalVertex φ l) = .inl ((ThreeSAT.distinctVars φ).idxOf l.1) := by
+    block (literalVertex φ l) = .inl (φ.distinctVars.idxOf l.1) := by
   simp [block, literalVertex]
 
 private theorem block_occurrenceVertex (i j : ℕ) : block (occurrenceVertex i j) = .inr i := by
@@ -213,7 +213,7 @@ private theorem satisfiable_of_mem (h : toSparseIndependentSet φ ∈ Independen
     φ.Satisfiable := by
   classical
   obtain ⟨S, hSV, hS⟩ := mem_IndependentSet_iff.1 h
-  set n := (ThreeSAT.distinctVars φ).length
+  set n := φ.distinctVars.length
   have hSV' : ∀ v ∈ S, v ∈ vertices φ := hSV
   have hind : ∀ u ∈ S, ∀ v ∈ S, u ≠ v → (u, v) ∉ edges φ := fun u hu v hv huv he =>
     hS.isIndepSet hu hv huv (adj_of_mem huv he)
@@ -223,7 +223,7 @@ private theorem satisfiable_of_mem (h : toSparseIndependentSet φ ∈ Independen
     rcases mem_vertices.1 (hSV' v hv) with ⟨x, hx, b, rfl⟩ | ⟨i, hi, j, -, rfl⟩
     · rw [block_literalVertex]
       exact Finset.inl_mem_disjSum.2 (Finset.mem_range.2
-        (List.idxOf_lt_length_iff.2 (ThreeSAT.mem_distinctVars.2 hx)))
+        (List.idxOf_lt_length_iff.2 (CNF.mem_distinctVars.2 hx)))
     · rw [block_occurrenceVertex]
       exact Finset.inr_mem_disjSum.2 (Finset.mem_range.2 hi)
   -- each block holds at most one vertex of `S`
@@ -234,7 +234,7 @@ private theorem satisfiable_of_mem (h : toSparseIndependentSet φ ∈ Independen
       rcases mem_vertices.1 (hSV' v hv) with ⟨x', hx', b', rfl⟩ | ⟨i', hi', j', hj', rfl⟩ <;>
       simp only [block_literalVertex, block_occurrenceVertex, Sum.inl.injEq, Sum.inr.injEq,
         reduceCtorEq] at huv
-    · rw [List.idxOf_inj (ThreeSAT.mem_distinctVars.2 hx)] at huv
+    · rw [List.idxOf_inj (CNF.mem_distinctVars.2 hx)] at huv
       subst huv
       have hbb : b ≠ b' := fun h => hne (by rw [h])
       have he : (literalVertex φ (x, true), literalVertex φ (x, false)) ∈ edges φ :=
@@ -261,12 +261,12 @@ private theorem satisfiable_of_mem (h : toSparseIndependentSet φ ∈ Independen
     exact Finset.mem_image.1 hb
   -- every variable has one of its literal vertices in `S`
   have hvar : ∀ x ∈ φ.vars, ∃ b, literalVertex φ (x, b) ∈ S := fun x hx => by
-    have hxd := ThreeSAT.mem_distinctVars.2 hx
-    obtain ⟨v, hv, hvb⟩ := hhit (.inl ((ThreeSAT.distinctVars φ).idxOf x))
+    have hxd := CNF.mem_distinctVars.2 hx
+    obtain ⟨v, hv, hvb⟩ := hhit (.inl (φ.distinctVars.idxOf x))
       (Finset.inl_mem_disjSum.2 (Finset.mem_range.2 (List.idxOf_lt_length_iff.2 hxd)))
     rcases mem_vertices.1 (hSV' v hv) with ⟨x', hx', b, rfl⟩ | ⟨i, hi, j, -, rfl⟩
     · rw [block_literalVertex, Sum.inl.injEq,
-        List.idxOf_inj (ThreeSAT.mem_distinctVars.2 hx')] at hvb
+        List.idxOf_inj (CNF.mem_distinctVars.2 hx')] at hvb
       exact ⟨b, hvb ▸ hv⟩
     · simp [block_occurrenceVertex] at hvb
   -- the two literal vertices of a variable are not both in `S`
@@ -310,11 +310,11 @@ private theorem mem_of_satisfiable (h : φ.Satisfiable) :
     obtain ⟨j, hj, rfl⟩ := List.getElem_of_mem hl
     exact ⟨⟨j, hj⟩, hσl⟩
   choose J hJ using hcl
-  set L : Finset ℕ := ((ThreeSAT.distinctVars φ).map fun x => literalVertex φ (x, σ x)).toFinset
+  set L : Finset ℕ := (φ.distinctVars.map fun x => literalVertex φ (x, σ x)).toFinset
   set O : Finset ℕ := Finset.univ.image fun i : Fin φ.length => occurrenceVertex i (J i)
   have hL : ∀ {v}, v ∈ L ↔ ∃ x ∈ φ.vars, v = literalVertex φ (x, σ x) := by
     intro v
-    simp only [L, List.mem_toFinset, List.mem_map, ThreeSAT.mem_distinctVars]
+    simp only [L, List.mem_toFinset, List.mem_map, CNF.mem_distinctVars]
     exact ⟨fun ⟨x, hx, he⟩ => ⟨x, hx, he.symm⟩, fun ⟨x, hx, he⟩ => ⟨x, hx, he.symm⟩⟩
   have hO : ∀ {v}, v ∈ O ↔ ∃ i : Fin φ.length, v = occurrenceVertex i (J i) := by
     intro v
@@ -392,8 +392,8 @@ private theorem mem_of_satisfiable (h : φ.Satisfiable) :
     rw [Finset.card_union_of_disjoint hdisj]
     congr 1
     · rw [List.toFinset_card_of_nodup, List.length_map]
-      refine (ThreeSAT.nodup_distinctVars).map_on fun x hx y hy hxy => ?_
-      exact ((literalVertex_inj (ThreeSAT.mem_distinctVars.1 hx)).1 hxy).1
+      refine φ.nodup_distinctVars.map_on fun x hx y hy hxy => ?_
+      exact ((literalVertex_inj (CNF.mem_distinctVars.1 hx)).1 hxy).1
     · rw [Finset.card_image_of_injective _ fun i i' h => Fin.ext (occurrenceVertex_inj.1 h).1,
         Finset.card_univ, Fintype.card_fin]
 
@@ -418,16 +418,16 @@ theorem length_toSparseIndependentSet_le {k : ℕ} {φ : CNF ℕ} (hφ : ∀ c �
     obtain ⟨cl, i⟩ := c
     obtain ⟨hi, rfl⟩ := mem_zipIdx_iff.1 hc
     exact hφ _ (List.getElem_mem hi)
-  have hn : (ThreeSAT.distinctVars φ).length ≤ k * φ.length :=
-    (ThreeSAT.length_distinctVars φ).trans_le (CNF.numVars_le_mul_length hφ)
-  have hV₁ : ((ThreeSAT.distinctVars φ).flatMap
+  have hn : φ.distinctVars.length ≤ k * φ.length :=
+    (CNF.length_distinctVars φ).trans_le (CNF.numVars_le_mul_length hφ)
+  have hV₁ : (φ.distinctVars.flatMap
       fun x => [literalVertex φ (x, true), literalVertex φ (x, false)]).length ≤
-      (ThreeSAT.distinctVars φ).length * 2 :=
+      φ.distinctVars.length * 2 :=
     List.length_flatMap_le fun _ _ => by simp
   have hV₂ : (φ.zipIdx.flatMap fun c => (List.range c.1.length).map (occurrenceVertex c.2)).length
       ≤ φ.length * k := by
     simpa using List.length_flatMap_le (l := φ.zipIdx) fun c hc => by simpa using hzip c hc
-  have hE₁ : (literalEdges φ).length ≤ (ThreeSAT.distinctVars φ).length := by
+  have hE₁ : (literalEdges φ).length ≤ φ.distinctVars.length := by
     simp [literalEdges]
   have hE₂ : (cliqueEdges φ).length ≤ φ.length * (k * k) := by
     refine (List.length_flatMap_le (l := φ.zipIdx) (k := k * k) fun c hc => ?_).trans_eq
@@ -450,9 +450,9 @@ computed in unary from clause, position and variable indices, then converted to 
 @[fun_prop]
 theorem computableTidilyInPolyTime_toSparseIndependentSet :
     ComputableTidilyInPolyTime toSparseIndependentSet encCNF (encPair encGraph encNat) := by
-  have hdv : ComputableTidilyInPolyTime ThreeSAT.distinctVars
+  have hdv : ComputableTidilyInPolyTime CNF.distinctVars
       (encList (encList (encPair encNat encBool))) (encList encNat) :=
-    ThreeSAT.computableTidilyInPolyTime_distinctVars
+    (CNF.computableInPolyTime_distinctVars encNat).tidy
   have hlit : ComputableTidilyInPolyTime (fun p : CNF ℕ × Literal ℕ => literalVertex p.1 p.2)
       (encPair (encList (encList (encPair encNat encBool))) (encPair encNat encBool)) encNat := by
     unfold literalVertex
@@ -462,7 +462,7 @@ theorem computableTidilyInPolyTime_toSparseIndependentSet :
     unfold occurrenceVertex
     exact unary_to_binary.comp (by fun_prop)
   have hk : ComputableTidilyInPolyTime
-      (fun φ : CNF ℕ => (ThreeSAT.distinctVars φ).length + φ.length)
+      (fun φ : CNF ℕ => φ.distinctVars.length + φ.length)
       (encList (encList (encPair encNat encBool))) encNat :=
     unary_to_binary.comp (unary_add.comp (((length_list encNat).comp hdv).prod (length_list _)))
   have hV : ComputableTidilyInPolyTime vertices (encList (encList (encPair encNat encBool)))
