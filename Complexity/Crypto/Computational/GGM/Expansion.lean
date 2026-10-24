@@ -117,10 +117,10 @@ theorem isPPTOn_expansionOracle {α : Type} {input : α ↪ List Bool}
     {width depth : α → ℕ} {query : α → List Bool} {cache : α → Cache}
     (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
     (hsample : IsPPTOn input encBits sample)
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hdepth : ComputableTidilyInPolyTime depth input encUnary)
-    (hquery : ComputableTidilyInPolyTime query input encBits)
-    (hcache : ComputableTidilyInPolyTime cache input cacheEncoding) :
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hdepth : ComputableInPolyTime depth input encUnary)
+    (hquery : ComputableInPolyTime query input encBits)
+    (hcache : ComputableInPolyTime cache input cacheEncoding) :
     IsPPTOn input (encPair encBits cacheEncoding) (fun a =>
       expansionOracle generator (sample a) (width a) (depth a) (query a) (cache a)) := by
   have heval := computableInPolyTime_eval (.of_tidy hgenerator)
@@ -134,8 +134,8 @@ theorem isPPTOn_expansionGame {Caller : Type} {input : Caller ↪ List Bool}
     {width depth : Caller → ℕ}
     (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
     (hsample : IsPPTOn input encBits sample)
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hdepth : ComputableTidilyInPolyTime depth input encUnary)
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hdepth : ComputableInPolyTime depth input encUnary)
     {adversary : OracleDistinguisher} (hadversary : IsOraclePPT encBool adversary) :
     IsPPTOn input encBool
       (fun a => expansionGame generator (sample a) adversary (width a) (depth a)) := by
@@ -154,7 +154,7 @@ theorem isPPTOn_expansionGame {Caller : Type} {input : Caller ↪ List Bool}
       expansionOracle_bounds generator (sample a) (width a) (depth a) request.2 cache hcache
         result hresult
     exact ⟨hcache', by lia, by lia⟩
-  exact hrun.map (ComputableTidilyInPolyTime.fst _ _)
+  exact hrun.map (ComputableInPolyTime.fst _ _)
 
 private def expandCache (generator : List Bool → List Bool) (n : ℕ) (cache : Cache) : Cache :=
   cache.map (fun entry => (entry.1, (generator entry.2).take (2 * n)))

@@ -88,9 +88,9 @@ theorem isPPTOn_sampleGame {Caller : Type} {input : Caller ↪ List Bool}
     {generator : List Bool → List Bool}
     (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
     {width depth : Caller → ℕ} {values : Caller → List (List Bool)}
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hdepth : ComputableTidilyInPolyTime depth input encUnary)
-    (hvalues : ComputableTidilyInPolyTime values input (encList encBits))
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hdepth : ComputableInPolyTime depth input encUnary)
+    (hvalues : ComputableInPolyTime values input (encList encBits))
     {adversary : OracleDistinguisher} (hadversary : IsOraclePPT encBool adversary) :
     IsPPTOn input encBool
       (fun a => sampleGame generator adversary (width a) (depth a) (values a)) := by
@@ -109,7 +109,7 @@ theorem isPPTOn_sampleGame {Caller : Type} {input : Caller ↪ List Bool}
     obtain ⟨hcache', hreply, hgrowth⟩ := expansionOracle_bounds generator
       (pure expansion) (width a) (depth a) request.2 cache hcache result hresult
     exact ⟨hcache', by lia, by lia⟩
-  exact hrun.map (ComputableTidilyInPolyTime.fst _ _)
+  exact hrun.map (ComputableInPolyTime.fst _ _)
 
 /-- Insert one challenge among simulated uniform and generated expansions at a chosen level. -/
 noncomputable def levelTest (generator : List Bool → List Bool) (adversary : OracleDistinguisher)
@@ -123,10 +123,10 @@ theorem isPPTOn_levelTest {Caller : Type} {input : Caller ↪ List Bool}
     {generator : List Bool → List Bool}
     (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
     {width depth count : Caller → ℕ} {challenge : Caller → List Bool}
-    (hwidth : ComputableTidilyInPolyTime width input encUnary)
-    (hdepth : ComputableTidilyInPolyTime depth input encUnary)
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hchallenge : ComputableTidilyInPolyTime challenge input encBits)
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hdepth : ComputableInPolyTime depth input encUnary)
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hchallenge : ComputableInPolyTime challenge input encBits)
     {adversary : OracleDistinguisher} (hadversary : IsOraclePPT encBool adversary) :
     IsPPTOn input encBool (fun a =>
       levelTest generator adversary (width a) (depth a) (count a) (challenge a)) := by
@@ -168,7 +168,7 @@ theorem isPPT_reduction {generator : List Bool → List Bool}
     (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
     {adversary : OracleDistinguisher}
     (hadversary : IsOraclePPT encBool adversary) {count : ℕ → ℕ}
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary) :
+    (hcount : ComputableInPolyTime count encUnary encUnary) :
     IsPPT encBool (reduction generator adversary count) := by
   have hlevel : IsPPTOn (encPair (encPair encUnary encBits) encUnary) encBool
       (fun pair => levelTest generator adversary pair.1.1 pair.2 (count pair.1.1) pair.1.2) :=
