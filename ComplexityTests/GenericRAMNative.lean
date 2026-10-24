@@ -74,9 +74,48 @@ example : ComputableTidilyInPolyTime (model.checkedOp ())
     (encPair encNat (encPi encNat)) (encOption encNat) := by polytime
 example : ComputableTidilyInPolyTime
     (fun k => (model.checkedConstant 7 k).getD 0) encNat encNat := by polytime
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (Cslib.WordRAM.Basis.standard.genericModel.checkedOp (.bin .add))
-    (encPair encUnary (encPi encNat)) (encOption encNat) := by polytime
+    (encPair encUnary (encPi encNat)) (encOption encNat) := by fun_prop
+example (op : Cslib.WordRAM.StandardOp) : ComputableInPolyTime
+    (Cslib.WordRAM.Basis.standard.genericModel.checkedOp op)
+    (encPair encUnary (encPi encNat)) (encOption encNat) := by fun_prop
+example (op : Cslib.WordRAM.StandardOp) : ComputableInPolyTime
+    (Cslib.WordRAM.Basis.exact.genericModel.checkedOp op)
+    (encPair encUnary (encPi encNat)) (encOption encNat) := by fun_prop
+example (op : Cslib.WordRAM.Basis.additive.Op) : ComputableInPolyTime
+    (Cslib.WordRAM.Basis.additive.genericModel.checkedOp op)
+    (encPair encUnary (encPi encNat)) (encOption encNat) := by fun_prop
+example (op : Cslib.WordRAM.Basis.arithmetic.Op) : ComputableInPolyTime
+    (Cslib.WordRAM.Basis.arithmetic.genericModel.checkedOp op)
+    (encPair encUnary (encPi encNat)) (encOption encNat) := by fun_prop
+example (B : Cslib.WordRAM.Basis) (c : ℕ) : ComputableInPolyTime
+    (B.genericModel.checkedConstant c) encUnary (encOption encNat) := by fun_prop
+example (B : Cslib.WordRAM.Basis) (t : Bool) : ComputableInPolyTime
+    (fun p => B.genericModel.evalTest p.1 t p.2)
+    (encPair encUnary (encPi encNat)) (encOption encBool) := by fun_prop
+example (B : Cslib.WordRAM.Basis) : ComputableInPolyTime
+    (fun p => B.genericModel.address p.1 p.2)
+    (encPair encUnary encNat) (encOption encNat) := by fun_prop
+example (B : Cslib.WordRAM.Basis) : ComputableInPolyTime
+    (fun p => B.genericModel.validMove p.1 p.2)
+    (encPair encUnary encNat) encBool := by fun_prop
+example (B : Cslib.WordRAM.Basis) : ComputableInPolyTime
+    (fun p => B.genericModel.validPC p.1 p.2)
+    (encPair encUnary encNat) encBool := by fun_prop
+
+-- Binary bitwise, right-shift, bit-length, and unary-capped minimum plain certificates.
+example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 &&& p.2)
+    (encPair encNat encNat) encNat := by fun_prop
+example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ||| p.2)
+    (encPair encNat encNat) encNat := by fun_prop
+example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ^^^ p.2)
+    (encPair encNat encNat) encNat := by fun_prop
+example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 >>> p.2)
+    (encPair encNat encNat) encNat := by fun_prop
+example : ComputableInPolyTime Nat.size encNat encUnary := by fun_prop
+example : ComputableInPolyTime (fun p : ℕ × ℕ => min p.1 p.2)
+    (encPair encUnary encNat) encUnary := by fun_prop
 
 -- Literals, results, tests, addresses, moves and labels have live rejection paths.
 example : model.checkedConstant 3 4 = some 3 := by decide
@@ -121,13 +160,47 @@ example (k : ℕ) (x : Data model 2) :
 
 -- WordRAM uses an exclusive bound 2^w, so width zero still admits zero.
 private abbrev word := Cslib.WordRAM.Basis.standard.genericModel
+private abbrev exactWord := Cslib.WordRAM.Basis.exact.genericModel
 example : word.checkedOp (.bin .add) (0, ![0, 0]) = some 0 := by decide
 example : word.checkedOp (.bin .add) (0, ![0, 1]) = none := by decide
 example : word.checkedOp (.bin .add) (2, ![1, 2]) = some 3 := by decide
 example : word.checkedOp (.bin .add) (2, ![2, 2]) = none := by decide
 example : word.checkedOp (.bin .add) (3, ![2, 2]) = some 4 := by decide
+example : word.checkedOp .width (0, ![]) = some 0 := by decide
+example : word.checkedOp .width (1, ![]) = some 1 := by decide
+example : word.checkedOp .width (2, ![]) = some 2 := by decide
+example : word.checkedOp (.bin .and) (2, ![3, 1]) = some 1 := by decide
+example : word.checkedOp (.bin .or) (2, ![2, 1]) = some 3 := by decide
+example : word.checkedOp (.bin .xor) (2, ![3, 1]) = some 2 := by decide
+example : word.checkedOp (.bin .shiftRight) (2, ![6, 1]) = some 3 := by decide
+example : word.checkedOp (.bin .shiftRight) (1, ![6, 1]) = none := by decide
+example : word.checkedOp (.bin .shiftLeft) (3, ![1, 2]) = some 4 := by decide
+example : word.checkedOp (.bin .shiftLeft) (2, ![1, 2]) = none := by decide
+-- Large shift counts y > w preserve zero and reject nonzero left shifts.
+example : word.checkedOp (.bin .shiftLeft) (2, ![0, 100]) = some 0 := by decide
+example : word.checkedOp (.bin .shiftLeft) (2, ![1, 100]) = none := by decide
+-- Standard saturating/zero-default arithmetic vs. exact partial arithmetic on underflow/zero-div.
+example : word.checkedOp (.bin .sub) (2, ![2, 3]) = some 0 := by decide
+example : exactWord.checkedOp (.bin .sub) (2, ![2, 3]) = none := by decide
+example : exactWord.checkedOp (.bin .sub) (2, ![3, 2]) = some 1 := by decide
+example : word.checkedOp (.bin .div) (2, ![3, 0]) = some 0 := by decide
+example : exactWord.checkedOp (.bin .div) (2, ![3, 0]) = none := by decide
+example : exactWord.checkedOp (.bin .div) (2, ![3, 2]) = some 1 := by decide
+example : word.checkedOp (.bin .mod) (2, ![3, 0]) = some 3 := by decide
+example : exactWord.checkedOp (.bin .mod) (2, ![3, 0]) = none := by decide
+example : exactWord.checkedOp (.bin .mod) (2, ![3, 2]) = some 1 := by decide
+
+-- Complete native primitive bundles for standard, additive, arithmetic, and exact bases.
 example : Cslib.WordRAM.checkedAddCertificate.IsPolynomial :=
-  NativeCertificate.ofPolyTime_isPolynomial Cslib.WordRAM.checkedAdd_polyTime
+  NativeCertificate.ofPolyTime_isPolynomial Cslib.WordRAM.checkedAdd_polyTime.tidy
+example : Cslib.WordRAM.Basis.standard.nativePrimitives.IsPolynomial :=
+  Cslib.WordRAM.Basis.standard.nativePrimitives_isPolynomial
+example : Cslib.WordRAM.Basis.additive.nativePrimitives.IsPolynomial :=
+  Cslib.WordRAM.Basis.additive.nativePrimitives_isPolynomial
+example : Cslib.WordRAM.Basis.arithmetic.nativePrimitives.IsPolynomial :=
+  Cslib.WordRAM.Basis.arithmetic.nativePrimitives_isPolynomial
+example : Cslib.WordRAM.Basis.exact.nativePrimitives.IsPolynomial :=
+  Cslib.WordRAM.Basis.exact.nativePrimitives_isPolynomial
 
 /--
 info: 'Cslib.GenericRAM.NativeCertificate.nonempty_iff_isComputable' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -145,9 +218,64 @@ info: 'Cslib.GenericRAM.BoundedNat.nativePrimitives' depends on axioms: [propext
 #guard_msgs (whitespace := lax) in
 #print axioms BoundedNat.nativePrimitives
 /--
+info: 'Turing.MultiTapeTM.ComputableInPolyTime.binary_bitwise' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.binary_bitwise
+/--
+info: 'Turing.MultiTapeTM.ComputableInPolyTime.binary_shiftRight' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.binary_shiftRight
+/--
+info: 'Turing.MultiTapeTM.ComputableInPolyTime.binary_min_unary' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.binary_min_unary
+/--
 info: 'Cslib.WordRAM.checkedAdd_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.WordRAM.checkedAdd_polyTime
+/--
+info: 'Cslib.WordRAM.Basis.standard.nativePrimitives' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.Basis.standard.nativePrimitives
+/--
+info: 'Cslib.WordRAM.Basis.standard.nativePrimitives_isPolynomial' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.Basis.standard.nativePrimitives_isPolynomial
+/--
+info: 'Cslib.WordRAM.Basis.additive.nativePrimitives' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.Basis.additive.nativePrimitives
+/--
+info: 'Cslib.WordRAM.Basis.additive.nativePrimitives_isPolynomial' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.Basis.additive.nativePrimitives_isPolynomial
+/--
+info: 'Cslib.WordRAM.Basis.arithmetic.nativePrimitives' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.Basis.arithmetic.nativePrimitives
+/--
+info: 'Cslib.WordRAM.Basis.arithmetic.nativePrimitives_isPolynomial' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.Basis.arithmetic.nativePrimitives_isPolynomial
+/--
+info: 'Cslib.WordRAM.Basis.exact.nativePrimitives' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.Basis.exact.nativePrimitives
+/--
+info: 'Cslib.WordRAM.Basis.exact.nativePrimitives_isPolynomial' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.WordRAM.Basis.exact.nativePrimitives_isPolynomial
 
 end ComplexityTests.GenericRAMNative

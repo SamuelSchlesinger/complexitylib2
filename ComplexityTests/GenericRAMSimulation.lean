@@ -11,7 +11,9 @@ public import Complexity.Computability.GenericRAM.Simulation.Turing
 public import Complexity.Computability.GenericRAM.Simulation.Run
 public import Complexity.Computability.GenericRAM.Native.Nat
 public import Complexity.Computability.WordRAM.Native
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Mathlib.Data.Fin.VecNotation
+import Mathlib.Data.Nat.Size
 
 /-!
 # Finite RAM simulation, multi-step execution, and native transport checks
@@ -368,6 +370,123 @@ theorem double_step_polyTime :
       (FiniteState.inputEncoding encoding) (FiniteState.resultEncoding encoding) :=
   FiniteState.step_polyTime encoding nativePrimitives doubleProgram nativePrimitives_isPolynomial
 
+/-! ### End-to-end WordRAM program transport over `Basis.standard` -/
+
+/-- Five-instruction `Basis.standard` word-RAM program that clears register `0` via bitwise XOR,
+stores `x` (initially in register `1`) at memory address `0`, loads it back into register `0`,
+adds registers `0` and `1`, and halts returning `x + x`. -/
+def wordDoubleProgram : Cslib.WordRAM.Program Cslib.WordRAM.Basis.standard 2 :=
+  [.op (.alu (.bin .xor) 0 ![0, 0]),
+   .op (.store 0 1),
+   .op (.load 0 0),
+   .op (.alu (.bin .add) 1 ![0, 1]),
+   .halt 1]
+
+/-- Initial finite generic state for `wordDoubleProgram` with both registers set to `x`. -/
+def wordDoubleInit (x : ℕ) : FiniteState Cslib.WordRAM.Basis.standard.genericModel 2 :=
+  FiniteState.initConst x 0 ∅
+
+/-- Corresponding semantic `WordRAM.State` with both registers set to `x` and zeroed memory. -/
+def wordDoubleState (x : ℕ) : Cslib.WordRAM.State 2 :=
+  ⟨0, ⟨fun _ => x, fun _ => 0⟩⟩
+
+/-- Native certificate for `wordDoubleInit`. -/
+noncomputable def wordDoubleInitCert :
+    NativeCertificate wordDoubleInit encNat
+      (FiniteState.encoding Cslib.WordRAM.Basis.standard.encoding) :=
+  FiniteState.initConstCertificate (r := 2) Cslib.WordRAM.Basis.standard.encoding
+    (NativeCertificate.linear ComputableTidilyInDegree.id'.inO_one)
+    (NativeCertificate.const 0)
+    (NativeCertificate.const ∅)
+
+theorem wordDoubleInitCert_isPolynomial : wordDoubleInitCert.IsPolynomial :=
+  FiniteState.initConstCertificate_isPolynomial (r := 2) Cslib.WordRAM.Basis.standard.encoding _ _ _
+    (NativeCertificate.linear_isPolynomial ComputableTidilyInDegree.id'.inO_one)
+    (NativeCertificate.const_isPolynomial 0)
+    (NativeCertificate.const_isPolynomial ∅)
+
+/-- Runtime word width `x.size + 2` (encoded in unary), accommodating `0`, `x`, and `x + x`. -/
+def wordDoubleWidth (x : ℕ) : ℕ := x.size + 2
+
+theorem wordDoubleWidth_polyTime :
+    ComputableInPolyTime wordDoubleWidth encNat encUnary :=
+  .of_tidy <| ComputableTidilyInPolyTime.unary_add.comp
+    (ComputableInPolyTime.binary_size.tidy.prod (ComputableTidilyInPolyTime.const 2))
+
+/-- Native certificate for `wordDoubleWidth`. -/
+noncomputable def wordDoubleWidthCert : NativeCertificate wordDoubleWidth encNat encUnary :=
+  .ofPolyTime wordDoubleWidth_polyTime.tidy
+
+theorem wordDoubleWidthCert_isPolynomial : wordDoubleWidthCert.IsPolynomial :=
+  NativeCertificate.ofPolyTime_isPolynomial wordDoubleWidth_polyTime.tidy
+
+/-- Constant step budget `5` for `wordDoubleProgram`. -/
+noncomputable def wordDoubleStepsCert : NativeCertificate (fun _ : ℕ => 5) encNat encNat :=
+  NativeCertificate.const 5
+
+theorem wordDoubleStepsCert_isPolynomial : wordDoubleStepsCert.IsPolynomial :=
+  NativeCertificate.const_isPolynomial 5
+
+/-- `wordDoubleProgram.toGeneric` halts in `5` steps with output `x + x` at width
+`wordDoubleWidth x` from initial state `wordDoubleInit x`. -/
+theorem wordDoubleProgram_run (x : ℕ) :
+    FiniteState.run (wordDoubleWidth x) wordDoubleProgram.toGeneric 5 (wordDoubleInit x) =
+      some (.inr (x + x)) := by
+  have hfit0 : Cslib.WordRAM.Fits (wordDoubleWidth x) 0 := Cslib.WordRAM.fits_zero _
+  have hfitxx : Cslib.WordRAM.Fits (wordDoubleWidth x) (x + x) := by
+    rw [Cslib.WordRAM.fits_iff, wordDoubleWidth]
+    have hx : x < 2 ^ x.size := Nat.lt_size_self x
+    have hpow : 2 ^ (x.size + 2) = 4 * 2 ^ x.size := by ring
+    omega
+  have hmem : SparseMemory.read 0 (0 : ℕ) (AList.singleton 0 x) = x := by
+    simpa using congrFun (SparseMemory.read_insert 0 (0 : ℕ) x ∅) 0
+  simp only [wordDoubleProgram, Cslib.WordRAM.Program.toGeneric, List.map_cons, List.map_nil,
+    Cslib.WordRAM.Instr.toGeneric, Cslib.WordRAM.Op.toGeneric]
+  simp [FiniteState.run, FiniteState.step, FiniteState.dispatch, FiniteState.evalInstr,
+    FiniteState.evalOp, FiniteState.resume, FiniteState.set, FiniteState.write, FiniteState.move,
+    Model.checkedOp, wordDoubleInit, FiniteState.initConst, FiniteState.init,
+    Cslib.WordRAM.Basis.genericModel, Cslib.WordRAM.Basis.standard,
+    Cslib.WordRAM.StandardOp.eval, Cslib.WordRAM.BinOp.eval, hfit0, hfitxx, hmem]
+
+/-- `wordDoubleProgram` satisfies semantic `WordRAM.Executes` within `5` steps for all `x`. -/
+theorem wordDoubleProgram_executes (x : ℕ) :
+    ∃ m ≤ 5, Cslib.WordRAM.Executes (wordDoubleWidth x) wordDoubleProgram
+      (wordDoubleState x) (x + x) m := by
+  obtain ⟨m, hm, hex⟩ := FiniteState.executes_of_run_eq_inr (wordDoubleProgram_run x)
+  exact ⟨m, hm, Cslib.WordRAM.executes_toGeneric_iff.mp hex⟩
+
+/-- Whole-run `ComputableTidilyInO` bound transported from `wordDoubleProgram` via
+`Cslib.WordRAM.transport_inO` and `Basis.standard.nativePrimitives`. -/
+theorem wordDouble_inO :
+    ComputableTidilyInO (fun x : ℕ => x + x) encNat encNat
+      (fun x => wordDoubleStepsCert.time x +
+        (wordDoubleWidthCert.time x + wordDoubleInitCert.time x) +
+        FiniteState.runTime Cslib.WordRAM.Basis.standard.encoding
+          Cslib.WordRAM.Basis.standard.nativePrimitives wordDoubleProgram.toGeneric
+          (5, (wordDoubleWidth x, wordDoubleInit x)))
+      (fun x => wordDoubleStepsCert.space x +
+        (wordDoubleWidthCert.space x + wordDoubleInitCert.space x) +
+        FiniteState.runSpace Cslib.WordRAM.Basis.standard.encoding
+          Cslib.WordRAM.Basis.standard.nativePrimitives wordDoubleProgram.toGeneric
+          (5, (wordDoubleWidth x, wordDoubleInit x))) :=
+  Cslib.WordRAM.transport_inO Cslib.WordRAM.Basis.standard.encoding
+    Cslib.WordRAM.Basis.standard.nativePrimitives wordDoubleProgram
+    wordDoubleStepsCert wordDoubleWidthCert wordDoubleInitCert
+    (fun _ => rfl) wordDoubleProgram_executes
+
+/-- Automatic `ComputableInPolyTime` transport for `wordDoubleProgram` via
+`Cslib.WordRAM.transport_polyTime_of_le_const` and `Basis.standard.nativePrimitives`. -/
+theorem wordDouble_polyTime :
+    ComputableInPolyTime (fun x : ℕ => x + x) encNat encNat :=
+  Cslib.WordRAM.transport_polyTime_of_le_const Cslib.WordRAM.Basis.standard.encoding
+    Cslib.WordRAM.Basis.standard.nativePrimitives wordDoubleProgram
+    wordDoubleStepsCert wordDoubleWidthCert wordDoubleInitCert
+    (fun _ => rfl) wordDoubleProgram_executes
+    Cslib.WordRAM.Basis.standard.nativePrimitives_isPolynomial
+    wordDoubleStepsCert_isPolynomial wordDoubleWidthCert_isPolynomial
+    wordDoubleInitCert_isPolynomial
+    5 (fun _ => le_rfl)
+
 /--
 info: 'Turing.MultiTapeTM.ComputableTidilyInO.inl' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
@@ -481,5 +600,11 @@ info: 'ComplexityTests.GenericRAMSimulation.double_polyTime' depends on axioms: 
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms double_polyTime
+
+/--
+info: 'ComplexityTests.GenericRAMSimulation.wordDouble_polyTime' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms wordDouble_polyTime
 
 end ComplexityTests.GenericRAMSimulation
