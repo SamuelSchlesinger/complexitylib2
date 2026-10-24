@@ -8,6 +8,9 @@ lines, comments, statements, and the initial "by" are excluded. Term proofs are
 included. Proofs inside definitions/instances and generated declarations are not.
 The scanner relies on the project's unindented top-level command convention;
 unrecognized theorem bodies cause an error rather than being silently omitted.
+
+The command and statement scanner here is shared with the formal-abstract renderer
+(`abstract_to_tex.py`) and the hygiene checks.
 """
 
 from __future__ import annotations
@@ -38,8 +41,23 @@ COMMAND = re.compile(
     + r"(?:theorem|lemma|def|abbrev|opaque|axiom|constant|instance|structure|class|inductive|"
     r"example|namespace|section|end|open|universe|variable|include|omit|attribute|set_option|"
     r"syntax|macro|macro_rules|elab|elab_rules|notation|infixl|infixr|infix|prefix|postfix|"
-    r"initialize|builtin_initialize|mutual|export)\b)", re.M
+    r"initialize|builtin_initialize|mutual|export|alias|irreducible_def|add_decl_doc|run_cmd|"
+    r"deriving\s+instance)\b)", re.M
 )
+# `open Foo in`, `set_option … in` and `#guard_msgs in` prefix the command that follows.
+COMMAND_PREFIX = re.compile(r"(?<![\w'.!?])in\Z")
+# Tokens that decide where a theorem statement ends: brackets, `:=`, binders in the statement
+# that take their own `:=`, `match`/`fun` alternatives, a `where` body and equation clauses.
+STATEMENT_TOKEN = re.compile(
+    r"(?P<open>[([{⟨⦃])|(?P<close>[)\]}⟩⦄])|(?P<assign>:=)|(?P<bar>\|(?![|>]))"
+    r"|(?<![\w'.!?])(?:(?P<binder>let|letI|have|haveI)|(?P<alternatives>match|fun(?=\s*\|))"
+    r"|(?P<where>where))(?![\w'!?])"
+)
+# `let x ← e` in `do` notation binds without a `:=` of its own.
+DO_BIND = re.compile(r"[^=←\n]*←")
+# The last character of a complete term, after which a line starting with `|` begins
+# equation clauses rather than continuing the statement (as in `:\n    |x| ≤ 1`).
+TERM_END = "_'!?)]}⟩⦄|⊤⊥∅"
 GROUPS = [
     ("Circuits: frontier", "Computability/Circuit/Frontier/"),
     ("Circuits: Boolean", "Computability/Circuit/Boolean/"),
@@ -67,13 +85,14 @@ GROUPS = [
 ]
 
 
-NORMAL_SPECIAL = re.compile(r"--|/-|['\"]")
+NORMAL_SPECIAL = re.compile(r"--|/-|['\"]|(?<![\w'!?.])r#*\"")
 COMMENT_SPECIAL = re.compile(r"/-|-/")
 STRING_SPECIAL = re.compile(r'[\\"]')
 
 
 def masks(text: str) -> tuple[str, str]:
-    """Preserve offsets while masking nested comments, then string/character literals."""
+    """Preserve offsets and newlines while masking nested comments, then string, raw-string
+    and character literals."""
     code, syntax = list(text), list(text)
     size = len(text)
 
@@ -99,7 +118,7 @@ def masks(text: str) -> tuple[str, str]:
             j = match.start()
             blank(syntax, i, j)
             if text[j] == "\\" and j + 1 < size:
-                syntax[j:j + 2] = [" ", " "]
+                blank(syntax, j, j + 2)  # Keeps the newline of a string gap.
                 i = j + 2
             else:
                 syntax[j], quoted, i = " ", text[j] != '"', j + 1
@@ -121,6 +140,14 @@ def masks(text: str) -> tuple[str, str]:
                 if literal:
                     blank(syntax, j, literal.end())
                 i = literal.end() if literal else j + 1
+            elif match[0] != '"':
+                # A raw string `r#"…"#` ends at the first quote followed by as many hashes.
+                close = '"' + match[0][1:-1]
+                end = text.find(close, match.end())
+                if end < 0:
+                    raise ValueError("Unterminated comment or string")
+                blank(syntax, j, end + len(close))
+                i = end + len(close)
             else:
                 syntax[j], quoted, i = " ", True, j + 1
     if depth or quoted:
@@ -128,31 +155,74 @@ def masks(text: str) -> tuple[str, str]:
     return "".join(code), "".join(syntax)
 
 
-def body_offset(statement: str) -> int:
-    depth, pending_lets = 0, 0
-    for i, char in enumerate(statement):
-        if not depth and char == "l" and re.match(r"\blet(?:I)?\b", statement[i:]) and (
-            not i or not (statement[i - 1].isalnum() or statement[i - 1] in "_'.")
-        ) and not re.match(r"let(?:I)?\b[^=←\n]*←", statement[i:]):
-            # `let x ← e` in `do` notation binds without a `:=` of its own.
-            pending_lets += 1
-        if not depth and statement.startswith(":=", i):
-            if pending_lets:
-                pending_lets -= 1
-            else:
-                return i + 2
-        if not depth and char == "|" and not statement[statement.rfind("\n", 0, i) + 1:i].strip():
-            return i
-        if char in "([{":
+def command_starts(syntax: str) -> list[int]:
+    """Return the offsets of the top-level commands in masked source (see `masks`).
+
+    A command begins at column 0 with a `COMMAND` keyword or attribute. Its attribute and
+    modifier prefixes, and `… in` prefix commands, belong to the command they precede. Blank
+    lines are not boundaries, and masked docstrings and comments never contain one.
+    """
+    starts, header_end = [], -1
+    for match in COMMAND.finditer(syntax):
+        start = match.start()
+        if start <= header_end:
+            continue
+        header_end = start
+        while syntax.startswith("@[", header_end):
+            depth, header_end = 1, header_end + 2
+            while header_end < len(syntax) and depth:
+                depth += (syntax[header_end] == "[") - (syntax[header_end] == "]")
+                header_end += 1
+            while header_end < len(syntax) and syntax[header_end].isspace():
+                header_end += 1
+        if not starts or not COMMAND_PREFIX.search(syntax[starts[-1]:start].rstrip()):
+            starts.append(start)
+    return starts
+
+
+def _starts_equations(statement: str, bar: int) -> bool:
+    """Whether a `|` begins equation clauses: it starts its line after a complete term."""
+    line = statement.rfind("\n", 0, bar) + 1
+    before = statement[:line].rstrip()
+    return not statement[line:bar].strip() and bool(before) and (
+        before[-1].isalnum() or before[-1] in TERM_END)
+
+
+def signature_end(statement: str) -> tuple[int, int]:
+    """Return where a theorem's statement ends and its body begins, in masked source.
+
+    The body begins at the first `:=` outside brackets that does not complete a `let`, `letI`,
+    `have` or `haveI` in the statement; at a `where` structure-instance body; or at a line that
+    begins equation clauses `| pattern => …`. A `let x ← e` in `do` notation has no `:=`, and
+    a `|` after `match` or `fun` begins one of its alternatives.
+    """
+    depth, pending, alternatives = 0, 0, False
+    for token in STATEMENT_TOKEN.finditer(statement):
+        kind, start = token.lastgroup, token.start()
+        if kind == "open":
             depth += 1
-        elif char in ")]}":
-            depth -= 1
+        elif kind == "close":
+            depth = max(0, depth - 1)
+        elif depth:
+            continue
+        elif kind == "binder":
+            pending += not DO_BIND.match(statement, token.end())
+        elif kind == "assign":
+            if not pending:
+                return start, token.end()
+            pending -= 1
+        elif kind == "alternatives":
+            alternatives = True
+        elif kind == "where":
+            return start, token.end()
+        elif kind == "bar" and not (pending or alternatives) and _starts_equations(statement, start):
+            return start, start
     raise ValueError("Theorem has neither a top-level := body nor equation clauses")
 
 
 def scan(text: str, path: str) -> list[dict]:
     code, syntax = masks(text)
-    boundaries = [m.start() for m in COMMAND.finditer(syntax)] + [len(syntax)]
+    boundaries = command_starts(syntax) + [len(syntax)]
     upstream = re.search(r"^-- upstream: (\S+)", text, re.M)
     status = upstream[1] if upstream else "unmarked"
     relative = path.removeprefix("Complexity/")
@@ -162,7 +232,7 @@ def scan(text: str, path: str) -> list[dict]:
         start = match.start()
         end = boundaries[bisect.bisect_right(boundaries, match.end())]
         try:
-            offset = start + body_offset(syntax[start:end])
+            offset = start + signature_end(syntax[start:end])[1]
         except ValueError as error:
             raise ValueError(f"{match[2]}: {error}") from error
         body = re.sub(r"^\s*by\b", "", code[offset:end], count=1)
@@ -219,13 +289,30 @@ theorem do_let : some 1 = do
     let m := n
     return m := by
   rfl
+theorem absolute (x : Int) :
+    |x| ≤ |x| := by
+  exact le_rfl
+theorem or_patterns : ∀ n : Nat, n = n
+  | 0 | 1 => rfl
+  | _ => rfl
+theorem structure_body : Nonempty Nat where
+  out := ⟨0⟩
+theorem statement_have (i : Fin 3) :
+    have := i.isLt
+    (⟨i.val, by have := i.isLt; omega⟩ : Fin 3) = i := by
+  rfl
+set_option maxRecDepth 1000 in
+theorem prefixed : True := by
+  trivial
 universe u
 end Sample
 """
     rows = scan(sample, "Complexity/Sample.lean")
     assert [(r["name"], r["body_lines"]) for r in rows] == [
         ("short", 1), ("term", 1), ("quoted", 1), ("separate_attribute", 1), ("equations", 2),
-        ("type_let", 1), ("after_annotated", 1), ("after_multi_line", 1), ("do_let", 1)
+        ("type_let", 1), ("after_annotated", 1), ("after_multi_line", 1), ("do_let", 1),
+        ("absolute", 1), ("or_patterns", 2), ("structure_body", 1), ("statement_have", 1),
+        ("prefixed", 1)
     ]
     for row in rows[-2:]:
         assert row["name"] in sample.splitlines()[row["line"] - 1]

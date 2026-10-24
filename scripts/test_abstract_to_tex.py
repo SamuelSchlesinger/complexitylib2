@@ -9,6 +9,7 @@ import unittest
 import xml.etree.ElementTree as ET
 
 import abstract_to_tex
+import proof_lengths
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -122,6 +123,76 @@ end Example
             abstract_to_tex.escape_tex_prose(prose),
             r"Check \texttt{x ** y} and \textbf{bold} text.",
         )
+
+    def test_statement_bindings_are_not_the_proof(self):
+        """Issue #699: the first top-level `:=` used to end the statement."""
+        display = abstract_to_tex.clean_code_for_display
+        self.assertEqual(display("theorem chosen : let n := 1; n = 1 := by rfl"),
+                         "theorem chosen : let n := 1; n = 1")
+        # The shape of `Cslib.Circuits.Boolean.Layered.length_encCompiled_compile_le`.
+        statement = (
+            "theorem length_encCompiled_compile_le {n m : ℕ} (c : Circuit signature n m) :\n"
+            "    let width := n + 3 * c.size\n"
+            "    let bits := Nat.log2 width + 1\n"
+            "    (encCompiled (compile n c.code)).length ≤\n"
+            "      4 * c.depth * (2 * width * (6 * bits + 21) + 1) + m * (2 * bits + 1) + 1")
+        self.assertEqual(display(statement + " := by\n  dsimp only\n  let width := n + 3 * c.size\n"
+                                 "  exact Bridge.bound c"), statement)
+        for statement in (
+                "theorem binders (i : Fin 3) :\n    have := i.isLt\n    letI : Inhabited ℕ := ⟨0⟩\n"
+                "    (⟨i.val, by have := i.isLt; omega⟩ : Fin 3) = i",
+                "theorem bound : some 1 = do\n    let n ← some 1\n    let m := n\n    return m",
+                "theorem named (x : ℕ) : Bar (V := ℕ) { val := x } (h := by simp) x"):
+            with self.subTest(statement=statement):
+                self.assertEqual(display(statement + " := by\n  rfl"), statement)
+
+    def test_blank_lines_and_commands_are_not_confused(self):
+        """Issue #699: blank lines are not command boundaries, and a missing blank line is not
+        a missing boundary."""
+        display = abstract_to_tex.clean_code_for_display
+        self.assertEqual(display("theorem t : True := by\n  trivial\n\n  -- tail\n  exact trivial"),
+                         "theorem t : True")
+        self.assertEqual(display("theorem t : True := trivial\ndef d : Nat := 3"),
+                         "theorem t : True\n\ndef d : Nat := 3")
+        self.assertEqual(
+            display("def table : List ℕ :=\n  [1,\n\n   2]\n@[simp]\ntheorem t : True := trivial\n"
+                    "set_option maxRecDepth 1000 in\nprivate theorem u : True := by\n  trivial\n"
+                    "-- Explains `d`.\nnoncomputable def d : ℕ := 3"),
+            "def table : List ℕ :=\n  [1,\n\n   2]\n\n@[simp]\ntheorem t : True\n\n"
+            "set_option maxRecDepth 1000 in\nprivate theorem u : True\n\n"
+            "-- Explains `d`.\nnoncomputable def d : ℕ := 3")
+        # Top-level text that the scanner does not recognize is never silently omitted.
+        with self.assertRaisesRegex(ValueError, "Unrecognized top-level command after theorem t"):
+            display("theorem t : True := trivial\nproof_wanted u : False")
+
+    def test_comment_and_string_delimiters_do_not_end_statements(self):
+        display = abstract_to_tex.clean_code_for_display
+        for statement in (
+                "theorem t : True -- not a proof := here (\n  ∧ True",
+                "theorem t : True /- := /- nested ) := -/ [ -/ ∧ True",
+                'theorem t : "a := b" = "a := (b" ∧ r#"x := ")"# = r#"x := ")"#',
+                "theorem t : '(' = '(' ∧ ')' ≠ '['"):
+            with self.subTest(statement=statement):
+                self.assertEqual(display(statement + " := by\n  rfl"), statement)
+        text = 'def gap := "one \\\ntwo"\ndef raw := r#"say "x := y""#\n'
+        masked = abstract_to_tex.lean_code(text)
+        self.assertEqual(masked.count("\n"), text.count("\n"))
+        self.assertNotIn(":= y", masked)
+
+    def test_where_equation_and_absolute_value_statements(self):
+        display = abstract_to_tex.clean_code_for_display
+        self.assertEqual(display("theorem s : Nonempty ℕ where\n  out := ⟨0⟩"),
+                         "theorem s : Nonempty ℕ")
+        self.assertEqual(display("theorem e : ∀ n : ℕ, n = n\n  | 0 | 1 => rfl\n  | _ => rfl"),
+                         "theorem e : ∀ n : ℕ, n = n")
+        for statement in ("theorem a (x : ℤ) :\n    |x| ≤ |x|",
+                          "theorem f : g = fun\n    | 0 => 1\n    | _ => 2",
+                          "theorem m (n : ℕ) : match n with\n    | 0 => True\n    | _ => True"):
+            with self.subTest(statement=statement):
+                self.assertEqual(display(statement + " := by\n  simp"), statement)
+
+    def test_shared_scanner_self_check(self):
+        proof_lengths.self_check()
 
     def test_attributed_theorems_strip_proofs_and_injectivity_helpers(self):
         attribute = '@[deprecated (since := "2026-10-23")]\n'
