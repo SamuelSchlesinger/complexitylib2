@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Languages.Probabilistic.Basic
+public import Complexity.Languages.Probabilistic.Sum
 import Complexity.Languages.Probabilistic.Simulation
 
 /-!
@@ -24,11 +24,15 @@ is not automatically a strict PPT operation.
 
 ## Main definitions
 
-* `Cslib.probOracleSpec`: the disjoint sum of the finite-uniform sampling requests and the
-  external queries of `spec`.
+* `Cslib.probOracleSpec`: the disjoint sum `unifSpec ⊕ₒ spec` of the finite-uniform sampling
+  requests and the external queries of `spec`.
 * `Cslib.ProbOracleComp`: the sum of the uniform sampling and external oracle interfaces.
 * `Cslib.ProbOracleComp.sample`, `.query`: closed sampling and typed external calls.
-* `Cslib.ProbOracleComp.handler`: combine handlers without introducing another interpreter.
+* `Cslib.ProbOracleComp.handler`: the sum handler of sampling and external queries.
+
+The sampling and external interfaces form the sum `unifSpec ⊕ₒ spec` of
+`Complexity/Languages/Probabilistic/Sum.lean`: `sample` is its left embedding
+(`sample_eq_liftLeft`) and `handler` its sum handler (`handler_eq_sumHandler`).
 
 ## Main results
 
@@ -55,9 +59,8 @@ namespace Cslib
 universe v
 
 /-- A disjoint sum keeps fresh sampling requests separate from external oracle requests. -/
-abbrev probOracleSpec {Query : Type} (spec : Query → Type) : ℕ ⊕ Query → Type
-  | .inl n => unifSpec n
-  | .inr q => spec q
+abbrev probOracleSpec {Query : Type} (spec : Query → Type) : OracleSpec (ℕ ⊕ Query) :=
+  unifSpec ⊕ₒ spec
 
 /-- A program with separate finite-uniform samples and typed external queries. -/
 abbrev ProbOracleComp {Query : Type} (spec : Query → Type) (α : Type) :=
@@ -72,15 +75,28 @@ def sample (program : ProbComp α) : ProbOracleComp spec α :=
   OracleComp.interpret (spec := unifSpec)
     (fun n => OracleComp.query (spec := probOracleSpec spec) (Sum.inl n)) program
 
+/-- Sampling is the left embedding into the sum `unifSpec ⊕ₒ spec`. -/
+theorem sample_eq_liftLeft (program : ProbComp α) :
+    sample (spec := spec) program = OracleComp.liftLeft program := rfl
+
 /-- Make one external call, whose reply may determine later sampling or queries. -/
 def query (q : Query) : ProbOracleComp spec (spec q) := OracleComp.query (Sum.inr q)
 
-/-- Combine the two handlers. In particular, memoizing `oracle` does not memoize `random`. -/
+/-- Combine the two handlers. In particular, memoizing `oracle` does not memoize `random`.
+This is the sum handler of `unifSpec ⊕ₒ spec` (`handler_eq_sumHandler`), with its own case
+equations. -/
 def handler {m : Type → Type v} (random : (n : ℕ) → m (Fin (n + 1)))
     (oracle : (q : Query) → m (spec q)) :
     (q : ℕ ⊕ Query) → m (probOracleSpec spec q)
   | .inl n => random n
   | .inr q => oracle q
+
+/-- The combined handler is the sum handler of the sampling and external interfaces. -/
+theorem handler_eq_sumHandler {m : Type → Type v} (random : (n : ℕ) → m (Fin (n + 1)))
+    (oracle : (q : Query) → m (spec q)) :
+    handler random oracle = OracleComp.sumHandler random oracle := by
+  funext q
+  cases q <;> rfl
 
 /-- Interpretation distributes over the sampling and external components of a program handler. -/
 theorem interpret_handler {Query' : Type} {spec' : Query' → Type}
@@ -90,8 +106,7 @@ theorem interpret_handler {Query' : Type} {spec' : Query' → Type}
     (fun q => OracleComp.interpret target (handler random oracle q)) =
       handler (fun k => OracleComp.interpret target (random k))
         (fun q => OracleComp.interpret target (oracle q)) := by
-  funext q
-  cases q <;> rfl
+  simp only [handler_eq_sumHandler, OracleComp.interpret_sumHandler]
 
 variable {m : Type → Type v} [Monad m] [LawfulMonad m]
 
@@ -106,7 +121,7 @@ variable {m : Type → Type v} [Monad m] [LawfulMonad m]
     (oracle : (q : Query) → m (spec q)) (program : ProbComp α) :
     OracleComp.interpret (handler random oracle) (sample program) =
       OracleComp.interpret random program := by
-  simp [sample, OracleComp.interpret_interpret, handler]
+  rw [handler_eq_sumHandler, sample_eq_liftLeft, OracleComp.interpret_sumHandler_liftLeft]
 
 /-- Sampling preserves ordinary functional sequencing before any interpretation. -/
 @[simp] theorem sample_bind (program : ProbComp α) (next : α → ProbComp β) :

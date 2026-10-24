@@ -108,7 +108,7 @@ verifier's output and the final prover state for every initial state and respons
 
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.ShamirAbstract`:
-10 root declarations, 213 dependencies checked
+10 root declarations, 215 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.ShamirAbstract allowing [
@@ -118,6 +118,7 @@ info: abstract audit passed for `ComplexityTests.Abstracts.ShamirAbstract`:
   Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Oracle,
   Complexity.Languages.Probabilistic.Basic,
   Complexity.Languages.Probabilistic.Oracle,
+  Complexity.Languages.Probabilistic.Sum,
   Complexity.Languages.Probabilistic.Oracle.Interaction
 ]
 

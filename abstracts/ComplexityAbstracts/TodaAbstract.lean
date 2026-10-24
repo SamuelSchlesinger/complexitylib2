@@ -149,7 +149,7 @@ The output and final oracle state must agree for every handler, not just for the
 
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.TodaAbstract`:
-15 root declarations, 238 dependencies checked
+15 root declarations, 240 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.TodaAbstract allowing [
@@ -160,6 +160,7 @@ info: abstract audit passed for `ComplexityTests.Abstracts.TodaAbstract`:
   Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Oracle,
   Complexity.Languages.Probabilistic.Basic,
   Complexity.Languages.Probabilistic.Oracle,
+  Complexity.Languages.Probabilistic.Sum,
   Complexity.Languages.Probabilistic.Oracle.Interaction
 ]
 
