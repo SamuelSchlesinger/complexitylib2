@@ -64,7 +64,8 @@ theorem exists_common_seedLength {sourceBits observationBound densityBound : ℕ
   have hseed : ComputableTidilyInPolyTime (fun input => seedLength input.1 (sourceBits input.1)
       (observationBound input.1) (densityBound input.1) input.2)
       (encPair encUnary encUnary) encUnary := by
-    apply isPolyTime_seedLength <;> polytime
+    apply ComputableInPolyTime.tidy
+    apply isPolyTime_seedLength <;> exact .of_tidy (by polytime)
   obtain ⟨c, d, hbound⟩ := hseed.indexed_polynomial_bound
     (f := fun n index => seedLength n (sourceBits n) (observationBound n) (densityBound n) index)
     hsize
@@ -107,17 +108,16 @@ theorem isPolyTime_paddedGenerate {pair : SamplablePair} (saved : pair.SeedReali
   have hobservation := hobservation.tidy
   have hdensity := hdensity.tidy
   have hcommon := hcommon.tidy
-  refine .of_tidy ?_
   have hlength := saved.length_isPolyTime.tidy
   have hgenerate := (isPolyTime_generate_of_realization saved (.of_tidy hobservation) (.of_tidy
     hdensity)).tidy
   unfold paddedGenerate
   apply GeneratorPadding.isPolyTime_generate
-  · apply isPolyTime_seedLength <;> fun_prop
-  · fun_prop
-  · exact hgenerate.comp (g := fun p : ((ℕ × ℕ) × List Bool) × List Bool =>
-      (p.1.1, p.2)) (by fun_prop)
-  · fun_prop
+  · apply isPolyTime_seedLength <;> exact .of_tidy (by fun_prop)
+  · exact .of_tidy (by fun_prop)
+  · exact .of_tidy (hgenerate.comp (g := fun p : ((ℕ × ℕ) × List Bool) × List Bool =>
+      (p.1.1, p.2)) (by fun_prop))
+  · exact .of_tidy (by fun_prop)
 
 /-- Correctly sized common inputs give exactly one bit of stretch. -/
 theorem length_paddedGenerate {pair : SamplablePair} (saved : pair.SeedRealization)
@@ -161,14 +161,15 @@ theorem exists_secure_padded_choice {pair : SamplablePair} {gap : ℕ → ℝ}
   have hseed : ComputableTidilyInPolyTime (fun input => seedLength input.1 (saved.length input.1)
       (observationBound input.1) (densityBound input.1) input.2)
       (encPair encUnary encUnary) encUnary := by
-    apply isPolyTime_seedLength <;> fun_prop
+    apply ComputableInPolyTime.tidy
+    apply isPolyTime_seedLength <;> exact .of_tidy (by fun_prop)
   let reduction := fun n index => GeneratorPadding.test
     (seedLength n (saved.length n) (observationBound n) (densityBound n) index) (common n)
     (test n index)
   have h := hsecure reduction (by
     dsimp only [reduction]
     apply GeneratorPadding.isPPTOn_test
-    · exact hseed.comp (g := Prod.fst) (by fun_prop)
+    · exact .of_tidy (hseed.comp (g := Prod.fst) (by fun_prop))
     · fun_prop
     · exact htest.preprocess (prepare := fun p : ((ℕ × ℕ) × List Bool) × List Bool =>
         (p.1.1, p.2)) (by fun_prop)

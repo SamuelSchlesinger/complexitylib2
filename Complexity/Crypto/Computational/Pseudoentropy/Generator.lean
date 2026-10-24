@@ -56,9 +56,10 @@ theorem SamplablePair.HasGap.exists_pseudorandomGenerator {pair : SamplablePair}
   obtain ⟨bound, hbound, hfits⟩ := pair.exists_observationBound
   obtain ⟨common, hcommon, _, hge, hsize⟩ := EntropyGrid.exists_common_seedLength
     (sourceBits := saved.length) (observationBound := bound) (densityBound := densityBound)
-    saved.length_isPolyTime.tidy hbound hdensity
+    saved.length_isPolyTime hbound (.of_tidy hdensity)
   have htotal := ComputableTidilyInPolyTime.unary_mul.comp
-    ((EntropyGrid.isPolyTime_size saved.length_isPolyTime (.of_tidy hdensity)).tidy.prod hcommon)
+    ((EntropyGrid.isPolyTime_size saved.length_isPolyTime (.of_tidy hdensity)).tidy.prod
+      hcommon.tidy)
   refine ⟨GeneratorReindex.generate
     (fun n => EntropyGrid.size (saved.length n) (densityBound n) * common n)
     (fun n => EntropyGrid.combinedGenerate n (saved.length n) (bound n) (densityBound n)
@@ -68,11 +69,11 @@ theorem SamplablePair.HasGap.exists_pseudorandomGenerator {pair : SamplablePair}
     exact (hge n).trans (Nat.le_mul_of_pos_left _ (EntropyGrid.size_pos ..))
   · exact (EntropyGrid.isPolyTime_combinedGenerate saved
       (observationBound := bound) (densityBound := densityBound) (common := common)
-      (.of_tidy hbound) (.of_tidy hdensity) (.of_tidy hcommon)).tidy
+      hbound (.of_tidy hdensity) hcommon).tidy
   · intro n seed _
     exact EntropyGrid.length_combinedGenerate ..
   · exact EntropyGrid.combinedGenerate_indistinguishable hpair saved
       (observationBound := bound) (densityBound := densityBound) (common := common)
-      ⟨.of_tidy hbound, .of_tidy hdensity, .of_tidy hcommon, hfits, hsize⟩ hgap
+      ⟨hbound, .of_tidy hdensity, hcommon, hfits, hsize⟩ hgap
 
 end Cslib.Crypto.Pseudoentropy
