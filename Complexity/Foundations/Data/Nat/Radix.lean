@@ -33,6 +33,9 @@ implicit in a carry equation.
 * `Nat.radix_carry_split`: one exact low-digit equation and its remaining carry.
 * `Cslib.Radix.component_pack`, `Cslib.Radix.pack_lt`: recovery and capacity for tuples indexed
   by any fixed finite type, independently of a machine or resource model.
+* `finFunctionFinEquiv_snoc`, `finFunctionFinEquiv_eq_of_high_zero`,
+  `finFunctionFinEquiv_lt_pow_iff`, `finFunctionFinEquiv_lt_iff`: highest-digit splitting,
+  zero high digits, power bounds, and colexicographic order for `finFunctionFinEquiv`.
 
 ## References
 
@@ -314,3 +317,108 @@ theorem pack_lt {B : ℕ} (hB : 0 < B) {f : ι → ℕ} (hf : ∀ i, f i < B) :
         simpa using fun i : Fin (Fintype.card ι) => hf ((Fintype.equivFin ι).symm i))
 
 end Cslib.Radix
+
+/-! ### `finFunctionFinEquiv` order and prefix lemmas -/
+
+/-- Separate the highest-weight digit `(x (Fin.last k) : ℕ) * n ^ k` of `finFunctionFinEquiv x`. -/
+theorem finFunctionFinEquiv_snoc {n k : ℕ} (x : Fin (k + 1) → Fin n) :
+    (finFunctionFinEquiv x : ℕ) =
+      finFunctionFinEquiv (x ∘ Fin.castSucc) + (x (Fin.last k) : ℕ) * n ^ k := by
+  simp only [finFunctionFinEquiv_apply, Fin.sum_univ_castSucc, Function.comp_apply,
+    Fin.val_castSucc, Fin.val_last]
+
+/-- When all coordinates of `x : Fin k → Fin n` at indices `≥ a` are zero, `finFunctionFinEquiv x`
+has the same value as its prefix of length `a`. -/
+theorem finFunctionFinEquiv_eq_of_high_zero {n a : ℕ} :
+    ∀ {k : ℕ} (ha : a ≤ k) {x : Fin k → Fin n}
+      (_ : ∀ i : Fin k, a ≤ (i : ℕ) → (x i : ℕ) = 0),
+      (finFunctionFinEquiv x : ℕ) =
+        finFunctionFinEquiv (fun j : Fin a => x (Fin.castLE ha j))
+  | k, ha, x, hx => by
+    obtain rfl | hlt := eq_or_lt_of_le ha
+    · rfl
+    · cases k with
+      | zero => omega
+      | succ k =>
+        rw [finFunctionFinEquiv_snoc x, hx (Fin.last k) (by simp only [Fin.val_last]; omega),
+          Nat.zero_mul, Nat.add_zero]
+        exact finFunctionFinEquiv_eq_of_high_zero (x := x ∘ Fin.castSucc) (Nat.lt_succ_iff.1 hlt)
+          (fun i hi => hx i.castSucc (by simpa only [Fin.val_castSucc] using hi))
+
+/-- For `a ≤ k`, a `k`-tuple has `finFunctionFinEquiv` value `< n ^ a` iff all coordinates at
+indices `≥ a` are zero. -/
+theorem finFunctionFinEquiv_lt_pow_iff {n a : ℕ} :
+    ∀ {k : ℕ} (_ : a ≤ k) (x : Fin k → Fin n),
+      (finFunctionFinEquiv x : ℕ) < n ^ a ↔ ∀ i : Fin k, a ≤ (i : ℕ) → (x i : ℕ) = 0
+  | k, ha, x => by
+    obtain rfl | hlt := eq_or_lt_of_le ha
+    · exact ⟨fun _ i hi => absurd i.2 (by omega), fun _ => (finFunctionFinEquiv x).2⟩
+    · cases k with
+      | zero => omega
+      | succ k =>
+        have ha' : a ≤ k := Nat.lt_succ_iff.1 hlt
+        constructor
+        · intro hlt' i hi
+          rw [finFunctionFinEquiv_snoc x] at hlt'
+          have hlast : (x (Fin.last k) : ℕ) = 0 := by
+            by_contra hne
+            have hn : 1 ≤ n := by have := (x (Fin.last k)).2; omega
+            have h1 : n ^ a ≤ n ^ k := Nat.pow_le_pow_right hn ha'
+            have h2 : n ^ k ≤ (x (Fin.last k) : ℕ) * n ^ k :=
+              Nat.le_mul_of_pos_left _ (by omega)
+            omega
+          induction i using Fin.lastCases with
+          | last => exact hlast
+          | cast i =>
+            rw [hlast, Nat.zero_mul, Nat.add_zero] at hlt'
+            exact (finFunctionFinEquiv_lt_pow_iff ha' (x ∘ Fin.castSucc)).1 hlt' i
+              (by simpa only [Fin.val_castSucc] using hi)
+        · intro hx
+          rw [finFunctionFinEquiv_eq_of_high_zero ha hx]
+          exact (finFunctionFinEquiv _).2
+
+/-- The numerical order on `finFunctionFinEquiv` is the colexicographic order on `Fin k → Fin n`
+(comparing at the most significant coordinate where the tuples differ). -/
+theorem finFunctionFinEquiv_lt_iff {n : ℕ} :
+    ∀ {k : ℕ} (x y : Fin k → Fin n),
+      finFunctionFinEquiv x < finFunctionFinEquiv y ↔
+        ∃ i : Fin k, x i < y i ∧ ∀ j : Fin k, i < j → x j = y j
+  | 0, x, y => ⟨fun h => absurd (Subsingleton.elim x y ▸ h) (lt_irrefl _), fun ⟨i, _⟩ => i.elim0⟩
+  | k + 1, x, y => by
+    rw [← Fin.val_fin_lt, finFunctionFinEquiv_snoc x, finFunctionFinEquiv_snoc y]
+    have hx := (finFunctionFinEquiv (x ∘ Fin.castSucc)).2
+    have hy := (finFunctionFinEquiv (y ∘ Fin.castSucc)).2
+    have hsplit : (finFunctionFinEquiv (x ∘ Fin.castSucc) : ℕ) + (x (Fin.last k) : ℕ) * n ^ k <
+        (finFunctionFinEquiv (y ∘ Fin.castSucc) : ℕ) + (y (Fin.last k) : ℕ) * n ^ k ↔
+        x (Fin.last k) < y (Fin.last k) ∨
+          (x (Fin.last k) = y (Fin.last k) ∧
+            finFunctionFinEquiv (x ∘ Fin.castSucc) < finFunctionFinEquiv (y ∘ Fin.castSucc)) := by
+      rcases lt_trichotomy (x (Fin.last k)) (y (Fin.last k)) with hlt | heq | hgt
+      · have hle : ((x (Fin.last k) : ℕ) + 1) * n ^ k ≤ (y (Fin.last k) : ℕ) * n ^ k :=
+          Nat.mul_le_mul_right (n ^ k) hlt
+        rw [Nat.add_mul, Nat.one_mul] at hle
+        exact ⟨fun _ => Or.inl hlt, fun _ => by omega⟩
+      · simp only [heq, lt_self_iff_false, Nat.add_lt_add_iff_right, Fin.val_fin_lt, true_and,
+          false_or]
+      · have hle : ((y (Fin.last k) : ℕ) + 1) * n ^ k ≤ (x (Fin.last k) : ℕ) * n ^ k :=
+          Nat.mul_le_mul_right (n ^ k) hgt
+        rw [Nat.add_mul, Nat.one_mul] at hle
+        have hnot1 : ¬ (x (Fin.last k) < y (Fin.last k)) := by omega
+        have hnot2 : x (Fin.last k) ≠ y (Fin.last k) := by omega
+        exact ⟨fun h => by omega, fun h => h.elim (fun h => absurd h hnot1)
+          (fun ⟨h, _⟩ => absurd h hnot2)⟩
+    rw [hsplit, finFunctionFinEquiv_lt_iff (x ∘ Fin.castSucc) (y ∘ Fin.castSucc)]
+    constructor
+    · rintro (hlt | ⟨heq, i, hi, hj⟩)
+      · exact ⟨Fin.last k, hlt, fun j hj => absurd (Fin.le_last j) (not_le_of_gt hj)⟩
+      · refine ⟨i.castSucc, hi, fun j hjlt => ?_⟩
+        induction j using Fin.lastCases with
+        | last => exact heq
+        | cast j => exact hj j (Fin.castSucc_lt_castSucc_iff.1 hjlt)
+    · rintro ⟨i, hi, hj⟩
+      induction i using Fin.lastCases with
+      | last => exact Or.inl hi
+      | cast i =>
+        refine Or.inr ⟨hj (Fin.last k) (Fin.castSucc_lt_last i), i, hi, fun j hlt => ?_⟩
+        exact hj j.castSucc (Fin.castSucc_lt_castSucc_iff.2 hlt)
+

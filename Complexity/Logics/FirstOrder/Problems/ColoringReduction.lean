@@ -320,6 +320,21 @@ private theorem gadgetDomain_of_realize {g : Fin 6} {ps : Fin 3 → Bool} {d : F
     (hd : (coloringInterpretation.domain (.gadget g ps)).Realize d) : GadgetDomain ps d :=
   (realize_gadgetDomain ps d).1 hd
 
+omit [cnf.Structure M] in
+private theorem colorOf_ne_of_comp_some {A : M → Prop} {c : Fin 3} {w : ColoringTag}
+    {x y : w.Coord → M} (hcomp : ∀ j i : w.Coord, some j = some i → y j = x i)
+    (hne : c ≠ colorOf A ⟨w, x⟩) : c ≠ colorOf A ⟨w, y⟩ :=
+  (funext fun j => hcomp j j rfl : y = x) ▸ hne
+
+omit [cnf.Structure M] in
+private theorem colorOf_ne_lit_of_comp {A : M → Prop} {α : Type} {c : Fin 3} {p : Bool} {i : α}
+    {x : α → M} {y : Fin 1 → M} (hcomp : ∀ (_ : Fin 1) (i' : α), some i = some i' → y ‹_› = x i')
+    (hne : c ≠ litColor A p (x i)) : c ≠ colorOf A ⟨.lit p, y⟩ := by
+  have hy : y 0 = x i := hcomp 0 i rfl
+  change c ≠ litColor A p (y 0)
+  rw [hy]
+  exact hne
+
 /-- **A satisfying assignment colors the graph**: the coloring `colorOf` is proper on every
 edge. -/
 private theorem colorOf_ne_of_edge {A : M → Prop} (hA : Satisfies A) (hgood : ¬M ⊨ badSentence)
@@ -349,10 +364,7 @@ private theorem colorOf_ne_of_edge {A : M → Prop} (hA : Satisfies A) (hgood : 
       exact litColor_ne_two A false (x 0)
     · simp only [coloringEdges, List.mem_cons, List.not_mem_nil, or_false] at hτ
       rcases hτ with rfl | rfl
-      · have hy : y 0 = x 0 := hcomp 0 0 rfl
-        change litColor A true (x 0) ≠ litColor A false (y 0)
-        rw [hy]
-        exact litColor_true_ne_false A (x 0)
+      · exact colorOf_ne_of_comp_some hcomp (litColor_true_ne_false A (x 0))
       · exact litColor_ne_two A true (x 0)
   | gadget g ps =>
     have hd := gadgetDomain_of_realize hx
@@ -362,50 +374,20 @@ private theorem colorOf_ne_of_edge {A : M → Prop} (hA : Satisfies A) (hgood : 
     obtain ⟨h0, h1, h01, h02, h12, h23, h4, h34, h35, h45, h5f, h5b⟩ := hP
     fin_cases g <;> simp only [coloringEdges, List.mem_cons, List.not_mem_nil, or_false] at hτ
     · rcases hτ with rfl | rfl | rfl
-      · have hy : y 0 = x 1 := hcomp 0 1 rfl
-        change _ ≠ litColor A (ps 0) (y 0)
-        rw [hy]
-        exact h0
-      · have hy : y = x := funext fun j => hcomp j j rfl
-        change _ ≠ colorOf A ⟨.gadget 1 ps, y⟩
-        rw [hy]
-        exact h01
-      · have hy : y = x := funext fun j => hcomp j j rfl
-        change _ ≠ colorOf A ⟨.gadget 2 ps, y⟩
-        rw [hy]
-        exact h02
+      · exact colorOf_ne_lit_of_comp hcomp h0
+      · exact colorOf_ne_of_comp_some hcomp h01
+      · exact colorOf_ne_of_comp_some hcomp h02
     · rcases hτ with rfl | rfl
-      · have hy : y 0 = x 2 := hcomp 0 2 rfl
-        change _ ≠ litColor A (ps 1) (y 0)
-        rw [hy]
-        exact h1
-      · have hy : y = x := funext fun j => hcomp j j rfl
-        change _ ≠ colorOf A ⟨.gadget 2 ps, y⟩
-        rw [hy]
-        exact h12
+      · exact colorOf_ne_lit_of_comp hcomp h1
+      · exact colorOf_ne_of_comp_some hcomp h12
     · subst hτ
-      have hy : y = x := funext fun j => hcomp j j rfl
-      change _ ≠ colorOf A ⟨.gadget 3 ps, y⟩
-      rw [hy]
-      exact h23
+      exact colorOf_ne_of_comp_some hcomp h23
     · rcases hτ with rfl | rfl
-      · have hy : y = x := funext fun j => hcomp j j rfl
-        change _ ≠ colorOf A ⟨.gadget 4 ps, y⟩
-        rw [hy]
-        exact h34
-      · have hy : y = x := funext fun j => hcomp j j rfl
-        change _ ≠ colorOf A ⟨.gadget 5 ps, y⟩
-        rw [hy]
-        exact h35
+      · exact colorOf_ne_of_comp_some hcomp h34
+      · exact colorOf_ne_of_comp_some hcomp h35
     · rcases hτ with rfl | rfl
-      · have hy : y 0 = x 3 := hcomp 0 3 rfl
-        change _ ≠ litColor A (ps 2) (y 0)
-        rw [hy]
-        exact h4
-      · have hy : y = x := funext fun j => hcomp j j rfl
-        change _ ≠ colorOf A ⟨.gadget 5 ps, y⟩
-        rw [hy]
-        exact h45
+      · exact colorOf_ne_lit_of_comp hcomp h4
+      · exact colorOf_ne_of_comp_some hcomp h45
     · rcases hτ with rfl | rfl
       · exact h5f
       · exact h5b
