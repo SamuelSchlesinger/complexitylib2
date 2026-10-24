@@ -105,4 +105,16 @@ theorem unary_mod : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 % p.2)
     (encPair encUnary encUnary) encUnary :=
   .of_tidy ComputableTidilyInPolyTime.unary_mod
 
+/-- Compute both quotient and remainder with a runtime unary divisor. Division by zero returns
+`(0, dividend)`, matching Lean's conventions. All intermediate counters have linear size. -/
+theorem unary_divMod : ComputableInPolyTime (fun p : ℕ × ℕ => (p.1 / p.2, p.1 % p.2))
+    (encPair encUnary encUnary) (encPair encUnary encUnary) :=
+  .of_tidy (ComputableTidilyInPolyTime.unary_divMod)
+
+/-- Division by a fixed natural is a special case of runtime unary division. -/
+@[fun_prop]
+theorem unary_div_const (divisor : ℕ) :
+    ComputableInPolyTime (fun n : ℕ => n / divisor) encUnary encUnary :=
+  .of_tidy (ComputableTidilyInPolyTime.unary_div_const (divisor := divisor))
+
 end Turing.MultiTapeTM.ComputableInPolyTime
