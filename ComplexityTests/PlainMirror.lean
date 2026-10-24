@@ -38,6 +38,13 @@ run_meta do
 
 open Turing.MultiTapeTM
 
+-- Newly landed generic membership rules use the same public plain entrypoint.
+example : ComputableInPolyTime (fun p : ℕ × List ℕ => decide (p.1 ∈ p.2))
+    (encPair encNat (encList encNat)) encBool := by fun_prop
+
+example : ComputableInPolyTime (fun p : ℕ × List ℕ => decide (p.1 ∉ p.2))
+    (encPair encNat (encList encNat)) encBool := by fun_prop
+
 example : ComputableInPolyTime (fun xs : List ℕ => xs.map (fun x => x + x))
     (encList encUnary) (encList encUnary) := by fun_prop
 

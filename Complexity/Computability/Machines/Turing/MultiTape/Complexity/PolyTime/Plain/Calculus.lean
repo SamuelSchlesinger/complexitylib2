@@ -18,6 +18,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
@@ -58,6 +59,7 @@ plain_mirror_sources [
   Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int,
   Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration,
   Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List,
+  Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership,
   Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat,
   Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option,
   Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi,

@@ -850,9 +850,19 @@
     "plain": "Turing.MultiTapeTM.ComputableInPolyTime.decide_eq'"
   },
   {
+    "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership",
+    "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_mem",
+    "plain": "Turing.MultiTapeTM.ComputableInPolyTime.decide_mem"
+  },
+  {
     "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic",
     "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_ne",
     "plain": "Turing.MultiTapeTM.ComputableInPolyTime.decide_ne"
+  },
+  {
+    "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership",
+    "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_not",
+    "plain": "Turing.MultiTapeTM.ComputableInPolyTime.decide_not"
   },
   {
     "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic",
