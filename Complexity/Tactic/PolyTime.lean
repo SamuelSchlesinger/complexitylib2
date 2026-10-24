@@ -231,7 +231,7 @@ private meta def polytimeKnownFacts : TacticM Unit := withMainContext do
   let mut added := false
   for h in ← getLCtx do
     unless h.isImplementationDetail do
-      let type := (← instantiateMVars h.type).consumeMData
+      let type := (← whnfR (← instantiateMVars h.type)).consumeMData
       if type.isAppOf source && !type.hasExprMVar then
         let proof ← mkAppM conversion #[h.toExpr]
         let type ← inferType proof
