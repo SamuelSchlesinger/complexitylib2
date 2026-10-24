@@ -478,7 +478,10 @@ level-collapse equivalences `BH_{k+1} = BH_k ↔ BH_k = coBH_k ⇒ BH = BH_k`), 
 definitions and elementary containments/closures. Full Boolean-hierarchy Boolean closure is
 proved with explicit finite-level upper bounds, as is BH ⊆ Σ₂ ∩ Π₂ using same-level union and
 intersection closure of every Σₖ and Πₖ
-([hierarchy connection](Complexity/Computability/Complexity/Classes/BooleanHierarchy/PH.lean)).
+([hierarchy connection](Complexity/Computability/Complexity/Classes/BooleanHierarchy/PH.lean)),
+and Kadin's polynomial-hierarchy collapse (`coBH k ⊆ BH k → PH = Σ₃ᴾ`, `BH (k + 1) = BH k → PH = Σ₃ᴾ`,
+`DP = coDP → PH = Σ₃ᴾ`, and `SATUNSAT ∈ coDP → PH = Σ₃ᴾ`) is proved in
+[BooleanHierarchy.Kadin](Complexity/Computability/Complexity/Classes/BooleanHierarchy/Kadin.lean).
 Further proved results include LWPP many-one
 reduction closure, unary-indexed target normalization, and full one-sided polynomial-family
 multiple-target robustness: Poly-WPP = WPP and Poly-LWPP = LWPP, and the full two-sided
@@ -501,8 +504,7 @@ The proof uses Newman's sign-approximating polynomial on GapP. P is closed under
 reductions. Closure of PP under adaptive polynomial-time Turing reductions (`P^PP = PP`) would
 give `PH ⊆ PP` by Toda's theorem; it is open and not claimed.
 The binary-output FP-to-#P/GapP bridge is available. Parsimonious Cook–Levin gives #P-completeness of #SAT and SAT-based complete problems for ⊕P, US, ModₖP/coModₖP, PP (both threshold #SAT and MAJSAT) and C=P/coC=P ([CountingSAT](Complexity/Computability/Complexity/Problems/CountingSAT.lean)). Remaining extensions include
-permanent completeness, Kadin's polynomial-hierarchy collapse from a Boolean-hierarchy
-collapse, and WPP/LWPP oracle lowness.
+permanent completeness and WPP/LWPP oracle lowness.
 SBP and AWPP now have verifier-based definitions, the elementary NP/BPP/SPP-to-PP
 containments, many-one reduction closure, SBP union closure and AWPP Boolean closure.
 WPP ⊆ AWPP is proved, including signed binary-output targets. Uniform AWPP
