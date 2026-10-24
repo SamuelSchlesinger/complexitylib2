@@ -123,7 +123,7 @@
  "Complexity/Computability/Complexity/Problems/Hamiltonian/Directed.lean": 3,
  "Complexity/Computability/Complexity/Problems/Hamiltonian/Sparse.lean": 7,
  "Complexity/Computability/Complexity/Problems/Hamiltonian/Undirected.lean": 2,
- "Complexity/Computability/Complexity/Problems/IndependentSet.lean": 5,
+ "Complexity/Computability/Complexity/Problems/IndependentSet.lean": 4,
  "Complexity/Computability/Complexity/Problems/IndependentSet/Sparse.lean": 1,
  "Complexity/Computability/Complexity/Problems/IntegerProgramming.lean": 2,
  "Complexity/Computability/Complexity/Problems/Knapsack.lean": 2,

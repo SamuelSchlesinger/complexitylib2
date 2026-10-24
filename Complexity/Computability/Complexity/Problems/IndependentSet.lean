@@ -8,8 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.Graph
-public import Complexity.Computability.Complexity.Problems.SAT
+public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Reduction
+public import Complexity.Logics.Propositional.CNF.ModelCount
 public import Mathlib.Combinatorics.SimpleGraph.Clique
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
@@ -94,18 +95,11 @@ namespace SAT
 
 /-! ### Karp's reduction -/
 
-/-- An occurrence of a literal: its clause, its position in the clause, and the literal. -/
-abbrev Occurrence : Type := ℕ × ℕ × Literal ℕ
-
-/-- The occurrences of literals in a formula. -/
-def occurrences (φ : CNF ℕ) : List Occurrence :=
-  φ.zipIdx.flatMap fun c => c.1.zipIdx.map fun l => (c.2, l.2, l.1)
-
 /-- The vertex of an occurrence. -/
-def Occurrence.vertex (o : Occurrence) : ℕ := Nat.pair o.1 o.2.1
+def _root_.Cslib.Logic.PL.Occurrence.vertex (o : Occurrence ℕ) : ℕ := Nat.pair o.1 o.2.1
 
 /-- Two occurrences conflict when they are in the same clause or are complementary. -/
-def Occurrence.Conflict (o o' : Occurrence) : Prop :=
+def _root_.Cslib.Logic.PL.Occurrence.Conflict (o o' : Occurrence ℕ) : Prop :=
   (o.1 = o'.1 ∧ o.2.1 ≠ o'.2.1) ∨ (o.2.2.1 = o'.2.2.1 ∧ o.2.2.2 ≠ o'.2.2.2)
 
 instance : DecidableRel Occurrence.Conflict := fun _ _ => by
@@ -119,51 +113,19 @@ def toIndependentSet (φ : CNF ℕ) : Graph × ℕ :=
         fun o' => (o.vertex, o'.vertex)),
     φ.length)
 
-theorem mem_occurrences {φ : CNF ℕ} {o : Occurrence} :
-    o ∈ occurrences φ ↔ ∃ (h₁ : o.1 < φ.length) (h₂ : o.2.1 < φ[o.1].length),
-      o.2.2 = φ[o.1][o.2.1] := by
-  obtain ⟨i, j, l⟩ := o
-  simp only [occurrences, List.mem_flatMap, List.mem_map, List.mem_zipIdx_iff_getElem?]
-  constructor
-  · rintro ⟨⟨c, i'⟩, hc, ⟨l', j'⟩, hl, he⟩
-    simp only [Prod.mk.injEq] at he hc hl
-    obtain ⟨rfl, rfl, rfl⟩ := he
-    obtain ⟨hi, hci⟩ := List.getElem?_eq_some_iff.1 hc
-    subst hci
-    obtain ⟨hj, hlj⟩ := List.getElem?_eq_some_iff.1 hl
-    exact ⟨hi, hj, hlj.symm⟩
-  · rintro ⟨hi, hj, hl⟩
-    exact ⟨(φ[i], i), by simp [hi], (φ[i][j], j), by simp [hj], by rw [hl]⟩
-
-/-- The variables of the occurrences, in order, are the variables of the formula. -/
-theorem map_occurrences (φ : CNF ℕ) : (occurrences φ).map (fun o => o.2.2.1) = φ.vars := by
-  have hc : ∀ c : Clause ℕ × ℕ, (c.1.zipIdx.map fun l => (c.2, l.2, l.1).2.2.1) =
-      c.1.map Prod.fst := fun c => by
-    calc (c.1.zipIdx.map fun l => (c.2, l.2, l.1).2.2.1) =
-        (c.1.zipIdx.map Prod.fst).map Prod.fst := by rw [List.map_map]; rfl
-      _ = c.1.map Prod.fst := by rw [List.zipIdx_map_fst]
-  calc (occurrences φ).map (fun o => o.2.2.1)
-      = φ.zipIdx.flatMap fun c => c.1.map Prod.fst := by
-        simp only [occurrences, List.map_flatMap, List.map_map, Function.comp_def, hc]
-    _ = (φ.zipIdx.map Prod.fst).flatMap fun c => c.map Prod.fst := by rw [List.flatMap_map]
-    _ = φ.vars := by
-        rw [List.zipIdx_map_fst, CNF.vars, List.map_flatten, List.flatMap_def]
-
-/-- A formula has one occurrence for each occurrence of a variable. -/
-theorem length_occurrences (φ : CNF ℕ) : (occurrences φ).length = φ.vars.length := by
-  rw [← map_occurrences, List.length_map]
-
-theorem Occurrence.Conflict.symm {o o' : Occurrence} (h : o.Conflict o') : o'.Conflict o := by
+theorem _root_.Cslib.Logic.PL.Occurrence.Conflict.symm {o o' : Occurrence ℕ}
+    (h : o.Conflict o') : o'.Conflict o := by
   rcases h with ⟨h₁, h₂⟩ | ⟨h₁, h₂⟩
   · exact Or.inl ⟨h₁.symm, h₂.symm⟩
   · exact Or.inr ⟨h₁.symm, h₂.symm⟩
 
-private theorem Occurrence.Conflict.ne {o o' : Occurrence} (h : o.Conflict o') : o ≠ o' := by
+private theorem _root_.Cslib.Logic.PL.Occurrence.Conflict.ne {o o' : Occurrence ℕ}
+    (h : o.Conflict o') : o ≠ o' := by
   rintro rfl
   rcases h with ⟨-, h⟩ | ⟨-, h⟩ <;> exact h rfl
 
 /-- An occurrence is determined by its vertex. -/
-private theorem vertex_injOn {φ : CNF ℕ} {o o' : Occurrence} (ho : o ∈ occurrences φ)
+private theorem vertex_injOn {φ : CNF ℕ} {o o' : Occurrence ℕ} (ho : o ∈ occurrences φ)
     (ho' : o' ∈ occurrences φ) (h : o.vertex = o'.vertex) : o = o' := by
   obtain ⟨i, j, l⟩ := o
   obtain ⟨i', j', l'⟩ := o'
@@ -175,7 +137,7 @@ private theorem vertex_injOn {φ : CNF ℕ} {o o' : Occurrence} (ho : o ∈ occu
   rw [hl, hl']
 
 /-- In the graph of Karp's reduction, two occurrences are adjacent exactly when they conflict. -/
-theorem adj_toIndependentSet_iff {φ : CNF ℕ} {o o' : Occurrence} (ho : o ∈ occurrences φ)
+theorem adj_toIndependentSet_iff {φ : CNF ℕ} {o o' : Occurrence ℕ} (ho : o ∈ occurrences φ)
     (ho' : o' ∈ occurrences φ) :
     (toIndependentSet φ).1.toSimpleGraph.Adj o.vertex o'.vertex ↔ o.Conflict o' := by
   have hedge : ∀ {p p'}, p ∈ occurrences φ → p' ∈ occurrences φ →
@@ -284,7 +246,7 @@ theorem toIndependentSet_mem_iff (φ : CNF ℕ) : toIndependentSet φ ∈ Indepe
       obtain ⟨j, hj, rfl⟩ := List.getElem_of_mem hl
       exact ⟨⟨j, hj⟩, hσl⟩
     choose J hJ using hcl
-    let o : Fin φ.length → Occurrence := fun i => (i, J i, φ[i][J i])
+    let o : Fin φ.length → Occurrence ℕ := fun i => (i, J i, φ[i][J i])
     have ho : ∀ i, o i ∈ occurrences φ := fun i => mem_occurrences.2 ⟨i.2, (J i).2, rfl⟩
     have hoinj : Function.Injective fun i => (o i).vertex := by
       intro i i' h
@@ -310,37 +272,26 @@ theorem toIndependentSet_mem_iff (φ : CNF ℕ) : toIndependentSet φ ∈ Indepe
 
 /-! ### Polynomial-time reduction -/
 
-/-- Encoding of a literal occurrence: unary clause and position indices with a binary-numbered
-literal. -/
-def encOccurrence : Occurrence ↪ List Bool :=
-  encPair encUnary (encPair encUnary (encPair encNat encBool))
-
-/-- Enumerating the literal occurrences of a CNF formula is polynomial-time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_occurrences :
-    ComputableTidilyInPolyTime occurrences encCNF (encList encOccurrence) := by
-  unfold occurrences encCNF encOccurrence
-  fun_prop
-
 /-- Computing the binary vertex label of an occurrence from its unary indices is polynomial-time. -/
 @[fun_prop]
-theorem Occurrence.computableTidilyInPolyTime_vertex :
+theorem _root_.Cslib.Logic.PL.Occurrence.computableTidilyInPolyTime_vertex :
     ComputableTidilyInPolyTime Occurrence.vertex encOccurrence encNat := by
-  unfold Occurrence.vertex encOccurrence
+  unfold Occurrence.vertex encOccurrence Cslib.Logic.PL.encOccurrence
   exact unary_to_binary.comp (by fun_prop)
 
 /-- Testing whether two occurrences conflict is polynomial-time. -/
 @[fun_prop]
-theorem Occurrence.computableTidilyInPolyTime_conflict :
-    ComputableTidilyInPolyTime (fun p : Occurrence × Occurrence => decide (p.1.Conflict p.2))
+theorem _root_.Cslib.Logic.PL.Occurrence.computableTidilyInPolyTime_conflict :
+    ComputableTidilyInPolyTime (fun p : Occurrence ℕ × Occurrence ℕ => decide (p.1.Conflict p.2))
       (encPair encOccurrence encOccurrence) encBool := by
-  unfold Occurrence.Conflict encOccurrence
+  unfold Occurrence.Conflict encOccurrence Cslib.Logic.PL.encOccurrence
   fun_prop
 
 /-- Karp's reduction `toIndependentSet` is computable in polynomial time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_toIndependentSet :
     ComputableTidilyInPolyTime toIndependentSet encCNF (encPair encGraph encNat) := by
+  have hocc := computableInPolyTime_occurrences.tidy
   have hlen : ComputableTidilyInPolyTime (fun φ : CNF ℕ => φ.length) encCNF encNat :=
     (ComputableInPolyTime.length_list_binary _).tidy
   unfold toIndependentSet encGraph
