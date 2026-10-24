@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Check every elaborated tidy certificate against the same-budget plain fun_prop search.
 
-Uses the exact registry from PlainMirror, never a guessed counterpart name. Run after building
-all three libraries and any requested mirror sidecar. Unsupported notions remain output rows;
+Finds compatible ordinary declarations by elaborated type and kernel-checked application, never
+a guessed counterpart name. Run after building all three libraries and requested plain modules. Unsupported notions remain output rows;
 a partial run is marked incomplete. This is a certificate check, not a quality metric system.
 """
 from __future__ import annotations
@@ -19,7 +19,6 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[1]
 LIBRARIES = ("Complexity", "ComplexityTests", "ComplexityAbstracts")
 RUNNER = "scripts/PlainCertificateInventory.lean"
-CORE = "Complexity.Tactic.PlainMirror"
 
 
 def discover_sources(root: Path) -> dict[str, Path]:
@@ -117,6 +116,7 @@ def validate_rows(rows: list[dict]) -> dict:
         "inventory_complete": len(records) == header["inventory_total"],
         "selected_total": selected, "selection_complete": len(records) == selected,
         "statuses": dict(statuses),
+        "registration_boundary": header.get("registration_boundary", {"status": "unknown"}),
         "holdout_pairs": {f"tidy:{a}/plain:{b}": n for (a, b), n in sorted(pairs.items())},
         "registration_probes": sum("plain_registration" in row for row in records),
         "registration_pairs": {f"tidy:{a}/plain:{b}": n
@@ -133,8 +133,8 @@ def validate_rows(rows: list[dict]) -> dict:
             role: dict(Counter(
                 f"tidy:{r['tidy_holdout']['status']}/plain:{r['plain_holdout']['status']}"
                 for r in records if r["status"] == "compared" and
-                ("mirrored_rule" if r["declaration"].get("mirror") else "unmirrored") == role))
-            for role in ("mirrored_rule", "unmirrored")},
+                ("ordinary_plain_rule" if r["declaration"].get("counterparts") else "without_counterpart") == role))
+            for role in ("ordinary_plain_rule", "without_counterpart")},
     }
 
 
@@ -146,7 +146,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--extra-import", action="append", default=[],
-                        help="mirror sidecar module; built outputs must already be current")
+                        help="ordinary plain-rule module; built outputs must already be current")
     parser.add_argument("--only-names", type=Path,
                         help="JSON list of exact original identities for a disclosed delta check")
     parser.add_argument("--heartbeats", type=int, default=200000)
@@ -161,7 +161,7 @@ def main() -> int:
                 not all(isinstance(n, str) for n in selection) or len(set(selection)) != len(selection)):
             parser.error("--only-names must hold a nonempty JSON list of distinct identity strings")
     sources = discover_sources(ROOT)
-    subprocess.run(["lake", "build", "--no-build", *LIBRARIES, CORE, *args.extra_import],
+    subprocess.run(["lake", "build", "--no-build", *LIBRARIES, *args.extra_import],
                    cwd=ROOT, check=True)
     validate_ileans(ROOT, sources)
     identities = {str(p.relative_to(ROOT)): digest(p) for p in sources.values()}
@@ -176,7 +176,7 @@ def main() -> int:
         "dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT)),
         "sources_sha256": identities, "extra_imports": args.extra_import,
         "selection": selection,
-        "pairing": "exact PlainMirror registry lookup; no inferred name rewrite",
+        "pairing": "ordinary elaborated statements and kernel-checked compatibility; no inferred name rewrite",
         "scope": "all elaborated declarations and captured local certificates in the three libraries",
         "local_inventory_unit": "unique stored expression per owner/binder/source context; repeated DAG use is not a new certificate",
         "limitations": [

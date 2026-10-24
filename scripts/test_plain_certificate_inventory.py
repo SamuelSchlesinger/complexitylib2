@@ -21,6 +21,17 @@ def record(name="cert", **kw):
 
 
 class InventoryTests(unittest.TestCase):
+    def test_completed_accounting_preserves_failed_public_boundary(self):
+        row = record()
+        row["declaration"]["counterparts"] = ["ordinaryA", "ordinaryB"]
+        boundary = {"status": "boundary-not-met", "global_tidy_fun_prop_rules": ["internal"]}
+        summary = runner.validate_rows([{"inventory_total": 1, "limit": 0,
+                                         "registration_boundary": boundary}, row])
+        self.assertTrue(summary["inventory_complete"])
+        self.assertEqual(summary["registration_boundary"], boundary)
+        self.assertEqual(summary["holdout_pairs_by_role"]["ordinary_plain_rule"],
+                         {"tidy:success/plain:failed": 1})
+
     def test_all_libraries_and_custom_srcdir(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -104,6 +115,7 @@ def native_probes():
     fixture = r"""
 import scripts.PlainCertificateInventory
 import Mathlib.Tactic.FunProp
+import Mathlib.Data.Nat.Basic
 open Lean Meta Mathlib.Meta.FunProp PlainCertificateInventory
 @[fun_prop] def TidyInventoryProperty (f : ℕ → ℕ) : Prop := ∀ x, f x = f x
 opaque uniqueFunction : ℕ → ℕ := id
@@ -111,12 +123,53 @@ abbrev HiddenProperty := TidyInventoryProperty
 @[fun_prop] theorem isolated_source : TidyInventoryProperty uniqueFunction := fun _ => rfl
 @[fun_prop] theorem indirect_source : TidyInventoryProperty uniqueFunction := isolated_source
 theorem hidden_source : HiddenProperty uniqueFunction := isolated_source
+theorem localOnlyRule : TidyInventoryProperty uniqueFunction := isolated_source
+section
+attribute [local fun_prop] localOnlyRule
+end
+namespace Construction
+theorem scopedOnlyRule : TidyInventoryProperty uniqueFunction := isolated_source
+attribute [scoped fun_prop] scopedOnlyRule
+end Construction
 private theorem captured_source (f : ℕ → ℕ) (hf : TidyInventoryProperty f) :
     TidyInventoryProperty f := by
   have localRoutine : TidyInventoryProperty f := hf
   have hiddenRoutine : HiddenProperty f := localRoutine
   exact hiddenRoutine
+universe u
+def OrdinaryProperty {α : Type u} (_f : α → α) : Prop := True
+theorem ordinarySource {α : Type} (f : α → α) : OrdinaryProperty f := True.intro
+theorem ordinaryTwin {α : Type} (f : α → α) : OrdinaryProperty f := ordinarySource f
+theorem ordinaryDuplicate {α : Type} (f : α → α) : OrdinaryProperty f := ordinarySource f
+theorem ordinaryStronger {α : Type u} (f : α → α) : OrdinaryProperty f := True.intro
+theorem ordinaryWrong {α : Type} (f : α → α) (_h : False) : OrdinaryProperty f := True.intro
+theorem specificSource : OrdinaryProperty (id : ℕ → ℕ) := True.intro
+abbrev OrdinaryAlias {α : Type u} (f : α → α) : Prop := OrdinaryProperty f
+theorem aliasTwin {α : Type} (f : α → α) : OrdinaryAlias f := ordinarySource f
+attribute [aesop safe apply] isolated_source
 run_meta do
+  let target := (← getConstInfo `ordinarySource).type
+  let index : CounterpartIndex := ({} : CounterpartIndex).insert `OrdinaryProperty
+    #[`ordinaryTwin, `ordinaryDuplicate, `ordinaryStronger, `ordinaryWrong]
+  let counterparts ← findCounterparts index target
+  unless counterparts.size == 3 && counterparts.contains `ordinaryStronger &&
+      !counterparts.contains `ordinaryWrong do
+    throwError "ordinary counterpart duplicates/stronger target matching failed: {counterparts}"
+  let sameOtherSource := (← getConstInfo `ordinaryDuplicate).type
+  unless (← findCounterparts index sameOtherSource) == counterparts do
+    throwError "one plain counterpart may match multiple original statements; ambiguity was lost"
+  let specific := (← getConstInfo `specificSource).type
+  unless (← findCounterparts index specific).isEmpty do
+    throwError "generic rule was misclassified as counterpart of a particular primitive"
+  unless (← findCounterparts {} target).isEmpty do
+    throwError "absent ordinary counterpart must remain explicit"
+  let reverse : Std.HashMap Name (List Name) := ({} : Std.HashMap Name (List Name)).insert `ordinaryTwin [`indirectTwin]
+  let excluded := closure reverse (#[`ordinarySource] ++ counterparts)
+  unless excluded.contains `indirectTwin && counterparts.all excluded.contains do
+    throwError "all compatible twins and indirect dependents must be excluded"
+  let boundary ← registrationBoundary
+  unless (boundary.getObjValAs? String "status").toOption == some "boundary-not-met" do
+    throwError "public tidy registrations were silently accepted"
   let type := mkApp (mkConst `TidyInventoryProperty) (mkConst `uniqueFunction)
   let leaf := Expr.letE `localRoutine type (mkConst `isolated_source) (mkConst `True.intro) true
   for depth in #[8, 16, 24] do
@@ -188,6 +241,15 @@ open Lean Meta PlainCertificateInventory
 run_meta do
   let env ← getEnv
   let modules : Std.HashSet Name := .ofArray #[`PlainInventoryProbe]
+  let index ← counterpartIndex (← getEnv) modules #[`OrdinaryProperty]
+  let target := (← getConstInfo `ordinarySource).type
+  let found ← findCounterparts index target
+  unless found.size == 5 && found.contains `ordinaryStronger && found.contains `ordinarySource && found.contains `aliasTwin do
+    throwError "ordinary source-module index omitted compatible declarations: {found}"
+  let some body := (← getConstInfo `ordinaryTwin).value? true
+    | throwError "ordinary proof provenance missing"
+  unless (constants body).contains `ordinarySource do
+    throwError "ordinary declaration proof reference lost"
   let reverse := reverseDependencies env modules
   let incoming := reverse.getD `Mathlib.InventoryFixture.denseRoot []
   unless incoming.length == 1000 do throwError "lost dense dependency edges: {incoming.length}"
@@ -213,6 +275,12 @@ run_meta do
         isolated = next(r for r in records if r["declaration"]["name"] == "isolated_source")
         assert isolated["tidy_holdout"]["status"] != "success", isolated
         assert isolated["excluded_count"] >= 2
+        boundary = rows[0]["registration_boundary"]
+        assert boundary["status"] == "boundary-not-met"
+        assert "isolated_source" in boundary["global_tidy_fun_prop_rules"]
+        assert "localOnlyRule" not in boundary["global_tidy_fun_prop_rules"]
+        assert "Construction.scopedOnlyRule" not in boundary["global_tidy_fun_prop_rules"]
+        assert any(rule[1] == "isolated_source" for rule in boundary["global_tidy_aesop_rules"])
         assert any(r["declaration"]["name"] == "hidden_source" for r in records)
         local = [r for r in records if r["declaration"].get("local_path")]
         assert local and all(r["declaration"]["private"] for r in local)
@@ -227,7 +295,7 @@ run_meta do
         selected_summary = runner.validate_rows(selected_rows)
         assert selected_summary["selection_complete"] and not selected_summary["inventory_complete"]
         assert len(selected_rows) == 2
-        print("Native probes passed: contextual DAG memo, dense fan-in/closure, actual-module owners, four databases, private/local/alias capture")
+        print("Native probes passed: ordinary declaration/type/provenance lookup, duplicate/stronger/absent twins, public tidy boundary, contextual DAG memo, dense fan-in/closure, actual-module owners, four databases, private/local/alias capture")
 
 
 if __name__ == "__main__":
