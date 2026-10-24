@@ -18,17 +18,17 @@ interface is adapted from `IsPolyTime.iterate_spec` in the cslib `crypto` branch
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterate`: iteration with a size bound.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith`: the same bound with captured data.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterate_spec`: a loop invariant gives both
+* `Turing.MultiTapeTM.ComputableInPolyTime.iterate`: iteration with a size bound.
+* `Turing.MultiTapeTM.ComputableInPolyTime.iterateWith`: the same bound with captured data.
+* `Turing.MultiTapeTM.ComputableInPolyTime.iterate_spec`: a loop invariant gives both
   polynomial-time computation and the final postcondition.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_spec`: capture a computed parameter
+* `Turing.MultiTapeTM.ComputableInPolyTime.iterateWith_spec`: capture a computed parameter
   while retaining a uniform joint certificate for the step.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterate_of_bounded_growth`: constant additive
+* `Turing.MultiTapeTM.ComputableInPolyTime.iterate_of_bounded_growth`: constant additive
   state growth discharges intermediate-size obligations.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWith_of_bounded_growth`: captured loops
+* `Turing.MultiTapeTM.ComputableInPolyTime.iterateWith_of_bounded_growth`: captured loops
   with a polynomial per-step growth bound depending on the original input.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.iterateWithInput_of_bounded_growth`: the same
+* `Turing.MultiTapeTM.ComputableInPolyTime.iterateWithInput_of_bounded_growth`: the same
   growth contract with the original input captured directly, for certificate inference.
 
 ## References
@@ -40,23 +40,23 @@ captured-input rules.
 
 @[expose] public section
 
-namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
+namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 variable {α β : Type} {encIn : α ↪ List Bool} {encState : β ↪ List Bool}
 
 /-- Capture a computed parameter while bounding every intermediate loop state. -/
 theorem iterateWith {π : Type} {encPar : π ↪ List Bool}
     {par : α → π} {count : α → ℕ} {init : α → β} {step : π → β → β}
-    (hpar : ComputableTidilyInPolyTime par encIn encPar)
-    (hcount : ComputableTidilyInPolyTime count encIn encUnary)
-    (hinit : ComputableTidilyInPolyTime init encIn encState)
-    (hstep : ComputableTidilyInPolyTime (fun p : π × β => step p.1 p.2)
+    (hpar : ComputableInPolyTime par encIn encPar)
+    (hcount : ComputableInPolyTime count encIn encUnary)
+    (hinit : ComputableInPolyTime init encIn encState)
+    (hstep : ComputableInPolyTime (fun p : π × β => step p.1 p.2)
       (encPair encPar encState) encState)
     {bound : α → ℕ} (hbound : PolyBounded (fun x => (encIn x).length) bound)
     (hstates : ∀ x, ∀ i ≤ count x,
       (encState ((step (par x))^[i] (init x))).length ≤ bound x) :
-    ComputableTidilyInPolyTime (fun x => (step (par x))^[count x] (init x)) encIn encState := by
-  have hlist : ComputableTidilyInPolyTime (fun x => List.replicate (count x) true)
+    ComputableInPolyTime (fun x => (step (par x))^[count x] (init x)) encIn encState := by
+  have hlist : ComputableInPolyTime (fun x => List.replicate (count x) true)
       encIn encBits := hcount.of_enc_eq fun _ => rfl
   simpa only [List.foldl_const, List.length_replicate] using
     foldlWith (encA := encBool) (step := fun par state _ => step par state)
@@ -67,12 +67,12 @@ theorem iterateWith {π : Type} {encPar : π ↪ List Bool}
 
 /-- A unary loop count and polynomially bounded intermediate states give a polynomial-time loop. -/
 theorem iterate {count : α → ℕ} {init : α → β} {step : β → β}
-    (hcount : ComputableTidilyInPolyTime count encIn encUnary)
-    (hinit : ComputableTidilyInPolyTime init encIn encState)
-    (hstep : ComputableTidilyInPolyTime step encState encState)
+    (hcount : ComputableInPolyTime count encIn encUnary)
+    (hinit : ComputableInPolyTime init encIn encState)
+    (hstep : ComputableInPolyTime step encState encState)
     {bound : α → ℕ} (hbound : PolyBounded (fun x => (encIn x).length) bound)
     (hstates : ∀ x, ∀ i ≤ count x, (encState (step^[i] (init x))).length ≤ bound x) :
-    ComputableTidilyInPolyTime (fun x => step^[count x] (init x)) encIn encState :=
+    ComputableInPolyTime (fun x => step^[count x] (init x)) encIn encState :=
   iterateWith (step := fun (_ : Bool) => step) (const false) hcount hinit
     (hstep.comp (snd encBool encState)) hbound hstates
 
@@ -81,10 +81,10 @@ in that parameter; the invariant and size bound concern the original input. The 
 be computable and may use properties of the input beyond its encoded length. -/
 theorem iterateWith_spec {π : Type} {encPar : π ↪ List Bool}
     {par : α → π} {count : α → ℕ} {init : α → β} {step : π → β → β}
-    (hpar : ComputableTidilyInPolyTime par encIn encPar)
-    (hcount : ComputableTidilyInPolyTime count encIn encUnary)
-    (hinit : ComputableTidilyInPolyTime init encIn encState)
-    (hstep : ComputableTidilyInPolyTime (fun p : π × β => step p.1 p.2)
+    (hpar : ComputableInPolyTime par encIn encPar)
+    (hcount : ComputableInPolyTime count encIn encUnary)
+    (hinit : ComputableInPolyTime init encIn encState)
+    (hstep : ComputableInPolyTime (fun p : π × β => step p.1 p.2)
       (encPair encPar encState) encState)
     (invariant : α → ℕ → β → Prop)
     (hbase : ∀ x, invariant x 0 (init x))
@@ -93,7 +93,7 @@ theorem iterateWith_spec {π : Type} {encPar : π ↪ List Bool}
     {size : α → ℕ} (hsize : PolyBounded (fun x => (encIn x).length) size)
     (hbound : ∀ x i state, i ≤ count x → invariant x i state →
       (encState state).length ≤ size x) :
-    ComputableTidilyInPolyTime (fun x => (step (par x))^[count x] (init x)) encIn encState ∧
+    ComputableInPolyTime (fun x => (step (par x))^[count x] (init x)) encIn encState ∧
       ∀ x, invariant x (count x) ((step (par x))^[count x] (init x)) := by
   have htrace (x : α) (i : ℕ) (hi : i ≤ count x) :
       invariant x i ((step (par x))^[i] (init x)) := by
@@ -107,9 +107,9 @@ theorem iterateWith_spec {π : Type} {encPar : π ↪ List Bool}
 
 /-- One invariant proves both the resource bound and the final loop postcondition. -/
 theorem iterate_spec {count : α → ℕ} {init : α → β} {step : β → β}
-    (hcount : ComputableTidilyInPolyTime count encIn encUnary)
-    (hinit : ComputableTidilyInPolyTime init encIn encState)
-    (hstep : ComputableTidilyInPolyTime step encState encState)
+    (hcount : ComputableInPolyTime count encIn encUnary)
+    (hinit : ComputableInPolyTime init encIn encState)
+    (hstep : ComputableInPolyTime step encState encState)
     (invariant : α → ℕ → β → Prop)
     (hbase : ∀ x, invariant x 0 (init x))
     (hpreserve : ∀ x i state, i < count x → invariant x i state →
@@ -117,7 +117,7 @@ theorem iterate_spec {count : α → ℕ} {init : α → β} {step : β → β}
     {size : α → ℕ} (hsize : PolyBounded (fun x => (encIn x).length) size)
     (hbound : ∀ x i state, i ≤ count x → invariant x i state →
       (encState state).length ≤ size x) :
-    ComputableTidilyInPolyTime (fun x => step^[count x] (init x)) encIn encState ∧
+    ComputableInPolyTime (fun x => step^[count x] (init x)) encIn encState ∧
       ∀ x, invariant x (count x) (step^[count x] (init x)) :=
   iterateWith_spec (step := fun (_ : Bool) => step) (const false) hcount hinit
     (hstep.comp (snd encBool encState)) invariant hbase hpreserve hsize hbound
@@ -126,15 +126,15 @@ theorem iterate_spec {count : α → ℕ} {init : α → β} {step : β → β}
 original input. A bound depending only on the current state would not justify this rule. -/
 theorem iterateWith_of_bounded_growth {π : Type} {encPar : π ↪ List Bool}
     {par : α → π} {count : α → ℕ} {init : α → β} {step : π → β → β}
-    (hpar : ComputableTidilyInPolyTime par encIn encPar)
-    (hcount : ComputableTidilyInPolyTime count encIn encUnary)
-    (hinit : ComputableTidilyInPolyTime init encIn encState)
-    (hstep : ComputableTidilyInPolyTime (fun p : π × β => step p.1 p.2)
+    (hpar : ComputableInPolyTime par encIn encPar)
+    (hcount : ComputableInPolyTime count encIn encUnary)
+    (hinit : ComputableInPolyTime init encIn encState)
+    (hstep : ComputableInPolyTime (fun p : π × β => step p.1 p.2)
       (encPair encPar encState) encState)
     {growth : α → ℕ} (hpoly : PolyBounded (fun x => (encIn x).length) growth)
     (hgrowth : ∀ x state, (encState (step (par x) state)).length ≤
       (encState state).length + growth x) :
-    ComputableTidilyInPolyTime (fun x => (step (par x))^[count x] (init x)) encIn encState := by
+    ComputableInPolyTime (fun x => (step (par x))^[count x] (init x)) encIn encState := by
   refine (iterateWith_spec hpar hcount hinit hstep
     (fun x i state => (encState state).length ≤ (encState (init x)).length + i * growth x)
     (by simp) ?_ (hinit.polyBounded_length.add (hcount.polyBounded.mul hpoly)) ?_).1
@@ -148,25 +148,25 @@ theorem iterateWith_of_bounded_growth {π : Type} {encPar : π ↪ List Bool}
 select a common polynomial bound. The uniform joint step certificate charges the captured input
 on every iteration; the growth bound need not itself be computable. -/
 theorem iterateWithInput_of_bounded_growth {count : α → ℕ} {init : α → β} {step : α → β → β}
-    (hcount : ComputableTidilyInPolyTime count encIn encUnary)
-    (hinit : ComputableTidilyInPolyTime init encIn encState)
-    (hstep : ComputableTidilyInPolyTime (fun p : α × β => step p.1 p.2)
+    (hcount : ComputableInPolyTime count encIn encUnary)
+    (hinit : ComputableInPolyTime init encIn encState)
+    (hstep : ComputableInPolyTime (fun p : α × β => step p.1 p.2)
       (encPair encIn encState) encState)
     {growth : α → ℕ} (hbound : PolyBounded (fun x => (encIn x).length) growth ∧
       ∀ x state, (encState (step x state)).length ≤ (encState state).length + growth x) :
-    ComputableTidilyInPolyTime (fun x => (step x)^[count x] (init x)) encIn encState :=
+    ComputableInPolyTime (fun x => (step x)^[count x] (init x)) encIn encState :=
   iterateWith_of_bounded_growth id' hcount hinit hstep hbound.1 hbound.2
 
 /-- A loop with constant additive state growth has polynomially bounded intermediate states. -/
 theorem iterate_of_bounded_growth {count : α → ℕ} {init : α → β} {step : β → β}
-    (hcount : ComputableTidilyInPolyTime count encIn encUnary)
-    (hinit : ComputableTidilyInPolyTime init encIn encState)
-    (hstep : ComputableTidilyInPolyTime step encState encState)
+    (hcount : ComputableInPolyTime count encIn encUnary)
+    (hinit : ComputableInPolyTime init encIn encState)
+    (hstep : ComputableInPolyTime step encState encState)
     {growth : ℕ} (hgrowth : ∀ state, (encState (step state)).length ≤
       (encState state).length + growth) :
-    ComputableTidilyInPolyTime (fun x => step^[count x] (init x)) encIn encState := by
+    ComputableInPolyTime (fun x => step^[count x] (init x)) encIn encState := by
   exact iterateWith_of_bounded_growth (step := fun (_ : Bool) => step)
     (const false) hcount hinit (hstep.comp (snd encBool encState)) (.const growth)
     (fun _ state => hgrowth state)
 
-end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+end Turing.MultiTapeTM.ComputableInPolyTime
