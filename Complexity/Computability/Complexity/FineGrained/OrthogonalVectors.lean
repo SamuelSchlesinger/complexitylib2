@@ -308,8 +308,8 @@ theorem exists_computableTidilyInO_stream {half : CNF ℕ → List ℕ}
       encStreamState by fun_prop).exists_degree
   obtain ⟨dE, _, ⟨tE, sE, ⟨cE, htE⟩, ⟨cE', hsE⟩, hE⟩, _⟩ :=
     (hwrap.comp computableTidilyInPolyTime_clauseVector).exists_degree
-  obtain ⟨cF, hF⟩ :=
-    ComputableTidilyInLinearTimeAndSpace.const (encIn := encStreamState) (encMid := encBits) fin
+  obtain ⟨cF, hF, -⟩ := ComputableTidilyInO.of_linear
+    (ComputableInLinearTimeAndSpace.const (encIn := encStreamState) (encMid := encBits) fin)
   set D := dN + dE + 1
   set B : StreamState × ℕ → ℕ := fun x =>
     2 * (encPair encCNF (encList encNat) x.1.1).length + 1 + (encNat (x.1.2 + x.2)).length
