@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Crypto.Computational.Homomorphic.Leveled.Bootstrapping
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Tactic.PPT
 
 /-!
@@ -120,7 +121,7 @@ private theorem encrypt_ppt : IsPPTOn (encPair encUnary (encPair encBits encBool
 
 @[fun_prop]
 private theorem stateBit_poly : ComputableTidilyInPolyTime stateBit encBits encBool := by
-  have hcontext := publicKeyDecoder.computableTidilyInPolyTime
+  have hcontext := publicKeyDecoder.computableInPolyTime.tidy
   dsimp only [encPublicKey] at hcontext
   have hpk := (ComputableTidilyInPolyTime.listGetD
     (encA := encBits) (encL := encList encBits) []).comp
