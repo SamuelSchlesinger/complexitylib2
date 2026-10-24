@@ -488,3 +488,4 @@ import ComplexityTests.WordRAMQueue
 import ComplexityTests.WordRAMRAM
 import ComplexityTests.WorstCaseHardness
 import ComplexityTests.ZooCountingHierarchy
+import ComplexityTests.PolyTimeEncodedProjection

@@ -327,6 +327,26 @@ theorem snd' {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β�
     ComputableInPolyTime (fun x => (f x).2) encIn enc₂ :=
   (snd enc₁ enc₂).comp hf
 
+/-- Project a first component and convert its encoding. Certifying the pair-valued function first
+determines the source encoding before automation searches for the conversion certificate. -/
+@[fun_prop]
+theorem fstWithEncoding {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {encC : γ ↪ List Bool} {output : α ↪ List Bool} {f : γ → α × β}
+    (hf : ComputableInPolyTime f encC (encPair encA encB))
+    (h : ComputableInPolyTime (fun a => a) encA output) :
+    ComputableInPolyTime (fun p => (f p).1) encC output :=
+  h.comp hf.fst'
+
+/-- Project a second component and convert its encoding. The pair certificate fixes the source
+encoding; the conversion certificate supplies the efficient change of representation. -/
+@[fun_prop]
+theorem sndWithEncoding {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+    {encC : γ ↪ List Bool} {output : β ↪ List Bool} {f : γ → α × β}
+    (hf : ComputableInPolyTime f encC (encPair encA encB))
+    (h : ComputableInPolyTime (fun a => a) encB output) :
+    ComputableInPolyTime (fun p => (f p).2) encC output :=
+  h.comp hf.snd'
+
 /-- A case distinction between functions computable in polynomial time on all inputs. -/
 @[fun_prop]
 theorem ite' {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β}
