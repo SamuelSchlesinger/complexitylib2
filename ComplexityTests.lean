@@ -93,6 +93,7 @@ import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.Bootstrapping
 import ComplexityTests.Crypto.Commitment
 import ComplexityTests.Crypto.Encryption
+import ComplexityTests.Crypto.FiatShamir
 import ComplexityTests.Crypto.FixedKeySecurity
 import ComplexityTests.Crypto.Forking
 import ComplexityTests.Crypto.GMWPointwise
