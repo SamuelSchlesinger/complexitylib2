@@ -65,7 +65,9 @@ theorem polyTime_reductionVerifier {graph : Input → Graph C} (width repeats : 
       (encPair enc (encPair alphabet alphabet)) encBool) :
     (reductionVerifier graph width repeats decode eval).PolyTime input := by
   obtain ⟨hcoins, hqueries, hverdict⟩ := polyTime_repeatedEdgeVerifier width repeats decode heval
-  exact ⟨hcoins.comp hgraph, hqueries.comp (by fun_prop), hverdict.comp (by fun_prop)⟩
+  exact ⟨hcoins.comp (.of_tidy hgraph),
+    .of_tidy (hqueries.tidy.comp (by fun_prop)),
+    .of_tidy (hverdict.tidy.comp (by fun_prop))⟩
 
 /-- An efficient well-formed graph reduction with a fixed positive gap gives a PCP using logarithmic
 randomness and constantly many queries. The alphabet representation precedes the input. -/
