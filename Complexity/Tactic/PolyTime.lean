@@ -256,19 +256,62 @@ private meta def rawTransitionPremise (type : Expr) : MetaM Bool := do
       return .continue (some reduced))
   return (← inspect.run false).2
 
+open Lean Meta in
+/-- Inspect a registered rule's hypotheses, including reducible proposition aliases. -/
+private meta def hasRawPremise (name : Name) : MetaM Bool := do
+  let some info := (← getEnv).find? name | return true
+  forallTelescope info.type fun xs _ => do
+    xs.anyM fun x => do rawTransitionPremise (← inferType x)
+
+open Lean in
+/-- Modify only the search's environment copy, including during asynchronous proof elaboration.
+The change cannot escape `withEnv`, so it is local and needs no persistent write log. -/
+private meta def searchRuleState {α β σ : Type} (ext : ScopedEnvExtension α β σ)
+    (env : Environment) (f : σ → σ) : Environment :=
+  ext.ext.modifyState (asyncMode := .local) (log := .unlogged) env fun s =>
+    match s.stateStack with
+    | top :: stack =>
+      { s with stateStack := { top with state := f top.state } :: stack }
+    | [] => s
+
 open Lean Meta Mathlib.Meta.FunProp in
-/-- Retain ordinary transitions while excluding those that require raw construction predicates.
+/-- Shadow global function and composition rules only during public search. Local proof entries
+and the original databases remain available outside it, including explicit raw construction. -/
+private meta def plainRuleEnvironment (env : Environment) : MetaM Environment := do
+  let mut seen : Std.HashSet Name := {}
+  let mut blocked : Std.HashSet Name := {}
+  for (_, properties) in (functionTheoremsExt.getState env).theorems do
+    for (_, rules) in properties do
+      for rule in rules do
+        if let .decl name := rule.thmOrigin then
+          unless seen.contains name do
+            seen := seen.insert name
+            if ← hasRawPremise name then blocked := blocked.insert name
+  for (_, rules) in (lambdaTheoremsExt.getState env).theorems do
+    for rule in rules do
+      unless seen.contains rule.thmName do
+        seen := seen.insert rule.thmName
+        if ← hasRawPremise rule.thmName then blocked := blocked.insert rule.thmName
+  let env := searchRuleState functionTheoremsExt env fun s =>
+    { s with theorems := s.theorems.map fun _ properties => properties.map fun _ rules =>
+      rules.filter fun rule => match rule.thmOrigin with
+        | .decl name => !blocked.contains name
+        | .fvar _ => true }
+  return searchRuleState lambdaTheoremsExt env fun s =>
+    { s with theorems := s.theorems.map fun _ rules =>
+        rules.filter fun rule => !blocked.contains rule.thmName }
+
+open Lean Meta Mathlib.Meta.FunProp in
+/-- Retain ordinary general rules while excluding raw construction premises.
 Both evaluated entries and lazy entries must be removed from this per-search tree. -/
-private meta def plainTransitions (thms : GeneralTheorems) : MetaM GeneralTheorems := do
+private meta def plainGeneralTheorems (thms : GeneralTheorems) : MetaM GeneralTheorems := do
   let mut names : Std.HashSet Name := {}
   for node in thms.theorems.tries do
     for rule in node.values do names := names.insert rule.thmName
     for (_, rule) in node.pending do names := names.insert rule.thmName
   let mut blocked : Std.HashSet Name := {}
   for name in names do
-    let raw ← forallTelescope (← getConstInfo name).type fun xs _ => xs.anyM fun x => do
-      rawTransitionPremise (← inferType x)
-    if raw then blocked := blocked.insert name
+    if ← hasRawPremise name then blocked := blocked.insert name
   return { thms with theorems := { thms.theorems with
     tries := thms.theorems.tries.map fun node =>
       { node with
@@ -287,9 +330,10 @@ meta def Internal.funPropWithPlainBoundary (maxSteps : Nat) : TacticM Unit := wi
   let ctx : Mathlib.Meta.FunProp.Context := { config := { maxSteps }, disch }
   let env ← getEnv
   let state : Mathlib.Meta.FunProp.State := {
-    morTheorems := morTheoremsExt.getState env
-    transitionTheorems := ← plainTransitions (transitionTheoremsExt.getState env) }
-  let (result, state) ← (funProp target ctx).run state
+    morTheorems := ← plainGeneralTheorems (morTheoremsExt.getState env)
+    transitionTheorems := ← plainGeneralTheorems (transitionTheoremsExt.getState env) }
+  let ruleEnv ← plainRuleEnvironment env
+  let (result, state) ← withEnv ruleEnv <| (funProp target ctx).run state
   let some result := result | throwError "no compositional plain certificate: {state.msgLog}"
   goal.assign result.proof
   replaceMainGoal []

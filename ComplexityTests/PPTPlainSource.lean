@@ -100,6 +100,25 @@ theorem consume_ppt {callback : List Bool → List Bool}
   unfold rawOnlyReverse
   fun_prop
 
+-- Literal pure programs must not recover a global raw certificate through either a function
+-- rule or a composition rule. Ordinary proof use and unfiltered `fun_prop` remain available.
+example : IsPPTOn encBits encBits (fun word => pure (rawOnlyReverse word)) := by
+  fail_if_success ppt
+  exact rawOnlyReverse_tidy.isPPTOn
+
+example (callback : List Bool → List Bool)
+    (hcallback : ComputableInPolyTime callback encBits encBits) :
+    IsPPTOn encBits encBits (fun word => pure (callback word)) := by
+  ppt
+
+example (callback : List Bool → List Bool)
+    (hcallback : ComputableTidilyInPolyTime callback encBits encBits) :
+    IsPPTOn encBits encBits (fun word => pure (callback word)) := by
+  ppt
+
+example : IsPPTOn encBits encBits (fun word => pure (rawOnlyReverse word)) := by
+  fun_prop
+
 /-- A complete predicate alias exercises the same boundary inside probabilistic search. -/
 abbrev RawAliasFull {α β : Type*} (f : α → β)
     (input : α ↪ List Bool) (output : β ↪ List Bool) : Prop :=
