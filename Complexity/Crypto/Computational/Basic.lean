@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Game
 import Complexity.Crypto.Negligible.Basic
@@ -137,7 +138,7 @@ theorem ComputationallyIndistinguishable.bind {X Y : ℕ → PMF (List Bool)}
 /-- Efficient parameter-dependent deterministic postprocessing preserves indistinguishability. -/
 theorem ComputationallyIndistinguishable.map {X Y : ℕ → PMF (List Bool)}
     (h : ComputationallyIndistinguishable X Y) {f : ℕ → List Bool → List Bool}
-    (hf : ComputableTidilyInPolyTime (fun p : ℕ × List Bool => f p.1 p.2)
+    (hf : ComputableInPolyTime (fun p : ℕ × List Bool => f p.1 p.2)
       (encPair encUnary encBits) encBits) :
     ComputationallyIndistinguishable (fun n => (X n).map (f n)) (fun n => (Y n).map (f n)) := by
   have hp : IsPPT encBits (fun n word => pure (f n word)) := by ppt

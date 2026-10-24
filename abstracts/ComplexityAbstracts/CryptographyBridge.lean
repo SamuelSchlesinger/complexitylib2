@@ -125,7 +125,7 @@ def OneWay (f : List Bool → List Bool) : Prop :=
 theorem oneWay_iff {f : List Bool → List Bool} : OneWay f ↔ Crypto.OneWay f := by
   constructor
   · rintro ⟨hf, hsecure⟩
-    apply Crypto.OneWay.of_inversion_negligible (polyTime_iff.mp hf)
+    apply Crypto.OneWay.of_inversion_negligible (.of_tidy (polyTime_iff.mp hf))
     intro adversary ha
     have h := hsecure (fun n word => ProbComp.eval (adversary n word))
       (strictPPT_iff.mpr ⟨fun p => adversary p.1 p.2, ha, fun _ => rfl⟩)

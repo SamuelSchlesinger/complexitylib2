@@ -91,7 +91,8 @@ theorem OneWay.normalize {f : List Bool → List Bool} (hf : OneWay f) (bound : 
     (hbound : ComputableTidilyInPolyTime bound encUnary encUnary) :
     OneWay (OneWayNormalization.normalize f bound) := by
   apply OneWay.of_inversion_negligible
-    (OneWayNormalization.computableTidilyInPolyTime_normalize hf.polyTime.tidy hbound)
+    (.of_tidy <|
+      OneWayNormalization.computableTidilyInPolyTime_normalize hf.polyTime.tidy hbound)
   intro adversary hPPT
   have hreduce : IsPPT encBits (fun n image =>
       adversary n (BitString.padWord (bound n) image)) := by ppt
