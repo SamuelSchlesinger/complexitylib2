@@ -4,15 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Christian Reitwiessner
 -/
 
-import Complexity.Computability.TreeEval.Ary.CookMertz
+import Complexity.Computability.TreeEval.CookMertz
 
 /-!
 # Tree Evaluation with fan-in `d`
 
 A ternary instance evaluated directly, and the Cook–Mertz procedure over `ZMod 11` on two-bit
 values: the field-size hypothesis `d * ℓ < |K| - 1` holds, as `3 * 2 < 10`, so the correctness
-theorem is not vacuous. A binary instance embedded with fan-in `2` keeps its value, and the
-fan-in-`2` procedure over `ZMod 7` computes it.
+theorem is not vacuous. A binary instance embedded with fan-in `2` keeps its value, the
+fan-in-`2` procedure over `ZMod 7` computes it, and on it the fan-in-`2` procedure is the binary
+procedure.
 -/
 
 namespace ComplexityTests.TreeEvalAry
@@ -67,6 +68,13 @@ example : Ary.proc (Finset.univ : Finset (ZMod 7)ˣ).toList (Ary.Tree.ofBinary b
   congr 1
   decide
 
+/-- On the embedded binary instance, the fan-in-`2` procedure over `ZMod 7` is the binary
+procedure, for every coefficient, target register and contents of the registers. -/
+example (c : ZMod 7) (t : Fin 3) (S : Cslib.TreeEval.State (ZMod 7) 2) :
+    Ary.proc (Finset.univ : Finset (ZMod 7)ˣ).toList (Ary.Tree.ofBinary binarySample) c t S =
+      Cslib.TreeEval.proc (Finset.univ : Finset (ZMod 7)ˣ).toList binarySample c t S := by
+  rw [Ary.proc_ofBinary]
+
 /--
 info: 'Cslib.TreeEval.Ary.proc_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
@@ -78,5 +86,11 @@ info: 'Cslib.TreeEval.Ary.embed_eval_eq_proc' depends on axioms: [propext, Class
 -/
 #guard_msgs in
 #print axioms Cslib.TreeEval.Ary.embed_eval_eq_proc
+
+/--
+info: 'Cslib.TreeEval.Ary.proc_ofBinary' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.TreeEval.Ary.proc_ofBinary
 
 end ComplexityTests.TreeEvalAry

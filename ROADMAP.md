@@ -1418,12 +1418,13 @@ space bounds. Further class-level work needs resource certificates for the actua
   `1 ≤ H`); malformed-input handling and the refined `O(ℓ + H log(ℓ + 2))` parameter bound
   remain outstanding. Toward Williams's `TIME[t] ⊆ SPACE[√(t log t)]` (#361), the
   [fan-in-`d` procedure](Complexity/Computability/TreeEval/Ary/CookMertz.lean) is proved correct
-  over `d + 1` registers when `d · ℓ < |K| - 1` (milestone M1), and implicit Tree Evaluation (#367)
-  starts from
+  over `d + 1` registers when `d · ℓ < |K| - 1` (milestone M1); at `d = 2` it is the binary
+  procedure step for step, whose correctness is derived from it
+  ([`Ary.proc_ofBinary`](Complexity/Computability/TreeEval/CookMertz.lean)). Implicit Tree
+  Evaluation (#367) starts from
   [query machines in the space of their states](Complexity/Computability/Machines/Turing/MultiTape/Complexity/LogSpace/QueryMachine.lean),
   which charge neither the input nor the output; the fan-in-`d` space bound, subroutine calls for
-  implicit gates and leaves, a step-exact bridge to the binary procedure at `d = 2` (or deprecating
-  the binary copy), padding of non-perfect trees, and the remaining milestones are open;
+  implicit gates and leaves, padding of non-perfect trees, and the remaining milestones are open;
 * the space hierarchy below linear space: the
   [space hierarchy](Complexity/Computability/Complexity/Classes/Hierarchy/Space.lean) and
   `L ⊊ PSPACE` are proved for space-constructible bounds `g` with `n ≤ g n`, and the textbook
