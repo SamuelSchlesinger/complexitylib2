@@ -9,7 +9,7 @@ module
 
 public import Complexity.Foundations.Combinatorics.Expander.Loops
 public import Complexity.Foundations.Combinatorics.Expander.Power
-public import Complexity.Foundations.Combinatorics.Expander.Products
+public import Complexity.Foundations.Combinatorics.Expander.Zigzag
 public import Complexity.Foundations.Combinatorics.Expander.SimpleGraph
 public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 
@@ -142,7 +142,7 @@ theorem comp_apply (ψ : Hom G' G'') (φ : Hom G G') (v : V) : ψ.comp φ v = ψ
 /-- A homomorphism maps walks to walks: the rotation map of the walks of length `t` follows it. -/
 theorem powRot_map (φ : Hom G G') :
     ∀ (t : ℕ) (v : V) (k : Fin t → D),
-      G'.powRot t (φ v, k) = Prod.map φ id (G.powRot t (v, k))
+      powRot G'.rot t (φ v, k) = Prod.map φ id (powRot G.rot t (v, k))
   | 0, _, _ => rfl
   | t + 1, v, k => by
     rw [powRot_succ, powRot_succ, φ.rot_map, Prod.map_fst, Prod.map_snd, id_eq, powRot_map φ t]

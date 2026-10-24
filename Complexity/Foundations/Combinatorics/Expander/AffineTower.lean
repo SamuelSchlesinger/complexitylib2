@@ -9,6 +9,9 @@ module
 
 public import Complexity.Foundations.Combinatorics.Expander.AffinePlane
 public import Complexity.Foundations.Combinatorics.Expander.Tower
+import Complexity.Foundations.Combinatorics.Expander.Reindex
+import Mathlib.Algebra.Field.ZMod
+import Mathlib.Tactic.NormNum.Prime
 
 /-!
 # A zig-zag tower with an arithmetic base
@@ -41,6 +44,8 @@ degree and time polynomial in the bit length of a vertex name remain separate ta
   the tower's spectral hypothesis whenever `|K| ≥ 256`.
 * `Cslib.RotationMap.spectralExpansion_affinePlaneTower_le`: every tower graph has expansion
   at most `2 / 5` under that same condition.
+* `Cslib.RotationMap.exists_spectralExpansion_zigzagTower_le`: constant-degree expanders on
+  `d ^ (4 (n + 1))` vertices for every `n`, instantiated over `ZMod 257`.
 
 ## References
 
@@ -114,5 +119,29 @@ theorem spectralExpansion_affinePlaneTower_le (hK : 256 ≤ Fintype.card K) (n :
     (affinePlaneTower K n).spectralExpansion ≤ 2 / 5 :=
   spectralExpansion_zigzagTower_le_two_div_five _ _
     (spectralExpansion_affinePlaneTowerBase_le_one_div_five K hK) n
+
+/-- **Constant-degree expanders on `d ^ (4 (n + 1))` vertices from the arithmetic base**
+[Reingold, Vadhan and Wigderson, Theorem 1.4 and Section 5.1][ReingoldVadhanWigderson2002]
+[Hoory, Linial and Wigderson, Section 9.2][HooryLinialWigderson2006]: there are a finite type
+`D` of at least two labels and a `D`-regular multigraph `H` on `Fin 2 → D × D` of spectral
+expansion at most `1 / 5` such that, for every `n`, the zig-zag tower `zigzagTower H _ n` is a
+`|D| ^ 2`-regular multigraph on `|D| ^ (4 (n + 1))` vertices of spectral expansion at most `2 / 5`.
+-/
+theorem exists_spectralExpansion_zigzagTower_le :
+    ∃ (D : Type) (_ : Fintype D) (H : RotationMap (Fin 2 → D × D) D),
+      1 < Fintype.card D ∧ H.spectralExpansion ≤ 1 / 5 ∧
+      ∀ n, Fintype.card (ZigzagTowerVertex (Fin 2 → D × D) n) = Fintype.card D ^ (4 * (n + 1)) ∧
+        (zigzagTower H (Equiv.refl _) n).spectralExpansion ≤ 2 / 5 := by
+  have : Fact (Nat.Prime 257) := ⟨by norm_num⟩
+  have hH : ((affinePlaneTowerBase (ZMod 257)).reindex
+      (affinePlaneTowerBaseEquiv (ZMod 257))).spectralExpansion ≤ 1 / 5 := by
+    rw [spectralExpansion_reindex]
+    exact spectralExpansion_affinePlaneTowerBase_le_one_div_five (ZMod 257)
+      (by rw [ZMod.card]; norm_num)
+  exact ⟨ZMod 257 × ZMod 257, inferInstance,
+    (affinePlaneTowerBase (ZMod 257)).reindex (affinePlaneTowerBaseEquiv (ZMod 257)),
+    by rw [Fintype.card_prod, ZMod.card]; norm_num, hH,
+    fun n ↦ ⟨card_zigzagTowerVertex_of_equiv (Equiv.refl _) n,
+      spectralExpansion_zigzagTower_le_two_div_five _ _ hH n⟩⟩
 
 end Cslib.RotationMap

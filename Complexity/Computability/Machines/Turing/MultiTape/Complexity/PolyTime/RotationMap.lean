@@ -11,7 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Foundations.Combinatorics.Expander.AffinePlane
 public import Complexity.Foundations.Combinatorics.Expander.Contraction
-public import Complexity.Foundations.Combinatorics.Expander.Products
+public import Complexity.Foundations.Combinatorics.Expander.Zigzag
 public import Complexity.Foundations.Combinatorics.Expander.Reindex
 
 /-!

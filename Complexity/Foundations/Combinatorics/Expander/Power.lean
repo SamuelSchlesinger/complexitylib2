@@ -56,62 +56,66 @@ namespace Cslib.RotationMap
 open Finset
 open scoped BigOperators
 
-variable {V D : Type*} (G : RotationMap V D)
+variable {V D : Type*}
 
-/-- The rotation map of the walks of length `t` in `G`
+/-- The rotation map of the walks of length `t` under `rotate`
 [Reingold, Vadhan and Wigderson, Section 2.3][ReingoldVadhanWigderson2002]:
-`G.powRot t (v, k) = (w, ℓ)` when the walk from `v` along the labels `k 0, …, k (t - 1)` ends at
-`w`, and `ℓ` lists the labels of its edges at their far ends, from the last edge back to the first,
-so that `ℓ` labels the reverse walk from `w` to `v`. -/
-def powRot : (t : ℕ) → V × (Fin t → D) → V × (Fin t → D)
+`powRot rotate t (v, k) = (w, ℓ)` when the walk from `v` along the labels `k 0, …, k (t - 1)` ends
+at `w`, and `ℓ` lists the labels of its edges at their far ends, from the last edge back to the
+first, so that `ℓ` labels the reverse walk from `w` to `v`. -/
+def powRot (rotate : V × D → V × D) : (t : ℕ) → V × (Fin t → D) → V × (Fin t → D)
   | 0, p => p
   | t + 1, p =>
-    let q := G.rot (p.1, p.2 0)
-    let r := powRot t (q.1, Fin.tail p.2)
+    let q := rotate (p.1, p.2 0)
+    let r := powRot rotate t (q.1, Fin.tail p.2)
     (r.1, Fin.snoc r.2 q.2)
 
 /-- A walk of length `0` is the identity. -/
 @[simp]
-theorem powRot_zero (p : V × (Fin 0 → D)) : G.powRot 0 p = p :=
+theorem powRot_zero (rotate : V × D → V × D) (p : V × (Fin 0 → D)) : powRot rotate 0 p = p :=
   rfl
 
 /-- A walk of length `t + 1` is a first step followed by a walk of length `t`. -/
-theorem powRot_succ (t : ℕ) (p : V × (Fin (t + 1) → D)) :
-    G.powRot (t + 1) p =
-      ((G.powRot t ((G.rot (p.1, p.2 0)).1, Fin.tail p.2)).1,
-        Fin.snoc (G.powRot t ((G.rot (p.1, p.2 0)).1, Fin.tail p.2)).2 (G.rot (p.1, p.2 0)).2) :=
+theorem powRot_succ (rotate : V × D → V × D) (t : ℕ) (p : V × (Fin (t + 1) → D)) :
+    powRot rotate (t + 1) p =
+      ((powRot rotate t ((rotate (p.1, p.2 0)).1, Fin.tail p.2)).1,
+        Fin.snoc (powRot rotate t ((rotate (p.1, p.2 0)).1, Fin.tail p.2)).2
+          (rotate (p.1, p.2 0)).2) :=
   rfl
 
 /-- A walk of length `t + 1` is a walk of length `t` followed by a last step. -/
-private theorem powRot_succ' (t : ℕ) (v : V) (k : Fin (t + 1) → D) :
-    G.powRot (t + 1) (v, k) =
-      ((G.rot ((G.powRot t (v, Fin.init k)).1, k (Fin.last t))).1,
-        Fin.cons (G.rot ((G.powRot t (v, Fin.init k)).1, k (Fin.last t))).2
-          (G.powRot t (v, Fin.init k)).2) := by
+private theorem powRot_succ' (rotate : V × D → V × D) (t : ℕ) (v : V) (k : Fin (t + 1) → D) :
+    powRot rotate (t + 1) (v, k) =
+      ((rotate ((powRot rotate t (v, Fin.init k)).1, k (Fin.last t))).1,
+        Fin.cons (rotate ((powRot rotate t (v, Fin.init k)).1, k (Fin.last t))).2
+          (powRot rotate t (v, Fin.init k)).2) := by
   induction t generalizing v with
   | zero =>
     refine Prod.ext rfl (funext fun i ↦ ?_)
     rw [Fin.fin_one_eq_zero i]
     rfl
   | succ t ih =>
-    rw [powRot_succ, ih, powRot_succ G t (v, Fin.init k)]
+    rw [powRot_succ, ih, powRot_succ rotate t (v, Fin.init k)]
     simp only [Fin.tail_init_eq_init_tail, Fin.cons_snoc_eq_snoc_cons]
     rfl
 
 /-- Reversing a walk twice returns the original walk. -/
-theorem powRot_involutive : ∀ t, Function.Involutive (G.powRot t)
+theorem powRot_involutive {rotate : V × D → V × D} (h : Function.Involutive rotate) :
+    ∀ t, Function.Involutive (powRot rotate t)
   | 0 => fun _ ↦ rfl
   | t + 1 => fun p ↦ by
-    rw [powRot_succ G t p, powRot_succ']
-    simp [Fin.init_snoc, Fin.snoc_last, powRot_involutive t _]
+    rw [powRot_succ rotate t p, powRot_succ']
+    simp [Fin.init_snoc, Fin.snoc_last, powRot_involutive h t _, h _]
+
+variable (G : RotationMap V D)
 
 /-- The **`t`-th power** `G ^ t`
 [Reingold, Vadhan and Wigderson, Section 2.3][ReingoldVadhanWigderson2002]: the multigraph on the
 same vertices with an edge for every walk of length `t` in `G`, labelled by the labels of its steps.
 -/
 def pow (t : ℕ) : RotationMap V (Fin t → D) where
-  rot := G.powRot t
-  rot_involutive := G.powRot_involutive t
+  rot := powRot G.rot t
+  rot_involutive := powRot_involutive G.rot_involutive t
 
 /-- In `G ^ 0`, the rotation map is the identity. -/
 @[simp]
@@ -143,7 +147,7 @@ labelled by the last. -/
 theorem neighbor_pow_succ' (t : ℕ) (v : V) (k : Fin (t + 1) → D) :
     (G.pow (t + 1)).neighbor v k =
       G.neighbor ((G.pow t).neighbor v (Fin.init k)) (k (Fin.last t)) :=
-  congrArg Prod.fst (G.powRot_succ' t v k)
+  congrArg Prod.fst (powRot_succ' G.rot t v k)
 
 variable [Fintype D]
 

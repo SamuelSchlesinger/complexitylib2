@@ -127,7 +127,7 @@ theorem reingoldStep_rot {V : Type*} (G : RotationMap V B) (y : V) (c a : B) :
       let s₄ := reingoldHStep H e .zag₁ (r₂.2, s₃.2)
       ((r₂.1, s₄.1), reingoldFinish e s₄.2) := by
   simp only [reingoldStep, rot_relabel, reingoldHStep, reingoldFinish, Equiv.apply_symm_apply]
-  change Prod.map id e.symm ((G.zigzag H).powRot 2 ((y, c), e.symm.symm a)) = _
+  change Prod.map id e.symm (powRot (G.zigzag H).rot 2 ((y, c), e.symm.symm a)) = _
   simp only [powRot, Equiv.symm_symm, zigzag, zigzagRot, Fin.tail, Prod.map_apply, id_eq]
   refine Prod.ext rfl (congrArg e.symm (funext fun i ↦ ?_))
   fin_cases i <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one, Fin.snoc]
