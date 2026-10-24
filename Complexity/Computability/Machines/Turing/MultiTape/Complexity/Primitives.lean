@@ -7,6 +7,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeUnaryPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Unary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Fold
 import Mathlib.Tactic.FinCases
