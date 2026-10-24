@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Complexity.Logics.Propositional.CNF
 public import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Finset.Lattice.Lemmas
 
@@ -35,6 +36,11 @@ than an evaluated one, so it is not reused.
 * `Cslib.Logic.PL.QBF.freeVars`, `Cslib.Logic.PL.QBF.Closed`.
 * `Cslib.Logic.PL.QBF.vars`, `Cslib.Logic.PL.QBF.size`: the variables, free or bound, and the number
   of nodes.
+* `Cslib.Logic.PL.QBF.exs`, `Cslib.Logic.PL.QBF.alls`, `Cslib.Logic.PL.QBF.conj`,
+  `Cslib.Logic.PL.QBF.imp`, `Cslib.Logic.PL.QBF.iff`, `Cslib.Logic.PL.QBF.lit`: derived
+  connectives, blocks of quantifiers and conjunctions of lists.
+* `Cslib.Logic.PL.QBF.ofClause`, `Cslib.Logic.PL.QBF.ofCNF`: clauses and formulas in conjunctive
+  normal form as quantified Boolean formulas.
 
 ## Main results
 
@@ -45,6 +51,10 @@ than an evaluated one, so it is not reused.
   assignment.
 * `Cslib.Logic.PL.QBF.eval_not_ex`, `Cslib.Logic.PL.QBF.eval_not_all`: De Morgan's laws for the
   quantifiers.
+* `Cslib.Logic.PL.QBF.eval_exs_eq_true_iff`, `Cslib.Logic.PL.QBF.eval_alls_eq_true_iff`: blocks
+  of quantifiers range over the assignments that agree outside the block.
+* `Cslib.Logic.PL.QBF.eval_ofCNF`, `Cslib.Logic.PL.QBF.mem_freeVars_ofCNF`: formulas in
+  conjunctive normal form keep their value and their variables.
 
 ## References
 
@@ -262,6 +272,183 @@ theorem closed_not : φ.not.Closed ↔ φ.Closed := Iff.rfl
 theorem closed_and : (φ.and ψ).Closed ↔ φ.Closed ∧ ψ.Closed := Finset.union_eq_empty
 
 theorem closed_or : (φ.or ψ).Closed ↔ φ.Closed ∧ ψ.Closed := Finset.union_eq_empty
+
+end QBF
+
+namespace QBF
+
+/-! ### Derived connectives -/
+
+variable {V : Type*}
+
+/-- Existential quantification over each variable of a list, the first one outermost. -/
+def exs (vs : List V) (φ : QBF V) : QBF V := vs.foldr ex φ
+
+/-- Universal quantification over each variable of a list, the first one outermost. -/
+def alls (vs : List V) (φ : QBF V) : QBF V := vs.foldr all φ
+
+/-- The conjunction of a list of formulas, `top` for the empty list. -/
+def conj (l : List (QBF V)) : QBF V := l.foldr and top
+
+/-- Implication. -/
+def imp (φ ψ : QBF V) : QBF V := or (not φ) ψ
+
+/-- Equivalence. -/
+def iff (φ ψ : QBF V) : QBF V := or (and φ ψ) (and (not φ) (not ψ))
+
+/-- The literal of `v` with sign `b`: `v` itself for `true`, its negation for `false`. -/
+def lit (v : V) (b : Bool) : QBF V := if b then var v else not (var v)
+
+/-- A clause as the disjunction of its literals, `bot` for the empty clause. -/
+def ofClause (c : Clause V) : QBF V := c.foldr (fun l φ => or (lit l.1 l.2) φ) bot
+
+/-- A formula in conjunctive normal form as the conjunction of its clauses, `top` for the empty
+formula. -/
+def ofCNF (φ : CNF V) : QBF V := φ.foldr (fun c ψ => and (ofClause c) ψ) top
+
+theorem exs_append (vs ws : List V) (φ : QBF V) : exs (vs ++ ws) φ = exs vs (exs ws φ) :=
+  List.foldr_append
+
+theorem alls_append (vs ws : List V) (φ : QBF V) : alls (vs ++ ws) φ = alls vs (alls ws φ) :=
+  List.foldr_append
+
+variable [DecidableEq V] (σ : V → Bool)
+
+/-- **A block of existential quantifiers** ranges over the assignments that agree with the given
+one outside the block. -/
+theorem eval_exs_eq_true_iff (vs : List V) (φ : QBF V) :
+    (exs vs φ).eval σ = true ↔ ∃ τ, (∀ x ∉ vs, τ x = σ x) ∧ φ.eval τ = true := by
+  induction vs generalizing σ with
+  | nil => exact ⟨fun h => ⟨σ, fun _ _ => rfl, h⟩, fun ⟨τ, hτ, h⟩ =>
+      (funext fun x => hτ x (List.not_mem_nil)) ▸ h⟩
+  | cons v vs ih =>
+    simp only [exs, List.foldr_cons] at ih ⊢
+    rw [eval_ex_eq_true_iff]
+    constructor
+    · rintro ⟨b, hb⟩
+      obtain ⟨τ, hτ, h⟩ := (ih _).mp hb
+      refine ⟨τ, fun x hx => ?_, h⟩
+      rw [hτ x fun h => hx (List.mem_cons_of_mem _ h),
+        Function.update_of_ne fun h => hx (by simp [h])]
+    · rintro ⟨τ, hτ, h⟩
+      refine ⟨τ v, (ih _).mpr ⟨τ, fun x hx => ?_, h⟩⟩
+      by_cases hxv : x = v
+      · subst hxv
+        simp
+      · rw [Function.update_of_ne hxv]
+        exact hτ x (by simp [hxv, hx])
+
+/-- **A block of universal quantifiers** ranges over the assignments that agree with the given one
+outside the block. -/
+theorem eval_alls_eq_true_iff (vs : List V) (φ : QBF V) :
+    (alls vs φ).eval σ = true ↔ ∀ τ, (∀ x ∉ vs, τ x = σ x) → φ.eval τ = true := by
+  induction vs generalizing σ with
+  | nil => exact ⟨fun h τ hτ => (funext fun x => hτ x (List.not_mem_nil)) ▸ h,
+      fun h => h σ fun _ _ => rfl⟩
+  | cons v vs ih =>
+    simp only [alls, List.foldr_cons] at ih ⊢
+    rw [eval_all_eq_true_iff]
+    constructor
+    · intro h τ hτ
+      refine (ih _).mp (h (τ v)) τ fun x hx => ?_
+      by_cases hxv : x = v
+      · subst hxv
+        simp
+      · rw [Function.update_of_ne hxv]
+        exact hτ x (by simp [hxv, hx])
+    · intro h b
+      refine (ih _).mpr fun τ hτ => h τ fun x hx => ?_
+      rw [hτ x fun h => hx (List.mem_cons_of_mem _ h),
+        Function.update_of_ne fun h => hx (by simp [h])]
+
+@[simp] theorem eval_conj (l : List (QBF V)) : (conj l).eval σ = l.all (·.eval σ) := by
+  induction l with
+  | nil => rfl
+  | cons φ l ih =>
+    change (φ.and (conj l)).eval σ = _
+    simp [ih]
+
+@[simp] theorem eval_imp (φ ψ : QBF V) : (imp φ ψ).eval σ = (!φ.eval σ || ψ.eval σ) := rfl
+
+@[simp] theorem eval_iff (φ ψ : QBF V) : (iff φ ψ).eval σ = (φ.eval σ == ψ.eval σ) := by
+  simp only [iff, eval_or, eval_and, eval_not]
+  cases φ.eval σ <;> cases ψ.eval σ <;> rfl
+
+@[simp] theorem eval_lit (v : V) (b : Bool) : (lit v b).eval σ = (σ v == b) := by
+  cases b <;> simp only [lit, eval_var, eval_not, Bool.false_eq_true, ite_false, ite_true] <;>
+    cases σ v <;> rfl
+
+@[simp] theorem eval_ofClause (c : Clause V) : (ofClause c).eval σ = Clause.eval σ c := by
+  induction c with
+  | nil => rfl
+  | cons l c ih =>
+    change ((lit l.1 l.2).or (ofClause c)).eval σ = _
+    simp [ih, Literal.eval]
+
+/-- **A formula in conjunctive normal form keeps its value.** -/
+@[simp] theorem eval_ofCNF (φ : CNF V) : (ofCNF φ).eval σ = CNF.eval σ φ := by
+  induction φ with
+  | nil => rfl
+  | cons c φ ih =>
+    change ((ofClause c).and (ofCNF φ)).eval σ = _
+    simp [ih]
+
+/-! ### Free variables of the derived connectives -/
+
+theorem freeVars_exs (vs : List V) (φ : QBF V) :
+    (exs vs φ).freeVars = φ.freeVars \ vs.toFinset := by
+  induction vs with
+  | nil => simp [exs]
+  | cons v vs ih =>
+    simp only [exs, List.foldr_cons] at ih ⊢
+    rw [freeVars_ex, ih, List.toFinset_cons]
+    ext x
+    simp only [Finset.mem_erase, Finset.mem_sdiff, Finset.mem_insert]
+    tauto
+
+theorem freeVars_alls (vs : List V) (φ : QBF V) :
+    (alls vs φ).freeVars = φ.freeVars \ vs.toFinset := by
+  induction vs with
+  | nil => simp [alls]
+  | cons v vs ih =>
+    simp only [alls, List.foldr_cons] at ih ⊢
+    rw [freeVars_all, ih, List.toFinset_cons]
+    ext x
+    simp only [Finset.mem_erase, Finset.mem_sdiff, Finset.mem_insert]
+    tauto
+
+theorem mem_freeVars_conj {l : List (QBF V)} {x : V} :
+    x ∈ (conj l).freeVars ↔ ∃ φ ∈ l, x ∈ φ.freeVars := by
+  induction l with
+  | nil => simp [conj]
+  | cons φ l ih =>
+    change x ∈ (φ.and (conj l)).freeVars ↔ _
+    simp [ih]
+
+@[simp] theorem freeVars_imp (φ ψ : QBF V) : (imp φ ψ).freeVars = φ.freeVars ∪ ψ.freeVars := rfl
+
+@[simp] theorem freeVars_iff (φ ψ : QBF V) : (iff φ ψ).freeVars = φ.freeVars ∪ ψ.freeVars := by
+  ext x
+  simp only [iff, freeVars_or, freeVars_and, freeVars_not, Finset.mem_union]
+  tauto
+
+@[simp] theorem freeVars_lit (v : V) (b : Bool) : (lit v b).freeVars = {v} := by
+  cases b <;> rfl
+
+theorem mem_freeVars_ofCNF {x : V} {φ : CNF V} : x ∈ (ofCNF φ).freeVars ↔ x ∈ φ.vars := by
+  have hc (c : Clause V) : x ∈ (ofClause c).freeVars ↔ ∃ l ∈ c, l.1 = x := by
+    induction c with
+    | nil => simp [ofClause]
+    | cons l c ih =>
+      change x ∈ ((lit l.1 l.2).or (ofClause c)).freeVars ↔ _
+      rw [freeVars_or, Finset.mem_union, ih, freeVars_lit, Finset.mem_singleton]
+      simp [eq_comm]
+  induction φ with
+  | nil => simp [ofCNF, CNF.vars]
+  | cons c φ ih =>
+    change x ∈ ((ofClause c).and (ofCNF φ)).freeVars ↔ _
+    simp only [freeVars_and, Finset.mem_union, ih, hc]
+    simp [CNF.vars]
 
 end QBF
 
