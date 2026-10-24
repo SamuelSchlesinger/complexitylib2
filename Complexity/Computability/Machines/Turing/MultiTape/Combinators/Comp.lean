@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Christian Reitwiessner. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Christian Reitwiessner
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -216,5 +216,19 @@ public theorem ComputableTidilyInTimeAndSpaceOfLength.computableInTimeAndSpaceOf
       (fun n => t₁ n + t₂ (l n) + 4 * l n + 9) (fun n => s₁ n + s₂ (l n) + 5 * l n + c) :=
   let ⟨c, h⟩ := comp ht hs hl hf hg
   ⟨c, ComputableTidilyInTimeAndSpace.computableInTimeAndSpace h⟩
+
+-- upstream: candidate
+-- vendored: local output-word transport rule; not part of the copied revision.
+/-- Reuse the same machine when the new function emits the same encoded output word.
+The time and space bounds are unchanged; no encoding conversion is performed. -/
+public theorem ComputableTidilyInTimeAndSpace.of_enc_eq
+    {α β γ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
+    {encOut : γ ↪ List Bool} {f : α → β} {g : α → γ} {t s : α → ℕ}
+    (hf : ComputableTidilyInTimeAndSpace f encIn encMid t s)
+    (h : ∀ a, encOut (g a) = encMid (f a)) :
+    ComputableTidilyInTimeAndSpace g encIn encOut t s :=
+  let ⟨k, State, hfinite, tm, htm⟩ := hf
+  ⟨k, State, hfinite, tm, fun a => h a ▸ htm a⟩
+
 
 end Turing.MultiTapeTM

@@ -125,7 +125,7 @@ namespace ComputableTidilyInDegree
 
 open EncInt in
 public theorem int_succ : ComputableTidilyInDegree (· + 1) encInt encInt 1 1 := by
-  refine .of_linear (succT.computableTidilyInLinearTimeAndSpace fun z => ?_)
+  refine .of_linear (succT.computableInLinearTimeAndSpace fun z => ?_)
   have hc := run_copy succT (fun b => by cases b <;> rfl) rfl
   rcases z with n | _ | n
   · simp [hc]
@@ -135,7 +135,7 @@ public theorem int_succ : ComputableTidilyInDegree (· + 1) encInt encInt 1 1 :=
 
 open EncInt in
 public theorem int_pred : ComputableTidilyInDegree (· - 1) encInt encInt 1 1 := by
-  refine .of_linear (predT.computableTidilyInLinearTimeAndSpace fun z => ?_)
+  refine .of_linear (predT.computableInLinearTimeAndSpace fun z => ?_)
   have hc := run_copy predT (fun b => by cases b <;> rfl) rfl
   rcases z with (_ | n) | n
   · rfl

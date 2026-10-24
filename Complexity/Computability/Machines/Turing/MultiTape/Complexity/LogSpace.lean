@@ -307,7 +307,7 @@ private theorem doubledTransducer_run (l : List Bool) :
 theorem doubled_inSpace :
     ComputableTidilyInSpace doubled encBits encBits fun l => (encBits l).length :=
   ComputableTidilyInSpace.of_inO (.of_linear
-    (doubledTransducer.computableTidilyInLinearTimeAndSpace fun l =>
+    (doubledTransducer.computableInLinearTimeAndSpace fun l =>
       (doubledTransducer_run l).symm))
 
 /-- **Framing an encoded instance** takes no work space. -/

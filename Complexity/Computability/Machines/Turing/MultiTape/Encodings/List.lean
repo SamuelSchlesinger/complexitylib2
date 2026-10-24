@@ -9,6 +9,8 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Encodings of lists
 
@@ -49,10 +51,13 @@ public lemma encList_cons (a : α) (l : List α) :
     encList enc (a :: l) = frame (enc a) ++ encList enc l := rfl
 
 public instance : ListEncoding enc (encList enc) where
-  headD d := .of_isEmpty_ite d (fun l hl => by cases l <;> simp_all)
-    (.of_unframe fun ⟨l, hl⟩ => by cases l <;> simp at hl ⊢)
-  tail := .of_dropFrame fun l => by cases l <;> simp [dropFrame]
-  isEmpty := .of_isEmpty fun l => by cases l <;> simp
+  headD d := (show ComputableInLinearTimeAndSpace _ _ _ from
+      .of_isEmpty_ite d (fun l hl => by cases l <;> simp_all)
+    (.of_unframe fun ⟨l, hl⟩ => by cases l <;> simp at hl ⊢))
+  tail := (show ComputableInLinearTimeAndSpace _ _ _ from
+      .of_dropFrame fun l => by cases l <;> simp [dropFrame])
+  isEmpty := (show ComputableInLinearTimeAndSpace _ _ _ from
+      .of_isEmpty fun l => by cases l <;> simp)
 
 /-- Lists of Booleans encoded as themselves. -/
 @[expose] public def encBits : List Bool ↪ List Bool := Function.Embedding.refl _
@@ -61,9 +66,12 @@ public instance : ListEncoding enc (encList enc) where
 public lemma encBits_apply (l : List Bool) : encBits l = l := rfl
 
 public instance : ListEncoding encBool encBits where
-  headD d := .of_isEmpty_ite d (fun l hl => by simp_all)
-    (.of_take_one fun ⟨l, hl⟩ => by cases l; exacts [by simp at hl, rfl])
-  tail := .of_tail fun _ => rfl
-  isEmpty := .of_isEmpty fun _ => rfl
+  headD d := (show ComputableInLinearTimeAndSpace _ _ _ from
+      .of_isEmpty_ite d (fun l hl => by simp_all)
+    (.of_take_one fun ⟨l, hl⟩ => by cases l; exacts [by simp at hl, rfl]))
+  tail := (show ComputableInLinearTimeAndSpace _ _ _ from
+      .of_tail fun _ => rfl)
+  isEmpty := (show ComputableInLinearTimeAndSpace _ _ _ from
+      .of_isEmpty fun _ => rfl)
 
 end Turing.MultiTapeTM

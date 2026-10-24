@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 Christian Reitwiessner, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Samuel Schlesinger
+Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
@@ -60,16 +60,21 @@ devices. Each plain notion agrees with its tidy counterpart with the same bounds
 `Turing.MultiTapeTM.computableInSpace_iff_computableTidilyInSpace`,
 `Turing.MultiTapeTM.computableInPolySpace_iff_computableTidilyInPolySpace`).
 
+`ComputableInLinearTimeAndSpace` uses one common linear time/workspace bound.
+`ComputableInBigO` retains independent time/workspace bounds and does not charge the output.
+
 ## Main definitions
 
 * `Turing.MultiTapeTM.ComputableInO`: computability within time and space bounds up to constants.
 * `Turing.MultiTapeTM.ComputableInSpace`: computability within a space bound up to constants.
 * `Turing.MultiTapeTM.ComputableInPolySpace`: computability within polynomial space.
 * `Turing.MultiTapeTM.ComputableInDegree`: independent time/workspace and output degrees.
+* `Turing.MultiTapeTM.ComputableInLinearTimeAndSpace`: linear time and workspace.
+* `Turing.MultiTapeTM.ComputableInBigO`: independent uncharged asymptotic time/workspace bounds.
 
 ## References
 
-* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Chapter 4][AroraBarak09]
+* [S. Arora and B. Barak, *Computational Complexity: A Modern Approach*, Chapter 4][AroraBarak09]
 * [C. H. Papadimitriou, *Computational Complexity*, Section 2.5][Papadimitriou94]
 -/
 
@@ -114,6 +119,13 @@ def ComputableInPolySpace (f : α → β) (encIn : α ↪ List Bool) (encOut : �
     ComputableInTimeAndSpace f encIn encOut t (fun a => s (encIn a).length) ∧
     ∀ a, (encOut (f a)).length ≤ s (encIn a).length
 
+/-- Linear-time and linear-work-space computability, with one existential constant and no
+clean-tape requirement. The encoded output length is bounded by the time of the computation. -/
+def ComputableInLinearTimeAndSpace (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) : Prop :=
+  ∃ c, ComputableInTimeAndSpace f encIn encOut
+    (fun a => c * ((encIn a).length + 1)) (fun a => c * ((encIn a).length + 1))
+
 /-- Polynomial time and work space of degree `d`, and encoded output growth of degree `e`.
 The realization is one machine for all inputs. Both degrees may be zero. -/
 def ComputableInDegree (f : α → β) (encIn : α ↪ List Bool) (encOut : β ↪ List Bool)
@@ -123,5 +135,9 @@ def ComputableInDegree (f : α → β) (encIn : α ↪ List Bool) (encOut : β �
     ComputableInTimeAndSpace f encIn encOut t s) ∧
   DegreeBounded (fun a => (encIn a).length) (fun a => (encOut (f a)).length) e
 
+/-- `f` is computable within time `O(T a)` and space `O(S a)` on the input `a`. -/
+def ComputableInBigO {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) (T S : α → ℕ) : Prop :=
+  ∃ c, ComputableInTimeAndSpace f encIn encOut (fun a => c * (T a + 1)) fun a => c * (S a + 1)
 
 end Turing.MultiTapeTM

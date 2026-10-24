@@ -13,6 +13,8 @@ import Complexity.Foundations.Data.List.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
 import Mathlib.Tactic.Linarith
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Quantitative streaming folds
 
@@ -380,8 +382,8 @@ theorem ComputableTidilyInTimeAndSpace.iterate_unary_stream_sum {σ : Type} {enc
       (fun x => c * (tF (f^[x.2] x.1) + (∑ i ∈ Finset.range x.2, R x i) + B x + 1))
       (fun x => c * (sF (f^[x.2] x.1) + Q x + B x + 1)) := by
   -- each round reads its state from the stream state paired with the token bit
-  obtain ⟨cfst, hfst⟩ := PairEncoding.fst (enc₁ := enc) (enc₂ := encBool)
-    (enc := encPair enc encBool)
+  obtain ⟨cfst, hfst⟩ := Internal.normalizeLinear
+    (PairEncoding.fst (enc₁ := enc) (enc₂ := encBool) (enc := encPair enc encBool))
   obtain ⟨cN, hN⟩ := hnext.comp_linear hfst
   obtain ⟨cE, hE⟩ := hemit.comp_linear hfst
   obtain ⟨D, hD⟩ : ∃ D, D = 6 * cfst + cN + cE + 2 := ⟨_, rfl⟩

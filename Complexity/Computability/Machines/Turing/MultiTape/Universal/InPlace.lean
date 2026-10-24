@@ -486,7 +486,7 @@ public lemma foldEmit_inO : ComputableTidilyInO foldEmit eSt encBits
     ho
   have hdbl : ComputableTidilyInO (fun n => doubled (frame (encUnary n))) encUnary encBits
       (fun n => (encUnary n).length) fun n => (encUnary n).length :=
-    (of_linear (doubledT.computableTidilyInLinearTimeAndSpace (f := doubled) (encIn := encBits)
+    (of_linear (doubledT.computableInLinearTimeAndSpace (f := doubled) (encIn := encBits)
       (encOut := encBits) fun w => (doubledT_run w).symm)).comp_linear
       (of_linear (.of_frame (f := fun n => frame (encUnary n)) fun _ => rfl))
   refine ((hsome.ite (hdbl.comp_linear hn) (const (encMid := encBits) [])).of_enc_eq

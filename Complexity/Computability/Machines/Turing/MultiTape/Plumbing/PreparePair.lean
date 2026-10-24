@@ -14,6 +14,8 @@ import Cslib.Foundations.Data.Fin.Tuple
 import Mathlib.Data.Fin.Tuple.Embedding
 import Mathlib.Tactic.Linarith
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Preparing both components of an encoded pair
 
@@ -66,8 +68,10 @@ theorem exists_prepare {α β : Type u} (enc₁ : α ↪ List Bool) (enc₂ : β
         (fun _ _ ws' emitted =>
           ws' = Fin.append (fun _ : Fin r => []) ![enc₁ p.1, enc₂ p.2] ∧ emitted = [])
         (c * ((enc p).length + 1)) (c * ((enc p).length + 1)) := by
-  obtain ⟨c₀, k, Q₀, _, m₀, h₀⟩ := PairEncoding.fst (enc₁ := enc₁) (enc₂ := enc₂) (enc := enc)
-  obtain ⟨c₁, l, Q₁, _, m₁, h₁⟩ := PairEncoding.snd (enc₁ := enc₁) (enc₂ := enc₂) (enc := enc)
+  obtain ⟨c₀, k, Q₀, _, m₀, h₀⟩ :=
+    Internal.normalizeLinear (PairEncoding.fst (enc₁ := enc₁) (enc₂ := enc₂) (enc := enc))
+  obtain ⟨c₁, l, Q₁, _, m₁, h₁⟩ :=
+    Internal.normalizeLinear (PairEncoding.snd (enc₁ := enc₁) (enc₂ := enc₂) (enc := enc))
   refine ⟨k + l, (Q₀ ⊕ RewindWorkState) ⊕ (Q₁ ⊕ RewindWorkState), inferInstance,
     (m₀.outputToWord.extendTapes (firstTapes k l)).seq
       (m₁.outputToWord.extendTapes (secondTapes k l)),

@@ -7,6 +7,8 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Foldl
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
@@ -34,7 +36,7 @@ and does not depend on the encodings up to polynomial-time conversions
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.comp`, `.ite`, `.pair`: closure properties.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldl`: left folds with polynomially bounded
   intermediate states.
-* `Turing.MultiTapeTM.EncodingEquiv.computableTidilyInPolyTime_iff`: polynomial-time computability
+* `Turing.MultiTapeTM.EncodingEquiv.computableInPolyTime_iff`: polynomial-time computability
   transfers along equivalent encodings.
 * `Turing.MultiTapeTM.computableTidilyInPolyTime_succ`: the successor in binary.
 
@@ -136,9 +138,9 @@ public theorem polyBounded_length {f : α → β} (h : ComputableTidilyInPolyTim
   let ⟨_, _, ht, _, hf⟩ := h
   ht.mono hf.length_le
 
-public theorem of_linear {f : α → β} (h : ComputableTidilyInLinearTimeAndSpace f encIn encMid) :
+public theorem of_linear {f : α → β} (h : ComputableInLinearTimeAndSpace f encIn encMid) :
     ComputableTidilyInPolyTime f encIn encMid :=
-  let ⟨c, hc⟩ := h
+  let ⟨c, hc⟩ := Internal.normalizeLinear h
   ⟨_, _, .of_forall_le c 1 (fun _ => by simp), .of_forall_le c 1 (fun _ => by simp), hc⟩
 
 public theorem comp {f : β → γ} {g : α → β} (hf : ComputableTidilyInPolyTime f encMid encOut)
@@ -214,7 +216,8 @@ public theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁
     ComputableTidilyInPolyTime (fun x => (f x, g x)) encIn enc := by
   obtain ⟨t₁, s₁, ht₁, hs₁, h₁⟩ := hf
   obtain ⟨t₂, s₂, ht₂, hs₂, h₂⟩ := hg
-  obtain ⟨c, h⟩ := hP.pair_mono h₁ h₂
+  obtain ⟨c, h⟩ := hP.pair_mono h₁.computableInTimeAndSpace h₂.computableInTimeAndSpace
+  obtain ⟨c, h⟩ := Internal.normalizeBigO ⟨c, h⟩
   have ht := (PolyBounded.const c).mul ((ht₁.add ht₂).add (.const 1))
   refine ⟨_, _, ht, (PolyBounded.const c).mul (((hs₁.add hs₂).add ht).add (.const 1)),
     h.mono (fun _ => le_rfl) (fun x => Nat.mul_le_mul_left c ?_)⟩
@@ -264,11 +267,34 @@ public theorem ite' {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → 
 
 end ComputableTidilyInPolyTime
 
+namespace ComputableInPolyTime
+
+/-- Composition preserves polynomial-time computability with independent time and space bounds. -/
+public theorem comp {α β γ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
+    {encOut : γ ↪ List Bool} {f : β → γ} {g : α → β}
+    (hf : ComputableInPolyTime f encMid encOut) (hg : ComputableInPolyTime g encIn encMid) :
+    ComputableInPolyTime (f ∘ g) encIn encOut := by
+  obtain ⟨t₁, s₁, ht₁, hs₁, h₁⟩ := Internal.normalizePolyTime hg
+  obtain ⟨t₂, s₂, ht₂, hs₂, h₂⟩ := Internal.normalizePolyTime hf
+  have hl : PolyBounded (fun a => (encIn a).length) (fun a => (encMid (g a)).length) :=
+    (PolyBounded.of_polynomiallyBounded _ ht₁).mono h₁.length_le
+  obtain ⟨c, h⟩ := ComputableTidilyInTimeAndSpace.comp_linear h₂ h₁
+  have hm := (PolyBounded.const c).mul (hl.add (PolyBounded.const 1))
+  have ht := ((PolyBounded.of_polynomiallyBounded _ ht₁).add
+    ((PolyBounded.of_polynomiallyBounded _ ht₂).comp hl)).add hm
+  have hs := ((PolyBounded.of_polynomiallyBounded _ hs₁).add
+    ((PolyBounded.of_polynomiallyBounded _ hs₂).comp hl)).add hm
+  obtain ⟨T, hT, ht⟩ := ht
+  obtain ⟨S, hS, hs⟩ := hs
+  exact Internal.forgetPolyTime hT hS (h.mono ht hs)
+
+end ComputableInPolyTime
+
 /-! ### Equivalent encodings -/
 
 /-- Encodings that convert into each other in polynomial time. -/
 public def EncodingEquiv {α : Type*} (enc₁ enc₂ : α ↪ List Bool) : Prop :=
-  ComputableTidilyInPolyTime id enc₁ enc₂ ∧ ComputableTidilyInPolyTime id enc₂ enc₁
+  ComputableInPolyTime id enc₁ enc₂ ∧ ComputableInPolyTime id enc₂ enc₁
 
 namespace EncodingEquiv
 
@@ -287,10 +313,10 @@ public theorem trans (h₁₂ : EncodingEquiv enc₁ enc₂) (h₂₃ : Encoding
   ⟨h₂₃.1.comp h₁₂.1, h₁₂.2.comp h₂₃.2⟩
 
 /-- Polynomial-time computability does not depend on the encodings, up to equivalence. -/
-public theorem computableTidilyInPolyTime_iff {encIn encIn' : α ↪ List Bool}
+public theorem computableInPolyTime_iff {encIn encIn' : α ↪ List Bool}
     {encOut encOut' : β ↪ List Bool} (hIn : EncodingEquiv encIn encIn')
     (hOut : EncodingEquiv encOut encOut') {f : α → β} :
-    ComputableTidilyInPolyTime f encIn encOut ↔ ComputableTidilyInPolyTime f encIn' encOut' :=
+    ComputableInPolyTime f encIn encOut ↔ ComputableInPolyTime f encIn' encOut' :=
   ⟨fun h => (hOut.1.comp h).comp hIn.2, fun h => (hOut.2.comp h).comp hIn.1⟩
 
 end EncodingEquiv
