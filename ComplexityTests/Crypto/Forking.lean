@@ -86,12 +86,15 @@ example {j : Fin 1} {out out' : (Option ℕ × Bool) × List Unit}
   obtain ⟨-, -, -, -, -, -, -, -, -, -, htake, -⟩ := OracleComp.mem_support_fork hfork
   exact htake
 
+/-- Name position `0` without asking any query. -/
+def nameWithoutAsking (_ : Unit) : OracleComp (fun _ : Unit => Bool) (Option ℕ × Unit) :=
+  pure (some 0, ())
+
 /-- A program that names position `0` without asking any query does not validly name it, so its
 fork never succeeds. -/
 example : (Forking.fork (PMF.pure ()) (OracleComp.forkingAlgorithm false 1
-    (fun _ : Unit => (pure (some 0, ()) : OracleComp (fun _ : Unit => Bool) (Option ℕ × Unit))))).map
-    Option.isSome true = 0 := by
-  simp [Forking.fork, OracleComp.forkingAlgorithm, OracleComp.validIndex]
+    nameWithoutAsking)).map Option.isSome true = 0 := by
+  simp [Forking.fork, OracleComp.forkingAlgorithm, OracleComp.validIndex, nameWithoutAsking]
 
 /-! ### Axioms -/
 
