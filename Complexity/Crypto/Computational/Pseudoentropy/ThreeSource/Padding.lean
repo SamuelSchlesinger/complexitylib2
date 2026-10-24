@@ -76,9 +76,9 @@ entropy grid. The observation bound applies only on support; the seed bound cove
 entry. Security assumptions and the entropy gap remain separate. -/
 structure PaddingBounds {pair : SamplablePair} (saved : pair.SeedRealization)
     (observationBound densityBound common : ℕ → ℕ) : Prop where
-  observation_isPolyTime : ComputableTidilyInPolyTime observationBound encUnary encUnary
-  density_isPolyTime : ComputableTidilyInPolyTime densityBound encUnary encUnary
-  common_isPolyTime : ComputableTidilyInPolyTime common encUnary encUnary
+  observation_isPolyTime : ComputableInPolyTime observationBound encUnary encUnary
+  density_isPolyTime : ComputableInPolyTime densityBound encUnary encUnary
+  common_isPolyTime : ComputableInPolyTime common encUnary encUnary
   observation_fits : ∀ n observation, observation ∈ ((pair.joint n).map Prod.fst).support →
     (pair.encode n observation).length ≤ observationBound n
   seed_fits : ∀ n index, index < size (saved.length n) (densityBound n) →
@@ -141,7 +141,10 @@ theorem exists_secure_padded_choice {pair : SamplablePair} {gap : ℕ → ℝ}
               (fun word => ProbComp.eval (test n (choose n) word)))
           ((uniformList (common n + 1)).bind
             (fun word => ProbComp.eval (test n (choose n) word)))) := by
-  obtain ⟨hobservation, hdensity, hcommon, hfits, hbound⟩ := bounds
+  obtain ⟨hobservationPlain, hdensityPlain, hcommonPlain, hfits, hbound⟩ := bounds
+  have hobservation := hobservationPlain.tidy
+  have hdensity := hdensityPlain.tidy
+  have hcommon := hcommonPlain.tidy
   obtain ⟨choose, hchoose, hsecure⟩ :=
     exists_secure_choice hpair saved hobservation hdensity hfits hgap
   refine ⟨choose, hchoose, fun test htest => ?_⟩

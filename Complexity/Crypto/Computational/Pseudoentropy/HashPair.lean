@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
 public import Complexity.Languages.Probabilistic.LinearHash
 public import Complexity.Languages.Probabilistic.UniformNat
@@ -216,14 +217,14 @@ theorem eval_sample {n : ℕ} {Image : Type*} (f : List Bool → List Bool)
 /-- Package the efficient sampler with its finite observation type and exact joint law.
 The image representation is needed for entropy bookkeeping, not as an extra algorithmic oracle. -/
 noncomputable def pair {Image : ℕ → Type} [∀ n, Finite (Image n)]
-    (f : List Bool → List Bool) (hf : ComputableTidilyInPolyTime f encBits encBits)
+    (f : List Bool → List Bool) (hf : ComputableInPolyTime f encBits encBits)
     (finiteFunction : ∀ n, BitString n → Image n) (encodeImage : ∀ n, Image n ↪ List Bool)
     (hencode : ∀ n x, f (List.ofFn x) = encodeImage n (finiteFunction n x)) : SamplablePair where
   Observation n := Observation n (hashCount n) (Image n)
   encode n := ⟨encodeObservation (encodeImage n), encodeObservation_injective (encodeImage n)⟩
   joint n := joint (finiteFunction n)
   sample := sample f
-  efficient := isPPTOn_sample f hf
+  efficient := isPPTOn_sample f hf.tidy
   eval_sample n := eval_sample f (finiteFunction n) (encodeImage n) (hencode n)
 
 end Cslib.Crypto.Pseudoentropy.HashPair
