@@ -969,6 +969,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decod
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBinary
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBinary.Decode
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.MultiPass
