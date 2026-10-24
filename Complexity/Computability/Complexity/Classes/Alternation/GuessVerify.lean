@@ -15,6 +15,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Ba
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 
 /-!
 # Games of polynomially many moves are in `AP`
@@ -92,60 +93,6 @@ theorem tapeOfList_set {Symbol : Type*} (w : List Symbol) {i : ℕ} (hi : i < w.
     · subst h
       simp [hi]
     · simp [h, Ne.symm h]
-
-namespace MultiTapeTM
-
-/-! ### Frames followed by a word -/
-
-section Frames
-
-private theorem length_flatMap_pair (w : List Bool) :
-    (w.flatMap fun b => [true, b]).length = 2 * w.length := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    simp only [List.flatMap_cons, List.length_append, ih, List.length_cons, List.length_nil]
-    ring
-
-/-- A frame split at a symbol. -/
-theorem frame_append_cons (w v : List Bool) (c : Bool) :
-    frame (w ++ c :: v) = (w.flatMap fun b => [true, b]) ++ true :: c :: frame v := by
-  simp [frame]
-
-/-- After the pairs of a frame comes its terminator `false`. -/
-theorem getElem?_frame_append_length (w x : List Bool) :
-    (frame w ++ x)[2 * w.length]? = some false := by
-  rw [frame, List.append_assoc, List.getElem?_append_right (by rw [length_flatMap_pair]),
-    length_flatMap_pair]
-  simp
-
-/-- Each pair of a frame starts with the tag `true`. -/
-theorem getElem?_frame_append_cons (w v x : List Bool) (c : Bool) :
-    (frame (w ++ c :: v) ++ x)[2 * w.length]? = some true := by
-  rw [frame_append_cons, List.append_assoc,
-    List.getElem?_append_right (by rw [length_flatMap_pair]), length_flatMap_pair]
-  simp
-
-theorem lt_length_frame_append_cons (w v x : List Bool) (c : Bool) :
-    2 * w.length + 1 < (frame (w ++ c :: v) ++ x).length := by
-  simp only [List.length_append, length_frame, List.length_cons]
-  omega
-
-/-- Setting the second cell of a pair of a frame replaces the framed symbol. -/
-theorem set_frame_append_cons (w v x : List Bool) (c b : Bool) :
-    (frame (w ++ c :: v) ++ x).set (2 * w.length + 1) b = frame (w ++ b :: v) ++ x := by
-  rw [frame_append_cons, frame_append_cons, List.append_assoc, List.append_assoc,
-    List.set_append_right _ _ (by rw [length_flatMap_pair]; omega), length_flatMap_pair]
-  simp
-
-theorem two_mul_length_le_length_frame_append (w x : List Bool) :
-    2 * w.length ≤ (frame w ++ x).length := by
-  simp only [List.length_append, length_frame]
-  omega
-
-end Frames
-
-end MultiTapeTM
 
 namespace MultiTapeATM
 

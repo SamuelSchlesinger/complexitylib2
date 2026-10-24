@@ -7,8 +7,12 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Classes.Constructible
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Constructible
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
+import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 import Complexity.Computability.Machines.Turing.MultiTape.Universal.Bound
+import Mathlib.Data.Nat.Size
 
 /-!
 # Short descriptions
