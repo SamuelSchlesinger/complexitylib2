@@ -67,7 +67,7 @@ theorem MaxDegreeLE.degree_toSimpleGraph_le [Fintype V] [DecidableRel G.toSimple
   · simp [otherEnd, hs, Ne.symm hne]
 
 /-- In maximum degree `d`, at most `d |S|` edges touch a set of vertices `S`. -/
-theorem ncard_touching_le [Finite V] {d : ℕ} (hd : G.MaxDegreeLE d) (S : Set V) :
+theorem ncard_touching_le [Finite E] [Finite V] {d : ℕ} (hd : G.MaxDegreeLE d) (S : Set V) :
     (G.touching S).ncard ≤ d * S.ncard := by
   classical
   have := Fintype.ofFinite V
@@ -85,7 +85,7 @@ theorem ncard_touching_le [Finite V] {d : ℕ} (hd : G.MaxDegreeLE d) (S : Set V
     _ = d * S.toFinset.card := by rw [Finset.sum_const, smul_eq_mul, mul_comm]
 
 /-- In maximum degree `d`, a multigraph has at most `d |V|` edges. -/
-theorem card_le_mul_card [Finite V] {d : ℕ} (hd : G.MaxDegreeLE d) :
+theorem card_le_mul_card [Finite E] [Finite V] {d : ℕ} (hd : G.MaxDegreeLE d) :
     Nat.card E ≤ d * Nat.card V := by
   have h := ncard_touching_le hd (univ : Set V)
   rwa [show G.touching univ = univ by ext; simp [mem_touching], ncard_univ, ncard_univ] at h

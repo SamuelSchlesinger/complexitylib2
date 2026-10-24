@@ -363,7 +363,7 @@ theorem ncard_incidenceSet_quotient (B : c.blocks) :
   rw [← edgeCut_singleton _ c.quotient_loopless, ← c.ncard_edgeCut_preimage,
     c.preimage_blockOf_singleton]
 
-theorem quotient_maxDegreeLE : c.quotient.MaxDegreeLE d := fun B =>
+theorem quotient_maxDegreeLE [Finite E] : c.quotient.MaxDegreeLE d := fun B =>
   (c.ncard_incidenceSet_quotient B).trans_le (c.ncard_edgeCut_le _ B.2)
 
 /-- The cuts of the blocks count every external edge twice. -/
