@@ -164,6 +164,7 @@ import ComplexityTests.FormulaDepth
 import ComplexityTests.FoundationsExamples
 import ComplexityTests.FourierLearning
 import ComplexityTests.FrontierAverageCaseImports
+import ComplexityTests.FrontierFiniteEdges
 import ComplexityTests.FrontierRectangleImports
 import ComplexityTests.FunctionalGraph
 import ComplexityTests.FunctionalGraphSpectrum

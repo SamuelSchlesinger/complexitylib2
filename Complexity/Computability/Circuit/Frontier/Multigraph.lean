@@ -110,8 +110,11 @@ def incidenceSet (v : V) : Set E :=
   {e | G.src e = v ∨ G.tgt e = v}
 
 /-- Every vertex is incident to at most `d` edges. In a loopless multigraph this says that the
-maximum degree is at most `d`. -/
-def MaxDegreeLE (d : ℕ) : Prop :=
+maximum degree is at most `d`. The finite edge type ensures that natural cardinalities
+count every incident edge. -/
+-- Finiteness restricts the public domain; `ncard` itself does not require it.
+@[nolint unusedArguments]
+def MaxDegreeLE [Finite E] (d : ℕ) : Prop :=
   ∀ v, (G.incidenceSet v).ncard ≤ d
 
 /-- No edge joins a vertex to itself. -/
@@ -460,8 +463,10 @@ rest. -/
 def frontier (t : ℕ) : Set E :=
   G.edgeCut (π.initial t)
 
-/-- The *width* of a layout: the size of its largest frontier. -/
-noncomputable def width : ℕ :=
+/-- The *width* of a layout with finitely many edges: the size of its largest frontier. -/
+-- Finiteness restricts the public domain; `ncard` itself does not require it.
+@[nolint unusedArguments]
+noncomputable def width [Finite E] : ℕ :=
   (Finset.range (Nat.card V)).sup fun t => (G.frontier π t).ncard
 
 /-- An edge is on the frontier at time `t` when exactly one of its ends is among the first `t`
@@ -482,12 +487,12 @@ theorem frontier_succ_subset {t : ℕ} (ht : t < Nat.card V) :
   rw [frontier, π.initial_succ ht]
   exact G.edgeCut_insert_subset _ _
 
-theorem ncard_frontier_le_width (t : ℕ) : (G.frontier π t).ncard ≤ G.width π := by
+theorem ncard_frontier_le_width [Finite E] (t : ℕ) : (G.frontier π t).ncard ≤ G.width π := by
   rcases lt_or_ge t (Nat.card V) with ht | ht
   · exact Finset.le_sup (f := fun t => (G.frontier π t).ncard) (Finset.mem_range.mpr ht)
   · simp [G.frontier_of_card_le π ht]
 
-theorem width_le_iff {w : ℕ} : G.width π ≤ w ↔ ∀ t, (G.frontier π t).ncard ≤ w :=
+theorem width_le_iff [Finite E] {w : ℕ} : G.width π ≤ w ↔ ∀ t, (G.frontier π t).ncard ≤ w :=
   ⟨fun h t => (G.ncard_frontier_le_width π t).trans h,
     fun h => Finset.sup_le fun t _ => h t⟩
 

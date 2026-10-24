@@ -81,7 +81,7 @@ namespace Multigraph
 variable {V E : Type*} (G : Multigraph V E) (π : Layout V)
 
 /-- A nonnegative real bound on the frontiers before the last vertex bounds the width. -/
-theorem width_le_of_ncard_frontier_le {B : ℝ} (hB : 0 ≤ B)
+theorem width_le_of_ncard_frontier_le [Finite E] {B : ℝ} (hB : 0 ≤ B)
     (h : ∀ t < Nat.card V, ((G.frontier π t).ncard : ℝ) ≤ B) : (G.width π : ℝ) ≤ B := by
   have hcut (t : ℕ) : (G.frontier π t).ncard ≤ ⌊B⌋₊ := by
     refine Nat.le_floor ?_
