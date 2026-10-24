@@ -222,6 +222,21 @@ theorem unary_eval (p : Polynomial ℕ) :
   encUnary encUnary :=
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_eval p)
 
+/-- Multiplication of unary naturals, by repeated addition. -/
+@[fun_prop]
+theorem unary_mul :
+    ComputableInPolyTime (fun (p : ℕ × ℕ) => p.1 * p.2)
+  (encPair encUnary encUnary)
+  encUnary :=
+  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_mul
+
+/-- A fixed power of a unary natural. -/
+@[fun_prop]
+theorem unary_pow (d : ℕ) :
+    ComputableInPolyTime (fun (n : ℕ) => n ^ d)
+  encUnary encUnary :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow d)
+
 /-- Truncated subtraction of unary naturals. -/
 @[fun_prop]
 theorem unary_sub :
