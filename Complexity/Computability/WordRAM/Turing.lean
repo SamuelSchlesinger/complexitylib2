@@ -48,7 +48,7 @@ word RAM; this is the regime of the invariance thesis of Slot and van Emde Boas.
 ## Main results
 
 * `Cslib.WordRAM.Program.ComputesInTime.computableInPolyTime`: RAM ⇒ TM for a fixed program.
-* `Cslib.WordRAM.UniformComputableInPolyTime.computableInPolyTime`: the same for the library's
+* `Cslib.WordRAM.UniformComputableInPolyTime.turingComputableInPolyTime`: the same for the library's
   uniform polynomial-time predicate.
 * `Cslib.WordRAM.Basis.polyTimeOps_additive`, `Cslib.WordRAM.Basis.polyTimeOps_arithmetic`:
   primitive obligations for the additive and arithmetic bases.
@@ -695,6 +695,18 @@ theorem Program.ComputesInTime.computableInPolyTime (hB : B.PolyTimeOps) {p : Pr
     (fun a => denote_initState (encode a)) hExec (nativePrimitives_isPolynomial hB)
     (ofPolyTime_isPolynomial hstepsT) (ofPolyTime_isPolynomial hwidthT) hInit
     hstepsU.polyBounded hbound hOutLen)
+
+/-- **Uniform polynomial word-RAM time gives Turing-machine polynomial time**, for a
+width-independent word encoding computable in polynomial time and a size polynomial in the
+encoded input length. -/
+theorem UniformComputableInPolyTime.turingComputableInPolyTime (hB : B.PolyTimeOps)
+    {encode : α → List ℕ} {size f : α → ℕ}
+    (h : UniformComputableInPolyTime B f (fun _ => encode) size)
+    (hsize : PolyBounded (fun a => (encIn a).length) size)
+    (hencode : Turing.MultiTapeTM.ComputableInPolyTime encode encIn (encList encNat)) :
+    Turing.MultiTapeTM.ComputableInPolyTime f encIn encNat := by
+  obtain ⟨T, hT, k, -, r, p, hp⟩ := h
+  exact hp.computableInPolyTime hB hT hsize hencode
 
 end Main
 
