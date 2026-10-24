@@ -29,9 +29,11 @@ answers with `m` residues of `w` bits each, read through their centered represen
 asserts that every uniform strict PPT program wins with negligible probability.
 
 The centered reading loses nothing when `2 β < q`: every short integer solution is decoded from
-the word of its own residues (`SIS.decode_toBinary`). Larger bounds make the experiment easy once
-`m > n`: every nonzero kernel vector modulo `q` then qualifies, and `2 ^ (w - 1)` times a kernel
-vector modulo `2` is one.
+the word of its own residues (`SIS.decode_toBinary`). For positive width `w > 0`, bounds at
+least `2 ^ (w - 1)` make the experiment easy once `m > n`: every centered nonzero kernel vector
+modulo `q` then qualifies, and `2 ^ (w - 1)` times a nonzero kernel vector modulo `2` is one.
+At width zero the decoder always returns the zero integer vector, so the experiment always
+rejects, even when nonzero integer SIS solutions exist modulo `1`.
 
 `SIS` is an explicit computational hardness hypothesis against uniform classical strict PPT
 programs, not a theorem. It asserts hardness for no particular parameters, and no worst-case

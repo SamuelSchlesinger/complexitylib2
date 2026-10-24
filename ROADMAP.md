@@ -1269,7 +1269,8 @@ Jukna coverage below is an additional target beyond the V1 port:
   [Sigma protocols with aborts](Complexity/Crypto/Protocols/SigmaProtocol/Abort.lean), and
   [Lyubashevsky identification](Complexity/Crypto/Protocols/SigmaProtocol/Lyubashevsky.lean) with
   completeness up to aborts and its exact abort probability, special soundness extracting a short
-  integer solution of `[A | T]`, and exact zero knowledge up to aborts. Open: Fiat–Shamir with
+  integer solution of `[A | T]`, and exact HVZK for the erased-abort projection. Full interactive-view simulation remains open
+  (#680/#643). Open: Fiat–Shamir with
   aborts and its signatures (after track A's random-oracle Fiat–Shamir), strict-PPT samplers for
   integer boxes, identification security under SIS, general moduli, module SIS and module
   lattices toward Dilithium-style schemes.

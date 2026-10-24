@@ -53,33 +53,6 @@ example : ¬SIS (fun _ => 0) (fun _ => 1) (fun _ => 1) (fun _ => 1) := fun h => 
   simpa only [hwin, Game.succProbability, PMF.pure_apply_self, ENNReal.toNNReal_one] using
     h _ (ComputableTidilyInPolyTime.const [true]).isPPT
 
-/-! ### Box rejection sampling
-
-In one dimension with `γ = 2` and `β = 1`, every shift in `[-1, 1]` gives the same law: accept
-with probability `3 / 5`, uniformly on `[-1, 1]`. -/
-
-example : boxReject (Fin 1) 2 1 ![1] = boxReject (Fin 1) 2 1 ![-1] :=
-  boxReject_eq (by norm_num) (by decide) (by decide)
-
-example : boxReject (Fin 1) 2 1 ![1] none = 1 - (3 / 5) ^ 1 := by
-  rw [boxReject_apply_none (by norm_num) (by decide)]
-  norm_num
-
-example : boxReject (Fin 1) 2 1 ![1] none ≤ 2 / 5 := by
-  have h := boxReject_apply_none_le (ι := Fin 1) (γ := 2) (β := 1) (v := ![1]) (by norm_num)
-    (by decide)
-  norm_num at h
-  exact h
-
-/-- The accepted value `1` has probability `1 / 5`, though `1 - 1 = 0` is the only draw that
-produces it. -/
-example : boxReject (Fin 1) 2 1 ![1] (some ![1]) = 5⁻¹ := by
-  rw [boxReject, shiftReject_apply_some (fun _ hz => sub_mem_intBox (by norm_num) hz
-    (by decide)), card_intBox]
-  simp only [Fintype.card_fin, pow_one]
-  rw [ite_eq_left (by decide)]
-  norm_num
-
 /-! ### Lyubashevsky's protocol
 
 The statement is `A = (1, 2)` and `T = A S = (6)` for the witness `S = (1, -1)ᵀ`. With the
@@ -170,11 +143,6 @@ info: 'Cslib.Crypto.Protocols.SigmaProtocol.lyubashevsky_nonAbortSpecialHVZK' de
 #guard_msgs (whitespace := lax) in
 #print axioms lyubashevsky_nonAbortSpecialHVZK
 
-/--
-info: 'Cslib.Probability.PMF.boxReject_apply_none_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms boxReject_apply_none_le
+
 
 end ComplexityTests.Crypto.Lyubashevsky

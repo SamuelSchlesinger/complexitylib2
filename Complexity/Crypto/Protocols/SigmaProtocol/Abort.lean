@@ -19,8 +19,10 @@ that would leak information about its witness. Such a protocol is an ordinary `S
 whose responses are `Option Z`. The prover answers `none` to abort, and the verifier is expected
 to reject `none`.
 
-Aborted runs are never published: an identification prover starts over, and a signer retries
-with fresh randomness. Zero knowledge therefore concerns the *accepted view*.
+This module studies an *erased-abort projection*, not the full interactive verifier view.
+An identification verifier has already seen the commitment before an abort; retrying does not
+erase that observation. A signer can instead keep aborted attempts unpublished and retry with
+fresh randomness. Full interactive-view simulation requires a separate theorem.
 `acceptedTranscript x y c` is the honest commitment and response at the challenge `c`, erased to
 `none` when the prover aborts. A simulator must reproduce the abort probability as well as the
 law of the transcripts that are not aborted. Plain `SpecialHVZK` usually fails for these
