@@ -211,28 +211,13 @@ interpreter starts with blank work and communication tapes. Its clock bounds eve
 query construction and reply access, while the handler's computation is external.
 -/
 
-/-- Compatibility form of the pair encoding, with injective maps as arguments. -/
-@[deprecated Encoding.encodePair +typeChanged (since := "2026-10-23")]
-abbrev encodePair {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool) (p : α × β) :
-    List Bool := Encoding.encodePair a b p
-
 /-- The underlying response family, retained for clients inspecting the program representation:
 `.inl n` requests a fresh uniform `Fin (n+1)`; `.inr ((),word)` requests an external word reply. -/
 abbrev OracleResponse : Sum ℕ (Unit × List Bool) → Type :=
   Cslib.probOracleSpec (fun _ : Unit × List Bool => List Bool)
 
-/-! ## Compatibility aliases -/
-
-@[deprecated (since := "2026-10-23")] alias frame := Encoding.frame
-@[deprecated (since := "2026-10-23")] alias encodePair_injective := Encoding.encodePair_injective
-@[deprecated (since := "2026-10-23")] alias pairEncoding := Encoding.encPair
-@[deprecated (since := "2026-10-23")] alias bitsEncoding := Encoding.encBits
-@[deprecated (since := "2026-10-23")] alias unaryEncoding := Encoding.encUnary
-@[deprecated (since := "2026-10-23")] alias boolEncoding := Encoding.encBool
-@[deprecated (since := "2026-10-23")] alias PolyTime := Computation.PolyTime
-
 /--
-info: abstract audit passed for `ComplexityTests.Abstracts.CryptographyAbstract`: 29 root declarations, 252 dependencies checked
+info: abstract audit passed for `ComplexityTests.Abstracts.CryptographyAbstract`: 21 root declarations, 252 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.CryptographyAbstract allowing [

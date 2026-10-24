@@ -107,24 +107,9 @@ theorem pcp_theorem {α : Type} (enc : α ↪ List Bool) :
   simp only [and_assoc]
   exact PCPBridge.pcp_theorem enc
 
-/-! ## Compatibility aliases -/
-
-@[deprecated (since := "2026-10-23")] alias frame := Encoding.frame
-@[deprecated (since := "2026-10-23")] alias encodePair := Encoding.encodePair
-@[deprecated (since := "2026-10-23")] alias encodeList := Encoding.encodeList
-@[deprecated (since := "2026-10-23")] alias encodePair_injective := Encoding.encodePair_injective
-@[deprecated (since := "2026-10-23")] alias encodeList_injective := Encoding.encodeList_injective
-@[deprecated (since := "2026-10-23")] alias bits_injective := Encoding.bits_injective
-@[deprecated (since := "2026-10-23")] alias encNat := Encoding.encNat
-@[deprecated (since := "2026-10-23")] alias encPair := Encoding.encPair
-@[deprecated (since := "2026-10-23")] alias encList := Encoding.encList
-@[deprecated (since := "2026-10-23")] alias encBool := Encoding.encBool
-@[deprecated (since := "2026-10-23")] alias encBits := Encoding.encBits
-@[deprecated (since := "2026-10-23")] alias ComputableInPolyTime := Computation.PolyTime
-
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.PCPAbstract`:
-19 root declarations, 85 dependencies checked
+7 root declarations, 85 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.PCPAbstract allowing [

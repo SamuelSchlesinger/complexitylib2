@@ -170,14 +170,19 @@ class BuildAbstractsTests(unittest.TestCase):
                 build.build(self.manifest, self.root / "build", root=self.root)
         self.assertFalse((self.root / "build/provenance.json").exists())
 
-    def test_selected_theorems_cannot_be_moved_to_an_appendix_or_hidden(self):
+    def test_selected_theorems_cannot_be_moved_to_an_appendix(self):
         source = build.module_source_path(self.entry["module"], self.root)
-        for section, message in (("Representation details", "main presentation"),
-                                 ("Compatibility aliases", "deprecated alias")):
-            source.write_text(SOURCE.replace("/-- The selected result. -/",
-                                             f"/-! ## {section} -/\n/-- The selected result. -/"))
-            with self.subTest(section=section), self.assertRaisesRegex(ValueError, message):
-                build.load_catalogue(self.manifest, self.root)
+        source.write_text(SOURCE.replace("/-- The selected result. -/",
+                                        "/-! ## Representation details -/\n/-- The selected result. -/"))
+        with self.assertRaisesRegex(ValueError, "main presentation"):
+            build.load_catalogue(self.manifest, self.root)
+
+    def test_other_section_headings_do_not_hide_selected_theorems(self):
+        source = build.module_source_path(self.entry["module"], self.root)
+        source.write_text(SOURCE.replace("/-- The selected result. -/",
+                                        "/-! ## Other results -/\n/-- The selected result. -/"))
+        self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+        self.assertIn("theorem chosen", build.render.render_source(source, "markdown"))
 
     def test_standalone_previews_include_foundation_definitions_and_digests(self):
         modules = self.add_foundations()

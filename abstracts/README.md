@@ -7,8 +7,7 @@ dependency boundary. Some abstracts also allowlist a few library modules for fou
 a reader must inspect them as well. The generated PDFs present the mathematical definitions and
 selected statements first, followed by exact representation details and any shared foundations in
 appendices. Proof bodies are omitted. Lean checks the proofs; independent review must still check
-their intended
-meaning.
+their intended meaning.
 
 The [combined PDF](https://github.com/cslib-community/complexitylib/releases/download/formal-abstracts/catalogue.pdf)
 and individual PDFs are published from main by the **Formal abstract PDFs** workflow. PR builds
@@ -94,10 +93,8 @@ artifact selection follows [download-artifact v4](https://github.com/actions/dow
 
 The source section `/-! ## Representation details ... -/` marks definitions and explanations
 to display in an appendix. The group ends at the next `##` section heading. Its definitions are
-retained in full; selected theorem statements must remain in the main presentation. A
-`## Compatibility aliases` section is omitted only when all its code consists of explicit
-`@[deprecated ...] alias old := target` declarations. Any substantive declaration there fails
-validation. These are presentation conventions in comments, not new Lean syntax.
+retained in full; selected theorem statements must remain in the main presentation. These are
+presentation conventions in comments, not new Lean syntax.
 
 An entry using shared definitions lists their modules in its `foundations` array, for example
 `["ComplexityAbstracts.Encoding", "ComplexityAbstracts.Computation"]`. The list must exactly match

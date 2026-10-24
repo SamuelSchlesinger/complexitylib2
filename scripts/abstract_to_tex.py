@@ -253,30 +253,13 @@ def section_heading(item: dict):
 
 
 def split_sections(sections: list[dict]) -> tuple[list[dict], list[dict]]:
-    """Keep the mathematical presentation first and move marked representation details last.
-
-    A compatibility section may hide only explicitly deprecated aliases. Reject any other code
-    rather than allowing a heading to suppress a definition or theorem.
-    """
+    """Keep the mathematical presentation first and move marked representation details last."""
     main, details, destination = [], [], "main"
-    alias = re.compile(r"\s*@\[\s*deprecated\b[^\]]*\]\s*alias\s+"
-                       r"[A-Za-z_][\w'.]*\s*:=\s*[A-Za-z_][\w'.]*\s*")
     for item in sections:
         heading = section_heading(item)
         if heading:
-            destination = {"Representation details": "details",
-                           "Compatibility aliases": "compatibility"}.get(
-                               heading.group(1).strip(), "main")
-        if destination == "compatibility":
-            code = lean_code(item["code"]).strip()
-            while code:
-                match = alias.match(code)
-                if not match:
-                    raise ValueError("Compatibility aliases may contain only explicitly "
-                                     "deprecated alias declarations")
-                code = code[match.end():].strip()
-        else:
-            (details if destination == "details" else main).append(item)
+            destination = "details" if heading.group(1).strip() == "Representation details" else "main"
+        (details if destination == "details" else main).append(item)
     return main, details
 
 

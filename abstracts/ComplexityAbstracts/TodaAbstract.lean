@@ -147,21 +147,9 @@ query and accessing its answer are charged even though the oracle's own computat
 The output and final oracle state must agree for every handler, not just for the counting oracle.
 -/
 
-/-! ## Compatibility aliases -/
-
-@[deprecated (since := "2026-10-23")] alias frame := Encoding.frame
-@[deprecated (since := "2026-10-23")] alias encodePair := Encoding.encodePair
-@[deprecated (since := "2026-10-23")] alias encodePair_injective := Encoding.encodePair_injective
-@[deprecated (since := "2026-10-23")] alias bits_injective := Encoding.bits_injective
-@[deprecated (since := "2026-10-23")] alias encNat := Encoding.encNat
-@[deprecated (since := "2026-10-23")] alias encPair := Encoding.encPair
-@[deprecated (since := "2026-10-23")] alias encBool := Encoding.encBool
-@[deprecated (since := "2026-10-23")] alias encBits := Encoding.encBits
-@[deprecated (since := "2026-10-23")] alias ComputableInPolyTime := Computation.PolyTime
-
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.TodaAbstract`:
-24 root declarations, 238 dependencies checked
+15 root declarations, 238 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.TodaAbstract allowing [

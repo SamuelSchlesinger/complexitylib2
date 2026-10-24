@@ -49,27 +49,6 @@ end Example
                 self.assertIn("continuation of the representation", output)
                 self.assertNotIn("rfl", output)
 
-    def test_only_explicitly_deprecated_compatibility_aliases_are_omitted(self):
-        sections = [
-            {"kind": "section", "doc": "## Compatibility aliases", "code": ""},
-            {"kind": "decl", "doc": "Compatibility spelling.", "code":
-                '@[deprecated (since := "2026-10-23")] alias old := Foundation.current'},
-            {"kind": "section", "doc": "## Main result", "code": ""},
-            {"kind": "decl", "doc": "The result.", "code": "theorem result : True := by trivial"},
-        ]
-        output = abstract_to_tex.render_markdown("Title", "", sections)
-        self.assertNotIn("old", output)
-        self.assertNotIn("Compatibility", output)
-        self.assertIn("theorem result : True", output)
-        for code in ("alias old := Foundation.current", "def important := 1",
-                     "theorem selected : True := by trivial",
-                     '@[deprecated (since := "2026-10-23")] theorem old : True := by trivial',
-                     '@[deprecated (since := "2026-10-23")] alias old := Foundation.current\n'
-                     "def hidden := 1"):
-            sections[1]["code"] = code
-            with self.subTest(code=code), self.assertRaisesRegex(ValueError, "deprecated alias"):
-                abstract_to_tex.render_markdown("Title", "", sections)
-
     def test_undocumented_declarations_are_not_silently_omitted(self):
         sample = "/-! # Title\nIntro.\n-/\nnamespace Example\ndef first := 1\nend Example\n"
         output = abstract_to_tex.render_markdown(*abstract_to_tex.parse_abstract(sample))

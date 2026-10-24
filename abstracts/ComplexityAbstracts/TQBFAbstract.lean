@@ -130,18 +130,6 @@ theorem encodeQBF_injective : Function.Injective encodeQBF :=
 def encQBF : Formula ↪ List Bool :=
   ⟨encodeQBF, encodeQBF_injective⟩
 
-/-! Older client names keep their original named encoding arguments. -/
-
-@[deprecated Encoding.encodePair (since := "2026-10-23")]
-abbrev encodePair {α β : Type} (encA : α → List Bool) (encB : β → List Bool) (p : α × β) :
-    List Bool :=
-  Encoding.encodePair encA encB p
-
-@[deprecated Computation.PolyTime (since := "2026-10-23")]
-abbrev ComputableInPolyTime {α β : Type} (f : α → β)
-    (encA : α ↪ List Bool) (encB : β ↪ List Bool) : Prop :=
-  Computation.PolyTime f encA encB
-
 /-! ## Polynomial space (`PSPACE`) and PSPACE-completeness
 
 `Computation.PolyTime` below is total polynomial-time computation in the input bit length,
@@ -194,15 +182,9 @@ theorem tqbf_pspaceComplete : PSPACEComplete encQBF TQBF :=
       eval := Formula.eval, freeVars := Formula.freeVars, tokens := Formula.tokens }
     (by constructor <;> intros <;> rfl)
 
-/-! ## Compatibility aliases -/
-
-@[deprecated (since := "2026-10-23")] alias frame := Encoding.frame
-@[deprecated (since := "2026-10-23")] alias encodeList := Encoding.encodeList
-@[deprecated (since := "2026-10-23")] alias encBool := Encoding.encBool
-
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.TQBFAbstract`:
-86 root declarations, 130 dependencies checked
+81 root declarations, 130 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.TQBFAbstract allowing [

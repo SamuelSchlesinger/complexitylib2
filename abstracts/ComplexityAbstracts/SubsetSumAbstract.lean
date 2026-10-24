@@ -48,27 +48,6 @@ input size includes every number's binary digits. The fixed pair/list delimiters
 def encSubsetSum : List ℕ × ℕ ↪ List Bool :=
   Encoding.encPair (Encoding.encList Encoding.encNat) Encoding.encNat
 
-/-! Older client names keep their original named encoding arguments. -/
-
-@[deprecated Encoding.encodePair (since := "2026-10-23")]
-abbrev encodePair {α β : Type} (encA : α → List Bool) (encB : β → List Bool) (p : α × β) :
-    List Bool :=
-  Encoding.encodePair encA encB p
-
-@[deprecated Encoding.encodePair_injective (since := "2026-10-23")]
-theorem encodePair_injective {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) :
-    Function.Injective (Encoding.encodePair encA encB) :=
-  Encoding.encodePair_injective encA encB
-
-@[deprecated Encoding.encPair (since := "2026-10-23")]
-abbrev encPair {α β : Type} (encA : α ↪ List Bool) (encB : β ↪ List Bool) : α × β ↪ List Bool :=
-  Encoding.encPair encA encB
-
-@[deprecated Computation.PolyTime (since := "2026-10-23")]
-abbrev ComputableInPolyTime {α β : Type} (f : α → β)
-    (encA : α ↪ List Bool) (encB : β ↪ List Bool) : Prop :=
-  Computation.PolyTime f encA encB
-
 /-! ## Efficient verification and reductions
 
 `Computation.PolyTimeVerifier enc V` means that one deterministic machine halts on every
@@ -115,20 +94,9 @@ reductions when the input list and target sum are encoded in binary. -/
 theorem subsetSum_npComplete : NPComplete encSubsetSum SubsetSum :=
   SubsetSumBridge.subsetSum_npComplete
 
-/-! ## Compatibility aliases -/
-
-@[deprecated (since := "2026-10-23")] alias frame := Encoding.frame
-@[deprecated (since := "2026-10-23")] alias encodeList := Encoding.encodeList
-@[deprecated (since := "2026-10-23")] alias encodeList_injective := Encoding.encodeList_injective
-@[deprecated (since := "2026-10-23")] alias bits_injective := Encoding.bits_injective
-@[deprecated (since := "2026-10-23")] alias encNat := Encoding.encNat
-@[deprecated (since := "2026-10-23")] alias encList := Encoding.encList
-@[deprecated (since := "2026-10-23")] alias encBool := Encoding.encBool
-@[deprecated (since := "2026-10-23")] alias encBits := Encoding.encBits
-
 /--
 info: abstract audit passed for `ComplexityTests.Abstracts.SubsetSumAbstract`:
-19 root declarations, 62 dependencies checked
+7 root declarations, 62 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.SubsetSumAbstract allowing [
