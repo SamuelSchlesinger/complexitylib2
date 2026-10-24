@@ -121,6 +121,7 @@ theorem isPPTOn_sampleModNat {α : Type} {input : α ↪ List Bool} {width modul
     IsPPTOn input encNat (fun a => sampleModNat (width a) (modulus a)) := by
   unfold sampleModNat
   exact (ComputableTidilyInPolyTime.sampleBinaryNat hwidth.tidy).map_with
-    (ComputableTidilyInPolyTime.binary_mod' (by fun_prop) (hmodulus.tidy.comp (by fun_prop)))
+    (.of_tidy (ComputableTidilyInPolyTime.binary_mod' (by fun_prop)
+      (hmodulus.tidy.comp (by fun_prop))))
 
 end Cslib.Probability
