@@ -845,23 +845,17 @@ namespace Turing.MultiTapeTM.ComputableInPolyTime
 theorem allConst {γ : Type} {input : γ ↪ List Bool} {ι : Type*} (l : List ι)
     {test : γ → ι → Bool}
     (htest : ∀ i ∈ l, ComputableInPolyTime (fun x => test x i) input encBool) :
-    ComputableInPolyTime (fun x => l.all (test x)) input encBool :=
-  .of_tidy (ComputableTidilyInPolyTime.allConst l fun i hi => (htest i hi).tidy)
+    ComputableInPolyTime (fun x => l.all (test x)) input encBool := by
+  induction l with
+  | nil => exact const true
+  | cons a l ih =>
+    exact bool_and.comp ((htest a (List.mem_cons_self ..)).prod
+      (ih fun b hb => htest b (List.mem_cons_of_mem _ hb)))
 
 /-- Enumerate the naturals below a unary bound, keeping the elements unary. -/
 @[fun_prop]
 theorem range : ComputableInPolyTime List.range encUnary (encList encUnary) :=
   .of_tidy ComputableTidilyInPolyTime.range
-
-/-- Test every list element with a predicate that captures the complete original input. -/
-@[fun_prop]
-theorem allWithInput {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
-    {test : γ → α → Bool} {list : γ → List α}
-    (hlist : ComputableInPolyTime list encIn (encList encA))
-    (htest : ComputableInPolyTime (fun p : γ × α => test p.1 p.2)
-      (encPair encIn encA) encBool) :
-    ComputableInPolyTime (fun x => (list x).all (test x)) encIn encBool :=
-  .of_tidy (ComputableTidilyInPolyTime.allWithInput hlist.tidy htest.tidy)
 
 /-- Test whether any list element satisfies a predicate that captures the original input. -/
 @[fun_prop]
@@ -878,6 +872,18 @@ theorem anyWithInput {α : Type}
   encBool :=
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWithInput α γ encA encIn test list
       hlist.tidy htest.tidy)
+
+/-- Test every list element with a predicate that captures the complete original input. -/
+@[fun_prop]
+theorem allWithInput {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {test : γ → α → Bool} {list : γ → List α}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (htest : ComputableInPolyTime (fun p : γ × α => test p.1 p.2)
+      (encPair encIn encA) encBool) :
+    ComputableInPolyTime (fun x => (list x).all (test x)) encIn encBool := by
+  have h := bool_not.comp
+    (anyWithInput (test := fun x a => !(test x a)) hlist (bool_not.comp htest))
+  simpa only [Function.comp_def, ← List.all_eq_not_any_not] using h
 
 /-- Concatenate raw bit strings, charging for both computed words. -/
 @[fun_prop]
