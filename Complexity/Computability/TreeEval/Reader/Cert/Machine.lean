@@ -71,8 +71,8 @@ private theorem offsetT_inSpace {st : Tuple × Bool → List Frame}
   have hpo := budget_comp pathOffset_inSpace.tidy harg (.const_mul (2 ^ 30)
     (((ell_le_stepBudget.add height_le_stepBudget).add (length_le harg)).add (.const 1 _)))
   have h₂ :=
-    (succ_inSpace (succ_inSpace
-    (.of_tidy (budget_comp_lin natAdd linear_succ (budget_prod ell_inSpace.tidy height_inSpace.tidy))))).tidy
+    (succ_inSpace (succ_inSpace (.of_tidy (budget_comp_lin natAdd linear_succ
+      (budget_prod ell_inSpace.tidy height_inSpace.tidy))))).tidy
   refine (budget_comp_lin natAdd linear_succ (budget_prod h₂ hpo)).of_enc_eq fun y => ?_
   simp only [offsetT, path_eq_reverse, foldl_cons_dir, List.append_nil]
 

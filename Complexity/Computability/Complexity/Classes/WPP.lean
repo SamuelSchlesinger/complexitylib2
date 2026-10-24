@@ -400,8 +400,8 @@ theorem mem_LWPP_of_polyTime_index {g : α → ℤ} {f : ℕ → ℤ} {k : α �
       rw [List.nodup_range.erase_eq_filter]
       exact List.filter_congr fun i _ => by simp [bne, beq_eq_decide]
     simpa only [h, F, herase] using List.prod_map_erase f (List.mem_range.mpr (hlt a))
-  refine ⟨g * h, GapP.mul_mem hg (mem_GapP_of_polyTime (.of_tidy hh)), F, .of_tidy hF, hFn, fun a => ?_,
-    fun a => ?_⟩
+  refine ⟨g * h, GapP.mul_mem hg (mem_GapP_of_polyTime (.of_tidy hh)), F, .of_tidy hF, hFn,
+    fun a => ?_, fun a => ?_⟩
   · rcases hr a with hz | hfk
     · exact Or.inl (by simp [hz])
     · exact Or.inr (by simp [hfk, hmul a])

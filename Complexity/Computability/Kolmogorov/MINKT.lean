@@ -259,7 +259,7 @@ is a binary program `p` of length at most `s ≤ |(x, 1^t, 1^s)|`, verified in p
 running the universal simulator for `t` steps (`check`). -/
 theorem mem_NP : MINKT ∈ NP enc := by
   have h := mem_NP_of_witness (enc := enc) (p := Polynomial.X) Decoder.bits
-    computableTidilyInPolyTime_check (fun i p => check_eq_true_iff)
+    computableInPolyTime_check (fun i p => check_eq_true_iff)
     fun i p hp => ⟨p, hp, by
       simpa only [encBits_apply, Polynomial.eval_X] using hp.1.trans (size_le_length_enc i)⟩
   simpa only [← mem_iff_exists_program, Set.ofPred_mem_eq] using h
