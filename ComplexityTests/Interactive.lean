@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Interactive.Sequential
+import Complexity.Probability.PMF.Uniform
 
 /-!
 # Tests for interactive reductions

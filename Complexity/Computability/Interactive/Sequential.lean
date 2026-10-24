@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Interactive.Plain
+import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Event
 
 /-!
 # Sequential composition of interactive reductions

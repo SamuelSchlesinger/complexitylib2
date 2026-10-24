@@ -9,6 +9,8 @@ module
 
 public import Complexity.Computability.Interactive.Security
 import Complexity.Probability.PMF
+import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Event
 
 /-!
 # Interactive reductions in the plain model
