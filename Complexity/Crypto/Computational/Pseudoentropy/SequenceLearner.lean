@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Computational.Hybrid.SavedPrediction
 public import Complexity.Crypto.Computational.Pseudoentropy.Learning
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Training
+import Complexity.Languages.Probabilistic.Notation
 import Complexity.Tactic.PPT
 
 /-!
@@ -55,8 +56,6 @@ namespace Cslib.Crypto.Pseudoentropy.SequenceLearner
 open Probability Probability.PMF BitString Boosting Turing.MultiTapeTM
 
 open scoped NNReal
-
-local notation "Pr[" p "]" => ENNReal.toReal (ProbComp.eval p true)
 
 /-- Configure the loop at the learner's required correlation. The density denominator and
 inverse distinguishing gap determine the rate; the supplied bound covers signed descriptions. -/
@@ -473,8 +472,7 @@ theorem predict_extracted_error {Seed Output : Type}
       (fun x => mask (signedPredict evaluate) params state (observe x, truth x)))
     count seed hash test ideal (hclose state hdense)
   have hgap' := (le_sub_iff_add_le.mpr hdistinguish).trans h
-  simpa only [Game.coe_advantage, Game.succProbability, ENNReal.coe_toNNReal_eq_toReal]
-    using hgap'
+  simpa only [Game.coe_advantage, Game.coe_succProbability] using hgap'
 
 end Correctness
 

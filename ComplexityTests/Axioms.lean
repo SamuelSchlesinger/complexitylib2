@@ -7893,13 +7893,6 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.findGreatest' depends on ax
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.findGreatest
 
 /--
-info: 'Cslib.Crypto.Game.coe_succProbability_eval_bind' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.Game.coe_succProbability_eval_bind
-
-/--
 info: 'Cslib.Crypto.Negligible.sqrt' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/

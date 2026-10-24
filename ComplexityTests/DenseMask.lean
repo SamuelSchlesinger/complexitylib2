@@ -79,8 +79,7 @@ private theorem fairPair_gap : fairPair.HasGap (fun _ => 0) := by
       (fun guess => (uniformOfFintype Bool).map (fun bit => guess == bit)) = _
     simp only [hbit, PMF.bind_const]
   rw [hgame, fairPair_entropy]
-  simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal]
-  norm_num [Game.succProbability, PMF.uniformOfFintype_apply]
+  norm_num [PMF.uniformOfFintype_apply]
 
 private noncomputable def saved : fairPair.SeedRealization :=
   Classical.choice fairPair.exists_seedRealization

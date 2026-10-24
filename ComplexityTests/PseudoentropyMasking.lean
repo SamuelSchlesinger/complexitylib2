@@ -78,7 +78,7 @@ example : (Game.succProbability (ProbComp.eval
     Game.succProbability, PMF.uniformOfFintype_apply, ProbComp.eval_bind,
     bind_apply_toReal, Fintype.sum_bool, ProbComp.eval_pure, PMF.pure_apply,
     ENNReal.toNNReal_ofNat] at h
-  dsimp only [Game.succProbability]
+  rw [Game.coe_succProbability]
   linarith
 
 -- All progress inequalities can hold at equality, including the exact four-round clock.

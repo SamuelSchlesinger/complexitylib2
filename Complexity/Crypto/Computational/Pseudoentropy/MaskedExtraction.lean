@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.Pseudoentropy.Masking
 public import Complexity.Crypto.Computational.Pseudoentropy.RepeatedExtraction
+import Complexity.Languages.Probabilistic.Notation
 
 /-!
 # Extracting fresh masked labels
@@ -46,8 +47,6 @@ open Probability Probability.PMF BitString
 
 open scoped NNReal
 
-local notation "Pr[" p "]" => ENNReal.toReal (ProbComp.eval p true)
-
 /-- Fresh masking preserves the complete public marginal. -/
 theorem maskedSample_map_fst {α β : Type} (source : ProbComp α)
     (observe : α → β) (truth : α → Bool) (mask : α → ProbComp Bool) :
@@ -64,7 +63,7 @@ theorem maskedSample_map_fst {α β : Type} (source : ProbComp α)
 probability at least `mass / 2`. Keeping the original label always has probability at least half. -/
 theorem maskBit_mass_ge (mask : ProbComp Bool) (truth bit : Bool) {mass : ℝ}
     (hmass : mass ≤ 1)
-    (hmask : 0 < (ProbComp.eval mask true).toReal → mass ≤ (ProbComp.eval mask true).toReal)
+    (hmask : 0 < Pr[mask] → mass ≤ Pr[mask])
     (hbit : bit ∈ (ProbComp.eval (maskBit mask truth)).support) :
     mass / 2 ≤ (ProbComp.eval (maskBit mask truth) bit).toReal := by
   have hpositive : 0 < (ProbComp.eval (maskBit mask truth) bit).toReal :=
@@ -87,8 +86,7 @@ theorem maskedSample_mass_ge {α β : Type} (source : ProbComp α)
     (hsource : ∀ value ∈ (ProbComp.eval source).support,
       sourceMass ≤ (ProbComp.eval source value).toReal)
     (hmask : ∀ value ∈ (ProbComp.eval source).support,
-      0 < (ProbComp.eval (mask value) true).toReal →
-        maskMass ≤ (ProbComp.eval (mask value) true).toReal)
+      0 < Pr[mask value] → maskMass ≤ Pr[mask value])
     (pair : β × Bool) (hpair : pair ∈ (ProbComp.eval
       (maskedSample source observe truth mask)).support) :
     sourceMass * (maskMass / 2) ≤

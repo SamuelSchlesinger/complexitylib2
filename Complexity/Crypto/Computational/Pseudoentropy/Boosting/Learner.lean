@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Loop
 public import Complexity.Computability.Probabilistic.Selection
+import Complexity.Languages.Probabilistic.Notation
 import Complexity.Probability.PMF.Expect
 import Complexity.Tactic.PPT
 
@@ -52,8 +53,6 @@ namespace Cslib.Crypto.Pseudoentropy.Boosting
 
 open Probability BitString Turing.MultiTapeTM
 
-local notation "Pr[" p "]" => ENNReal.toReal (ProbComp.eval p true)
-
 variable {α : Type}
 
 /-- Run a trial on a freshly weighted example, with a fair baseline when its weight coin fails. -/
@@ -72,7 +71,7 @@ private theorem gate_probability (mask test : ProbComp Bool) :
   have hfair : Pr[ProbComp.uniform Bool] = 1 / 2 := by
     simp [PMF.uniformOfFintype_apply]
   rw [hfair]
-  change _ = 1 / 2 + (ProbComp.eval mask true).toReal * _
+  change _ = 1 / 2 + Pr[mask] * _
   nlinarith
 
 /-- Acceptance above a fair baseline is exactly the mask-weighted trial bias. -/

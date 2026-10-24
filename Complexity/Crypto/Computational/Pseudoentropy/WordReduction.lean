@@ -11,6 +11,7 @@ public import Complexity.Crypto.Computational.Pseudoentropy.HashReduction
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
 public import Complexity.Crypto.Computational.GoldreichLevin.WordDecoder
 public import Complexity.Crypto.Computational.OneWay
+import Complexity.Languages.Probabilistic.Notation
 
 import Complexity.Computability.Probabilistic.UniformNat
 import Complexity.Tactic.PPT
@@ -53,8 +54,6 @@ at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using typed saved seeds and the t
 namespace Cslib.Crypto.Pseudoentropy.HashPair
 
 open Probability BitString GoldreichLevin Turing.MultiTapeTM
-
-local notation "Pr[" p "]" => (Game.succProbability (ProbComp.eval p) : ℝ)
 
 /-- One polynomial tape budget covers all digest lengths and parity queries for an image. -/
 def coinBudget (c d n imageLength : ℕ) : ℕ :=
@@ -281,7 +280,7 @@ theorem word_prediction_entropy_le {n imageLength : ℕ} {Image : Type*}
       1 - 2 / (hashCount n : ℝ) + 128 * (dyadicSize (16 * hashCount n) : ℝ) ^ 2 *
         Pr[inversionGame f (wordInverter f evaluate c d degree) n] := by
   classical
-  simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal,
+  simp only [
     eval_predictionGame f finiteFunction encodeImage hf hlength adversary evaluate c d hrealize,
     eval_wordInversionGame f finiteFunction encodeImage hf hlength evaluate c d degree]
   exact matrixPrediction_entropy_le_of_coins finiteFunction (hashCount_ge n) _ _ _ hp

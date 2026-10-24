@@ -343,6 +343,7 @@ import ComplexityTests.PostTuringMachine
 import ComplexityTests.Presample
 import ComplexityTests.ProbabilisticComposition
 import ComplexityTests.ProbabilisticSampling
+import ComplexityTests.ProbabilityNotation
 import ComplexityTests.ProbabilityToolkit
 import ComplexityTests.ProbabilityToolkit2
 import ComplexityTests.ProbabilityToolkit3

@@ -11,6 +11,7 @@ public import Complexity.Probability.Entropy
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Sampling
+import Complexity.Languages.Probabilistic.Notation
 import Complexity.Tactic.PPT
 
 /-!
@@ -57,8 +58,6 @@ namespace Cslib.Crypto.Pseudoentropy
 
 open Probability Probability.PMF BitString Turing.MultiTapeTM
 
-local notation "Pr[" p "]" => (Game.succProbability (ProbComp.eval p) : ℝ)
-
 /-- Replace a label by a fresh fair bit when the supplied mask accepts. -/
 noncomputable def maskBit (mask : ProbComp Bool) (truth : Bool) : ProbComp Bool := do
   let replace ← mask
@@ -83,8 +82,7 @@ theorem eval_maskBit (mask : ProbComp Bool) (truth : Bool) :
 /-- The original label remains with probability `1 - maskProbability / 2`. -/
 theorem eval_maskBit_apply (mask : ProbComp Bool) (truth bit : Bool) :
     (ProbComp.eval (maskBit mask truth) bit).toReal =
-      if bit = truth then 1 - (ProbComp.eval mask true).toReal / 2
-      else (ProbComp.eval mask true).toReal / 2 := by
+      if bit = truth then 1 - Pr[mask] / 2 else Pr[mask] / 2 := by
   have hmass := toReal_true_add_toReal_false (ProbComp.eval mask)
   rw [eval_maskBit, bind_apply_toReal]
   cases truth <;> cases bit <;>
@@ -92,7 +90,7 @@ theorem eval_maskBit_apply (mask : ProbComp Bool) (truth bit : Bool) :
 
 /-- A fresh replacement contributes one bit of conditional randomness whenever the mask accepts. -/
 theorem entropy_maskBit_ge (mask : ProbComp Bool) (truth : Bool) :
-    (ProbComp.eval mask true).toReal ≤ entropy (ProbComp.eval (maskBit mask truth)) := by
+    Pr[mask] ≤ entropy (ProbComp.eval (maskBit mask truth)) := by
   rw [eval_maskBit]
   have h := sum_mul_entropy_le_entropy_bind (ProbComp.eval mask)
     (fun replace => if replace then PMF.uniformOfFintype Bool else PMF.pure truth)
@@ -110,7 +108,7 @@ theorem eval_maskedSample {α β : Type} (source : ProbComp α)
 in conditional label entropy. In particular, mask probabilities may depend on hidden labels. -/
 theorem maskedSample_entropy_ge {α β : Type} [Fintype α] [Finite β] (source : ProbComp α)
     (observe : α → β) (truth : α → Bool) (mask : α → ProbComp Bool) :
-    (∑ x, (ProbComp.eval source x).toReal * (ProbComp.eval (mask x) true).toReal) ≤
+    (∑ x, (ProbComp.eval source x).toReal * Pr[mask x]) ≤
       conditionalEntropy (ProbComp.eval (maskedSample source observe truth mask)) := by
   rw [eval_maskedSample]
   exact (Finset.sum_le_sum (fun x _ => mul_le_mul_of_nonneg_left
@@ -135,9 +133,9 @@ mask probability. The predictor itself receives only the test, not the mask or h
 theorem maskBit_prediction_gap (test : Bool → ProbComp Bool) (mask : ProbComp Bool)
     (truth : Bool) :
     Pr[test truth] - Pr[maskBit mask truth >>= test] =
-      (ProbComp.eval mask true).toReal *
+      Pr[mask] *
         (Pr[(fun guess => guess == truth) <$> bitPredictor test] - 1 / 2) := by
-  rw [Game.coe_succProbability_eval_bind, bitPredictor_bias]
+  rw [ProbComp.probability_bind, bitPredictor_bias]
   simp only [Fintype.sum_bool, eval_maskBit_apply]
   cases truth <;> norm_num <;> ring
 
@@ -148,12 +146,11 @@ theorem maskedSample_prediction_gap {α β : Type} [Fintype α] (source : ProbCo
     (test : β → Bool → ProbComp Bool) :
     Pr[source >>= fun x => test (observe x) (truth x)] -
         Pr[maskedSample source observe truth mask >>= fun pair => test pair.1 pair.2] =
-      ∑ x, (ProbComp.eval source x).toReal * (ProbComp.eval (mask x) true).toReal *
+      ∑ x, (ProbComp.eval source x).toReal * Pr[mask x] *
         (Pr[(fun guess => guess == truth x) <$> bitPredictor (test (observe x))] -
           1 / 2) := by
   simp only [maskedSample, bind_assoc, bind_map_left]
-  rw [Game.coe_succProbability_eval_bind, Game.coe_succProbability_eval_bind,
-    ← Finset.sum_sub_distrib]
+  rw [ProbComp.probability_bind, ProbComp.probability_bind, ← Finset.sum_sub_distrib]
   simp only [← mul_sub, maskBit_prediction_gap, mul_assoc]
 
 /-- A certified mask and an efficiently supplied label give a strict PPT randomized label. -/
@@ -201,10 +198,13 @@ theorem maskedSequence_prediction_gap {α β : Type} [Fintype α] (source : Prob
       Pr[OracleComp.replicate count (maskedSample source observe truth mask)
         >>= test] =
       (dyadicSize count : ℝ) * ∑ x,
-        (ProbComp.eval source x).toReal * (ProbComp.eval (mask x) true).toReal *
+        (ProbComp.eval source x).toReal * Pr[mask x] *
           (Pr[(fun guess => guess == truth x) <$>
             maskedSequencePredictor source observe truth mask count test (observe x)] - 1 / 2) := by
-  rw [sequenceTest_gap]
+  have hgap := sequenceTest_gap (maskedSample source observe truth mask)
+    ((fun x => (observe x, truth x)) <$> source) count test
+  simp only [Game.coe_succProbability] at hgap
+  rw [hgap]
   unfold maskedSequencePredictor
   congr 1
   simpa only [bind_map_left] using maskedSample_prediction_gap source observe truth mask

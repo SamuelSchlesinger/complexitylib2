@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.Basic
 public import Complexity.Probability.Entropy
+import Complexity.Languages.Probabilistic.Notation
 import Complexity.Tactic.PPT
 
 /-!
@@ -54,8 +55,6 @@ certificates. Existence of a pair with a positive gap is a separate security the
 namespace Cslib.Crypto.Pseudoentropy
 
 open Probability Filter Turing.MultiTapeTM
-
-local notation "Pr[" p "]" => (Game.succProbability (ProbComp.eval p) : ℝ)
 
 /-- Predict the hidden bit from the public component of a sampled pair. -/
 def predictionGame (sample : ℕ → ProbComp (List Bool × Bool))
@@ -129,7 +128,6 @@ theorem HasGap.eventually_error_ge {pair : SamplablePair} {gap : ℕ → ℝ}
   filter_upwards [hgap adversary hefficient] with n hn
   have hsum := PMF.toReal_true_add_toReal_false
     (ProbComp.eval (predictionGame pair.sample adversary n))
-  simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal] at hn
   linarith
 
 /-- A fair-bit predictor has zero correlation, so entropy plus the prediction gap cannot
@@ -140,8 +138,7 @@ theorem HasGap.eventually_entropy_add_gap_le_one {pair : SamplablePair} {gap : �
   have h := hgap (fun _ _ => ProbComp.uniform Bool) (by ppt)
   have hfair (n : ℕ) :
       Pr[predictionGame pair.sample (fun _ _ => ProbComp.uniform Bool) n] = 1 / 2 := by
-    simp [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal, predictionGame,
-      ProbComp.eval_bind, ProbComp.eval_map, PMF.bind_apply, PMF.map_apply,
+    simp [predictionGame, ProbComp.eval_bind, ProbComp.eval_map, PMF.bind_apply, PMF.map_apply,
       PMF.uniformOfFintype_apply, ENNReal.tsum_mul_right, PMF.tsum_coe]
   filter_upwards [h] with n hn
   rw [hfair] at hn

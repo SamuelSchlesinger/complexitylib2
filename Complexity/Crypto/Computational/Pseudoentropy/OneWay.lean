@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Pseudoentropy.WordReduction
+import Complexity.Languages.Probabilistic.Notation
 import Complexity.Crypto.Computational.OneWay.Normalize
 import Complexity.Computability.Probabilistic.CoinTape
 import Complexity.Crypto.Negligible.Basic
@@ -44,8 +45,6 @@ namespace Cslib.Crypto.Pseudoentropy.HashPair
 open Probability BitString GoldreichLevin Filter Turing.MultiTapeTM
 open scoped NNReal
 
-local notation "Pr[" p "]" => (Game.succProbability (ProbComp.eval p) : ℝ)
-
 /-- A single cubic precision suffices for all sufficiently large dimensions. -/
 theorem precision_three_ge {n : ℕ} (hn : 8 ≤ n) :
     8 * hashCount n ≤ precision 3 n := by
@@ -78,7 +77,8 @@ theorem eventually_prediction_entropy_le {f : List Bool → List Bool} (hf : One
   have hsmall := hloss.eventually_le_inv_polynomial
     hashCount_polynomiallyBounded (fun n => Nat.pos_of_ne_zero (NeZero.ne (hashCount n)))
   filter_upwards [hsmall, eventually_ge_atTop 8] with n hsmall hn
-  simp only [NNReal.coe_mul, NNReal.coe_pow, NNReal.coe_ofNat, NNReal.coe_natCast] at hsmall
+  simp only [NNReal.coe_mul, NNReal.coe_pow, NNReal.coe_ofNat, NNReal.coe_natCast,
+    Game.coe_succProbability] at hsmall
   have h := word_prediction_entropy_le f (finiteFunction n) (encodeImage n)
     (hencode n) (hlength n) adversary evaluate c d (fun n input => hrealize (n, input))
     3 (precision_three_ge hn)
