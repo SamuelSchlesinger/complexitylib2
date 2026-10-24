@@ -1200,6 +1200,30 @@ Jukna coverage below is an additional target beyond the V1 port:
   Open (see #640): computational Schnorr signatures under discrete log for strict PPT forgers,
   and security against eavesdropping in the strict-PPT model, where simulating transcripts needs
   approximately uniform `ZMod q` samples and hence an explicit statistical-distance term.
+* **Lattice identification and signatures (#640, track B).** The short-integer-solution
+  hypothesis, exact box rejection sampling and Lyubashevsky identification are in review (#660).
+  Open: Fiat–Shamir with aborts and signatures from SIS [Lyubashevsky 2009, 2012]; efficiency
+  certificates for the identification simulator and extractor; SIS for a general (prime) modulus;
+  module SIS and module LWE over polynomial rings, and Dilithium-style signatures as theory, not a
+  parameter set or ciphersuite.
+* **Zero-knowledge proof systems toward libzk (#643, #640).** A public-coin interactive-reduction
+  core with sequential composition and round-by-round soundness, and sumcheck as its first client,
+  are in review (#701, #703). Open, in order:
+  - oracle statements, so a later phase can query an earlier phase's oracle (ArkLib-style virtual
+    output oracles), together with knowledge soundness and zero knowledge in oracle worlds;
+  - efficiency-certified simulators and extractors, and auxiliary-input zero knowledge (#704)
+    on the core;
+  - polynomial commitment and evaluation-query reductions, and the Ligero IOP;
+  - the BCS transform from public-coin IOPs to non-interactive arguments in the random-oracle
+    model;
+  - VOLE as an ideal functionality and VOLE-in-the-head;
+  - the compositional structure of libzk (Shelat's IETF draft) as a composition of these
+    components, stated as theory without concrete ciphersuites.
+* **Classic symmetric constructions (#640, track D).** Proved: PRF-based MACs (#677), keyed
+  collision-resistant hash families and Merkle–Damgård (#678), and universal hashing (#663).
+  Open: Luby–Rackoff (three Feistel rounds over a PRF give a PRP, four give a strong PRP), strongly
+  unforgeable MACs and Carter–Wegman MACs from Δ-universal hashing, the Naor–Reingold PRF from the
+  decisional Diffie–Hellman assumption, and Even–Mansour in the ideal-permutation model.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should
