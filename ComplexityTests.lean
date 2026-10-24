@@ -27,6 +27,7 @@ import ComplexityTests.BitStringRows
 import ComplexityTests.BitonicSort
 import ComplexityTests.BitonicTrace
 import ComplexityTests.BooleanAnalysisDecisionTree
+import ComplexityTests.BooleanAnalysisExamples
 import ComplexityTests.BooleanHierarchyClosure
 import ComplexityTests.BooleanHierarchyPH
 import ComplexityTests.Broadcast
@@ -55,6 +56,7 @@ import ComplexityTests.CodeComposition
 import ComplexityTests.CodeSubstitution
 import ComplexityTests.CoinTape
 import ComplexityTests.CombinatorialBounds
+import ComplexityTests.CombinatoricsExamples
 import ComplexityTests.CommunicationComplexity
 import ComplexityTests.CommunicationComplexity2
 import ComplexityTests.CommunicationComplexity3
@@ -145,6 +147,7 @@ import ComplexityTests.FirstOrderConstants
 import ComplexityTests.FirstOrderProjection
 import ComplexityTests.FirstOrderReductions
 import ComplexityTests.FormulaDepth
+import ComplexityTests.FoundationsExamples
 import ComplexityTests.FourierLearning
 import ComplexityTests.FrontierAverageCaseImports
 import ComplexityTests.FrontierRectangleImports
