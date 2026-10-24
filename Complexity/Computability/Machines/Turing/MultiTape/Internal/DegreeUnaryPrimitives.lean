@@ -8,6 +8,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Unary
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.UnaryMachines
 
 /-!
 # Direct unary degree primitives
@@ -19,21 +20,6 @@ growth. No higher tidy computability calculus is used.
 @[expose] public section
 namespace Turing.MultiTapeTM
 namespace Internal.Unary
-
-/-- Copy the input and append one unary symbol. -/
-private def succT : Transducer Bool Unit where
-  q₀ := ()
-  step _ b := ((), [b])
-  final _ := [true]
-  length_step_le _ _ := by simp
-  length_final_le _ := by simp
-
-private lemma succT_run (w : List Bool) : succT.run () w = w ++ [true] := by
-  induction w with
-  | nil => rfl
-  | cons b w ih =>
-    change [b] ++ succT.run () w = (b :: w) ++ [true]
-    simp [ih]
 
 /-- Drop the first unary symbol and copy the remaining input. -/
 private def predT : Transducer Bool Bool where
@@ -65,12 +51,13 @@ open Internal.Unary
 theorem unary_succ : ComputableInDegree (· + 1) encUnary encUnary 1 1 := by
   refine ⟨⟨fun n => 2 * (encUnary n).length + 3, fun _ => 0,
     ⟨3, fun _ => by simp only [pow_one]; omega⟩, DegreeBounded.const 0,
-    0, _, inferInstance, succT.toTM, fun n => ?_⟩,
+    0, _, inferInstance, unarySuccTransducer.toTM, fun n => ?_⟩,
     ⟨1, fun n => by simp⟩⟩
-  have heq : encUnary (n + 1) = succT.run succT.q₀ (encUnary n) := by
-    rw [show succT.q₀ = () from rfl, succT_run]
-    simp [List.replicate_add]
-  simpa only [heq] using succT.computesInTimeAndSpace_toTM (encUnary n)
+  have heq : encUnary (n + 1) =
+      unarySuccTransducer.run unarySuccTransducer.q₀ (encUnary n) := by
+    rw [show unarySuccTransducer.q₀ = true from rfl, (unarySuccRun _).1]
+    simp [List.replicate_succ]
+  simpa only [heq] using unarySuccTransducer.computesInTimeAndSpace_toTM (encUnary n)
 
 /-- Saturating predecessor on unary natural numbers. -/
 theorem unary_pred : ComputableInDegree (· - 1) encUnary encUnary 1 1 := by
