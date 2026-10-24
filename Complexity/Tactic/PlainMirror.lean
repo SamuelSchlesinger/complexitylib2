@@ -64,7 +64,11 @@ def plainType (type : Expr) : MetaM Expr := do
   let result := type.replace fun e => match e with
     | .const name levels =>
       (equivalences.find? (fun entry => entry.1 == name)).map fun entry =>
-        Expr.const entry.2.1 levels
+        -- A monomorphic source can have a polymorphic plain counterpart. In particular,
+        -- tidy polynomial space fixes both types to Type, while plain space is polymorphic.
+        let targetArity := (env.find? entry.2.1).map (·.levelParams.length) |>.getD levels.length
+        let targetLevels := if levels.isEmpty then List.replicate targetArity .zero else levels
+        Expr.const entry.2.1 targetLevels
     | _ => none
   for entry in equivalences do
     if type.find? (·.isConstOf entry.1) |>.isSome then

@@ -11,6 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Plain
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Tape
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace
@@ -47,6 +48,7 @@ permanent surface-policy exemption.
 public section
 
 plain_mirror_sources [
+  Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Tape,
   Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO,
   Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree,
   Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace,

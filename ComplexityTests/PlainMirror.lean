@@ -13,6 +13,29 @@ import Complexity.Computability.Complexity.Parameterized.PlainCalculus
 
 universe u
 
+-- Existing hand-written rules can be more general than their tidy sources. Every collision
+-- must cover the transformed telescope, including monomorphic-to-polymorphic space transport.
+run_meta do
+  let sources := #[
+    `Turing.MultiTapeTM.ComputableTidilyInPolySpace.comp,
+    `Turing.MultiTapeTM.ComputableTidilyInPolySpace.comp',
+    `Turing.MultiTapeTM.ComputableTidilyInPolySpace.ite,
+    `Turing.MultiTapeTM.ComputableTidilyInPolySpace.of_polyTime,
+    `Turing.MultiTapeTM.ComputableTidilyInPolySpace.prod,
+    `Turing.MultiTapeTM.ComputableTidilyInPolyTime.fst',
+    `Turing.MultiTapeTM.ComputableTidilyInPolyTime.snd',
+    `Turing.MultiTapeTM.ComputableTidilyInPolyTime.trans,
+    `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_finite]
+  for source in sources do
+    let target := Cslib.Tactic.PlainMirror.mirrorName source
+    let originalTargetType := (← Lean.getConstInfo target).type
+    Cslib.Tactic.PlainMirror.mirrorDeclaration source target
+    unless (← Lean.getConstInfo target).type == originalTargetType do
+      throwError "existing rule was overwritten: {target}"
+    unless (← Cslib.Tactic.PlainMirror.getMirror? source) == some target do
+      throwError "covered collision is absent from registry: {source}"
+
+
 open Turing.MultiTapeTM
 
 example : ComputableInPolyTime (fun xs : List ℕ => xs.map (fun x => x + x))
