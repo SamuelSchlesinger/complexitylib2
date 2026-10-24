@@ -57,11 +57,11 @@ variable {ι : Type u} {spec : OracleSpec.{u, v} ι} {α β : Type v}
 a call `q` costs `cost q`. -/
 inductive IsCostBounded (cost : ι → ℕ) : OracleComp spec α → ℕ → Prop
   /-- Returning a value makes no call. -/
-  | pure (a : α) (n : ℕ) : IsCostBounded cost (PFunctor.FreeM.pure a) n
+  | pure (a : α) (n : ℕ) : IsCostBounded cost (pure a) n
   /-- A call followed by continuations whose calls each cost at most `n`. -/
   | liftBind (q : ι) (cont : spec q → OracleComp spec α) (n : ℕ)
       (hcont : ∀ a, IsCostBounded cost (cont a) n) :
-      IsCostBounded cost (PFunctor.FreeM.liftBind q cont) (n + cost q)
+      IsCostBounded cost (OracleComp.query q >>= cont) (n + cost q)
 
 /-- The program makes at most `n` oracle calls on every path, whatever the answers. -/
 abbrev IsQueryBounded (program : OracleComp spec α) (n : ℕ) : Prop :=
@@ -145,7 +145,6 @@ theorem interpret {κ : Type u} {target : OracleSpec.{u, v} κ} {cost' : κ → 
   induction h with
   | pure a n => exact .pure a n
   | liftBind q cont n _ ih =>
-    change IsCostBounded cost' (OracleComp.interpret handler (OracleComp.query q >>= cont)) _
     rw [interpret_bind, interpret_query, Nat.add_comm]
     exact (hhandler q).bind ih
 
@@ -159,8 +158,6 @@ theorem run_interpret {κ : Type u} {target : OracleSpec.{u, v} κ} {cost' : κ 
   induction h generalizing s with
   | pure a n => exact .pure (a, s) _
   | liftBind q cont n _ ih =>
-    change IsCostBounded cost'
-      ((OracleComp.interpret handler (OracleComp.query q >>= cont)).run s) _
     simp only [interpret_bind, interpret_query, StateT.run_bind]
     rw [Nat.add_comm]
     exact (hhandler q s).bind fun result => ih result.1 result.2
@@ -256,13 +253,11 @@ theorem IsCostBounded.transcript_cost_le {cost : Query → ℕ} {program : Oracl
     (transcript.map fun entry => cost entry.1).sum ≤ n := by
   induction h generalizing s s' result transcript with
   | pure a n =>
-    change (result, s', transcript) ∈ (PMF.pure (a, s, [])).support at hmem
-    rw [PMF.mem_support_pure_iff] at hmem
+    simp only [run_interpret_pure, Probability.PMF.monad_pure_eq_pure,
+      PMF.mem_support_pure_iff] at hmem
     cases hmem
     simp
   | liftBind q cont n _ ih =>
-    change (result, s', transcript) ∈ ((OracleComp.interpret (withTranscript oracle)
-      (OracleComp.query q >>= cont)).run (s, [])).support at hmem
     simp only [interpret_bind, interpret_query, StateT.run_bind,
       Probability.PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff] at hmem
     obtain ⟨⟨a, middle, seen⟩, hfirst, hrest⟩ := hmem

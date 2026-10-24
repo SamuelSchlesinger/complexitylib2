@@ -363,10 +363,8 @@ theorem eval_run_interpret_memoize [DecidableEq Key] (sample : Key → ProbComp 
         (fun (result, cache') => (result, ofList cache')) =
       (OracleComp.interpret (answer (fun q => ProbComp.eval (sample q))) program).run
         (ofList cache) := by
-  have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
-    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
-  rw [OracleComp.map_run_interpret heval]
-  simpa only [heval.map_memoize] using
+  rw [OracleComp.map_run_interpret ProbComp.isMonadHom_eval]
+  simpa only [ProbComp.isMonadHom_eval.map_memoize] using
     run_interpret_memoize (fun q => ProbComp.eval (sample q)) program cache
 
 /-- Memoized closed samplers implement the eager independent random-function experiment. -/

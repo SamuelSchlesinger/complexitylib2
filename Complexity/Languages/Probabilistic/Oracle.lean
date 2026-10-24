@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.Sum
-import Complexity.Languages.Probabilistic.Simulation
+public import Complexity.Languages.Probabilistic.Simulation
 
 /-!
 # Private randomness with typed oracle calls
@@ -36,6 +36,7 @@ The sampling and external interfaces form the sum `unifSpec ⊕ₒ spec` of
 
 ## Main results
 
+* `Cslib.ProbOracleComp.isMonadHom_sample`: `sample` is a monad morphism from `ProbComp`.
 * `Cslib.ProbOracleComp.interpret_sample`: embedded sampling uses only the sampling handler.
 * `Cslib.ProbOracleComp.run_interpret_sample`: private sampling leaves oracle state unchanged.
 * `Cslib.ProbOracleComp.run_interpret_lift_sample`: a stateful handler with external calls
@@ -78,6 +79,11 @@ def sample (program : ProbComp α) : ProbOracleComp spec α :=
 /-- Sampling is the left embedding into the sum `unifSpec ⊕ₒ spec`. -/
 theorem sample_eq_liftLeft (program : ProbComp α) :
     sample (spec := spec) program = OracleComp.liftLeft program := rfl
+
+/-- Lifting a closed sampler into `ProbOracleComp spec` is a monad morphism. -/
+theorem isMonadHom_sample : IsMonadHom ProbComp (ProbOracleComp spec) (sample (spec := spec)) :=
+  PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩)
+    (fun n => OracleComp.query (spec := probOracleSpec spec) (Sum.inl n))
 
 /-- Make one external call, whose reply may determine later sampling or queries. -/
 def query (q : Query) : ProbOracleComp spec (spec q) := OracleComp.query (Sum.inr q)
@@ -164,10 +170,7 @@ theorem sample_run_interpret {Query' : Type} {spec' : Query' → Type}
       (handler (fun n => StateT.lift (ProbComp.unifFin n)) oracle) program).run s) =
       (OracleComp.interpret (handler (fun n => StateT.lift (sample (ProbComp.unifFin n)))
         (fun q state => sample (oracle q state))) program).run s := by
-  have hsample : IsMonadHom ProbComp (ProbOracleComp spec') (sample (spec := spec')) :=
-    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩)
-      (fun n => OracleComp.query (spec := probOracleSpec spec') (Sum.inl n))
-  rw [OracleComp.map_run_interpret hsample]
+  rw [OracleComp.map_run_interpret (isMonadHom_sample (spec := spec'))]
   congr 2
   funext q state
   cases q with
@@ -191,9 +194,7 @@ theorem eval_run_interpret (oracle : (q : Query) → StateT State ProbComp (spec
       (handler (fun n => StateT.lift (ProbComp.unifFin n)) oracle) program).run s) =
       (OracleComp.interpret (handler (fun n => StateT.lift (ProbComp.unifOracle n))
         (fun q state => ProbComp.eval (oracle q state))) program).run s := by
-  have heval : IsMonadHom ProbComp PMF (@ProbComp.eval) :=
-    PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) ProbComp.unifOracle
-  rw [OracleComp.map_run_interpret heval]
+  rw [OracleComp.map_run_interpret ProbComp.isMonadHom_eval]
   apply congrArg (fun oracle => (OracleComp.interpret (m := StateT State PMF) oracle program).run s)
   funext q state
   cases q with

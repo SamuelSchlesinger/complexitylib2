@@ -9,6 +9,7 @@ module
 
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Foundations.Control.Monad.Memoize
+import Complexity.Languages.Probabilistic.Simulation
 
 /-!
 # Evaluating memoized probabilistic programs
@@ -34,7 +35,6 @@ namespace Cslib.ProbComp
 @[simp] theorem eval_memoize {Key Value : Type} [BEq Key]
     (compute : Key → ProbComp Value) (key : Key) (cache : List (Key × Value)) :
     eval (memoize compute key cache) = memoize (fun q => eval (compute q)) key cache :=
-  (PFunctor.FreeM.isMonadHom_liftM (P := ⟨ℕ, unifSpec⟩) unifOracle).map_memoize
-    compute key cache
+  isMonadHom_eval.map_memoize compute key cache
 
 end Cslib.ProbComp
