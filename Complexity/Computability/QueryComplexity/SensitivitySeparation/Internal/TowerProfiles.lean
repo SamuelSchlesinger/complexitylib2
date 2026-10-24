@@ -74,7 +74,7 @@ def towerJoint {k r : ℕ} {I : Type} [Fintype I] (T : Tournament k)
 a nested base family `base D`, writing `s b`, `j b` for `towerSide`, `towerJoint` at level `n` and
 `s' b`, `j' b` for the same profiles at level `n + 1`, we have
 `s' true ≤ M ^ 2 * s false + r * s true`, `j' true ≤ M ^ 2 * j false + r * s true`,
-`s' false ≤ 16 * s false + s true + 3 * j true` and `j' false ≤ 16 * s false + 3 * j true`. -/
+`s' false ≤ 15 * s false + s true + 3 * j true` and `j' false ≤ 15 * s false + 3 * j true`. -/
 theorem tower_four_recurrences {M r : ℕ} {I : Type} [Fintype I]
     (T : RegularTournament M) (A : GoodLabeling T.toTournament r)
     (base : (h : ℕ) → Fin h → (I → Bool) → Bool)
@@ -86,11 +86,11 @@ theorem tower_four_recurrences {M r : ℕ} {I : Type} [Fintype I]
       M ^ 2 * towerJoint T.toTournament A.label base D n false +
       r * towerSide T.toTournament A.label base D n true) ∧
     (towerSide T.toTournament A.label base D (n + 1) false ≤
-      16 * towerSide T.toTournament A.label base D n false +
+      15 * towerSide T.toTournament A.label base D n false +
       towerSide T.toTournament A.label base D n true +
       3 * towerJoint T.toTournament A.label base D n true) ∧
     (towerJoint T.toTournament A.label base D (n + 1) false ≤
-      16 * towerSide T.toTournament A.label base D n false +
+      15 * towerSide T.toTournament A.label base D n false +
       3 * towerJoint T.toTournament A.label base D n true) := by
   have he : (D - (n + 1) + 1) + n = D := by omega
   have hf : NestedFamily (towerFamily T.toTournament A.label base n (D - (n + 1) + 1)) := by

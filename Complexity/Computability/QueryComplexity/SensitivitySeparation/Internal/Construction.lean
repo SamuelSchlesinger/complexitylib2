@@ -155,9 +155,9 @@ theorem construction_profiles {M r : ℕ} (d : ℕ) (T : RegularTournament M)
       initialFamily_joint d M false
   · simpa only [towerJoint_zero, constructionBase, baseExtension_same] using
       initialFamily_joint d M true
-  · exact fun n hn => (hstep n hn).2.2.1
+  · exact fun n hn => (hstep n hn).2.2.1.trans (by omega)
   · exact fun n hn => (hstep n hn).1
-  · exact fun n hn => (hstep n hn).2.2.2
+  · exact fun n hn => (hstep n hn).2.2.2.trans (by omega)
   · exact fun n hn => (hstep n hn).2.1
 
 /-- Under the budget `max r 16 / M * 3 ^ (d + 1) ≤ 2`, the terminal predicate has sensitivity at

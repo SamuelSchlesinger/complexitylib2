@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveFailures
+public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.RecursiveSets
 
 /-!
 # Superquadratic sensitivity separation: recursive candidates
@@ -16,7 +17,8 @@ Characterizes the witnesses chosen for candidate rows: the target witness of a t
 its unique rejected target column, and the gate witness of a gate candidate is its unique outgoing
 neighbor whose labeled gate child is accepted. It also introduces the sinks of the set of gate
 candidates, shows that there is at most one, and proves that the gate witness of a non-sink gate
-candidate is itself a gate candidate.
+candidate is itself a gate candidate. Finally, it bounds the raw coordinates that can repair the
+target condition of a target candidate.
 
 ## Main definitions
 
@@ -30,6 +32,8 @@ candidate is itself a gate candidate.
 * `gateWitness_unique`: the gate witness is the unique such neighbor.
 * `gateSinks_card`: there is at most one gate sink.
 * `nonsink_gateWitness_mem`: the gate witness of a non-sink gate candidate is a gate candidate.
+* `targetCandidates_biUnion_card_le`: the coordinates that change the final predicate on the target
+  witness child of some target candidate number at most `15 * sideSensitivity F false`.
 
 ## References
 
@@ -133,6 +137,27 @@ theorem nonsink_gateWitness_mem {k r h : ℕ} {I : Type} (T : Tournament k)
     exact hn ⟨j, hj, hij⟩
   obtain ⟨j, hj, hij⟩ := he
   rwa [← gateCandidates_neighbor T label F hF q x i j hi hj hij]
+
+open scoped Classical in
+/-- For a good labeling `A`, a nested family `F` and `0 < r`, the raw coordinates whose flip changes
+the final predicate on the target witness child of some target candidate number at most
+`15 * sideSensitivity F false`: there are at most `15` target candidates (`targetCandidates_card`),
+and each target witness child is rejected by the final predicate. -/
+theorem targetCandidates_biUnion_card_le {k r h : ℕ} {I : Type} [Fintype I]
+    (T : Tournament k) (A : GoodLabeling T r)
+    (F : Fin (h + 1) → (I → Bool) → Bool) (hF : NestedFamily F) (hr : 0 < r)
+    (q : Fin h) (x : ((Fin k × Fin r) × I) → Bool) :
+    ((targetCandidates T A.label F q x).biUnion fun i =>
+        childChanges F (Fin.last h) x i (targetWitness F x hr i)).card ≤
+      15 * sideSensitivity F false :=
+  calc
+    _ ≤ (targetCandidates T A.label F q x).card * sideSensitivity F false :=
+      card_biUnion_le_mul _ _ _ fun i hi => by
+        rw [childChanges_card]
+        exact sensitivityAt_le_sideSensitivity F false _ _
+          (targetWitness_false T A.label F q x hr i hi)
+    _ ≤ 15 * sideSensitivity F false :=
+      Nat.mul_le_mul_right _ (Nat.le_of_lt_succ (targetCandidates_card T A F hF q x hr))
 
 end Internal
 

@@ -15,7 +15,7 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 # Superquadratic sensitivity separation: recursive zero
 
 Bounds the sensitivity of the recursive family at inputs where it is `false`. A sensitive bit must
-repair the unique failed condition of some row clause: of a target candidate (fewer than `16`), of
+repair the unique failed condition of some row clause: of a target candidate (at most `15`), of
 the gate sink (at most one), or of a non-sink gate candidate (at most `3`). In the last case the
 gate witness is itself a gate candidate, so the flip changes both the gate and the final predicate
 on a single child, which is charged to the joint sensitivity.
@@ -23,7 +23,7 @@ on a single child, which is charged to the joint sensitivity.
 ## Main results
 
 * `recursive_sensitivity_zero_at`: at an input with output `false`, the sensitivity is at most
-  `16 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true`.
+  `15 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true`.
 * `recursive_side_zero`: the same bound for the `false`-side sensitivity of the recursive family.
 
 ## References
@@ -45,14 +45,14 @@ namespace Internal
 open scoped Classical in
 /-- For a good labeling `A`, a nested family `F` and `0 < r`, at an input `x` where
 `recursiveFamily T A.label F q` is `false`, its sensitivity at `x` is at most
-`16 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true`. -/
+`15 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true`. -/
 theorem recursive_sensitivity_zero_at {k r h : ℕ} {I : Type} [Fintype I]
     (T : Tournament k) (A : GoodLabeling T r)
     (F : Fin (h + 1) → (I → Bool) → Bool) (hF : NestedFamily F) (hr : 0 < r)
     (q : Fin h) (x : ((Fin k × Fin r) × I) → Bool)
     (hx : recursiveFamily T A.label F q x = false) :
     sensitivityAt (recursiveFamily T A.label F q) x ≤
-      16 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true := by
+      15 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true := by
   let TC := targetCandidates T A.label F q x
   let GC := gateCandidates T A.label F q x
   let SC := gateSinks T A.label F q x
@@ -107,15 +107,8 @@ theorem recursive_sensitivity_zero_at {k r h : ℕ} {I : Type} [Fintype I]
               F (Fin.last h) (recursiveChild x j (A.label i j)) := by
           simp [hgon, hgoff, hton, htoff]
         simpa [childJointChanges, w, hj] using hn
-  have hU : U.card ≤ 16 * sideSensitivity F false := by
-    calc
-      U.card ≤ TC.card * sideSensitivity F false :=
-        card_biUnion_le_mul TC _ _ (fun i hi => by
-          rw [childChanges_card]
-          exact sensitivityAt_le_sideSensitivity F false _ _
-            (targetWitness_false T A.label F q x hr i hi))
-      _ ≤ 16 * sideSensitivity F false := Nat.mul_le_mul_right _
-        (Nat.le_of_lt (targetCandidates_card T A F hF q x hr))
+  have hU : U.card ≤ 15 * sideSensitivity F false :=
+    targetCandidates_biUnion_card_le T A F hF hr q x
   have hV : V.card ≤ 3 * jointSensitivity F true := by
     calc
       V.card ≤ NC.card * jointSensitivity F true :=
@@ -145,18 +138,18 @@ theorem recursive_sensitivity_zero_at {k r h : ℕ} {I : Type} [Fintype I]
     sensitivityAt (recursiveFamily T A.label F q) x ≤ (U ∪ (V ∪ W)).card := Finset.card_le_card hsub
     _ ≤ U.card + (V ∪ W).card := Finset.card_union_le _ _
     _ ≤ U.card + (V.card + W.card) := Nat.add_le_add_left (Finset.card_union_le _ _) _
-    _ ≤ 16 * sideSensitivity F false + (3 * jointSensitivity F true + sideSensitivity F true) :=
+    _ ≤ 15 * sideSensitivity F false + (3 * jointSensitivity F true + sideSensitivity F true) :=
       Nat.add_le_add hU (Nat.add_le_add hV hW)
     _ = _ := by omega
 
 /-- Zero-side recurrence: for a good labeling, a nested family `F` and `0 < r`,
 `sideSensitivity (recursiveFamily T A.label F) false` is at most
-`16 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true`. -/
+`15 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true`. -/
 theorem recursive_side_zero {k r h : ℕ} {I : Type} [Fintype I]
     (T : Tournament k) (A : GoodLabeling T r)
     (F : Fin (h + 1) → (I → Bool) → Bool) (hF : NestedFamily F) (hr : 0 < r) :
     sideSensitivity (recursiveFamily T A.label F) false ≤
-      16 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true := by
+      15 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true := by
   apply sideSensitivity_le
   exact fun q x hx => recursive_sensitivity_zero_at T A F hF hr q x hx
 
