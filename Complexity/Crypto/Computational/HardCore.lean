@@ -82,16 +82,6 @@ structure HardCore (f : List Bool → List Bool) (predicate : List Bool → Bool
     (fun adversary n => ProbComp.eval (predictionGame f predicate adversary n))
     (fun _ _ => PMF.uniformOfFintype Bool) (IsPPT encBool)
 
-/-- Recover the tidy presentation for proofs without changing the security contract. -/
-theorem hardCore_iff_tidy {f : List Bool → List Bool} {predicate : List Bool → Bool} :
-    HardCore f predicate ↔
-    (ComputableTidilyInPolyTime predicate encBits encBool) ∧
-    (Game.Indistinguishable
-    (fun adversary n => ProbComp.eval (predictionGame f predicate adversary n))
-    (fun _ _ => PMF.uniformOfFintype Bool) (IsPPT encBool)) :=
-  ⟨fun h => ⟨h.polyTime.tidy, h.secure⟩,
-    fun ⟨h0, h1⟩ => ⟨.of_tidy h0, h1⟩⟩
-
 /-- The shared security property gives negligible absolute prediction bias. -/
 theorem HardCore.unpredictable {f : List Bool → List Bool} {predicate : List Bool → Bool}
     (h : HardCore f predicate) (adversary : Distinguisher) (ha : IsPPT encBool adversary) :
