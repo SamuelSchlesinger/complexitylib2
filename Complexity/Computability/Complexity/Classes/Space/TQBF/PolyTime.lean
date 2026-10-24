@@ -316,6 +316,12 @@ theorem computableTidilyInPolyTime_baseFormula {tab : γ → CNF (CookLevin.Var 
       (encList (encList (encPair CookLevin.encVar encBool))))
     (hw : ComputableTidilyInPolyTime w encIn encUnary) :
     ComputableTidilyInPolyTime (fun x => baseFormula (tab x) (w x)) encIn encQBF := by
+  have hvars : ComputableTidilyInPolyTime (fun x => (tab x).vars) encIn
+      (encList CookLevin.encVar) :=
+    (CNF.computableInPolyTime_vars CookLevin.encVar).tidy.comp htab
+  have hrelabel : ComputableTidilyInPolyTime (fun x => CNF.relabel tabVar (tab x)) encIn
+      (encList (encList (encPair encNat encBool))) :=
+    (CNF.computableInPolyTime_relabel (.of_tidy computableTidilyInPolyTime_tabVar)).tidy.comp htab
   unfold baseFormula baseVars certLinks
   fun_prop
 

@@ -23,33 +23,33 @@ example : Clause.split3 (fun i : ℕ => i + 100) 7
     [(0, true), (1, false), (2, true), (3, false)] =
       [[(0, true), (1, false), (107, true)], [(107, false), (2, true), (3, false)]] := rfl
 
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : ℕ × Clause ℕ => Clause.split3 (fun i => p.1 + i) p.1 p.2)
     (encPair encUnary (encList (encPair encUnary encBool)))
-    (encList (encList (encPair encUnary encBool))) := by polytime
+    (encList (encList (encPair encUnary encBool))) := by fun_prop
 
 -- Binary original names coexist with unary fresh clause and chain indices.
-example : ComputableTidilyInPolyTime (CNF.to3CNF (V := ℕ))
+example : ComputableInPolyTime (CNF.to3CNF (V := ℕ))
     (encList (encList (encPair encNat encBool)))
     (encList (encList (encPair (encSum encNat (encPair encUnary encUnary)) encBool))) := by
   fun_prop
 
 -- No inhabitant of the original variable type is required.
-example (empty : Empty ↪ List Bool) : ComputableTidilyInPolyTime (CNF.to3CNF (V := Empty))
+example (empty : Empty ↪ List Bool) : ComputableInPolyTime (CNF.to3CNF (V := Empty))
     (encList (encList (encPair empty encBool)))
     (encList (encList (encPair (encSum empty (encPair encUnary encUnary)) encBool))) := by
-  polytime
+  fun_prop
 
 section Captured
 
 variable {W Input : Type} (input : Input ↪ List Bool) (enc : W ↪ List Bool)
   (fresh : Input → ℕ → W) (index : Input → ℕ) (clause : Input → Clause W)
-  (hclause : ComputableTidilyInPolyTime clause input (encList (encPair enc encBool)))
-  (hindex : ComputableTidilyInPolyTime index input encUnary)
-  (hfresh : ComputableTidilyInPolyTime (fun p : Input × ℕ => fresh p.1 p.2)
+  (hclause : ComputableInPolyTime clause input (encList (encPair enc encBool)))
+  (hindex : ComputableInPolyTime index input encUnary)
+  (hfresh : ComputableInPolyTime (fun p : Input × ℕ => fresh p.1 p.2)
     (encPair input encUnary) enc)
 
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun x => Clause.split3 (fresh x) (index x) (clause x))
     input (encList (encList (encPair enc encBool))) := by
   fail_if_success (clear hclause; fun_prop)
@@ -57,20 +57,20 @@ example : ComputableTidilyInPolyTime
   fail_if_success (clear hfresh; fun_prop)
   fun_prop
 
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun x => let c := clause x; let start := index x; Clause.split3 (fresh x) start (c ++ c))
-    input (encList (encList (encPair enc encBool))) := by polytime
+    input (encList (encList (encPair enc encBool))) := by fun_prop
 
 end Captured
 
 example {V Input : Type} (enc : V ↪ List Bool) (input : Input ↪ List Bool)
     (formula : Input → CNF V)
-    (hformula : ComputableTidilyInPolyTime formula input
+    (hformula : ComputableInPolyTime formula input
       (encList (encList (encPair enc encBool)))) :
-    ComputableTidilyInPolyTime (fun x => let φ := formula x; φ.to3CNF)
+    ComputableInPolyTime (fun x => let φ := formula x; φ.to3CNF)
       input (encList (encList (encPair (encSum enc (encPair encUnary encUnary)) encBool))) := by
   fail_if_success (clear hformula; fun_prop)
-  polytime
+  fun_prop
 
 example (φ : CNF ℕ) : φ.to3CNF.Satisfiable ↔ φ.Satisfiable := CNF.satisfiable_to3CNF φ
 

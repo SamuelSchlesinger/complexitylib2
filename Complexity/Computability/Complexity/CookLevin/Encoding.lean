@@ -123,6 +123,6 @@ theorem computableTidilyInPolyTime_index :
 theorem computableTidilyInPolyTime_relabel :
     ComputableTidilyInPolyTime (Cslib.Logic.PL.CNF.relabel (Var.index (k := k) (State := State)))
       (encList (encList (encPair encVar encBool))) encCNF :=
-  Cslib.Logic.PL.CNF.computableTidilyInPolyTime_relabel computableTidilyInPolyTime_index
+  (Cslib.Logic.PL.CNF.computableInPolyTime_relabel (.of_tidy computableTidilyInPolyTime_index)).tidy
 
 end Cslib.Complexity.CookLevin

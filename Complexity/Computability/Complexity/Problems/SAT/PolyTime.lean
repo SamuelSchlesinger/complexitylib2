@@ -61,7 +61,7 @@ open ComputableTidilyInPolyTime
 @[fun_prop]
 theorem computableTidilyInPolyTime_vars :
     ComputableTidilyInPolyTime (CNF.vars (V := ℕ)) encCNF (encList encNat) :=
-  CNF.computableTidilyInPolyTime_vars encNat
+  (CNF.computableInPolyTime_vars encNat).tidy
 
 /-- The number of literals of a polynomial-time clause, in unary, is polynomial-time. -/
 @[fun_prop]
@@ -69,14 +69,14 @@ theorem computableTidilyInPolyTime_clause_length {α : Type} {input : α ↪ Lis
     {c : α → Clause ℕ}
     (hc : ComputableTidilyInPolyTime c input (encList (encPair encNat encBool))) :
     ComputableTidilyInPolyTime (fun a => (c a).length) input encUnary :=
-  Clause.computableTidilyInPolyTime_length hc
+  (Clause.computableInPolyTime_length (.of_tidy hc)).tidy
 
 /-- The number of clauses of a polynomial-time formula, in unary, is polynomial-time. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_length {α : Type} {input : α ↪ List Bool} {φ : α → CNF ℕ}
     (hφ : ComputableTidilyInPolyTime φ input encCNF) :
     ComputableTidilyInPolyTime (fun a => (φ a).length) input encUnary :=
-  CNF.computableTidilyInPolyTime_length (encV := encNat) hφ
+  (CNF.computableInPolyTime_length (encV := encNat) (.of_tidy hφ)).tidy
 
 /-- The number of variable occurrences of a polynomial-time formula, in unary, is
 polynomial-time. -/
@@ -84,7 +84,7 @@ polynomial-time. -/
 theorem computableTidilyInPolyTime_vars_length {α : Type} {input : α ↪ List Bool}
     {φ : α → CNF ℕ} (hφ : ComputableTidilyInPolyTime φ input encCNF) :
     ComputableTidilyInPolyTime (fun a => (φ a).vars.length) input encUnary :=
-  CNF.computableTidilyInPolyTime_vars_length (encV := encNat) hφ
+  (CNF.computableInPolyTime_vars_length (encV := encNat) (.of_tidy hφ)).tidy
 
 /-- Reading the certificate at the first occurrence of a variable is polynomial-time. -/
 @[fun_prop]

@@ -12,6 +12,7 @@ public import Complexity.Computability.PCP.Encoded.SelectedComposition.Enumerati
 public import Complexity.Computability.PCP.Encoded.Amplification.Arithmetic
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 import Complexity.Logics.Propositional.CNF.ThreeCNF.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # An executable constant-gap reduction from SAT
@@ -71,7 +72,7 @@ theorem isPolyTime_gapGraph {V Input : Type} [DecidableEq V]
   unfold gapGraph
   apply Graph.isPolyTime_arithmeticAmplify
   · exact Graph.isPolyTime_composeSelectedEnumerated
-      (Graph.isPolyTime_ofCompactCNF ((CNF.isPolyTime_to3CNF enc).comp hformula))
+      (Graph.isPolyTime_ofCompactCNF ((CNF.isPolyTime_to3CNF enc).tidy.comp hformula))
   · exact fun x => (Graph.wellFormed_ofCompactCNF (formula x).to3CNF).composeSelectedEnumerated
 
 /-- Every output edge has endpoints in the declared finite vertex range. -/

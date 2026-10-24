@@ -421,8 +421,5 @@
  "Complexity/Crypto/Computational/Stretch.lean": 8,
  "Complexity/Crypto/Computational/Stretch/Quantitative.lean": 9,
  "Complexity/Crypto/Computational/UniformChoice.lean": 2,
- "Complexity/Logics/Propositional/CNF/PolyTime.lean": 13,
- "Complexity/Logics/Propositional/CNF/ThreeCNF/PolyTime.lean": 3,
- "Complexity/Logics/Propositional/ClauseSet/Sparsification/PolyTime.lean": 4,
  "Complexity/Tactic/PolyTime.lean": 3
 }

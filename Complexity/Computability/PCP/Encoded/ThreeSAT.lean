@@ -127,6 +127,7 @@ theorem isPolyTime_ofCNF :
   unfold ofCNF
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- The complete construction accepts any variable encoding and charges compact renaming. -/
 @[fun_prop]
 theorem isPolyTime_ofCompactCNF {V Input : Type} [DecidableEq V]

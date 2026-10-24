@@ -157,8 +157,8 @@ theorem computableTidilyInPolyTime_splitVarToNat :
 @[fun_prop]
 theorem computableTidilyInPolyTime_toThreeSAT :
     ComputableTidilyInPolyTime toThreeSAT encCNF encCNF :=
-  (CNF.computableTidilyInPolyTime_relabel computableTidilyInPolyTime_splitVarToNat).comp
-    (CNF.isPolyTime_to3CNF encNat)
+  (CNF.computableInPolyTime_relabel (.of_tidy computableTidilyInPolyTime_splitVarToNat)).tidy.comp
+    (CNF.isPolyTime_to3CNF encNat).tidy
 
 namespace ThreeSAT
 

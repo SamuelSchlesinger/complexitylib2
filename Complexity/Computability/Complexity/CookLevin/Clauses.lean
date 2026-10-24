@@ -60,6 +60,7 @@ theorem computableTidilyInPolyTime_groups :
   simp only [SProd.sprod, List.product, List.map_flatMap, List.map_map, Function.comp_def]
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Build all exactly-one clauses for one tableau row, including the input-dependent windows. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_oneHotClauses [DecidableEq State]
@@ -87,6 +88,7 @@ theorem computableTidilyInPolyTime_acceptClauses :
       (encList (encList (encPair encVar encBool))) := by
   fun_prop [acceptClauses]
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Build the situation clauses at a unary time, with the finite machine data fixed. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_sitClauses :
@@ -94,6 +96,7 @@ theorem computableTidilyInPolyTime_sitClauses :
       (encList (encList (encPair encVar encBool))) := by
   fun_prop [sitClauses]
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Build the uniqueness clauses at a unary time, with the finite machine data fixed. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_uniqueClauses [DecidableEq State] :
@@ -101,6 +104,7 @@ theorem computableTidilyInPolyTime_uniqueClauses [DecidableEq State] :
       (encList (encList (encPair encVar encBool))) := by
   fun_prop [uniqueClauses]
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Build input-symbol clauses from computed input, certificate length, time and position. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_inputClauses {α : Type} {enc : α ↪ List Bool}
@@ -114,6 +118,7 @@ theorem computableTidilyInPolyTime_inputClauses {α : Type} {enc : α ↪ List B
       enc (encList (encList (encPair encVar encBool))) := by
   fun_prop [inputClauses]
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Enumerate work-tape and input-symbol clauses, charging the complete input-dependent lists. -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_readClauses
@@ -178,6 +183,7 @@ private theorem stepTerms_inPos {j : α → ℕ}
     · fun_prop
 
 omit [DecidableEq State] in
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 private theorem stepImpClauses {t : α → ℕ} {feature : α → Feature k State}
     {terms : α → List (Feature.Term k State)}
     (ht : ComputableTidilyInPolyTime t enc encUnary)
