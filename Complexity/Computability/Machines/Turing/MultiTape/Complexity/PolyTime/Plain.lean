@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate (after crei/tidy-universal lands)
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.ResourceFacts
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimePrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
@@ -202,15 +203,6 @@ theorem ComputableTidilyInPolyTime.computableInPolyTime
     (h : ComputableTidilyInPolyTime f encIn encOut) : ComputableInPolyTime f encIn encOut :=
   .of_tidy h
 
-/-- **A polynomial time bound alone suffices.** A function computable by some machine within a time
-bound polynomial in the length of the encoded input, with any space bound, is computable in
-polynomial time: within `t` steps the machine visits at most `c t + c` work-tape cells. -/
-theorem ComputableInTimeAndSpace.computableInPolyTime {t : ℕ → ℕ} {s : α → ℕ}
-    (ht : PolynomiallyBounded t)
-    (h : ComputableInTimeAndSpace f encIn encOut (fun a => t (encIn a).length) s) :
-    ComputableInPolyTime f encIn encOut :=
-  let ⟨c, h⟩ := h.exists_space_linear
-  ⟨t, fun n => c * t n + c, ht, by fun_prop, h⟩
 
 end Turing.MultiTapeTM
 

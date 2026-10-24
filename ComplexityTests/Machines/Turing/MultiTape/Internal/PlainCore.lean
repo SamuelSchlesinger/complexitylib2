@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: local-only (test driver)
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bounds
 import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimePrimitives
 import Complexity.Computability.Machines.Turing.MultiTape.Internal.OPrimitives
 import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeComposition
@@ -56,6 +57,10 @@ section Resources
 variable {α β γ : Type*} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
   {encC : γ ↪ List Bool} {f : β → γ} {g : α → β}
 
+-- The degree witness comes from the same polynomial-time machine, at unrelated universes.
+example (h : ComputableInPolyTime g encA encB) :
+    ∃ d e, ComputableInDegree g encA encB d e := h.exists_degree
+
 -- The output exponent is independent of the cost/workspace exponent; all may be zero.
 example {d₁ e₁ d₂ e₂ : ℕ} (hf : ComputableInDegree f encB encC d₂ e₂)
     (hg : ComputableInDegree g encA encB d₁ e₁) :
@@ -81,3 +86,7 @@ end Resources
 /-- info: 'Turing.MultiTapeTM.ComputableInO.ite' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableInO.ite
+
+/-- info: 'Turing.MultiTapeTM.ComputableInPolyTime.exists_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.exists_degree
