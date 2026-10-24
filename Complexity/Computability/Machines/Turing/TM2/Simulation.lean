@@ -12,6 +12,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Polynomial-time simulation of one Mathlib TM2 step
 
@@ -44,12 +47,12 @@ The statement semantics is `Turing.TM2.stepAux` in
 
 namespace Turing.TM2
 
-open MultiTapeTM ComputableTidilyInPolyTime
+open MultiTapeTM ComputableInPolyTime
 
 variable {K : Type} [Fintype K] {Γ : K → Type} {Λ σ : Type}
   [Finite Λ] [Finite σ] [∀ k, Finite (Γ k)]
 
-private theorem cfg_parts : ComputableTidilyInPolyTime
+private theorem cfg_parts : ComputableInPolyTime
     (fun cfg : Cfg Γ Λ σ => (cfg.l, cfg.var, cfg.stk)) encCfg
     (encPair (encFinite (Option Λ))
       (encPair (encFinite σ) (encDPi (fun k => encList (encFinite (Γ k)))))) :=
@@ -57,16 +60,16 @@ private theorem cfg_parts : ComputableTidilyInPolyTime
 
 /-- Reading the source label is efficient. -/
 @[fun_prop] theorem cfg_label : ComputableTidilyInPolyTime
-    (Cfg.l (Γ := Γ) (Λ := Λ) (σ := σ)) encCfg (encFinite (Option Λ)) := cfg_parts.fst'
+    (Cfg.l (Γ := Γ) (Λ := Λ) (σ := σ)) encCfg (encFinite (Option Λ)) := cfg_parts.fst'.tidy
 
 /-- Reading the finite register state is efficient. -/
 @[fun_prop] theorem cfg_var : ComputableTidilyInPolyTime
-    (Cfg.var (Γ := Γ) (Λ := Λ) (σ := σ)) encCfg (encFinite σ) := cfg_parts.snd'.fst'
+    (Cfg.var (Γ := Γ) (Λ := Λ) (σ := σ)) encCfg (encFinite σ) := cfg_parts.snd'.fst'.tidy
 
 /-- Reading the complete stack family is efficient. -/
 @[fun_prop] theorem cfg_stacks : ComputableTidilyInPolyTime
     (Cfg.stk (Γ := Γ) (Λ := Λ) (σ := σ)) encCfg
-    (encDPi (fun k => encList (encFinite (Γ k)))) := cfg_parts.snd'.snd'
+    (encDPi (fun k => encList (encFinite (Γ k)))) := cfg_parts.snd'.snd'.tidy
 
 /-- Construct a configuration while charging all retained storage. -/
 @[fun_prop] theorem cfg_mk {α : Type} {input : α ↪ List Bool}
@@ -76,15 +79,17 @@ private theorem cfg_parts : ComputableTidilyInPolyTime
     (hs : ComputableTidilyInPolyTime store input
       (encDPi (fun k => encList (encFinite (Γ k))))) :
     ComputableTidilyInPolyTime (fun a => Cfg.mk (label a) (state a) (store a)) input encCfg :=
-  (hl.prod (hv.prod hs)).of_enc_eq fun _ => rfl
+  (((ComputableInPolyTime.of_tidy hl).prod
+    ((ComputableInPolyTime.of_tidy hv).prod (ComputableInPolyTime.of_tidy hs))).of_enc_eq
+      (fun _ => rfl)).tidy
 
 private theorem map_head {α : Type} {input : α ↪ List Bool}
     {state : α → σ} {store : α → ∀ k, List (Γ k)}
-    (hv : ComputableTidilyInPolyTime state input (encFinite σ))
-    (hs : ComputableTidilyInPolyTime store input
+    (hv : ComputableInPolyTime state input (encFinite σ))
+    (hs : ComputableInPolyTime store input
       (encDPi (fun k => encList (encFinite (Γ k)))))
     (k : K) (f : σ → Option (Γ k) → σ) :
-    ComputableTidilyInPolyTime (fun a => f (state a) (store a k).head?) input (encFinite σ) := by
+    ComputableInPolyTime (fun a => f (state a) (store a k).head?) input (encFinite σ) := by
   have hhead := (head? (encFinite (Γ k))).comp
     ((dpi_apply (fun k => encList (encFinite (Γ k))) k).comp hs)
   exact (of_finite (fun p : σ × Option (Γ k) => f p.1 p.2)).comp (hv.prod hhead)
@@ -93,13 +98,13 @@ variable [DecidableEq K]
 
 private theorem stepAux_with {α : Type} {input : α ↪ List Bool} (q : Stmt Γ Λ σ)
     {state : α → σ} {store : α → ∀ k, List (Γ k)}
-    (hv : ComputableTidilyInPolyTime state input (encFinite σ))
-    (hs : ComputableTidilyInPolyTime store input
+    (hv : ComputableInPolyTime state input (encFinite σ))
+    (hs : ComputableInPolyTime store input
       (encDPi (fun k => encList (encFinite (Γ k))))) :
-    ComputableTidilyInPolyTime (fun a => stepAux q (state a) (store a)) input encCfg := by
+    ComputableInPolyTime (fun a => stepAux q (state a) (store a)) input encCfg := by
   induction q generalizing state store with
   | push k f q ih =>
-    have hsymbol := (of_finite f (encB := encFinite (Γ k))).comp hv
+    have hsymbol := (of_finite f (encOut := encFinite (Γ k))).comp hv
     have hstack := (dpi_apply (fun k => encList (encFinite (Γ k))) k).comp hs
     exact ih hv (dpi_update hs (hsymbol.cons' hstack))
   | peek k f q ih => exact ih (map_head hv hs k f) hs
@@ -111,13 +116,15 @@ private theorem stepAux_with {α : Type} {input : α ↪ List Bool} (q : Stmt Γ
     refine (((of_finite f).comp hv).cond (ih₁ hv hs) (ih₂ hv hs)).of_enc_eq ?_
     intro a
     cases hf : f (state a) <;> simp [stepAux, hf]
-  | goto f => exact cfg_mk ((of_finite (fun v => some (f v))).comp hv) hv hs
-  | halt => exact cfg_mk (const none) hv hs
+  | goto f => exact ComputableInPolyTime.of_tidy (cfg_mk
+    (((of_finite (fun v => some (f v))).comp hv).tidy) hv.tidy hs.tidy)
+  | halt => exact ComputableInPolyTime.of_tidy (cfg_mk (const none).tidy hv.tidy hs.tidy)
 
 /-- Executing a fixed statement is efficient, including its straight-line continuations. -/
 theorem stepAux_polyTime (q : Stmt Γ Λ σ) : ComputableTidilyInPolyTime
     (fun cfg : Cfg Γ Λ σ => stepAux q cfg.var cfg.stk) encCfg encCfg :=
-  stepAux_with q (cfg_var (Γ := Γ) (Λ := Λ)) (cfg_stacks (Γ := Γ) (Λ := Λ))
+  (stepAux_with q (ComputableInPolyTime.of_tidy (cfg_var (Γ := Γ) (Λ := Λ)))
+    (ComputableInPolyTime.of_tidy (cfg_stacks (Γ := Γ) (Λ := Λ)))).tidy
 
 /-- Execute one source step, keeping the last configuration after halting. -/
 def stepTotal (M : Λ → Stmt Γ Λ σ) (cfg : Cfg Γ Λ σ) : Cfg Γ Λ σ :=
@@ -126,12 +133,13 @@ def stepTotal (M : Λ → Stmt Γ Λ σ) (cfg : Cfg Γ Λ σ) : Cfg Γ Λ σ :=
 /-- The finite label chooses a fixed certified statement. -/
 theorem stepTotal_polyTime (M : Λ → Stmt Γ Λ σ) :
     ComputableTidilyInPolyTime (stepTotal M) encCfg encCfg := by
-  exact (cfg_label (Γ := Γ) (Λ := Λ) (σ := σ)).finite_cases
+  apply ComputableInPolyTime.tidy
+  exact (ComputableInPolyTime.of_tidy (cfg_label (Γ := Γ) (Λ := Λ) (σ := σ))).finite_cases
     (branch := fun label (cfg : Cfg Γ Λ σ) =>
       label.elim cfg (fun l => stepAux (M l) cfg.var cfg.stk)) fun label => by
     cases label with
     | none => exact id'
-    | some label => exact stepAux_polyTime (M label)
+    | some label => exact ComputableInPolyTime.of_tidy (stepAux_polyTime (M label))
 
 /-- A syntactic bound on the number of pushes along any path through a statement. -/
 def pushBound : Stmt Γ Λ σ → ℕ

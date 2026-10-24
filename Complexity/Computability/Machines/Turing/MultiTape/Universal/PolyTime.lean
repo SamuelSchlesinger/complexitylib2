@@ -14,7 +14,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
-import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Universal input coding and polynomial-time simulation
@@ -60,7 +61,7 @@ single bit, independently of hierarchy theorems and Ladner's language.
 
 namespace Turing.MultiTapeTM.Universal
 
-open ComputableTidilyInPolyTime
+open ComputableInPolyTime
 
 /-! ### The symbols of the input -/
 
@@ -147,7 +148,7 @@ theorem computableTidilyInPolyTime_map_eBit :
 @[fun_prop]
 theorem computableTidilyInPolyTime_eBit :
     ComputableTidilyInPolyTime (fun b : Bool => eBit b) encBool encUnary :=
-  of_finite _
+  (of_finite _).tidy
 
 /-! ### Simulation with a unary clock -/
 
@@ -211,12 +212,13 @@ of steps counts towards the length of the input. -/
 theorem computableTidilyInPolyTime_universal :
     ComputableTidilyInPolyTime universal
       (encPair eDesc (encPair (encList encUnary) encUnary)) eOut := by
-  have hconv : ComputableTidilyInPolyTime (fun i : Desc × List ℕ × ℕ => i)
+  have hconv : ComputableInPolyTime (fun i : Desc × List ℕ × ℕ => i)
       (encPair eDesc (encPair (encList encUnary) encUnary)) eIn := by
     have : (fun i : Desc × List ℕ × ℕ => i) = fun i => (i.1, i.2.1, i.2.2) := rfl
     rw [this]
     fun_prop
   obtain ⟨d, e, hdeg⟩ := hconv.exists_degree
+  have hdeg : ComputableTidilyInDegree _ _ _ _ _ := Internal.normalizeDegree hdeg
   exact (computableTidilyInO_universal.comp hdeg.inO).computableTidilyInPolyTime
     ((PolyBounded.of_forall_le 1 d fun _ => by simp).add
       (PolyBounded.of_forall_le 100025 8 fun i => (universal_bounds_unary i).1))

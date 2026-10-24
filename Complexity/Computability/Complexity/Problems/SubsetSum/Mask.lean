@@ -10,6 +10,9 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Mathlib.Data.Multiset.AddSub
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Selecting list entries by a mask
 
@@ -37,7 +40,7 @@ sub-multiset of the input numbers, such as subset sum, partition and knapsack.
 
 namespace Cslib.Complexity
 
-open Turing.MultiTapeTM ComputableTidilyInPolyTime
+open Turing.MultiTapeTM ComputableInPolyTime
 open scoped List
 
 variable {α : Type}
@@ -122,6 +125,7 @@ theorem exists_le_iff_exists_maskSelect {l : List α} {n : ℕ} (hn : l.length �
 theorem computableTidilyInPolyTime_maskSelect (enc : α ↪ List Bool) :
     ComputableTidilyInPolyTime (fun p : List α × List Bool => maskSelect p.1 p.2)
       (encPair (encList enc) encBits) (encList enc) := by
+  apply ComputableInPolyTime.tidy
   unfold maskSelect
   fun_prop
 

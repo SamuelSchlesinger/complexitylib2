@@ -12,6 +12,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Computa
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Native certificates for RAM primitives
 
@@ -96,8 +98,8 @@ def comp (d : NativeCertificate g encMid encOut) (c : NativeCertificate f encIn 
 theorem comp_isPolynomial (d : NativeCertificate g encMid encOut)
     (c : NativeCertificate f encIn encMid) (hd : d.IsPolynomial) (hc : c.IsPolynomial) :
     (d.comp c).IsPolynomial :=
-  ⟨hc.1.add (hd.1.comp (c.polyTime hc).polyBounded_length),
-    hc.2.add (hd.2.comp (c.polyTime hc).polyBounded_length)⟩
+  ⟨hc.1.add (hd.1.comp (ComputableInPolyTime.of_tidy (c.polyTime hc)).polyBounded_length),
+    hc.2.add (hd.2.comp (ComputableInPolyTime.of_tidy (c.polyTime hc)).polyBounded_length)⟩
 
 /-- Package exact native bounds, including the running time in the space allowance to charge
 encoded output length. No polynomial hypothesis is needed. -/

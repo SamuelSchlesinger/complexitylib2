@@ -13,6 +13,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 import Complexity.Foundations.Data.List.Basic
 import Mathlib.Data.Fintype.Basic
 
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Tidy realizations of oracle PPT programs
 
@@ -148,9 +150,10 @@ theorem pair {program : α → WordOracleComp Operation γ} {f : α → β}
     (hf : ComputableTidilyInPolyTime f input middle) :
     IsTidyOraclePPTOn input (encPair middle output)
       (fun a => (fun b => (f a, b)) <$> program a) := by
-  have hframe : ComputableTidilyInPolyTime (fun b => frame (middle b)) middle encBits :=
+  have hframe : ComputableInPolyTime (fun b => frame (middle b)) middle encBits :=
     .of_linear (.of_frame fun _ => rfl)
-  obtain ⟨t, _, ht, _, kp, Prepare, hfiniteP, prepare, hprepare⟩ := hframe.comp hf
+  obtain ⟨t, _, ht, _, kp, Prepare, hfiniteP, prepare, hprepare⟩ :=
+    (hframe.comp (ComputableInPolyTime.of_tidy hf)).tidy
   obtain ⟨hops, k, Control, hfinite, source, c, d, hsource⟩ := hprogram
   refine of_polyBounded (appendPTM (ofDeterministic prepare) source)
     (ht.add (.of_polynomiallyBounded _ (Cslib.PolynomiallyBounded.of_forall_le c d
@@ -199,7 +202,7 @@ theorem bind_with {first : α → WordOracleComp Operation β}
       (fun pair => second pair.1 pair.2)) :
     IsTidyOraclePPTOn input output (fun a => first a >>= second a) := by
   simpa only [bind_map_left] using
-    (hfirst.pair (ComputableTidilyInPolyTime.id' (encIn := input))).bind hsecond
+    (hfirst.pair (ComputableInPolyTime.id' (encIn := input)).tidy).bind hsecond
 
 /-- Efficient deterministic programs are clean phases that make no external call. -/
 theorem of_computableTidilyInPolyTime [Finite Operation] {f : α → γ}
@@ -242,8 +245,9 @@ theorem cond {condition : α → Bool} {yes no : α → WordOracleComp Operation
     IsTidyOraclePPTOn input output (fun a => if condition a then yes a else no a) := by
   let test (a : α) : List Bool := if condition a then [true] else []
   have htest : ComputableTidilyInPolyTime test input encBits :=
-    (ComputableTidilyInPolyTime.of_finite (encA := encBool) (encB := encBits)
-      (fun b : Bool => if b then [true] else [])).comp hcondition
+    ((ComputableInPolyTime.of_finite (encIn := encBool) (encOut := encBits)
+      (fun b : Bool => if b then [true] else [])).comp
+        (ComputableInPolyTime.of_tidy hcondition)).tidy
   obtain ⟨tt, _, htt, _, kt, Test, hfiniteT, tester, htester⟩ := htest
   obtain ⟨hops, k₁, Control₁, hfinite₁, yesMachine, c₁, d₁, hyesMachine⟩ := hyes
   obtain ⟨_, k₂, Control₂, hfinite₂, noMachine, c₂, d₂, hnoMachine⟩ := hno
@@ -283,8 +287,8 @@ theorem finite_cases {Tag : Type} [Finite Tag] {tagEncoding : Tag ↪ List Bool}
   | inl hempty =>
     let : IsEmpty α := ⟨fun a => isEmptyElim (tag a)⟩
     apply (of_computableTidilyInPolyTime (Operation := Operation)
-      (ComputableTidilyInPolyTime.of_finite (encA := input) (encB := output)
-        (fun a : α => isEmptyElim a))).congr
+      (ComputableInPolyTime.of_finite (encIn := input) (encOut := output)
+        (fun a : α => isEmptyElim a)).tidy).congr
     intro a
     exact isEmptyElim a
   | inr hnonempty =>
@@ -296,7 +300,8 @@ theorem finite_cases {Tag : Type} [Finite Tag] {tagEncoding : Tag ↪ List Bool}
       | nil => exact hbranch fallback
       | cons choice tags ih =>
         exact IsTidyOraclePPTOn.ite
-          (ComputableTidilyInPolyTime.decide_eq' htag (.const choice)) (hbranch choice) ih
+          ((ComputableInPolyTime.decide_eq' (ComputableInPolyTime.of_tidy htag)
+            (.const choice)).tidy) (hbranch choice) ih
     simpa only [List.foldr_ite_eq_of_mem, Finset.mem_toList, Finset.mem_univ] using
       hselect (Finset.univ.toList : List Tag)
 

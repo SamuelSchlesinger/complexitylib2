@@ -14,6 +14,9 @@ public import Mathlib.SetTheory.Cardinal.NatCard
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Existential second-order definable classes are in NP
 
@@ -363,7 +366,7 @@ end Correctness
 
 section PolyTime
 
-open ComputableTidilyInPolyTime
+open ComputableInPolyTime
 
 variable {v} {γ : Type} {encIn : γ ↪ List Bool}
 
@@ -373,45 +376,58 @@ omit [L.IsRelational] in
 theorem _root_.Cslib.Logic.Vocabulary.computableTidilyInPolyTime_table (r : Σ n, L.Relations n)
     {a : γ → EncodedStructure} (ha : ComputableTidilyInPolyTime a encIn encStructure) :
     ComputableTidilyInPolyTime (fun x => v.table (a x) r) encIn encBits :=
-  (listGetD (encA := encBits) []).comp (((snd encUnary (encList encBits)).comp ha).prod
-    (const (encMid := encUnary) (v.index r)))
+  ((listGetD (encA := encBits) []).comp
+    (((snd encUnary (encList encBits)).comp (ComputableInPolyTime.of_tidy ha)).prod
+      (const (encOut := encUnary) (v.index r)))).tidy
 
 /-- The cardinality of the input, in unary. -/
 theorem computableTidilyInPolyTime_card {a : γ → EncodedStructure}
     (ha : ComputableTidilyInPolyTime a encIn encStructure) :
     ComputableTidilyInPolyTime (fun x => (a x).1) encIn encUnary :=
-  (fst encUnary (encList encBits)).comp ha
+  ((fst encUnary (encList encBits)).comp (ComputableInPolyTime.of_tidy ha)).tidy
 
 omit [L.IsRelational] in
 /-- Checking well-formedness is polynomial-time. -/
 @[fun_prop]
 theorem _root_.Cslib.Logic.Vocabulary.computableTidilyInPolyTime_checkShape :
     ComputableTidilyInPolyTime v.checkShape encStructure encBool := by
+  apply ComputableInPolyTime.tidy
   unfold Vocabulary.checkShape
   refine bool_and' (unary_beq ((length_list encBits).comp (snd encUnary (encList encBits)))
     (const v.count)) (allConst _ fun i _ => unary_beq ?_ ?_)
   · exact length_bits_comp ((listGetD (encA := encBits) []).comp
-      ((snd encUnary (encList encBits)).prod (const (encMid := encUnary) (i : ℕ))))
-  · exact (unary_pow _).comp (computableTidilyInPolyTime_card id')
+      ((snd encUnary (encList encBits)).prod (const (encOut := encUnary) (i : ℕ))))
+  · exact (unary_pow _).comp (fst encUnary (encList encBits))
 
 @[fun_prop]
 theorem computableTidilyInPolyTime_termValue {k : ℕ} {σ : γ → List ℕ}
     (hσ : ComputableTidilyInPolyTime σ encIn (encList encUnary))
     (t : (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)) :
     ComputableTidilyInPolyTime (fun x => termValue (Φ := Φ) (σ x) t) encIn encUnary :=
-  (listGetD (encA := encUnary) 0).comp
-    (hσ.prod (const (encMid := encUnary) (varPos (FO.termVar t))))
+  ((listGetD (encA := encUnary) 0).comp
+    ((ComputableInPolyTime.of_tidy hσ).prod
+      (const (encOut := encUnary) (varPos (FO.termVar t))))).tidy
+
+private theorem compatPlain_termsIndex {k : ℕ} {n : γ → ℕ} {σ : γ → List ℕ}
+    (hn : ComputableTidilyInPolyTime n encIn encUnary)
+    (hσ : ComputableTidilyInPolyTime σ encIn (encList encUnary)) :
+    ∀ {l : ℕ} (ts : Fin l → (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)),
+      ComputableInPolyTime (fun x => termsIndex (Φ := Φ) (n x) (σ x) ts) encIn encUnary
+  | 0, _ => const 0
+  | _ + 1, ts =>
+    unary_add.comp
+      ((ComputableInPolyTime.of_tidy (computableTidilyInPolyTime_termValue hσ (ts 0))).prod
+        (unary_mul.comp ((ComputableInPolyTime.of_tidy hn).prod
+          (compatPlain_termsIndex hn hσ fun j => ts j.succ))))
 
 @[fun_prop]
 theorem computableTidilyInPolyTime_termsIndex {k : ℕ} {n : γ → ℕ} {σ : γ → List ℕ}
     (hn : ComputableTidilyInPolyTime n encIn encUnary)
     (hσ : ComputableTidilyInPolyTime σ encIn (encList encUnary)) :
     ∀ {l : ℕ} (ts : Fin l → (L.sum (varLanguage Φ.arity)).Term (Empty ⊕ Fin k)),
-      ComputableTidilyInPolyTime (fun x => termsIndex (Φ := Φ) (n x) (σ x) ts) encIn encUnary
-  | 0, _ => const 0
-  | _ + 1, ts =>
-    unary_add.comp ((computableTidilyInPolyTime_termValue hσ (ts 0)).prod
-      (unary_mul.comp (hn.prod (computableTidilyInPolyTime_termsIndex hn hσ fun j => ts j.succ))))
+      ComputableTidilyInPolyTime (fun x => termsIndex (Φ := Φ) (n x) (σ x) ts) encIn encUnary := by
+  intro l ts
+  exact (compatPlain_termsIndex hn hσ ts).tidy
 
 omit [L.IsRelational] in
 @[fun_prop]
@@ -423,9 +439,14 @@ theorem computableTidilyInPolyTime_relBit {l : ℕ}
     (hidx : ComputableTidilyInPolyTime idx encIn encUnary) :
     ComputableTidilyInPolyTime (fun x => ℓ.relBit v (a x) (N x) (w x) R (idx x)) encIn encBool :=
   match R with
-  | .inl r => (bitsGetD false).comp ((v.computableTidilyInPolyTime_table ⟨_, r⟩ ha).prod hidx)
-  | .inr r => (bitsGetD false).comp (hw.prod (unary_add.comp ((unary_mul.comp
-      ((const (encMid := encUnary) (ℓ.block r.1 : ℕ)).prod ((unary_pow _).comp hN))).prod hidx)))
+  | .inl r => ((bitsGetD false).comp
+      ((ComputableInPolyTime.of_tidy (v.computableTidilyInPolyTime_table ⟨_, r⟩ ha)).prod
+        (ComputableInPolyTime.of_tidy hidx))).tidy
+  | .inr r => ((bitsGetD false).comp ((ComputableInPolyTime.of_tidy hw).prod
+      (unary_add.comp ((unary_mul.comp
+        ((const (encOut := encUnary) (ℓ.block r.1 : ℕ)).prod
+          ((unary_pow _).comp (ComputableInPolyTime.of_tidy hN)))).prod
+        (ComputableInPolyTime.of_tidy hidx))))).tidy
 
 /-- **The evaluator is polynomial-time** for each fixed formula, by induction on the formula. The
 input type is generalized, as the body of a quantifier takes the current element as well. -/
@@ -438,30 +459,36 @@ theorem computableTidilyInPolyTime_eval {k : ℕ}
     (hw : ComputableTidilyInPolyTime w encIn encBits)
     (hσ : ComputableTidilyInPolyTime σ encIn (encList encUnary)) :
     ComputableTidilyInPolyTime (fun x => ℓ.eval v (a x) (N x) (w x) φ (σ x)) encIn encBool := by
+  apply ComputableInPolyTime.tidy
   induction φ generalizing γ with
   | falsum => exact const false
   | equal t₁ t₂ =>
-    exact unary_beq (computableTidilyInPolyTime_termValue hσ t₁)
-      (computableTidilyInPolyTime_termValue hσ t₂)
+    exact unary_beq (ComputableInPolyTime.of_tidy (computableTidilyInPolyTime_termValue hσ t₁))
+      (ComputableInPolyTime.of_tidy (computableTidilyInPolyTime_termValue hσ t₂))
   | rel R ts =>
-    exact ℓ.computableTidilyInPolyTime_relBit R ha hN hw
-      (computableTidilyInPolyTime_termsIndex (computableTidilyInPolyTime_card ha) hσ ts)
+    exact ComputableInPolyTime.of_tidy (ℓ.computableTidilyInPolyTime_relBit R ha hN hw
+      (computableTidilyInPolyTime_termsIndex (computableTidilyInPolyTime_card ha) hσ ts))
   | imp φ ψ ih₁ ih₂ =>
     exact bool_or.comp ((bool_not.comp (ih₁ ha hN hw hσ)).prod (ih₂ ha hN hw hσ))
   | all φ ih =>
-    exact allWithInput (range.comp (computableTidilyInPolyTime_card ha))
-      (ih (ha.comp (fst encIn encUnary)) (hN.comp (fst encIn encUnary))
-        (hw.comp (fst encIn encUnary)) (listAppend' (hσ.comp (fst encIn encUnary))
-          (cons' (snd encIn encUnary) (const (encMid := encList encUnary) []))))
+    exact allWithInput (range.comp
+      (ComputableInPolyTime.of_tidy (computableTidilyInPolyTime_card ha)))
+      (ih (((ComputableInPolyTime.of_tidy ha).comp (fst encIn encUnary)).tidy)
+        (((ComputableInPolyTime.of_tidy hN).comp (fst encIn encUnary)).tidy)
+        (((ComputableInPolyTime.of_tidy hw).comp (fst encIn encUnary)).tidy)
+        ((listAppend' ((ComputableInPolyTime.of_tidy hσ).comp (fst encIn encUnary))
+          (cons' (snd encIn encUnary) (const (encOut := encList encUnary) []))).tidy))
 
 /-- **The verifier is polynomial-time.** -/
 @[fun_prop]
 theorem computableTidilyInPolyTime_verifier :
     ComputableTidilyInPolyTime (ℓ.verifier v) (encPair encStructure encBits) encBool :=
-  bool_and' (v.computableTidilyInPolyTime_checkShape.comp (fst encStructure encBits))
-    (ℓ.computableTidilyInPolyTime_eval Φ.matrix (fst encStructure encBits)
-      ((encoding_length encStructure).comp (fst encStructure encBits))
-      (snd encStructure encBits) (const []))
+  (bool_and' ((ComputableInPolyTime.of_tidy
+      v.computableTidilyInPolyTime_checkShape).comp (fst encStructure encBits))
+    (ComputableInPolyTime.of_tidy (ℓ.computableTidilyInPolyTime_eval Φ.matrix
+      ((fst encStructure encBits).tidy)
+      (((encoding_length encStructure).comp (fst encStructure encBits)).tidy)
+      ((snd encStructure encBits).tidy) (const []).tidy))).tidy
 
 end PolyTime
 
