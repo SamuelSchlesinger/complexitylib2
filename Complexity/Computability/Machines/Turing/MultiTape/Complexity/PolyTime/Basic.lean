@@ -78,18 +78,19 @@ theorem sndWithEncoding {γ : Type} {encC : γ ↪ List Bool}
   h.comp hf.snd'
 
 /-- Every polynomial-time function admits explicit time and output degrees. -/
-theorem exists_degree {f : α → β} (hf : ComputableInPolyTime f encA encB) :
+theorem exists_degree {α : Type*} {β : Type*}
+    {encA : α ↪ List Bool} {encB : β ↪ List Bool} {f : α → β}
+    (hf : ComputableInPolyTime f encA encB) :
     ∃ d e, ComputableInDegree f encA encB d e := by
   obtain ⟨t, s, ht, hs, h⟩ := hf
-  obtain ⟨ct, dt, ht⟩ := Cslib.polynomiallyBounded_iff_le.mp ht
-  obtain ⟨cs, ds, hs⟩ := Cslib.polynomiallyBounded_iff_le.mp hs
-  have htime : DegreeBounded (fun a => (encA a).length)
-      (fun a => t (encA a).length) (max dt ds) :=
-    DegreeBounded.mono_deg ⟨ct, fun a => ht (encA a).length⟩ (le_max_left dt ds)
-  have hspace : DegreeBounded (fun a => (encA a).length)
-      (fun a => s (encA a).length) (max dt ds) :=
-    DegreeBounded.mono_deg ⟨cs, fun a => hs (encA a).length⟩ (le_max_right dt ds)
-  exact ⟨max dt ds, max dt ds, ⟨⟨_, _, htime, hspace, h⟩, htime.mono h.length_le⟩⟩
+  obtain ⟨ct, dt, ht⟩ :=
+    (PolyBounded.of_polynomiallyBounded (fun a => (encA a).length) ht).exists_le
+  obtain ⟨cs, ds, hs⟩ :=
+    (PolyBounded.of_polynomiallyBounded (fun a => (encA a).length) hs).exists_le
+  have hT : DegreeBounded (fun a => (encA a).length) (fun a => t (encA a).length) (max dt ds) :=
+    DegreeBounded.mono_deg ⟨ct, ht⟩ (le_max_left dt ds)
+  exact ⟨max dt ds, max dt ds,
+    ⟨_, _, hT, DegreeBounded.mono_deg ⟨cs, hs⟩ (le_max_right dt ds), h⟩, hT.mono h.length_le⟩
 
 
 /-- Reuse a computation when the new function emits the same encoded output word. -/
