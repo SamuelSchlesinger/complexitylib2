@@ -286,14 +286,15 @@ private meta def plainTransitions (thms : GeneralTheorems) : MetaM GeneralTheore
         pending := node.pending.filter fun entry => !blocked.contains entry.2.thmName } } }
 
 open Lean Meta Elab Tactic Mathlib.Meta.FunProp in
-/-- Use the standard `fun_prop` frontend's context and discharger with a local transition tree.
-The normal transition depth remains available for ordinary plain-to-plain implications. -/
-private meta def polytimePlainFunProp : TacticM Unit := withMainContext do
+/-- Shared compositional backend with a fresh alias-aware transition boundary. The standard
+assumption discharger and ordinary transition depth are retained; callers keep their step limit.
+PPT uses the same state so nested plain deterministic goals cannot enter raw search. -/
+meta def Internal.funPropWithPlainBoundary (maxSteps : Nat) : TacticM Unit := withMainContext do
   let goal ← getMainGoal
   let target ← goal.getType
   let disch : Expr → MetaM (Option Expr) := fun e => do
     tacticToDischarge (← `(tactic| first | with_reducible assumption | infer_param)) e
-  let ctx : Mathlib.Meta.FunProp.Context := { config := { maxSteps := 256 }, disch }
+  let ctx : Mathlib.Meta.FunProp.Context := { config := { maxSteps }, disch }
   let env ← getEnv
   let state : Mathlib.Meta.FunProp.State := {
     morTheorems := morTheoremsExt.getState env
@@ -302,6 +303,11 @@ private meta def polytimePlainFunProp : TacticM Unit := withMainContext do
   let some result := result | throwError "no compositional plain certificate: {state.msgLog}"
   goal.assign result.proof
   replaceMainGoal []
+
+open Lean Elab Tactic in
+/-- Plain deterministic goals use the shared backend at their original step limit. -/
+private meta def polytimePlainFunProp : TacticM Unit :=
+  Internal.funPropWithPlainBoundary 256
 
 open Lean Meta Elab Tactic in
 /-- An explicit raw construction goal may use a plain certificate and its existing PT normal
