@@ -62,6 +62,7 @@ theorem maskSelect_cons (a : α) (l : List α) (w : List Bool) :
   | nil => simp
   | cons b w => cases b <;> simp [List.map_map, Function.comp_def]
 
+/-- A mask selects a sublist. -/
 theorem maskSelect_sublist (l : List α) (w : List Bool) : maskSelect l w <+ l := by
   simpa only [maskSelect, List.zipIdx_map_fst] using
     (List.filter_sublist (p := fun p : α × ℕ => w.getD p.2 false) (l := l.zipIdx)).map Prod.fst

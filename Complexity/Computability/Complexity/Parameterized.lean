@@ -135,10 +135,14 @@ def XP (enc : α ↪ List Bool) (κ : α → ℕ) : Set (Set α) :=
 
 variable {enc : α ↪ List Bool} {κ κ' : α → ℕ} {A : Set α}
 
+/-- Membership in `FPT`: decidability within time `f (κ a) * (|enc a| + 1) ^ c` up to a constant
+factor, for some function `f` and constant `c`. -/
 theorem mem_FPT : A ∈ FPT enc κ ↔
     ∃ (f : ℕ → ℕ) (c : ℕ), DecidableInTimeO A enc fun a => f (κ a) * ((enc a).length + 1) ^ c :=
   Iff.rfl
 
+/-- Membership in `XP`: decidability within time `f (κ a) * (|enc a| + 1) ^ g (κ a)` up to a
+constant factor, for some functions `f` and `g`. -/
 theorem mem_XP : A ∈ XP enc κ ↔ ∃ f g : ℕ → ℕ,
     DecidableInTimeO A enc fun a => f (κ a) * ((enc a).length + 1) ^ g (κ a) :=
   Iff.rfl

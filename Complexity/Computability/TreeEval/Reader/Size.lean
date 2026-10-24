@@ -27,6 +27,12 @@ of them, the stack holds at most `H` frames with a residue each, and the counter
 ## Main results
 
 * `Cslib.TreeEval.Reader.stateBudget_le`: the budget of every state reached is `O(spaceBound ℓ H)`.
+
+## References
+
+* [J. Cook and I. Mertz, *Tree Evaluation is in Space O(log n · log log n)*][CookMertz2024]
+* [O. Goldreich, *On the Cook–Mertz Tree Evaluation procedure*][Goldreich2024TreeEval],
+  Algorithm 1, which the machine runs.
 -/
 
 @[expose] public section

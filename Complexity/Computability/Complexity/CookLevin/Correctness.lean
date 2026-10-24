@@ -34,6 +34,10 @@ step equation.
 
 * `Cslib.Complexity.CookLevin.exists_eval_tableau_iff`: the tableau with fixed certificate bits.
 * `Cslib.Complexity.CookLevin.tableau_satisfiable_iff`: the tableau is correct.
+
+## References
+
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Section 2.3.
 -/
 
 @[expose] public section

@@ -135,6 +135,10 @@ section Arcs
 
 variable {xs : List ℕ} {ψ : CNF ℕ} {u w : ℕ}
 
+/-- **The arcs of the graph of a formula**: those of the diamonds `j < xs.length`, the arc from the
+top of diamond `xs.length` to the chooser node, the arcs from the chooser node to the clause nodes,
+and the arcs from the node of clause `i` to the value node of `!b` in the diamond of the last
+quantifier over `x`, for each literal `(x, b)` of clause `i` with `x ∈ xs`. -/
 theorem mem_formulaArcs :
     (u, w) ∈ formulaArcs xs ψ ↔
       (∃ j < xs.length, (u = topNode j ∧ ∃ b, w = valueNode j b) ∨

@@ -46,7 +46,8 @@ namespace Cslib.Complexity
 
 variable {α : Type} {enc : α ↪ List Bool} {A : Set α}
 
-/-- The problems whose complements belong to native nondeterministic logarithmic space. -/
+/-- The problems whose complements belong to native nondeterministic logarithmic space
+[Sipser, Section 8.6][Sipser2013]. -/
 def coNL (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ NL enc}
 
 /-- A problem belongs to `coNL` exactly when its complement belongs to `NL`. -/

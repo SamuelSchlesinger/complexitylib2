@@ -104,19 +104,21 @@ def IsDirHamCycle (G : Graph) (p : List ℕ) : Prop :=
 
 end Graph
 
-/-- The directed graphs with a Hamiltonian path from `s` to `t`. -/
+/-- The directed graphs with a Hamiltonian path from `s` to `t`
+[Sipser, Section 7.3][Sipser2013]. -/
 def DirHamPath : Set (Graph × ℕ × ℕ) := {x | ∃ p, x.1.IsDirHamPath x.2.1 x.2.2 p}
 
-/-- The directed graphs with a Hamiltonian cycle. -/
+/-- The directed graphs with a Hamiltonian cycle [Karp1972]. -/
 def DirHamCycle : Set Graph := {G | ∃ p, G.IsDirHamCycle p}
 
-/-- The graphs with a Hamiltonian path from `s` to `t` through their declared vertices. -/
+/-- The graphs with a Hamiltonian path from `s` to `t` through their declared vertices
+[Sipser, Theorem 7.55][Sipser2013]. -/
 def HamPath : Set (Graph × ℕ × ℕ) :=
   {x | ∃ (hs : x.2.1 ∈ x.1.1) (ht : x.2.2 ∈ x.1.1)
     (p : (x.1.toSimpleGraph.induce {v | v ∈ x.1.1}).Walk ⟨x.2.1, hs⟩ ⟨x.2.2, ht⟩),
     p.IsHamiltonian}
 
-/-- The graphs with a Hamiltonian cycle through their declared vertices. -/
+/-- The graphs with a Hamiltonian cycle through their declared vertices [Karp1972]. -/
 def HamCycle : Set Graph :=
   {G | ∃ (a : {v | v ∈ G.1}) (p : (G.toSimpleGraph.induce {v | v ∈ G.1}).Walk a a),
     p.IsHamiltonianCycle}

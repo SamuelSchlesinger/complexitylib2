@@ -51,6 +51,7 @@ the random strings, and on a non-member the second does.
 
 ## References
 
+* [J. Gill, *Computational complexity of probabilistic Turing machines*][Gill1977]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09]
 -/
 
@@ -74,7 +75,8 @@ def DecidesWithZeroError (enc : α ↪ List Bool) (p : Polynomial ℕ)
         (V (a, List.ofFn r)).isSome = true).card
 
 /-- The problems decided with zero error by polynomial-time machines reading polynomially long
-random strings, with respect to the encoding `enc` of instances. -/
+random strings, with respect to the encoding `enc` of instances [Gill][Gill1977],
+[Arora and Barak, Section 7.3][AroraBarak09]. -/
 def ZPP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Option Bool),
     ComputableInPolyTime V (encPair enc encBits) (encOption encBool) ∧

@@ -50,7 +50,8 @@ open Turing.MultiTapeTM
 
 variable {α β γ : Type} {enc : α ↪ List Bool} {A B : Set α}
 
-/-- The class of languages expressible as the intersection of an NP and a coNP language. -/
+/-- The class of languages expressible as the intersection of an NP and a coNP language
+[Papadimitriou][Papadimitriou94]. -/
 def DP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ B ∈ NP enc, ∃ C ∈ coNP enc, A = B ∩ C}
 

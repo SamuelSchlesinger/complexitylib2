@@ -93,10 +93,11 @@ theorem computableTidilyInPolyTime_adjIndex {γ : Type} {input : γ ↪ List Boo
 
 end Graph
 
-/-- The pairs of isomorphic graphs: the graphs induced on the declared vertices are isomorphic. -/
+/-- The pairs of isomorphic graphs: the graphs induced on the declared vertices are isomorphic
+[Arora and Barak, Section 8.1.3][AroraBarak09]. -/
 def GraphIsomorphism : Set (Graph × Graph) := {x | Nonempty (x.1.induced ≃g x.2.induced)}
 
-/-- The pairs of non-isomorphic graphs. -/
+/-- The pairs of non-isomorphic graphs [Arora and Barak, Section 8.1.3][AroraBarak09]. -/
 def GraphNonIsomorphism : Set (Graph × Graph) := GraphIsomorphismᶜ
 
 /-- Two graphs are isomorphic exactly when a bijection between the positions of their distinct

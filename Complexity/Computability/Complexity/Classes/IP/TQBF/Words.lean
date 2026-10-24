@@ -61,6 +61,12 @@ All are polynomial-time in their unary or binary inputs.
 * `Cslib.Complexity.QBFProtocol.updatePt_canonPt`: updating a point.
 * `Cslib.Complexity.QBFProtocol.decodeReply_encodeReply`: decoding inverts the honest encoding.
 * `Cslib.Complexity.QBFProtocol.eval_sampleMod_le`: the samples are nearly uniform.
+
+## References
+
+* [A. Shamir, *IP = PSPACE*][Shamir1992]
+* [A. Shen, *IP = SPACE: simplified proof*][Shen1992]
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Section 8.3][AroraBarak09]
 -/
 
 @[expose] public section
@@ -106,6 +112,7 @@ theorem natCast_connectiveMod [NeZero p] (o : ArithQBF.Connective) (a b : ℕ) :
   · rw [connectiveMod, natCast_subMod, Nat.cast_mul, natCast_subMod, natCast_subMod,
       ArithQBF.Connective.apply, Nat.cast_one]
 
+/-- For `p ≠ 0`, `operatorMod` computes the operators of the arithmetization in `ZMod p`. -/
 theorem natCast_operatorMod [NeZero p] (o : ArithQBF.Operator) (t a b : ℕ) :
     ((operatorMod p o t a b : ℕ) : ZMod p) = o.apply (t : ZMod p) a b := by
   cases o
@@ -115,6 +122,8 @@ theorem natCast_operatorMod [NeZero p] (o : ArithQBF.Operator) (t a b : ℕ) :
   · rw [operatorMod, ZMod.natCast_mod, Nat.cast_add, Nat.cast_mul, Nat.cast_mul, natCast_subMod,
       ArithQBF.Operator.apply, Nat.cast_one]
 
+/-- For `p ≠ 0`, Horner's rule modulo `p` evaluates the coefficient list `l` at `z` in
+`ZMod p`. -/
 theorem natCast_hornerMod [NeZero p] (z : ℕ) (l : List ℕ) :
     ((hornerMod p z l : ℕ) : ZMod p) = evalCoeffList (z : ZMod p) (l.map Nat.cast) := by
   rw [hornerMod, List.foldl_reverse, Nat.sub_add_cancel NeZero.one_le]
@@ -188,6 +197,8 @@ theorem normPt_canonPt [NeZero p] (xs : List ℕ) (r : ℕ → ZMod p) :
   refine List.map_congr_left fun x hx => ?_
   rw [lookupPt_canonPt r hx, Nat.mod_eq_of_lt (ZMod.val_lt _)]
 
+/-- For `p ≠ 0`, setting the variable `v` to `z` in the point `r` on the variables of `xs` gives
+the point `Function.update r v z` on the same variables. -/
 theorem updatePt_canonPt [NeZero p] (xs : List ℕ) (r : ℕ → ZMod p) (v z : ℕ) :
     updatePt p xs (canonPt xs r) v z = canonPt xs (Function.update r v (z : ZMod p)) := by
   unfold updatePt canonPt

@@ -75,13 +75,14 @@ def DecidesWithOneSidedError (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : 
     (a ∉ A → ∀ r : Fin (p.eval (enc a).length) → Bool, V (a, List.ofFn r) = false)
 
 /-- The problems decided with one-sided error by polynomial-time machines reading polynomially
-long random strings, with respect to the encoding `enc` of instances. -/
+long random strings, with respect to the encoding `enc` of instances
+[Arora and Barak, Section 7.3][AroraBarak09]. -/
 def RP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
     ComputableInPolyTime V (encPair enc encBits) encBool ∧
       DecidesWithOneSidedError enc p V A}
 
-/-- The problems whose complements are in `RP`. -/
+/-- The problems whose complements are in `RP` [Arora and Barak, Section 7.3][AroraBarak09]. -/
 def coRP (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ RP enc}
 
 variable {enc : α ↪ List Bool}
@@ -121,8 +122,10 @@ theorem DecidesWithOneSidedError.isVerifier {p : Polynomial ℕ} {V : α × List
     rw [hV] at this
     exact Bool.noConfusion this
 
+/-- `RP ⊆ NP`: a random string accepted by a one-sided-error decider is a certificate. -/
 theorem RP_subset_NP : RP enc ⊆ NP enc := fun _ ⟨p, V, hV, h⟩ => ⟨p, V, hV, h.isVerifier⟩
 
+/-- `coRP ⊆ coNP`. -/
 theorem coRP_subset_coNP : coRP enc ⊆ coNP enc := fun _ hA => RP_subset_NP hA
 
 /-! ### Error reduction -/

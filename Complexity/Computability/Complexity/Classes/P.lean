@@ -65,7 +65,8 @@ open Turing.MultiTapeTM
 variable {α : Type*}
 
 /-- The problems decidable in polynomial time with respect to the encoding `enc`: `A ∈ P enc`
-when a Boolean function deciding membership in `A` is computable in polynomial time. -/
+when a Boolean function deciding membership in `A` is computable in polynomial time
+[Arora and Barak, Definition 1.13][AroraBarak09]. -/
 def P (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ f : α → Bool, ComputableInPolyTime f enc encBool ∧ ∀ a, a ∈ A ↔ f a = true}
 

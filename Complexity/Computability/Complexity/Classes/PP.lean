@@ -62,7 +62,7 @@ def DecidesByMajority (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × L
   ∀ a, a ∈ A ↔ 2 ^ p.eval (enc a).length < 2 * acceptCount V a (p.eval (enc a).length)
 
 /-- The problems decided by majority by polynomial-time machines reading polynomially long random
-strings, with respect to the encoding `enc` of instances. -/
+strings, with respect to the encoding `enc` of instances [Gill][Gill1977]. -/
 def PP (enc : α ↪ List Bool) : Set (Set α) :=
   {A | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
     ComputableInPolyTime V (encPair enc encBits) encBool ∧ DecidesByMajority enc p V A}

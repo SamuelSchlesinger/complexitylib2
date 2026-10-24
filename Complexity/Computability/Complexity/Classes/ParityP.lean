@@ -122,7 +122,9 @@ theorem computableTidilyInPolyTime_succVerifier {enc : α ↪ List Bool}
 
 /-- **The class `⊕P`**: the parity operator applied to `P`. A problem `L` is in `⊕P` when, for a
 polynomial `p` and a polynomial-time `V`, `a ∈ L` exactly when an odd number of the strings `w` of
-length `p (enc a).length` have `V (a, w) = true` (`mem_ParityP`). -/
+length `p (enc a).length` have `V (a, w) = true` (`mem_ParityP`)
+[Papadimitriou and Zachos][PapadimitriouZachos1983],
+[Arora and Barak, Section 17.4][AroraBarak09]. -/
 def ParityP (enc : α ↪ List Bool) : Set (Set α) := ParityOp enc (P (encPair enc encBits))
 
 variable {enc : α ↪ List Bool} {L : Set α}

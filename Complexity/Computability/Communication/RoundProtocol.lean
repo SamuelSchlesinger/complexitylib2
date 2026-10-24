@@ -154,6 +154,8 @@ def comap (φ : X' → X) (ψ : Y' → Y) :
   | _, .alice send next => .alice (send ∘ φ) fun a => (next a).comap φ ψ
   | _, .bob send next => .bob (send ∘ ψ) fun a => (next a).comap φ ψ
 
+/-- Relabelling the inputs is precomposition: `P.comap φ ψ` outputs on `x` and `y` what `P` outputs
+on `φ x` and `ψ y`. -/
 @[simp] theorem run_comap (φ : X' → X) (ψ : Y' → Y) : ∀ {d : ℕ} (P : RoundProtocol X Y M Z d)
     (x : X') (y : Y'), (P.comap φ ψ).run x y = P.run (φ x) (ψ y)
   | _, .output _, _, _ => rfl
@@ -178,6 +180,8 @@ def ofProtocol : (p : Protocol X Y Z) → (d : ℕ) → p.depth ≤ d → RoundP
     cond b (ofProtocol p₁ d (le_of_max_le_right (Nat.le_of_succ_le_succ h)))
       (ofProtocol p₀ d (le_of_max_le_left (Nat.le_of_succ_le_succ h)))
 
+/-- A bit protocol of depth at most `d`, run as a round protocol with `d` messages, has the same
+output. -/
 @[simp] theorem run_ofProtocol : ∀ (p : Protocol X Y Z) (d : ℕ) (h : p.depth ≤ d) (x : X) (y : Y),
     (ofProtocol p d h).run x y = p.run x y
   | .output _, _, _, _, _ => rfl
