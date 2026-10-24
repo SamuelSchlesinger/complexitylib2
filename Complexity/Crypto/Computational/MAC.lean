@@ -29,22 +29,31 @@ on an `n`-bit message under a secret key sampled at security parameter `n`. Unli
 signatures (`SignatureScheme`), verification uses the same secret key as tag generation, and the
 adversary receives no public key.
 
-We formalize existential unforgeability under adaptive chosen-message attack (`eufCmaGame`,
-`EUFCMA`) and under one-time adaptive chosen-message attack (`eufOneTimeGame`, `OneTimeEUFCMA`)
-against uniform strict oracle-PPT forgers (`IsOraclePPT`), and prove that any uniform
-`PseudorandomFunction` yields an `EUFCMA`-secure deterministic MAC (`prfMAC`,
-`PseudorandomFunction.eufCma_prfMAC`), with the quantitative security reduction of
-[Boneh and Shoup, Theorem 6.1][BonehShoup2023]:
+We formalize fresh-message existential unforgeability under adaptive chosen-message attack
+(`eufCmaGame`, `EUFCMA`) and under one-time adaptive chosen-message attack (`eufOneTimeGame`,
+`OneTimeEUFCMA`) against uniform strict oracle-PPT forgers (`IsOraclePPT`). As in
+`SignatureScheme.eufCmaGame`, the experiment logs queried messages and rejects any candidate
+forgery on a previously queried message (`!queried.contains msg`), whereas [Boneh and Shoup,
+Attack Game 6.1 / Definition 6.2][BonehShoup2023] forbids only previously returned `(message, tag)`
+pairs (strong / fresh-pair unforgeability). For randomized `MACScheme.sign` algorithms the two
+notions differ (a randomized signer could issue multiple valid tags on the same message); for
+deterministic canonical MACs with a unique valid tag per message (such as `prfMAC`), fresh-message
+and fresh-pair unforgeability coincide.
+
+We then prove that any uniform `PseudorandomFunction` yields an `EUFCMA`-secure deterministic MAC
+(`prfMAC`, `PseudorandomFunction.eufCma_prfMAC`), with the quantitative security reduction of
+[Boneh and Shoup, Section 6.3, Theorem 6.2][BonehShoup2023]:
 $$\Pr[\text{Forge}] \le \mathrm{Adv}_{\mathrm{PRF}}(B(\mathcal{A}), n) + 2^{-n}.$$
 
 ## Main definitions
 
 * `Cslib.Crypto.MACScheme`: uniform symmetric message authentication code on `n`-bit messages.
-* `Cslib.Crypto.MACScheme.signingOracle`, `eufCmaGame`, `EUFCMA`: full adaptive EUF-CMA experiment
-  and security predicate.
+* `Cslib.Crypto.MACScheme.signingOracle`, `eufCmaGame`, `EUFCMA`: fresh-message adaptive EUF-CMA
+  experiment and security predicate.
 * `Cslib.Crypto.MACScheme.oneTimeSigningOracle`, `eufOneTimeGame`, `OneTimeEUFCMA`: one-time
-  adaptive EUF-CMA experiment and security predicate.
-* `Cslib.Crypto.prfMAC`: canonical deterministic MAC constructed from a keyed function family.
+  fresh-message adaptive EUF-CMA experiment and security predicate.
+* `Cslib.Crypto.prfMAC`: canonical deterministic MAC constructed from a keyed function family
+  ([Boneh and Shoup, Section 6.3][BonehShoup2023]).
 * `Cslib.Crypto.macLogHandler`, `Cslib.Crypto.macToPrfDistinguisher`: oracle logging handler and
   reduction turning a MAC forger into a PRF distinguisher.
 
@@ -60,7 +69,7 @@ $$\Pr[\text{Forge}] \le \mathrm{Adv}_{\mathrm{PRF}}(B(\mathcal{A}), n) + 2^{-n}.
   `Cslib.Crypto.eval_prfRealGame_macToPrfDistinguisher`,
   `Cslib.Crypto.succProbability_prfIdealGame_macToPrfDistinguisher_le`,
   `Cslib.Crypto.succProbability_eufCmaGame_prfMAC_le`: quantitative PRF-to-MAC forgery reduction
-  (Boneh–Shoup, Theorem 6.1).
+  ([Boneh and Shoup, Theorem 6.2][BonehShoup2023]).
 * `Cslib.Crypto.PseudorandomFunction.eufCma_prfMAC`,
   `Cslib.Crypto.PseudorandomFunction.oneTimeEUFCMA_prfMAC`: any secure uniform
   `PseudorandomFunction` yields an `EUFCMA`-secure (and `OneTimeEUFCMA`-secure) `MACScheme`.
@@ -68,7 +77,7 @@ $$\Pr[\text{Forge}] \le \mathrm{Adv}_{\mathrm{PRF}}(B(\mathcal{A}), n) + 2^{-n}.
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023], Chapter 6,
-  Sections 6.1–6.4 (Definitions 6.1–6.2, Construction 6.1, and Theorem 6.1).
+  Sections 6.1–6.3 (Definitions 6.1–6.2 and Theorem 6.2).
 * [O. Goldreich, S. Goldwasser, S. Micali, *How to Construct Random Functions*][GGM1986].
 -/
 
@@ -164,10 +173,14 @@ noncomputable def signingOracle (M : MACScheme) (sk : List Bool)
     let tag ← M.sign sk request.2
     return (tag, request.2 :: queried)
 
-/-- The MAC EUF-CMA experiment [Boneh and Shoup, Definition 6.2][BonehShoup2023]: sample
-`sk ← M.keyGen n`, run the adaptive forger on `(n, [])` with oracle access to
-`M.signingOracle sk`, and accept when the forger outputs a valid `(msg, tag)` pair on an `n`-bit
-message `msg` that was never queried to the tagging oracle. -/
+/-- The fresh-message MAC EUF-CMA experiment: sample `sk ← M.keyGen n`, run the adaptive forger on
+`(n, [])` with oracle access to `M.signingOracle sk`, and accept when the forger outputs a valid
+`(msg, tag)` pair on an `n`-bit message `msg` that was never queried to the tagging oracle.
+
+Unlike [Boneh and Shoup, Attack Game 6.1 / Definition 6.2][BonehShoup2023], which logs `(msg, tag)`
+pairs and rejects only previously returned pairs, this experiment logs queried messages and rejects
+any previously queried message (`!out.2.contains out.1.1`). The two notions differ for randomized
+`sign` algorithms, and coincide for deterministic canonical MACs such as `prfMAC`. -/
 noncomputable def eufCmaGame (M : MACScheme) (adversary : Forger) (n : ℕ) :
     ProbComp Bool := do
   let sk ← M.keyGen n
@@ -230,8 +243,12 @@ theorem isPPT_eufCmaGame (M : MACScheme) {adversary : Forger}
     IsPPT encBool (fun n _ => M.eufCmaGame adversary n) :=
   ((M.isPPTOn_eufCmaGame hadversary).preprocess (ComputableTidilyInPolyTime.fst _ _)).isPPT
 
-/-- Existential unforgeability under adaptive chosen-message attack (EUF-CMA) for a symmetric MAC
-against uniform strict oracle-PPT adversaries [Boneh and Shoup, Definition 6.2][BonehShoup2023]. -/
+/-- Fresh-message existential unforgeability under adaptive chosen-message attack (`EUFCMA`) for a
+symmetric MAC against uniform strict oracle-PPT adversaries.
+
+Note that `eufCmaGame` enforces fresh-message unforgeability (`msg ∉ queried`), whereas
+[Boneh and Shoup, Attack Game 6.1 / Definition 6.2][BonehShoup2023] defines the stronger fresh-pair
+variant (`(msg, tag) ∉ queriedPairs`) for general (possibly randomized) signing algorithms. -/
 def EUFCMA (M : MACScheme) : Prop :=
   Game.Indistinguishable
     (fun adversary n => ProbComp.eval (M.eufCmaGame adversary n))
@@ -518,10 +535,10 @@ theorem EUFCMA.oneTimeEUFCMA {M : MACScheme} (h : M.EUFCMA) : M.OneTimeEUFCMA :=
 
 end MACScheme
 
-/-! ### Canonical PRF-based MAC (`prfMAC`, Boneh–Shoup Construction 6.1 & Theorem 6.1) -/
+/-! ### Canonical PRF-based MAC (`prfMAC`, Boneh–Shoup Section 6.3 & Theorem 6.2) -/
 
 /-- Canonical deterministic MAC constructed from a keyed function family `family`
-[Boneh and Shoup, Construction 6.1][BonehShoup2023]:
+([Boneh and Shoup, Section 6.3][BonehShoup2023]):
 * `keyGen n` samples a uniform `n`-bit key via `BitString.sampleList n`.
 * `sign sk msg` returns `prfOracle family sk.length sk msg` (which evaluates `family sk msg` on
   `sk.length`-bit messages and rejects malformed queries with `[]`).
@@ -571,7 +588,7 @@ def macLogHandler (n : ℕ) (request : Unit × List Bool) :
       (List.take n <$> ProbOracleComp.query ((), request.2))
 
 /-- Oracle reduction turning an adaptive MAC forger `adversary` into an `OracleDistinguisher` for
-the PRF security game [Boneh and Shoup, Theorem 6.1][BonehShoup2023]:
+the PRF security game [Boneh and Shoup, Section 6.3, Theorem 6.2][BonehShoup2023]:
 1. Run `adversary n []`, answering each tagging query via `macLogHandler n` and logging all queried
    messages.
 2. When `adversary` outputs `((msg, tag), queried)`, if `msg.length == n` and
@@ -913,7 +930,7 @@ theorem succProbability_prfIdealGame_macToPrfDistinguisher_le (adversary : Forge
     rw [ENNReal.toNNReal_div, ENNReal.toNNReal_one, ENNReal.toNNReal_pow, ENNReal.toNNReal_ofNat]
   rwa [hrhs] at hmono
 
-/-- **Quantitative PRF-to-MAC forgery bound** [Boneh and Shoup, Theorem 6.1][BonehShoup2023]:
+/-- **Quantitative PRF-to-MAC forgery bound** [Boneh and Shoup, Theorem 6.2][BonehShoup2023]:
 for every adaptive MAC forger `adversary` and every security parameter `n`, the EUF-CMA forgery
 probability against `prfMAC family` is at most the PRF distinguishing advantage of
 `macToPrfDistinguisher adversary` plus `1 / 2 ^ n`. -/
@@ -937,7 +954,7 @@ theorem succProbability_eufCmaGame_prfMAC_le
   exact htri.trans (add_le_add_right
     (succProbability_prfIdealGame_macToPrfDistinguisher_le adversary n) _)
 
-/-- **PRF-to-MAC security theorem** [Boneh and Shoup, Theorem 6.1][BonehShoup2023]:
+/-- **PRF-to-MAC security theorem** [Boneh and Shoup, Theorem 6.2][BonehShoup2023]:
 every uniform `PseudorandomFunction` yields an `EUFCMA`-secure `MACScheme`. -/
 theorem PseudorandomFunction.eufCma_prfMAC
     {family : List Bool → List Bool → List Bool}
