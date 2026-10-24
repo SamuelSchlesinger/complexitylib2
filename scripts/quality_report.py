@@ -623,12 +623,22 @@ def tidy_source_signals(text: str, tidy_names: set[str], known_names: set[str] |
 def private_tidy_declarations(constants: dict[str, dict], source) -> dict[str, list[dict]]:
     """Private source declarations with tidy in their type, excluding generated children."""
     found: dict[str, list[dict]] = defaultdict(list)
+    by_range: dict[tuple, set[str]] = defaultdict(set)
+    for name, c in constants.items():
+        if c["r"]:
+            by_range[c["m"], tuple(c["r"])].add(name)
     for name, c in constants.items():
         if not (name.startswith("_private.") and c["tidy"] and c["r"]):
             continue
         r = c["r"]
         selected = source(c["m"]).span(*r[4:]).strip()
-        if selected and name.endswith("." + selected):
+        # An authored anonymous instance selects the keyword, not its auto-generated name.
+        # Its auxiliary constants can inherit that same range; retain only the source owner,
+        # considering *all* types so a plain owner cannot leave a tidy generated child behind.
+        anonymous_instance = selected == "instance" and not is_internal(name.rsplit(".", 1)[-1]) \
+            and not any(name.startswith(other + ".") for other in by_range[c["m"], tuple(r)]
+                        if other != name)
+        if selected and (name.endswith("." + selected) or anonymous_instance):
             found[c["m"]].append({"name": name, "line": r[4], "mentions": c["tidy"]})
     return found
 

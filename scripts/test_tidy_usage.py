@@ -48,6 +48,20 @@ theorem ignored := h.tidy' -- a different identifier
         self.assertEqual(rows, [{"line": 6, "bridge": "tidy"},
                                 {"line": 7, "bridge": "of_tidy"}])
 
+    def test_anonymous_private_instance_counts_once_without_generated_children(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "Source.lean"
+            path.write_text("private instance : Raw := proof\n")
+            source = q.Source(path)
+            row = {"m": "X", "tidy": ["Raw"], "r": [1, 0, 1, 31, 1, 8, 1, 16]}
+            owner = "_private.X.0.instProbeFact"
+            constants = {owner: row, owner + ".eq_1": row, owner + "._proof_1": row}
+            found = q.private_tidy_declarations(constants, lambda _: source)
+            self.assertEqual([r["name"] for r in found["X"]], [owner])
+            # Excluding a generated child must not depend on the owner's type being tidy.
+            constants[owner] = {**row, "tidy": []}
+            self.assertEqual(q.private_tidy_declarations(constants, lambda _: source), {})
+
     def test_inline_and_command_attributes_count_targets_not_commands(self):
         text = '''@[local fun_prop]
 private theorem helper : Raw f := old
@@ -107,6 +121,29 @@ macro "unknown" : term => `(True)
 @unittest.skipUnless(os.environ.get("TIDY_USAGE_NATIVE") == "1",
                      "set TIDY_USAGE_NATIVE=1 for isolated Lean metadata fixtures")
 class NativeMetadataTests(unittest.TestCase):
+    def test_three_authored_private_tidy_declarations_include_anonymous_instance(self):
+        with tempfile.TemporaryDirectory(prefix="tidy-usage-instance-") as directory:
+            root = pathlib.Path(directory)
+            src = root / "AnonymousInstance.lean"
+            src.write_text("module\n@[expose] public section\n"
+                "def ComputableTidilyProbe (_ : Nat) : Prop := True\n"
+                "class ProbeFact (p : Prop) : Prop where\n  out : p\n"
+                "private instance : ProbeFact (ComputableTidilyProbe 0) := ⟨by trivial⟩\n"
+                "private instance namedControl : ProbeFact (ComputableTidilyProbe 1) := ⟨by trivial⟩\n"
+                "private theorem namedTheorem : ComputableTidilyProbe 2 := by trivial\n")
+            subprocess.run(["lake", "env", "lean", "-DwarningAsError=true", "-R", str(root),
+                            str(src), "-o", str(root / "AnonymousInstance.olean"), "-i",
+                            str(root / "AnonymousInstance.ilean")], cwd=q.ROOT, check=True,
+                           capture_output=True, text=True)
+            result = subprocess.run(["lake", "env", "lean", "--run", "scripts/QualityReport.lean",
+                                     str(root)], cwd=q.ROOT, input="AnonymousInstance\n",
+                                    text=True, capture_output=True, check=True)
+            constants = {row["n"]: row for line in result.stdout.splitlines()
+                         if "n" in (row := json.loads(line))}
+            found = q.private_tidy_declarations(constants, lambda _: q.Source(src))
+            self.assertEqual(len(found["AnonymousInstance"]), 3)
+            self.assertTrue(any("instProbeFact" in row["name"] for row in found["AnonymousInstance"]))
+
     def test_classic_and_split_private_metadata_and_incomplete_split_rejection(self):
         with tempfile.TemporaryDirectory(prefix="tidy-usage-native-") as directory:
             root = pathlib.Path(directory)
