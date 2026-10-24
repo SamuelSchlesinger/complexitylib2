@@ -28,7 +28,8 @@ Mathlib's `FinTM2` alone only guarantees finiteness of the input alphabet.
 * `Turing.TM2ComputableInPolyTime.computableTidilyInPolyTime`: transfer a typed Mathlib
   polynomial-time certificate to CSLib.
 
-This is a polynomial-time bridge, not a space-preserving simulation or a converse equivalence.
+This is the forward bridge. `TM2.Reverse.Transfer` supplies a direct reverse compiler and
+polynomial-time equivalence, including explicit conversions for these word encodings.
 
 ## References
 
