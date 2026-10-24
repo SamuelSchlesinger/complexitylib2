@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Layered.Compile
 public import Complexity.Computability.Circuit.Boolean.Layered.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Circuit.Boolean.DepthTime.PolyTime
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
@@ -26,10 +27,10 @@ It is polynomial-time on all raw code, without a well-formedness or promised-dep
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_prepareLayer`,
-  `computableTidilyInPolyTime_finishLayer`: generate the two microlevels of a depth.
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_schedule`: generate all levels.
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_compile`: compute depths and emit
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_prepareLayer`,
+  `computableInPolyTime_finishLayer`: generate the two microlevels of a depth.
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_schedule`: generate all levels.
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_compile`: compute depths and emit
   the complete schedule and output selectors.
 
 ## References
@@ -41,27 +42,27 @@ It is polynomial-time on all raw code, without a well-formedness or promised-dep
 
 namespace Cslib.Circuits.Boolean.Layered
 
-open Turing.MultiTapeTM ComputableTidilyInPolyTime
+open Turing.MultiTapeTM ComputableInPolyTime
 
 variable {α : Type} {input : α ↪ List Bool}
 
 /-- Decide whether a unary-numbered wire is already available, then emit its binary copy index. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_carry {depths : α → List ℕ} {level wire : α → ℕ}
-    (hdepths : ComputableTidilyInPolyTime depths input (encList encUnary))
-    (hlevel : ComputableTidilyInPolyTime level input encUnary)
-    (hwire : ComputableTidilyInPolyTime wire input encUnary) :
-    ComputableTidilyInPolyTime (fun a => carry (depths a) (level a) (wire a)) input encNode :=
+theorem computableInPolyTime_carry {depths : α → List ℕ} {level wire : α → ℕ}
+    (hdepths : ComputableInPolyTime depths input (encList encUnary))
+    (hlevel : ComputableInPolyTime level input encUnary)
+    (hwire : ComputableInPolyTime wire input encUnary) :
+    ComputableInPolyTime (fun a => carry (depths a) (level a) (wire a)) input encNode :=
   (unary_lt' ((listGetD 0).comp (hdepths.prod hwire)) hlevel).ite_decide
-    (computableTidilyInPolyTime_nodeCopy.comp (unary_to_binary.comp hwire))
+    (computableInPolyTime_nodeCopy.comp (unary_to_binary.comp hwire))
     (const (Node.const false))
 
 /-- Prepare the first intermediate, retaining binary source references. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_prepareFirst {gate : α → Op × List ℕ}
-    (hgate : ComputableTidilyInPolyTime gate input encGate) :
-    ComputableTidilyInPolyTime (fun a => prepareFirst (gate a)) input encNode := by
-  have harg (i : ℕ) : ComputableTidilyInPolyTime (fun a => (gate a).2.getD i 0)
+theorem computableInPolyTime_prepareFirst {gate : α → Op × List ℕ}
+    (hgate : ComputableInPolyTime gate input encGate) :
+    ComputableInPolyTime (fun a => prepareFirst (gate a)) input encNode := by
+  have harg (i : ℕ) : ComputableInPolyTime (fun a => (gate a).2.getD i 0)
       input encNat := (listGetD 0).comp (hgate.snd'.prod (const i))
   apply finite_cases (branch := fun op a => prepareFirst (op, (gate a).2)) hgate.fst'
   intro op
@@ -69,17 +70,17 @@ theorem computableTidilyInPolyTime_prepareFirst {gate : α → Op × List ℕ}
   | const b => exact const (Node.const b)
   | not | or =>
     simpa only [prepareFirst, Function.comp_def] using
-      computableTidilyInPolyTime_nodeNand.comp ((harg 0).prod (harg 0))
+      computableInPolyTime_nodeNand.comp ((harg 0).prod (harg 0))
   | and =>
     simpa only [prepareFirst, Function.comp_def] using
-      computableTidilyInPolyTime_nodeNand.comp ((harg 0).prod (harg 1))
+      computableInPolyTime_nodeNand.comp ((harg 0).prod (harg 1))
 
 /-- Prepare the second intermediate, retaining the binary source reference. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_prepareSecond {gate : α → Op × List ℕ}
-    (hgate : ComputableTidilyInPolyTime gate input encGate) :
-    ComputableTidilyInPolyTime (fun a => prepareSecond (gate a)) input encNode := by
-  have harg : ComputableTidilyInPolyTime (fun a => (gate a).2.getD 1 0) input encNat :=
+theorem computableInPolyTime_prepareSecond {gate : α → Op × List ℕ}
+    (hgate : ComputableInPolyTime gate input encGate) :
+    ComputableInPolyTime (fun a => prepareSecond (gate a)) input encNode := by
+  have harg : ComputableInPolyTime (fun a => (gate a).2.getD 1 0) input encNat :=
     (listGetD 0).comp (hgate.snd'.prod (const 1))
   apply finite_cases (branch := fun op a => prepareSecond (op, (gate a).2)) hgate.fst'
   intro op
@@ -87,21 +88,21 @@ theorem computableTidilyInPolyTime_prepareSecond {gate : α → Op × List ℕ}
   | const _ | not | and => exact const (Node.const false)
   | or =>
     simpa only [prepareSecond, Function.comp_def] using
-      computableTidilyInPolyTime_nodeNand.comp (harg.prod harg)
+      computableInPolyTime_nodeNand.comp (harg.prod harg)
 
 /-- Finish a gate, computing scratch positions in unary before emitting binary indices. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_finish {inputCount gateCount gateIndex : α → ℕ}
-    {op : α → Op} (hn : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hg : ComputableTidilyInPolyTime gateCount input encUnary)
-    (hj : ComputableTidilyInPolyTime gateIndex input encUnary)
-    (hop : ComputableTidilyInPolyTime op input encOp) :
-    ComputableTidilyInPolyTime
+theorem computableInPolyTime_finish {inputCount gateCount gateIndex : α → ℕ}
+    {op : α → Op} (hn : ComputableInPolyTime inputCount input encUnary)
+    (hg : ComputableInPolyTime gateCount input encUnary)
+    (hj : ComputableInPolyTime gateIndex input encUnary)
+    (hop : ComputableInPolyTime op input encOp) :
+    ComputableInPolyTime
       (fun a => finish (inputCount a) (gateCount a) (gateIndex a) (op a)) input encNode := by
-  have hfirst : ComputableTidilyInPolyTime
+  have hfirst : ComputableInPolyTime
       (fun a => inputCount a + gateCount a + gateIndex a) input encNat :=
     unary_to_binary.comp (by fun_prop)
-  have hsecond : ComputableTidilyInPolyTime
+  have hsecond : ComputableInPolyTime
       (fun a => inputCount a + 2 * gateCount a + gateIndex a) input encNat :=
     unary_to_binary.comp (by fun_prop)
   apply finite_cases
@@ -109,125 +110,125 @@ theorem computableTidilyInPolyTime_finish {inputCount gateCount gateIndex : α �
   intro op
   cases op with
   | const _ | not =>
-    simpa only [finish, Function.comp_def] using computableTidilyInPolyTime_nodeCopy.comp hfirst
+    simpa only [finish, Function.comp_def] using computableInPolyTime_nodeCopy.comp hfirst
   | and =>
     simpa only [finish, Function.comp_def] using
-      computableTidilyInPolyTime_nodeNand.comp (hfirst.prod hfirst)
+      computableInPolyTime_nodeNand.comp (hfirst.prod hfirst)
   | or =>
     simpa only [finish, Function.comp_def] using
-      computableTidilyInPolyTime_nodeNand.comp (hfirst.prod hsecond)
+      computableInPolyTime_nodeNand.comp (hfirst.prod hsecond)
 
 /-- Generate a preparation layer, charging the complete framed node list. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_prepareLayer {inputCount level : α → ℕ}
+theorem computableInPolyTime_prepareLayer {inputCount level : α → ℕ}
     {gates : α → List (Op × List ℕ)} {depths : α → List ℕ}
-    (hn : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hgates : ComputableTidilyInPolyTime gates input (encList encGate))
-    (hdepths : ComputableTidilyInPolyTime depths input (encList encUnary))
-    (hlevel : ComputableTidilyInPolyTime level input encUnary) :
-    ComputableTidilyInPolyTime
+    (hn : ComputableInPolyTime inputCount input encUnary)
+    (hgates : ComputableInPolyTime gates input (encList encGate))
+    (hdepths : ComputableInPolyTime depths input (encList encUnary))
+    (hlevel : ComputableInPolyTime level input encUnary) :
+    ComputableInPolyTime
       (fun a => prepareLayer (inputCount a) (gates a) (depths a) (level a))
       input (encList encNode) := by
   have hcount := (length_list encGate).comp hgates
-  have hread : ComputableTidilyInPolyTime
+  have hread : ComputableInPolyTime
       (fun p : α × ℕ => (gates p.1).getD p.2 (.const false, []))
       (encPair input encUnary) encGate := by fun_prop
-  have hactive : ComputableTidilyInPolyTime
+  have hactive : ComputableInPolyTime
       (fun p : α × ℕ => decide ((depths p.1).getD (inputCount p.1 + p.2) 0 = level p.1))
       (encPair input encUnary) encBool := by
     apply decide_eq' (encB := encUnary) <;> fun_prop
-  have hmain : ComputableTidilyInPolyTime (fun a =>
+  have hmain : ComputableInPolyTime (fun a =>
       (List.range (inputCount a + (gates a).length)).map (carry (depths a) (level a)))
       input (encList encNode) := by
     apply mapWithInput (range.comp (by fun_prop))
-    apply computableTidilyInPolyTime_carry <;> fun_prop
-  have hfirst : ComputableTidilyInPolyTime (fun a => (List.range (gates a).length).map fun j =>
+    apply computableInPolyTime_carry <;> fun_prop
+  have hfirst : ComputableInPolyTime (fun a => (List.range (gates a).length).map fun j =>
       if (depths a).getD (inputCount a + j) 0 = level a then
         prepareFirst ((gates a).getD j (.const false, [])) else Node.const false)
       input (encList encNode) := by
     apply mapWithInput (range.comp hcount)
-    exact hactive.ite_decide (computableTidilyInPolyTime_prepareFirst hread)
+    exact hactive.ite_decide (computableInPolyTime_prepareFirst hread)
       (const (Node.const false))
-  have hsecond : ComputableTidilyInPolyTime (fun a => (List.range (gates a).length).map fun j =>
+  have hsecond : ComputableInPolyTime (fun a => (List.range (gates a).length).map fun j =>
       if (depths a).getD (inputCount a + j) 0 = level a then
         prepareSecond ((gates a).getD j (.const false, [])) else Node.const false)
       input (encList encNode) := by
     apply mapWithInput (range.comp hcount)
-    exact hactive.ite_decide (computableTidilyInPolyTime_prepareSecond hread)
+    exact hactive.ite_decide (computableInPolyTime_prepareSecond hread)
       (const (Node.const false))
   exact listAppend' (listAppend' hmain hfirst) hsecond
 
 /-- Generate a finishing layer, including copies and all cleared scratch slots. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_finishLayer {inputCount level : α → ℕ}
+theorem computableInPolyTime_finishLayer {inputCount level : α → ℕ}
     {gates : α → List (Op × List ℕ)} {depths : α → List ℕ}
-    (hn : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hgates : ComputableTidilyInPolyTime gates input (encList encGate))
-    (hdepths : ComputableTidilyInPolyTime depths input (encList encUnary))
-    (hlevel : ComputableTidilyInPolyTime level input encUnary) :
-    ComputableTidilyInPolyTime
+    (hn : ComputableInPolyTime inputCount input encUnary)
+    (hgates : ComputableInPolyTime gates input (encList encGate))
+    (hdepths : ComputableInPolyTime depths input (encList encUnary))
+    (hlevel : ComputableInPolyTime level input encUnary) :
+    ComputableInPolyTime
       (fun a => finishLayer (inputCount a) (gates a) (depths a) (level a))
       input (encList encNode) := by
   have hcount := (length_list encGate).comp hgates
-  have hread : ComputableTidilyInPolyTime
+  have hread : ComputableInPolyTime
       (fun p : α × ℕ => (gates p.1).getD p.2 (.const false, []))
       (encPair input encUnary) encGate := by fun_prop
-  have hactive : ComputableTidilyInPolyTime
+  have hactive : ComputableInPolyTime
       (fun p : α × ℕ => decide ((depths p.1).getD (inputCount p.1 + p.2) 0 = level p.1))
       (encPair input encUnary) encBool := by
     apply decide_eq' (encB := encUnary) <;> fun_prop
-  have hinputs : ComputableTidilyInPolyTime
+  have hinputs : ComputableInPolyTime
       (fun a => (List.range (inputCount a)).map Node.copy) input (encList encNode) := by
     apply mapWithInput (range.comp hn)
-    exact computableTidilyInPolyTime_nodeCopy.comp (unary_to_binary.comp (snd input encUnary))
-  have hfinish : ComputableTidilyInPolyTime
+    exact computableInPolyTime_nodeCopy.comp (unary_to_binary.comp (snd input encUnary))
+  have hfinish : ComputableInPolyTime
       (fun p : α × ℕ => finish (inputCount p.1) (gates p.1).length p.2
         ((gates p.1).getD p.2 (.const false, [])).1) (encPair input encUnary) encNode :=
-    computableTidilyInPolyTime_finish (by fun_prop) (by fun_prop) (by fun_prop) hread.fst'
-  have hcarry : ComputableTidilyInPolyTime
+    computableInPolyTime_finish (by fun_prop) (by fun_prop) (by fun_prop) hread.fst'
+  have hcarry : ComputableInPolyTime
       (fun p : α × ℕ => carry (depths p.1) (level p.1) (inputCount p.1 + p.2))
       (encPair input encUnary) encNode :=
-    computableTidilyInPolyTime_carry (by fun_prop) (by fun_prop) (by fun_prop)
-  have hg : ComputableTidilyInPolyTime (fun a => (List.range (gates a).length).map fun j =>
+    computableInPolyTime_carry (by fun_prop) (by fun_prop) (by fun_prop)
+  have hg : ComputableInPolyTime (fun a => (List.range (gates a).length).map fun j =>
       if (depths a).getD (inputCount a + j) 0 = level a then
         finish (inputCount a) (gates a).length j ((gates a).getD j (.const false, [])).1
       else carry (depths a) (level a) (inputCount a + j)) input (encList encNode) := by
     apply mapWithInput (range.comp hcount)
     exact hactive.ite_decide hfinish hcarry
-  have hscratch : ComputableTidilyInPolyTime
+  have hscratch : ComputableInPolyTime
       (fun a => List.replicate (2 * (gates a).length) (Node.const false))
       input (encList encNode) := replicate (by fun_prop) (const (Node.const false))
   exact listAppend' (listAppend' hinputs hg) hscratch
 
 /-- Generate both microlevels at every computed unary depth, charging their full encoding. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_schedule {inputCount depth : α → ℕ}
+theorem computableInPolyTime_schedule {inputCount depth : α → ℕ}
     {gates : α → List (Op × List ℕ)} {depths : α → List ℕ}
-    (hn : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hgates : ComputableTidilyInPolyTime gates input (encList encGate))
-    (hdepths : ComputableTidilyInPolyTime depths input (encList encUnary))
-    (hdepth : ComputableTidilyInPolyTime depth input encUnary) :
-    ComputableTidilyInPolyTime
+    (hn : ComputableInPolyTime inputCount input encUnary)
+    (hgates : ComputableInPolyTime gates input (encList encGate))
+    (hdepths : ComputableInPolyTime depths input (encList encUnary))
+    (hdepth : ComputableInPolyTime depth input encUnary) :
+    ComputableInPolyTime
       (fun a => schedule (inputCount a) (gates a) (depths a) (depth a))
       input (encList (encList encNode)) := by
   apply flatMapWithInput (range.comp hdepth)
   apply cons'
-  · apply computableTidilyInPolyTime_prepareLayer <;> fun_prop
+  · apply computableInPolyTime_prepareLayer <;> fun_prop
   · apply cons'
-    · apply computableTidilyInPolyTime_finishLayer <;> fun_prop
+    · apply computableInPolyTime_finishLayer <;> fun_prop
     · exact const []
 
 /-- Compile arbitrary raw code in native polynomial time. The input count is unary; all source
 references and output selectors are binary. Depth computation and the entire emitted schedule
 are included, with no validity premise or fixed input/output arity. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_compile {inputCount : α → ℕ}
+theorem computableInPolyTime_compile {inputCount : α → ℕ}
     {code : α → List (Op × List ℕ) × List ℕ}
-    (hn : ComputableTidilyInPolyTime inputCount input encUnary)
-    (hcode : ComputableTidilyInPolyTime code input encCode) :
-    ComputableTidilyInPolyTime (fun a => compile (inputCount a) (code a)) input encCompiled :=
-  (computableTidilyInPolyTime_schedule hn hcode.fst'
-    (computableTidilyInPolyTime_wireDepthsCode hn hcode.fst')
-    (computableTidilyInPolyTime_depthCode hn hcode)).prod hcode.snd'
+    (hn : ComputableInPolyTime inputCount input encUnary)
+    (hcode : ComputableInPolyTime code input encCode) :
+    ComputableInPolyTime (fun a => compile (inputCount a) (code a)) input encCompiled :=
+  (computableInPolyTime_schedule hn hcode.fst'
+    (computableInPolyTime_wireDepthsCode hn hcode.fst')
+    (computableInPolyTime_depthCode hn hcode)).prod hcode.snd'
 
 end Cslib.Circuits.Boolean.Layered
