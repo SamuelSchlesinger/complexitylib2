@@ -10,8 +10,9 @@ import ComplexityAbstracts.ResolutionBridge
 
 /-! # A formal abstract of Haken's resolution lower bound
 
-The pigeonhole principle has a short CNF expression but exponentially long resolution
-refutations. This file defines the exact line-proof rule and pigeonhole formula and states
+The pigeonhole principle with `n + 1` pigeons and `n` holes has a CNF of polynomial size in `n`,
+but its resolution refutations need exponentially many lines in `n`. This file defines the
+exact line-proof rule and pigeonhole formula and states
 Haken's lower bound, following the Beame–Pitassi bottleneck argument.
 
 A reader can inspect the definitions and theorem statements here without reading proof
@@ -78,8 +79,9 @@ theorem pigeonhole_satisfiable (m n : ℕ) : Satisfiable (pigeonhole m n) ↔ m 
   ResolutionBridge.pigeonhole_satisfiable m n
 
 /-- **Haken:** every resolution refutation with `s` lines of the formula for `n + 1` pigeons
-and `n` holes satisfies `2^(floor(n/24)) ≤ s`. The formal proof follows the Beame–Pitassi
-bottleneck argument, rather than obtaining this bound from size–width. -/
+and `n` holes satisfies `2^(floor(n/24)) ≤ s`. The exponential parameter is the number of holes,
+not the length of an encoding of the CNF. The proof follows the Beame–Pitassi bottleneck
+argument. -/
 theorem haken {n s : ℕ} (hs : RefutableInSize (pigeonhole (n + 1) n) s) :
     2 ^ (n / 24) ≤ s :=
   ResolutionBridge.haken_of_rules IsProof

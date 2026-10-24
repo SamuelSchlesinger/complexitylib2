@@ -7,6 +7,8 @@ Authors: Samuel Schlesinger
 -- upstream: local-only (formal abstract library)
 
 import ComplexityAbstracts.Check
+import ComplexityAbstracts.Encoding
+import ComplexityAbstracts.Computation
 import ComplexityAbstracts.CryptographyBridge
 
 /-! # One-way functions, generators and adaptive pseudorandom functions
@@ -19,9 +21,9 @@ Goldreich–Goldwasser–Micali construction then produces a keyed function that
 consistently chosen random function even when each query depends on earlier answers.
 Existence of a one-way function remains a hypothesis; efficiency and security use uniform
 finite-control machines with strict polynomial bounds and independent fair coins.
-Lean checks the explicit experiments below through `CryptographyBridge`, and `#check_abstract`
-allows only the six foundational oracle-syntax and machine modules described in the adaptive
-section across the implementation boundary.
+The definitions and theorem statements below specify the claim; Lean checks their proofs through
+`CryptographyBridge`. The audit allows only the listed foundational program, interpretation and
+machine modules across the implementation boundary, without importing a security definition.
 
 ## References
 
@@ -38,37 +40,6 @@ as credited in `Complexity.Languages.Probabilistic.Basic`.
 
 namespace ComplexityTests.Abstracts.CryptographyAbstract
 
-/-- Self-delimiting framing: double each bit `b` to `[true,b]` and terminate with `[false]`. -/
-def frame (w : List Bool) : List Bool := w.flatMap (fun b => [true, b]) ++ [false]
-
-/-- Encode a pair by framing its first component and appending its second. -/
-def encodePair {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool) (p : α × β) :
-    List Bool := frame (a p.1) ++ b p.2
-
-theorem encodePair_injective {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool) :
-    Function.Injective (encodePair a b) := CryptographyBridge.encodePair_injective a b
-
-/-- The injective pair encoding. The arrow `↪` means an injective function. -/
-def pairEncoding {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool) : α × β ↪ List Bool :=
-  ⟨encodePair a b, encodePair_injective a b⟩
-
-/-- Bitstrings encode as themselves. -/
-def bitsEncoding : List Bool ↪ List Bool := Function.Embedding.refl _
-
-/-- The security parameter is supplied in unary: `n` consecutive true bits. -/
-def unaryEncoding : ℕ ↪ List Bool := ⟨fun n => List.replicate n true,
-  fun _ _ h => by simpa only [List.length_replicate] using congrArg List.length h⟩
-
-/-- A Boolean output encodes as one bit. -/
-def boolEncoding : Bool ↪ List Bool := ⟨fun b => [b], fun _ _ h => by injection h⟩
-
-/-- One deterministic finite-state binary multitape Turing machine halts with the encoded
-answer on every encoded input, within polynomially bounded time and space in its bit length.
-`ComputableInTimeAndSpaceOfLength` is the upstream machine contract; both bounds are uniform. -/
-def PolyTime {α β : Type} (f : α → β) (a : α ↪ List Bool) (b : β ↪ List Bool) : Prop :=
-  ∃ t s : ℕ → ℕ, Cslib.PolynomiallyBounded t ∧ Cslib.PolynomiallyBounded s ∧
-    Turing.MultiTapeTM.ComputableInTimeAndSpaceOfLength f a b t s
-
 /-- Exactly `n` independent fair bits, as a word of length `n`. -/
 noncomputable def uniformBits (n : ℕ) : PMF (List Bool) :=
   (Cslib.Probability.PMF.uniformOfFintype (Fin n → Bool)).map List.ofFn
@@ -80,7 +51,8 @@ are fixed before the input. This also bounds every execution, rather than its ex
 def StrictPPT {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool)
     (law : α → PMF β) : Prop :=
   ∃ (c d : ℕ) (evaluate : α → List Bool → β),
-    PolyTime (fun p : α × List Bool => evaluate p.1 p.2) (pairEncoding a bitsEncoding) b ∧
+    Computation.PolyTime (fun p : α × List Bool => evaluate p.1 p.2)
+      (Encoding.encPair a Encoding.encBits) b ∧
     ∀ x, law x = (uniformBits (c * ((a x).length + 1) ^ d)).map (evaluate x)
 
 /-- A nonnegative error is negligible if multiplication by every fixed power of the security
@@ -97,20 +69,22 @@ The test receives the unary seed length and a sample. `bind` samples the word an
 the test with independent coins; `nndist` is the absolute difference of success probabilities. -/
 def Indistinguishable (X Y : ℕ → PMF (List Bool)) : Prop :=
   ∀ test : ℕ → List Bool → PMF Bool,
-    StrictPPT (pairEncoding unaryEncoding bitsEncoding) boolEncoding
+    StrictPPT (Encoding.encPair Encoding.encUnary Encoding.encBits) Encoding.encBool
       (fun p => test p.1 p.2) →
-    Negligible (fun n => nndist (probability ((X n).bind (test n)))
-      (probability ((Y n).bind (test n))))
+    Negligible (fun n => nndist
+      (probability (do let sample ← X n; test n sample))
+      (probability (do let sample ← Y n; test n sample)))
 
 /-- A polynomial-time function is one-way if every strict PPT inverter, given unary `n` and
 `f(x)` for a uniform `n`-bit `x`, finds any preimage only with negligible probability.
 The candidate's length is unrestricted, and recovering the sampled `x` is unnecessary. -/
 def OneWay (f : List Bool → List Bool) : Prop :=
-  PolyTime f bitsEncoding bitsEncoding ∧
+  Computation.PolyTime f Encoding.encBits Encoding.encBits ∧
     ∀ inverter : ℕ → List Bool → PMF (List Bool),
-      StrictPPT (pairEncoding unaryEncoding bitsEncoding) bitsEncoding
+      StrictPPT (Encoding.encPair Encoding.encUnary Encoding.encBits) Encoding.encBits
         (fun p => inverter p.1 p.2) →
-      Negligible (fun n => probability ((uniformBits n).bind fun x =>
+      Negligible (fun n => probability (do
+        let x ← uniformBits n
         (inverter n (f x)).map fun candidate => f candidate == f x))
 
 /-- A deterministic polynomial-time generator has exact seed-dependent output length,
@@ -118,7 +92,7 @@ strictly expands every length, and its uniform-seed outputs are indistinguishabl
 uniform distribution at that output length. The security parameter in both games is the
 seed length. The function need not be injective. -/
 def PseudorandomGenerator (g : List Bool → List Bool) (length : ℕ → ℕ) : Prop :=
-  PolyTime g bitsEncoding bitsEncoding ∧
+  Computation.PolyTime g Encoding.encBits Encoding.encBits ∧
     (∀ seed, (g seed).length = length seed.length) ∧ (∀ n, n < length n) ∧
     Indistinguishable (fun n => (uniformBits n).map g) (fun n => uniformBits (length n))
 
@@ -142,7 +116,8 @@ computable in polynomial time with unary input and output. The resulting algorit
 deterministic polynomial time and secure against the same uniform strict PPT tests. -/
 theorem stretch {g : List Bool → List Bool}
     (hg : PseudorandomGenerator g (fun n => n + 1)) (target : ℕ → ℕ)
-    (htarget : PolyTime target unaryEncoding unaryEncoding) (hgreater : ∀ n, n < target n) :
+    (htarget : Computation.PolyTime target Encoding.encUnary Encoding.encUnary)
+    (hgreater : ∀ n, n < target n) :
     ∃ g' : List Bool → List Bool, PseudorandomGenerator g' target :=
   CryptographyBridge.stretch hg target htarget hgreater
 
@@ -152,84 +127,67 @@ A program is a terminating interaction tree. It can return a result, request an 
 uniform sample, or submit a word and branch on the oracle's reply. Its next requests may depend
 on earlier replies. Termination alone gives no efficiency: the separate machine certificate
 below charges ordinary computation, query writing, reply access and output writing.
-
-The allowed machine is a binary multitape Turing machine with finite control and one named
-oracle channel. Each channel has a write-only query buffer and a read-only reply tape with a
-head. An ordinary transition reads input/work/reply cells, performs an upstream tape action,
-appends at most one bit to the query buffer and moves the reply head by at most one cell.
-A query instruction submits that buffer, installs the oracle's reply, resets the reply head
-and clears the buffer. Each live instruction uses one independent fair bit to select between
-two transitions. Each ordinary or query instruction costs one unit; the handler's computation
-is external. The bounded interpreter starts with blank work and communication tapes and
-returns the written output on halting or clock exhaustion. A later normalization theorem in
-the implementation supplies an intrinsically halting realization with polynomial overhead.
 -/
 
-/-- Two disjoint effects: `.inl n` requests a fresh uniform `Fin (n+1)`; `.inr ((),word)`
-submits a word to the single external channel and receives a word. This foundational response
-family is reused exactly so the machine interpreter has the same typed interface. -/
-abbrev OracleResponse : Sum ℕ (Unit × List Bool) → Type :=
-  Cslib.probOracleSpec (fun _ : Unit × List Bool => List Bool)
-
-/-- The free interaction tree for these effects. Upstream `PFunctor.FreeM` has two constructors:
-`pure value` returns, and `liftBind request continuation` branches on the response. -/
+/-- Programs with private finite-uniform samples and one word-query channel. A request is
+`((), word)` and its reply is a word. Sampling is independent of the external oracle; strict
+fair-coin realizability is a separate requirement in `OraclePPT`. -/
 abbrev OracleProgram (β : Type) :=
-  (PFunctor.mk (Sum ℕ (Unit × List Bool)) OracleResponse).FreeM β
+  Cslib.ProbOracleComp (fun _ : Unit × List Bool => List Bool) β
 
 /-- Interpret a program against any shared stateful probabilistic handler. Fresh random draws
 are independent of that handler and leave its private state unchanged; external requests can
 update it. The result retains both the program's output and the final handler state. -/
 noncomputable def execute {State β : Type} (program : OracleProgram β)
     (oracle : Unit × List Bool → StateT State PMF (List Bool)) (s : State) : PMF (β × State) :=
-  (PFunctor.FreeM.liftM (P := ⟨Sum ℕ (Unit × List Bool), OracleResponse⟩)
-    (fun q => match q with
-    | .inl n => StateT.lift (Cslib.Probability.PMF.uniformOfFintype (Fin (n + 1)))
-    | .inr request => oracle request) program).run s
+  Cslib.ProbOracleComp.runWith oracle program s
 
 /-- One uniform finite-control oracle machine realizes the entire interaction, at a strict
 polynomial clock in the encoded unary parameter and auxiliary input. Equality is required for
 every handler and starting state, preserving the final state as well as the output. The
 machine cannot return an arbitrarily long reply for free: access and output writing are charged.
-This is not a mere bound on the number of oracle queries. -/
+Each instruction costs one unit; oracle computation is external. The clocked run returns its
+written output on halting or clock exhaustion. The definition does not require the unclocked
+machine to halt; this is not a mere bound on the number of oracle queries. -/
 def OraclePPT (program : ℕ → List Bool → OracleProgram Bool) : Prop :=
   ∃ (k : ℕ) (Control : Type) (_ : Finite Control)
     (machine : Turing.MultiTapePTM k Bool Control Unit) (c d : ℕ),
     ∀ n aux (State : Type) (oracle : Unit × List Bool → StateT State PMF (List Bool)) s,
-      execute (boolEncoding <$> program n aux) oracle s =
-        execute (machine.runOracle (c * ((encodePair unaryEncoding bitsEncoding (n, aux)).length
-          + 1) ^ d) (encodePair unaryEncoding bitsEncoding (n, aux))) oracle s
+      let input := Encoding.encPair Encoding.encUnary Encoding.encBits (n, aux)
+      execute (Encoding.encBool <$> program n aux) oracle s =
+        execute (machine.runOracle (c * (input.length + 1) ^ d) input) oracle s
 
-/-- Run a program against a fixed deterministic word oracle, with independent private samples. -/
+/-- Run a program against a fixed deterministic word oracle, with independent private samples.
+The handler has no changing state: `Unit` is its single state, discarded from the result. -/
 noncomputable def evaluateOracle {β : Type} (program : OracleProgram β)
     (oracle : List Bool → List Bool) : PMF β :=
-  PFunctor.FreeM.liftM (P := ⟨Sum ℕ (Unit × List Bool), OracleResponse⟩)
-    (fun q => match q with
-    | .inl n => Cslib.Probability.PMF.uniformOfFintype (Fin (n + 1))
-    | .inr request => PMF.pure (oracle request.2)) program
+  (Cslib.ProbOracleComp.runWith
+    (fun request => StateT.lift (PMF.pure (oracle request.2))) program ()).map Prod.fst
 
 /-- The real experiment samples one uniform key and consistently answers every valid query
 with that key's function. Wrong-length queries return the empty word. The adversary receives
 unary `n` and an empty auxiliary input. -/
 noncomputable def realPRF (family : List Bool → List Bool → List Bool)
-    (adversary : ℕ → List Bool → OracleProgram Bool) (n : ℕ) : PMF Bool :=
-  (uniformBits n).bind fun key => evaluateOracle (adversary n [])
+    (adversary : ℕ → List Bool → OracleProgram Bool) (n : ℕ) : PMF Bool := do
+  let key ← uniformBits n
+  evaluateOracle (adversary n [])
     (fun query => if query.length = n then family key query else [])
 
 /-- The ideal experiment samples one entire uniform function from `n` bits to `n` bits and
 reuses it across all adaptive calls. This is a probability specification; a lazy cache in the
 implementation realizes the same law without constructing its exponential truth table.
 Malformed queries are rejected in exactly the same way as in the real experiment. -/
-noncomputable def idealPRF (adversary : ℕ → List Bool → OracleProgram Bool) (n : ℕ) : PMF Bool :=
-  (Cslib.Probability.PMF.uniformOfFintype ((Fin n → Bool) → Fin n → Bool)).bind
-    fun table => evaluateOracle (adversary n []) (fun query =>
-      if query.length = n then List.ofFn (table fun i => query.getD i.val false) else [])
+noncomputable def idealPRF (adversary : ℕ → List Bool → OracleProgram Bool) (n : ℕ) : PMF Bool := do
+  let table ← Cslib.Probability.PMF.uniformOfFintype ((Fin n → Bool) → Fin n → Bool)
+  evaluateOracle (adversary n []) (fun query =>
+    if query.length = n then List.ofFn (table fun i => query.getD i.val false) else [])
 
 /-- A uniform adaptive pseudorandom function family has a deterministic polynomial-time keyed
 evaluator, `n`-bit answers to valid `n`-bit queries under `n`-bit keys, and negligible advantage
 between the preceding games for every one strict uniform adaptive oracle-PPT adversary. -/
 def PseudorandomFunction (family : List Bool → List Bool → List Bool) : Prop :=
-  PolyTime (fun p : List Bool × List Bool => family p.1 p.2)
-    (pairEncoding bitsEncoding bitsEncoding) bitsEncoding ∧
+  Computation.PolyTime (fun p : List Bool × List Bool => family p.1 p.2)
+    (Encoding.encPair Encoding.encBits Encoding.encBits) Encoding.encBits ∧
   (∀ key query, query.length = key.length → (family key query).length = key.length) ∧
   ∀ adversary : ℕ → List Bool → OracleProgram Bool, OraclePPT adversary →
     Negligible (fun n => nndist (probability (realPRF family adversary n))
@@ -242,14 +200,31 @@ theorem adaptive_functions {f : List Bool → List Bool} (hf : OneWay f) :
     ∃ family : List Bool → List Bool → List Bool, PseudorandomFunction family :=
   CryptographyBridge.adaptive_functions hf
 
+/-! ## Representation details
+
+The binary multitape machine has finite control and one oracle channel with a write-only query
+buffer and a read-only reply tape. An ordinary instruction performs an upstream tape action,
+appends at most one bit to the query buffer and moves the reply head by at most one cell. A query
+instruction submits the buffer, installs the reply, resets the reply head and clears the buffer.
+Each live instruction uses one independent fair bit to select between two transitions. The
+interpreter starts with blank work and communication tapes. Its clock bounds every run, including
+query construction and reply access, while the handler's computation is external.
+-/
+
+/-- The underlying response family, retained for clients inspecting the program representation:
+`.inl n` requests a fresh uniform `Fin (n+1)`; `.inr ((),word)` requests an external word reply. -/
+abbrev OracleResponse : Sum ℕ (Unit × List Bool) → Type :=
+  Cslib.probOracleSpec (fun _ : Unit × List Bool => List Bool)
+
 /--
-info: abstract audit passed for `ComplexityTests.Abstracts.CryptographyAbstract`: 33 root
-declarations, 254 dependencies checked
+info: abstract audit passed for `ComplexityTests.Abstracts.CryptographyAbstract`: 21 root declarations, 252 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.CryptographyAbstract allowing [
+  ComplexityAbstracts.Encoding, ComplexityAbstracts.Computation,
   Complexity.Languages.Probabilistic.Basic,
   Complexity.Languages.Probabilistic.Oracle,
+  Complexity.Languages.Probabilistic.Oracle.Interaction,
   Complexity.Computability.Machines.Turing.MultiTape.Machine,
   Complexity.Computability.Machines.Turing.MultiTape.Machine.Program,
   Complexity.Computability.Machines.Turing.MultiTape.Probabilistic,

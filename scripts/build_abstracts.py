@@ -13,7 +13,6 @@ from urllib.parse import quote
 import xml.etree.ElementTree as ET
 
 import abstract_to_tex as render
-from proof_lengths import CHAR_LITERAL
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,9 +44,27 @@ PREAMBLE = r"""\documentclass[11pt]{article}
 \definecolor{leanblue}{RGB}{41,110,166}
 \definecolor{leangreen}{RGB}{38,128,89}
 \hypersetup{colorlinks=true,urlcolor=leanblue,linkcolor=leanblue}
+\tcbset{leandeclarationmeasure/.style={}}
 \newtcolorbox{leanbox}{breakable,enhanced,colback=black!3,colframe=black!45,
   boxrule=0.5pt,arc=2pt,left=7pt,right=7pt,top=5pt,bottom=5pt,
-  before skip=7pt,after skip=9pt}
+  before skip=7pt,after skip=9pt,leandeclarationmeasure}
+% Measure a declaration's prose and code at their actual display width. Keep the pair
+% together only below 35% of the text height; larger declarations retain breakable boxes.
+% environ is already required by tcolorbox. These bodies contain display text, not counters.
+\newsavebox{\leandeclarationbox}
+\NewEnviron{leandeclaration}{%
+  \par
+  \sbox{\leandeclarationbox}{%
+    \begin{minipage}{\linewidth}
+    \setlength{\parskip}{0.45em}
+    \tcbset{leandeclarationmeasure/.style={unbreakable}}%
+    \BODY
+    \end{minipage}}%
+  \ifdim\dimexpr\ht\leandeclarationbox+\dp\leandeclarationbox\relax<0.35\textheight
+    \noindent\usebox{\leandeclarationbox}\par
+  \else
+    \BODY
+  \fi}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.45em}
 \setlength{\emergencystretch}{2em}
@@ -70,59 +87,11 @@ def git(root, *args):
 
 
 def module_source_path(module, root=ROOT):
-    """Resolve the dedicated abstract library's modules within its configured source root."""
-    if not isinstance(module, str) or not re.fullmatch(
-            r"ComplexityAbstracts\.[A-Za-z_][A-Za-z0-9_]*", module):
-        raise ValueError(f"Not a formal-abstract module: {module}")
-    return Path(root).joinpath("abstracts", *module.split(".")).with_suffix(".lean")
+    return render.module_source_path(module, root)
 
 
 def _lean_code(text):
-    """Mask comments and strings while preserving source positions and line numbers."""
-    result, index, depth = list(text), 0, 0
-    while index < len(text):
-        if depth:
-            if text.startswith("/-", index):
-                depth += 1
-                width = 2
-            elif text.startswith("-/", index):
-                depth -= 1
-                width = 2
-            else:
-                width = 1
-        elif text.startswith("/-", index):
-            depth, width = 1, 2
-        elif text.startswith("--", index):
-            end = text.find("\n", index)
-            width = (len(text) if end < 0 else end) - index
-        # A quote directly after an identifier character is part of the name (`lemma'`).
-        elif text[index] == "'" and (literal := CHAR_LITERAL.match(text, index)):
-            width = literal.end() - index
-        elif text[index] == '"' or (text[index] == "r" and re.match(r'r#+"', text[index:])):
-            raw = re.match(r'r(#+)"', text[index:])
-            if raw:
-                close = '"' + raw.group(1)
-                end = text.find(close, index + len(raw.group()))
-                width = (len(text) if end < 0 else end + len(close)) - index
-            else:
-                end = index + 1
-                while end < len(text):
-                    if text[end] == "\\":
-                        end += 2
-                    elif text[end] == '"':
-                        end += 1
-                        break
-                    else:
-                        end += 1
-                width = end - index
-        else:
-            index += 1
-            continue
-        for offset in range(index, min(index + width, len(text))):
-            if text[offset] != "\n":
-                result[offset] = " "
-        index += width
-    return "".join(result)
+    return render.lean_code(text)
 
 
 def _namespace_contexts(text):
@@ -155,6 +124,28 @@ def declaration_line(text, name):
     return matches[0]
 
 
+def entry_foundations(entry, root=ROOT):
+    """Require the manifest to name exactly the source's imported foundation closure."""
+    listed = entry.get("foundations", [])
+    if not isinstance(listed, list) or any(not isinstance(module, str) for module in listed):
+        raise ValueError(f"Foundations must be a list of module names in {entry['id']}")
+    if len(listed) != len(set(listed)):
+        raise ValueError(f"Duplicate foundation in {entry['id']}")
+    for module in listed:
+        path = module_source_path(module, root)
+        if module == "ComplexityAbstracts.Check" or module.endswith(("Abstract", "Bridge")):
+            raise ValueError(f"Not a shared foundation: {module}")
+        if not path.is_file():
+            raise ValueError(f"Missing shared foundation source: {module}")
+        render.split_sections(render.parse_abstract(path.read_text())[2])
+    expected = render.foundation_modules(module_source_path(entry["module"], root), root)
+    missing, unused = set(expected) - set(listed), set(listed) - set(expected)
+    if missing or unused:
+        raise ValueError(f"Foundation manifest mismatch in {entry['id']}: "
+                         f"missing {sorted(missing)}, unused {sorted(unused)}")
+    return expected
+
+
 def load_catalogue(manifest, root=ROOT):
     data = json.loads(Path(manifest).read_text())
     if not isinstance(data, dict) or not isinstance(data.get("title"), str) or not data["title"].strip():
@@ -183,6 +174,7 @@ def load_catalogue(manifest, root=ROOT):
                 r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*", namespace):
             raise ValueError(f"Invalid abstract namespace: {namespace}")
         text = source.read_text()
+        main_sections, _ = render.split_sections(render.parse_abstract(text)[2])
         declared, contexts = _namespace_contexts(text)
         if namespace not in declared:
             raise ValueError(f"Abstract namespace {namespace} is not declared in {source}")
@@ -204,6 +196,14 @@ def load_catalogue(manifest, root=ROOT):
                 raise ValueError(f"Headline is outside namespace {namespace}: {name}")
             if not re.match(r"\s*(?:theorem|lemma)\s", text.splitlines()[line - 1]):
                 raise ValueError(f"Selected headline is not a theorem: {name}")
+        main_theorems = set(re.findall(
+            r"^\s*(?:theorem|lemma)\s+([^\s:{(]+)",
+            "\n\n".join(_lean_code(item["code"]) for item in main_sections), re.MULTILINE))
+        outside_main = {name.rsplit(".", 1)[-1] for name in [*headlines, *supporting]} - main_theorems
+        if outside_main:
+            raise ValueError(f"Selected statements must be in the main presentation: "
+                             f"{sorted(outside_main)}")
+        entry_foundations(entry, root)
     return entries
 
 
@@ -232,7 +232,84 @@ def highlighted_line(line):
     return "".join(pieces)
 
 
-def render_entry(entry, repository, sha, dirty, root=ROOT):
+def render_sections(sections, selected=None):
+    """Display all definitions, and either all theorem signatures or an explicit selection."""
+    lines, displayed = [], set()
+    for item in sections:
+        item_lines = []
+        code = render.clean_code_for_display(item["code"],
+                                             is_undocumented_tail=item["kind"] == "section")
+        kept = []
+        for block in re.split(r"\n\s*\n", code):
+            theorem = render.theorem_name(block)
+            if not theorem or selected is None or theorem in selected:
+                kept.append(block)
+                if theorem:
+                    displayed.add(theorem)
+        code = "\n\n".join(kept).strip()
+        if item["kind"] == "decl" and item["code"].strip() and not code:
+            continue
+        heading = render.section_heading(item)
+        if heading:
+            item_lines.extend([r"\subsection*{" + render.escape_tex_prose(heading.group(1).strip()) + "}",
+                               render.escape_tex_prose(heading.group(2).strip())])
+        else:
+            item_lines.append(render.escape_tex_prose(item["doc"]))
+        if code:
+            code_lines = [highlighted_line(line) or "~" for line in code.splitlines()]
+            item_lines.extend([r"\begin{leanbox}\small\ttfamily\raggedright\noindent",
+                               " \\\\\n".join(code_lines), r"\par\end{leanbox}"])
+        if item["kind"] == "decl" and code:
+            lines.extend([r"\begin{leandeclaration}", *item_lines, r"\end{leandeclaration}"])
+        else:
+            lines.extend(item_lines)
+    return "\n\n".join(lines), displayed
+
+
+def foundation_record(module, repository, sha, root=ROOT):
+    source = module_source_path(module, root)
+    text = source.read_text()
+    declared, contexts = _namespace_contexts(text)
+    relative = source.relative_to(root)
+    declarations = []
+    for number, line in enumerate(_lean_code(text).splitlines(), 1):
+        match = re.match(r"\s*(?:(?:private|noncomputable)\s+)?"
+                         r"(?:def|abbrev|theorem|lemma|inductive|structure)\s+([\w'.]+)", line)
+        if match:
+            name = ".".join(filter(None, (contexts[number], match.group(1))))
+            declarations.append({"declaration": name, "line": number,
+                                 "url": source_url(repository, sha, relative, number)})
+    return {"module": module, "source": str(relative), "source_sha256": digest(source),
+            "url": source_url(repository, sha, relative), "namespaces": sorted(declared),
+            "declarations": declarations}
+
+
+def render_foundations(modules, repository, sha, root=ROOT):
+    if not modules:
+        return ""
+    lines = [r"\section*{Appendix: shared foundations}",
+             "These checked definitions specify the representations and machine bounds used "
+             "above. They are displayed once here; their Lean sources remain part of the "
+             "document's provenance."]
+    for module in dict.fromkeys(modules):
+        source = module_source_path(module, root)
+        title, intro, sections = render.parse_abstract(source.read_text())
+        record = foundation_record(module, repository, sha, root)
+        lines.extend([r"\subsection*{" + render.escape_tex_prose(title) + "}",
+                      r"{\small " + link(record["url"], "Lean source") + ". Namespaces: " +
+                      ", ".join(render.escape_tex_prose("`" + ns + "`")
+                                for ns in record["namespaces"]) + ".}"])
+        if record["declarations"]:
+            lines.append(r"{\small Declarations: " + ", ".join(
+                link(item["url"], render.escape_tex_prose(
+                    "`" + item["declaration"].rsplit(".", 1)[-1] + "`"))
+                for item in record["declarations"]) + ".}")
+        lines.extend([*render.render_tex_intro(intro),
+                      render_sections(render.presentation_sections(sections))[0]])
+    return "\n\n".join(lines) + "\n"
+
+
+def render_entry(entry, repository, sha, dirty, root=ROOT, *, include_foundations=True):
     source = module_source_path(entry["module"], root)
     text = source.read_text()
     _, intro, sections = render.parse_abstract(text)
@@ -256,33 +333,21 @@ def render_entry(entry, repository, sha, dirty, root=ROOT):
                   r"\par\emph{Scope.} " + render.escape_tex_prose(entry["scope"]) +
                   r"\end{quote}", "", *render.render_tex_intro(intro), ""])
     selected = {name.rsplit(".", 1)[-1] for name in displayed_names}
-    displayed = set()
-    for item in sections:
-        code = render.clean_code_for_display(item["code"],
-                                             is_undocumented_tail=item["kind"] == "section")
-        kept = []
-        for block in re.split(r"\n\s*\n", code):
-            theorem = re.match(r"(?:private\s+)?(?:theorem|lemma)\s+(\S+)", block)
-            if not theorem or theorem.group(1) in selected:
-                kept.append(block)
-                if theorem:
-                    displayed.add(theorem.group(1))
-        code = "\n\n".join(kept).strip()
-        if item["kind"] == "decl" and item["code"].strip() and not code:
-            continue
-        doc = item["doc"]
-        heading = re.match(r"^##\s*([^\n]+)\n?(.*)", doc, re.DOTALL) if item["kind"] == "section" else None
-        if heading:
-            lines.extend([r"\subsection*{" + render.escape_tex_prose(heading.group(1).strip()) + "}",
-                          render.escape_tex_prose(heading.group(2).strip())])
-        else:
-            lines.append(render.escape_tex_prose(doc))
-        if code:
-            code_lines = [highlighted_line(line) or "~" for line in code.splitlines()]
-            lines.extend([r"\begin{leanbox}\small\ttfamily\raggedright\noindent",
-                          " \\\\\n".join(code_lines), r"\par\end{leanbox}"])
+    main, _ = render.split_sections(sections)
+    _, displayed = render_sections(main, selected)
     if displayed != selected:
-        raise ValueError(f"Selected statements were not rendered: {sorted(selected - displayed)}")
+        raise ValueError("Selected statements were not rendered in the main presentation: "
+                         f"{sorted(selected - displayed)}")
+    lines.append(render_sections(render.presentation_sections(sections), selected)[0])
+    modules = entry_foundations(entry, root)
+    if modules:
+        lines.insert(-1, r"{\small Shared foundation definitions appear in the appendix: " +
+                     ", ".join(link(source_url(repository, sha,
+                                                module_source_path(module, root).relative_to(root)),
+                                    render.escape_tex_prose("`" + module + "`"))
+                               for module in modules) + ".}")
+    if include_foundations:
+        lines.append(render_foundations(modules, repository, sha, root))
     return "\n\n".join(lines) + "\n"
 
 
@@ -336,9 +401,13 @@ def build(manifest, output, *, root=ROOT, require_clean=False):
     if not shutil.which("latexmk"):
         raise ValueError("latexmk is required (see abstracts/README.md for TeX dependencies)")
     inputs = {Path(manifest), root / "scripts/build_abstracts.py", root / "scripts/abstract_to_tex.py"}
+    all_foundations = []
     for entry in entries:
         source = module_source_path(entry["module"], root)
         inputs.add(source)
+        modules = entry_foundations(entry, root)
+        all_foundations.extend(modules)
+        inputs.update(module_source_path(module, root) for module in modules)
         bridge = source.with_name(source.name.replace("Abstract.lean", "Bridge.lean"))
         if bridge.is_file():
             inputs.add(bridge)
@@ -353,17 +422,20 @@ def build(manifest, output, *, root=ROOT, require_clean=False):
             stale.unlink()
     bodies, documents = [], []
     for entry in entries:
-        body = render_entry(entry, repository, sha, dirty, root)
+        body = render_entry(entry, repository, sha, dirty, root, include_foundations=False)
         bodies.append(body)
         tex = output / (entry["id"] + ".tex")
-        tex.write_text(document(body))
+        modules = entry_foundations(entry, root)
+        tex.write_text(document(body + render_foundations(modules, repository, sha, root)))
         pdf = build_pdf(tex)
         source = module_source_path(entry["module"], root)
         text = source.read_text()
         documents.append({
             "id": entry["id"], "title": entry["title"], "pdf": pdf.name,
             "pdf_sha256": digest(pdf), "source": str(source.relative_to(root)),
-            "source_sha256": digest(source), "headlines": [
+            "source_sha256": digest(source),
+            "foundations": [foundation_record(module, repository, sha, root) for module in modules],
+            "headlines": [
                 {"declaration": name, "line": declaration_line(text, name),
                  "url": source_url(repository, sha, source.relative_to(root),
                                    declaration_line(text, name))}
@@ -386,7 +458,9 @@ def build(manifest, output, *, root=ROOT, require_clean=False):
                      render.escape_tex_prose(entry["summary"]))
     index.extend([r"\end{itemize}", r"\clearpage"])
     catalogue = output / "catalogue.tex"
-    catalogue.write_text(document("\n\n".join(index) + "\n\\clearpage\n".join(bodies)))
+    foundations = render_foundations(all_foundations, repository, sha, root)
+    catalogue.write_text(document("\n\n".join(index) + "\n\\clearpage\n".join(bodies) +
+                                  ("\n\\clearpage\n" + foundations if foundations else "")))
     catalogue_pdf = build_pdf(catalogue)
     event_path = os.environ.get("GITHUB_EVENT_PATH")
     event = json.loads(Path(event_path).read_text()) if event_path else {}
@@ -403,7 +477,8 @@ def build(manifest, output, *, root=ROOT, require_clean=False):
         "run_url": (f"https://github.com/{repository}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
                     if os.environ.get("GITHUB_RUN_ID") else None),
         "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
-        "catalogue": {"pdf": "catalogue.pdf", "pdf_sha256": digest(catalogue_pdf)},
+        "catalogue": {"pdf": "catalogue.pdf", "pdf_sha256": digest(catalogue_pdf),
+                      "foundations": list(dict.fromkeys(all_foundations))},
         "documents": documents,
         "inputs": input_records,
         "style_sources": [STYLE_SOURCE, EXTRACTION_SOURCE],

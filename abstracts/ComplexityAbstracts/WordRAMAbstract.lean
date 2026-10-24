@@ -213,7 +213,7 @@ of registers, decides it. -/
 def DecidableInTime {α : Type*} (A : Set α) (encode : α → List ℕ) (T bits : α → ℕ) : Prop :=
   ∃ r, ∃ p : Program r, Decides p A encode T bits
 
-/-! ## Main theorems
+/-! ## Connection to the library
 
 Two theorems say that the machine of this file is the library's word RAM `Cslib.WordRAM` over
 its exact basis `Cslib.WordRAM.Basis.exact`. Names with the prefix `Cslib.WordRAM.` are from the
