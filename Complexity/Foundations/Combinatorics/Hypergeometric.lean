@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Mathlib.Data.Finset.Powerset
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Basic.Real.Basic
+import Complexity.Foundations.Data.Finset.Markov
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Data.Finset.Prod
@@ -32,8 +33,6 @@ Chebyshev's inequality `X < m ≤ μ` with probability at most `μ / (μ - m)²`
 
 ## Main results
 
-* `Cslib.mul_card_filter_le_sum`, `Cslib.card_filter_mul_le_sum`: Markov's inequality for a
-  `Finset` sum.
 * `Cslib.sum_card_inter_powersetCard`, `Cslib.sum_card_inter_mul_sub_one_powersetCard`: the
   first two factorial moments of `#(U ∩ J)` over the `ℓ`-subsets `J`.
 * `Cslib.sum_card_inter_sub_sq_le`: the variance is at most the mean.
@@ -47,27 +46,6 @@ Chebyshev's inequality `X < m ≤ μ` with probability at most `μ / (μ - m)²`
 namespace Cslib
 
 open Finset
-
-/-- **Markov's inequality** for a `Finset` sum: if `m ≤ f x` whenever `x ∈ s` satisfies `p x`,
-then `m * #{x ∈ s | p x} ≤ ∑ x ∈ s, f x`. -/
-theorem mul_card_filter_le_sum {α : Type*} (s : Finset α) (p : α → Prop)
-    [DecidablePred p] (f : α → ℕ) {m : ℕ} (hm : ∀ x ∈ s, p x → m ≤ f x) :
-    m * #{x ∈ s | p x} ≤ ∑ x ∈ s, f x := by
-  rw [mul_comm, ← smul_eq_mul]
-  exact ((s.filter p).card_nsmul_le_sum f m fun x hx =>
-    hm x (mem_filter.mp hx).1 (mem_filter.mp hx).2).trans
-    (sum_le_sum_of_subset (filter_subset p s))
-
-/-- **Markov's inequality** for a nonnegative `Finset` sum: if `0 ≤ f x` on `s` and `m ≤ f x`
-whenever `x ∈ s` satisfies `p x`, then `#{x ∈ s | p x} * m ≤ ∑ x ∈ s, f x`. -/
-theorem card_filter_mul_le_sum {α R : Type*} [Semiring R] [PartialOrder R] [IsOrderedAddMonoid R]
-    (s : Finset α) (p : α → Prop) [DecidablePred p] (f : α → R) {m : R}
-    (hf : ∀ x ∈ s, 0 ≤ f x) (hm : ∀ x ∈ s, p x → m ≤ f x) :
-    (#{x ∈ s | p x} : R) * m ≤ ∑ x ∈ s, f x := by
-  rw [← nsmul_eq_mul]
-  exact ((s.filter p).card_nsmul_le_sum f m fun x hx =>
-    hm x (mem_filter.mp hx).1 (mem_filter.mp hx).2).trans
-    (sum_le_sum_of_subset_of_nonneg (filter_subset p s) fun x hx _ => hf x hx)
 
 variable {α : Type*} [DecidableEq α] {s U : Finset α} {ℓ : ℕ}
 

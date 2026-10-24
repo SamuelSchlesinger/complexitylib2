@@ -11,7 +11,7 @@ public import Complexity.Init
 public import Mathlib.Data.Finset.Powerset
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Basic.Real.Basic
-import Complexity.Foundations.Combinatorics.Hypergeometric
+import Complexity.Foundations.Data.Finset.Markov
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Group.Action.Defs
 import Mathlib.Algebra.Order.BigOperators.Group.Finset

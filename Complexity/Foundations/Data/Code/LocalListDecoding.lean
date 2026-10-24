@@ -9,7 +9,7 @@ module
 
 public import Complexity.Foundations.Data.Code.HintDecoding
 public import Complexity.Foundations.Data.Code.LocalDecoding
-import Complexity.Foundations.Combinatorics.Hypergeometric
+import Complexity.Foundations.Data.Finset.Markov
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
 

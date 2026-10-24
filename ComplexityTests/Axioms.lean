@@ -2405,10 +2405,10 @@ info: 'Cslib.RotationMap.sq_expect_walkDart_mul_walkDart_sub_le' depends on axio
 #print axioms Cslib.RotationMap.sq_expect_walkDart_mul_walkDart_sub_le
 
 /--
-info: 'Cslib.RotationMap.card_filter_killTime_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.card_filter_killTime_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.RotationMap.card_filter_killTime_eq
+#print axioms Cslib.card_filter_killTime_eq
 
 /--
 info: 'Cslib.RotationMap.card_filter_killTime_eq_and_splitWalk' depends on axioms: [propext, Classical.choice, Quot.sound]

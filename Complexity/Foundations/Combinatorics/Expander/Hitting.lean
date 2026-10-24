@@ -34,8 +34,9 @@ the walk operator with multiplication by the weights (`Cslib.RotationMap.weighte
 `Cslib.RotationMap.expect_prod_walkAt`). For indicator weights, each step multiplies the second
 moment of a function supported on a set of density at most `μ` by at most
 `((1 - λ) μ + λ) ^ 2`: the walk operator is `(1 - λ)` times the projection onto the constants plus
-an operator of norm at most `λ`, and the projection of a function supported on a small set is small
-(`Cslib.RotationMap.expect_ite_mem_walk_sq_le`).
+an operator of norm at most `λ`
+(`Cslib.RotationMap.expect_walk_sub_one_sub_spectralExpansion_sq_le`), and the projection of a
+function supported on a small set is small (`Cslib.RotationMap.expect_ite_mem_walk_sq_le`).
 
 ## Main definitions
 
@@ -45,6 +46,8 @@ an operator of norm at most `λ`, and the projection of a function supported on 
 
 * `Cslib.RotationMap.expect_prod_walkAt`: the expected product of weights along a walk from a
   vertex is the weighted walk.
+* `Cslib.RotationMap.expect_walk_sub_one_sub_spectralExpansion_sq_le`: subtracting `(1 - λ)` times
+  the mean from `G.walk x` leaves second moment at most `λ ^ 2` times the second moment of `x`.
 * `Cslib.RotationMap.expect_ite_mem_walk_sq_le`: one step of a walk restricted to a small set.
 * `Cslib.RotationMap.dens_filter_forall_walkAt_mem_le`: the hitting property.
 * `Cslib.RotationMap.dens_filter_forall_walkAt_mem_le_pow`: the usual power bound for remaining
@@ -127,30 +130,21 @@ section Hitting
 
 variable [Fintype V] [Fintype D]
 
-/-- The second moment of a constant restricted to `B` is `dens B` times its square. -/
-private theorem expect_ite_const_sq [DecidableEq V] (B : Finset V) (α : ℝ) :
-    𝔼 v, (if v ∈ B then α else 0) ^ 2 = dens B * α ^ 2 := by
-  have h : (𝔼 v, if v ∈ B then (1 : ℝ) else 0) = dens B := by
-    simpa using (Fintype.expect_boole (𝕜 := ℝ) fun v => v ∈ B)
-  rw [← h, expect_mul]
-  exact expect_congr rfl fun v _ => by split_ifs <;> simp
-
-/-- By Cauchy–Schwarz, the squared average of a function vanishing outside `C` is at most the
-density of `C` times its second moment. -/
+/-- By the second moment method (`Fintype.sq_expect_le_dens_mul_expect_sq`), the squared average
+of a function vanishing outside `C` is at most the density of `C` times its second moment. -/
 private theorem sq_expect_le_dens_mul_expect_sq {C : Finset V} {x : V → ℝ}
     (hx : ∀ v ∉ C, x v = 0) :
     (𝔼 v, x v) ^ 2 ≤ dens C * 𝔼 v, x v ^ 2 := by
   classical
-  have h := expect_mul_sq_le_sq_mul_sq univ (fun v => if v ∈ C then (1 : ℝ) else 0) x
-  have h₁ : 𝔼 v, (if v ∈ C then (1 : ℝ) else 0) * x v = 𝔼 v, x v :=
-    expect_congr rfl fun v _ => by by_cases hv : v ∈ C <;> simp [hv, hx]
-  have h₂ : 𝔼 v, (if v ∈ C then (1 : ℝ) else 0) ^ 2 = dens C := by
-    simpa using expect_ite_const_sq C 1
-  rwa [h₁, h₂] at h
+  refine (Fintype.sq_expect_le_dens_mul_expect_sq x).trans ?_
+  have hsub : ({v : V | x v ≠ 0} : Finset V) ⊆ C := fun v hv =>
+    by_contra fun hvC => (mem_filter.mp hv).2 (hx v hvC)
+  exact mul_le_mul_of_nonneg_right (by exact_mod_cast dens_le_dens hsub)
+    (expect_nonneg fun _ _ => sq_nonneg _)
 
 /-- Subtracting `(1 - λ(G))` times the mean from `G.walk x` leaves second moment at most
 `λ(G) ^ 2` times the second moment of `x`. -/
-private theorem expect_walk_sub_one_sub_spectralExpansion_sq_le [Nonempty V] [Nonempty D]
+theorem expect_walk_sub_one_sub_spectralExpansion_sq_le [Nonempty V] [Nonempty D]
     (x : V → ℝ) :
     𝔼 v, (G.walk x v - (1 - G.spectralExpansion) * 𝔼 u, x u) ^ 2 ≤
       G.spectralExpansion ^ 2 * 𝔼 v, x v ^ 2 := by
@@ -203,7 +197,9 @@ theorem expect_ite_mem_walk_sq_le [Nonempty D] {B C : Finset V} {μ : ℝ} (hB :
   simp only [hsplit]
   refine Fintype.expect_add_sq_le (by linarith) zero_le_one hμ hℓ₀
     (expect_nonneg fun _ _ => sq_nonneg _) ?_ ?_ |>.trans_eq (by ring)
-  · calc 𝔼 v, (if v ∈ B then α else 0) ^ 2 = dens B * α ^ 2 := expect_ite_const_sq B α
+  · calc 𝔼 v, (if v ∈ B then α else 0) ^ 2 = dens B * α ^ 2 := by
+          rw [← Fintype.expect_boole_mem B, expect_mul]
+          exact expect_congr rfl fun v _ => by split_ifs <;> simp
       _ ≤ μ * (μ * 𝔼 v, x v ^ 2) := by
           have := expect_nonneg (s := (univ : Finset V)) fun v _ => sq_nonneg (x v)
           gcongr
@@ -231,7 +227,7 @@ private theorem expect_weightedWalk_ite_sq_le [Nonempty D] {μ : ℝ} (t : ℕ) 
   induction t with
   | zero =>
     intro B hB
-    rw [weightedWalk_zero, expect_ite_const_sq]
+    rw [weightedWalk_zero, Fintype.expect_boole_mem_sq]
     simpa using hB 0
   | succ t ih =>
     intro B hB
