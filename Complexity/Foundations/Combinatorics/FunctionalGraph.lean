@@ -173,10 +173,10 @@ theorem exists_iterate_mem_periodicPts (x : α) : ∃ t, f^[t] x ∈ periodicPts
   · exact ⟨i, mk_mem_periodicPts (by omega) (isPeriodicPt_of_iterate_eq hij.le he)⟩
   · exact ⟨j, mk_mem_periodicPts (by omega) (isPeriodicPt_of_iterate_eq hji.le he.symm)⟩
 
+open scoped Classical in
 /-- The transient depth of `x`: the first time its orbit is periodic. -/
-noncomputable def transientDepth (x : α) : ℕ := by
-  classical
-  exact Nat.find (exists_iterate_mem_periodicPts f x)
+noncomputable def transientDepth (x : α) : ℕ :=
+  Nat.find (exists_iterate_mem_periodicPts f x)
 
 theorem iterate_transientDepth_mem_periodicPts (x : α) :
     f^[transientDepth f x] x ∈ periodicPts f := by
