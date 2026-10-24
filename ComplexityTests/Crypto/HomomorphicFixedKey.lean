@@ -167,7 +167,7 @@ example : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
     (fun p => (FixedKey.scheme decryptionCircuits).encrypt p.1 p.2.1 p.2.2) :=
   FixedKey.isPPTOn_scheme_encrypt encrypt_ppt decryptionCircuits
 
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : ℕ × List Bool × List Bool =>
       (FixedKey.scheme decryptionCircuits).decrypt p.1 p.2.1 p.2.2)
     (encPair encUnary (encPair encBits encBits)) encBool :=
