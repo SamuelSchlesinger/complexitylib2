@@ -1708,6 +1708,7 @@ public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Languages.Probabilistic.CenteredBinomial
 public import Complexity.Languages.Probabilistic.Concentration
+public import Complexity.Languages.Probabilistic.Forking
 public import Complexity.Languages.Probabilistic.Iteration
 public import Complexity.Languages.Probabilistic.LinearHash
 public import Complexity.Languages.Probabilistic.Memoize
@@ -1849,6 +1850,7 @@ public import Complexity.Probability.Divergence
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.EntropyConcentration
 public import Complexity.Probability.EntropyExtraction
+public import Complexity.Probability.Forking
 public import Complexity.Probability.Guessing
 public import Complexity.Probability.HashIsolation
 public import Complexity.Probability.IID

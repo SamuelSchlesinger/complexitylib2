@@ -86,6 +86,7 @@ import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.Bootstrapping
 import ComplexityTests.Crypto.Encryption
 import ComplexityTests.Crypto.FixedKeySecurity
+import ComplexityTests.Crypto.Forking
 import ComplexityTests.Crypto.GMWPointwise
 import ComplexityTests.Crypto.GSW
 import ComplexityTests.Crypto.GSWDecryption
