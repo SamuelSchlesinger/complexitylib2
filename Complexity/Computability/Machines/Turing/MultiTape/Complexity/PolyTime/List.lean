@@ -854,6 +854,19 @@ theorem anyWithInput {α : Type}
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.anyWithInput α γ encA encIn test list
       hlist.tidy htest.tidy)
 
+/-- Concatenate raw bit strings, charging for both computed words. -/
+@[fun_prop]
+theorem bitsAppend {γ : Type}
+    {encIn : γ ↪ List Bool}
+    {left : γ → List Bool}
+    {right : γ → List Bool}
+    (hleft : ComputableInPolyTime left encIn encBits)
+    (hright : ComputableInPolyTime right encIn encBits) :
+    ComputableInPolyTime (fun (x : γ) => left x ++ right x) encIn
+  encBits :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsAppend γ encIn left right
+      hleft.tidy hright.tidy)
+
 /-- Reverse a raw bit string using an accumulator that grows by one bit per step. -/
 @[fun_prop]
 theorem bitsReverse :

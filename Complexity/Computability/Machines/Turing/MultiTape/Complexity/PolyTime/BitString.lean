@@ -477,4 +477,18 @@ theorem bitsAnyWithInput {α : Type}
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsAnyWithInput α input list test
       hlist.tidy htest.tidy)
 
+/-- Self-delimiting padding uses ordinary framing and unary arithmetic. -/
+@[fun_prop]
+theorem bitsPadWord {α : Type}
+    {input : α ↪ List Bool}
+    {bound : α → ℕ}
+    {word : α → List Bool}
+    (hbound : ComputableInPolyTime bound input encUnary)
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime
+  (fun (a : α) => Cslib.BitString.padWord (bound a) (word a)) input
+  encBits :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsPadWord α input bound word
+      hbound.tidy hword.tidy)
+
 end Turing.MultiTapeTM.ComputableInPolyTime

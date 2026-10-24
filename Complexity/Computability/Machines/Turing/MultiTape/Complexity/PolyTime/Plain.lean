@@ -335,4 +335,14 @@ theorem ite' {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β}
     ComputableInPolyTime (fun x => if c x then f x else g x) encIn encMid :=
   .of_tidy (hc.tidy.ite' hf.tidy hg.tidy)
 
+
+/-- Return the encoded word of an already computed value. The source and result encodings of
+that value remain fixed; this reads the representation already produced by its certificate. -/
+@[fun_prop]
+theorem encoding_comp {δ : Type*} {ε : Type*} {input : δ ↪ List Bool}
+    {output : ε ↪ List Bool} {f : δ → ε} (hf : ComputableInPolyTime f input output) :
+    ComputableInPolyTime (fun a => output (f a)) input encBits :=
+  (ComputableInPolyTime.of_eq (fun _ => rfl) :
+    ComputableInPolyTime output output encBits).comp hf
+
 end Turing.MultiTapeTM.ComputableInPolyTime

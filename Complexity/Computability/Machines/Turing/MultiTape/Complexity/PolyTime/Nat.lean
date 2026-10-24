@@ -222,4 +222,12 @@ theorem unary_eval (p : Polynomial ℕ) :
   encUnary encUnary :=
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_eval p)
 
+/-- Truncated subtraction of unary naturals. -/
+@[fun_prop]
+theorem unary_sub :
+    ComputableInPolyTime (fun (p : ℕ × ℕ) => p.1 - p.2)
+  (encPair encUnary encUnary)
+  encUnary :=
+  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_sub
+
 end Turing.MultiTapeTM.ComputableInPolyTime
