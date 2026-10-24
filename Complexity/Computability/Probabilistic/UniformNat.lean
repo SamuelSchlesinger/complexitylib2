@@ -10,6 +10,7 @@ module
 public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Computability.Probabilistic.Sampling
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
 import Complexity.Tactic.PPT
@@ -25,7 +26,7 @@ loop is used.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_dyadicSize`: efficient unary range size.
+* `Turing.MultiTapeTM.ComputableInPolyTime.unary_dyadicSize`: efficient unary range size.
 * `Cslib.Probability.isPPTOn_sampleBinaryNat`: uniform sampling with binary output.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleBinaryNat`: sample a computed bit width.
 * `Cslib.Probability.isPPTOn_sampleModNat`: approximately uniform residues, for a computed bit width
@@ -54,6 +55,14 @@ theorem unary_dyadicSize : ComputableTidilyInPolyTime Cslib.Probability.dyadicSi
   fun_prop
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+/-- Compute the linearly capped dyadic range from a unary bound in plain polynomial time. -/
+@[fun_prop]
+theorem Turing.MultiTapeTM.ComputableInPolyTime.unary_dyadicSize :
+    Turing.MultiTapeTM.ComputableInPolyTime Cslib.Probability.dyadicSize
+      Turing.MultiTapeTM.encUnary Turing.MultiTapeTM.encUnary :=
+  Turing.MultiTapeTM.ComputableInPolyTime.of_tidy
+    Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_dyadicSize
 
 namespace Cslib.Probability
 

@@ -9,6 +9,8 @@ module
 
 public import Complexity.Languages.Probabilistic.LinearHash
 public import Complexity.Computability.Probabilistic.PPT
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Probabilistic.Sampling
@@ -23,7 +25,7 @@ The full extractor charges sampling, hashing and copying its complete public see
 
 ## Main results
 
-* `Cslib.BitString.LinearHash.computableTidilyInPolyTime_wordHash`: deterministic hashing.
+* `Cslib.BitString.LinearHash.computableInPolyTime_wordHash`: deterministic hashing.
 * `Cslib.BitString.LinearHash.isPPTOn_extract`: the complete seeded sampler.
 
 ## References
@@ -49,6 +51,17 @@ theorem computableTidilyInPolyTime_wordHash {α : Type} {encode : α ↪ List Bo
       encode encBits := by
   unfold wordHash
   fun_prop
+
+/-- Hash plain polynomial-time words, retaining unary output dimensions and the full input. -/
+@[fun_prop]
+theorem computableInPolyTime_wordHash {α : Type} {encode : α ↪ List Bool}
+    {count : α → ℕ} {seed input : α → List Bool}
+    (hcount : ComputableInPolyTime count encode encUnary)
+    (hseed : ComputableInPolyTime seed encode encBits)
+    (hinput : ComputableInPolyTime input encode encBits) :
+    ComputableInPolyTime (fun a => wordHash (count a) (seed a) (input a))
+      encode encBits :=
+  .of_tidy (computableTidilyInPolyTime_wordHash hcount.tidy hseed.tidy hinput.tidy)
 
 /-- The complete extractor is uniformly strict PPT, including the revealed matrix seed. -/
 @[program_certificate]

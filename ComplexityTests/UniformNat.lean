@@ -79,3 +79,10 @@ example : IsPPTOn encUnary encNat (fun n => sampleModNat (n + 8) (2 * n + 3)) :=
   isPPTOn_sampleModNat (by fun_prop) (by fun_prop)
 
 end ComplexityTests.UniformNat
+
+-- An arbitrary plain bound composes with the capped unary dyadic-size provider.
+example {α : Type} {encode : α ↪ List Bool} {bound : α → ℕ}
+    (hbound : Turing.MultiTapeTM.ComputableInPolyTime bound encode Turing.MultiTapeTM.encUnary) :
+    Turing.MultiTapeTM.ComputableInPolyTime
+      (fun a => Cslib.Probability.dyadicSize (bound a)) encode Turing.MultiTapeTM.encUnary := by
+  fun_prop

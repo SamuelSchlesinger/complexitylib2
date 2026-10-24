@@ -94,3 +94,14 @@ example : ¬ ∃ rows : Fin 0 → BitString 1,
   2 * (S.offDiag.filter fun p => hash rows p.1 = hash rows p.2).card ≤ S.offDiag.card)
 
 end ComplexityTests.LinearHash
+
+-- Plain callbacks share the entire captured input; no sampler or raw certificate is required.
+example {α : Type} {encode : α ↪ List Bool}
+    {count : α → ℕ} {seed input : α → List Bool}
+    (hcount : Turing.MultiTapeTM.ComputableInPolyTime count encode Turing.MultiTapeTM.encUnary)
+    (hseed : Turing.MultiTapeTM.ComputableInPolyTime seed encode Turing.MultiTapeTM.encBits)
+    (hinput : Turing.MultiTapeTM.ComputableInPolyTime input encode Turing.MultiTapeTM.encBits) :
+    Turing.MultiTapeTM.ComputableInPolyTime
+      (fun a => Cslib.BitString.LinearHash.wordHash (count a) (seed a) (input a))
+      encode Turing.MultiTapeTM.encBits := by
+  fun_prop
