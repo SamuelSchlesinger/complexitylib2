@@ -117,6 +117,25 @@ example : ComputableInPolyTime rawOnlyReverseProbe encBits encBits := by
   fail_if_success polytime
   exact .of_tidy rawOnlyReverseProbe_tidy
 
+/-- Function-table rules must respect the same boundary as transition rules. -/
+@[irreducible] def aliasRoutine (routine : List Bool → List Bool) (word : List Bool) :
+    List Bool := routine word
+
+/-- The explicit proof API remains usable, while its aliased raw premise excludes global search. -/
+@[fun_prop] theorem aliasRoutine_plain {routine : List Bool → List Bool}
+    (h : RawAliasFull routine encBits encBits) :
+    ComputableInPolyTime (aliasRoutine routine) encBits encBits := by
+  unfold aliasRoutine
+  exact .of_tidy h
+
+example : ComputableInPolyTime (aliasRoutine rawOnlyReverseProbe) encBits encBits := by
+  fail_if_success polytime
+  exact aliasRoutine_plain rawOnlyReverseProbe_tidy
+
+-- The copied search tables do not remove the ordinary global function rule.
+example : ComputableInPolyTime (aliasRoutine rawOnlyReverseProbe) encBits encBits := by
+  fun_prop
+
 -- An already supplied alias certificate is evidence, not a raw search request.
 example (routine : List Bool → List Bool) (h : RawAliasFull routine encBits encBits) :
     ComputableInPolyTime routine encBits encBits := by
