@@ -19,10 +19,13 @@ import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 Over `𝔽₂`, a map between additive groups is *affine* when it preserves sums of three points:
 `g (x + y + z) = g x + g y + g z` (`Cslib.BitString.IsAffine`). For maps between `𝔽₂`-vector
-spaces this is meant to be the usual notion, a translate of a linear map, and the images of the
-injective affine maps from `BitString d` are meant to be the affine subspaces of dimension `d` of
-the cube `BitString n`; neither correspondence is formalized here, and everything below is stated
-in terms of affine maps.
+spaces this is the usual notion, a translate of a linear map (`Cslib.BitString.IsAffine.toAffineMap`
+in `Complexity/Foundations/Combinatorics/AffineDisperser/AffineSubspace.lean`), and the image of an
+injective affine map from `BitString d` is an affine subspace of dimension `d` of the cube
+`BitString n` (`Cslib.BitString.IsAffine.finrank_direction_map_top`), so nonconstancy on every
+`d`-dimensional affine subspace gives an affine disperser
+(`Cslib.BitString.isAffineDisperser_of_forall_exists_ne`); everything in this file is stated in
+terms of affine maps.
 
 A Boolean function `f` on `n` bits is an *affine disperser for dimension `d`* when it is
 nonconstant on the image of every injective affine map from `BitString d`
@@ -77,8 +80,9 @@ theorem isAffine_const {α β : Type*} [Add α] [AddGroup β] (h : ∀ b : β, b
     IsAffine (fun _ : α => c) := fun _ _ _ => by rw [h, zero_add]
 
 /-- `f` is an affine disperser for dimension `d`: it is nonconstant on the image of every
-injective affine map from `BitString d`. Informally these images are the affine subspaces of
-dimension `d`; that correspondence is not formalized here. -/
+injective affine map from `BitString d`. By `Cslib.BitString.IsAffine.finrank_direction_map_top`
+each such image is an affine subspace of dimension `d`, so nonconstancy on `d`-dimensional affine
+subspaces suffices (`Cslib.BitString.isAffineDisperser_of_forall_exists_ne`). -/
 def IsAffineDisperser {n : ℕ} (f : BitString n → Bool) (d : ℕ) : Prop :=
   ∀ g : BitString d → BitString n, IsAffine g → Function.Injective g → ∃ x y, f (g x) ≠ f (g y)
 
