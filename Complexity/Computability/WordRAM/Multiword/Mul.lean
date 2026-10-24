@@ -19,10 +19,21 @@ accumulator and shifted operand have the same length.
 
 ## Main definitions
 
-* `Cslib.WordRAM.Multiword.Schoolbook.row`: one complete multiply-add row.
-* `Cslib.WordRAM.Multiword.Schoolbook.rows`: the schoolbook multiplication routine.
-* `Cslib.WordRAM.Multiword.Schoolbook.fixedProgram`: a concrete register allocation for
-  arbitrary fixed operand lengths, including radix setup and accumulator clearing.
+* `Cslib.WordRAM.Multiword.Schoolbook.cell`, `Cslib.WordRAM.Multiword.Schoolbook.row`: one
+  multiply-add cell and one complete multiply-add row.
+* `Cslib.WordRAM.Multiword.Schoolbook.rows`, `Cslib.WordRAM.Multiword.Schoolbook.rowCost`,
+  `Cslib.WordRAM.Multiword.Schoolbook.clear`, `Cslib.WordRAM.Multiword.Schoolbook.program`:
+  the unrolled schoolbook rows, their instruction cost, accumulator clearing, and full
+  multiplication routine.
+* `Cslib.WordRAM.Multiword.Schoolbook.registers`,
+  `Cslib.WordRAM.Multiword.Schoolbook.leftRegs`,
+  `Cslib.WordRAM.Multiword.Schoolbook.rightRegs`,
+  `Cslib.WordRAM.Multiword.Schoolbook.outputRegs`,
+  `Cslib.WordRAM.Multiword.Schoolbook.lowRegs`,
+  `Cslib.WordRAM.Multiword.Schoolbook.highRegs`,
+  `Cslib.WordRAM.Multiword.Schoolbook.fixedProgram`,
+  `Cslib.WordRAM.Multiword.Schoolbook.input`: a concrete register allocation and input
+  encoding for arbitrary fixed operand lengths.
 
 ## Main results
 
@@ -244,6 +255,7 @@ theorem rowCost_eq (m n : ℕ) :
       ring
   simpa only [Nat.choose_two_right] using h
 
+/-- The instruction count of `rows` equals `rowCost` on the operand lengths. -/
 theorem size_rows (as bs ds os : List (Fin (r + 4)))
     (hlen : bs.length = ds.length) (hos : os.length = as.length) :
     (rows as bs ds os).size = rowCost as.length bs.length := by
@@ -453,6 +465,7 @@ def clear : List (Fin (r + 4)) → Code .standard (r + 4)
   | [] => .op (.copy carry carry)
   | d :: ds => .seq (.op (.const d 0)) (clear ds)
 
+/-- Clearing `ds` takes one constant instruction per digit plus one final self-copy. -/
 theorem size_clear (ds : List (Fin (r + 4))) : (clear ds).size = ds.length + 1 := by
   induction ds with
   | nil => rfl
@@ -646,6 +659,7 @@ The code and register count depend only on the limb counts, not on the physical 
 def fixedProgram (m n : ℕ) : Code .standard (2 * (m + n) + 4) :=
   program (leftRegs m n) (rightRegs m n) (lowRegs m n) (highRegs m n)
 
+/-- Exact code size of the fixed-register schoolbook multiplication program. -/
 theorem size_fixedProgram (m n : ℕ) :
     (fixedProgram m n).size = 7 + n + rowCost m n := by
   obtain ⟨hl, hr, hd, ho⟩ := lengths m n

@@ -26,6 +26,11 @@ half-word digits per virtual value. Every virtual intermediate fits in `6w` bits
 
 * `MSB.Program.values`: the mathematical value at each virtual slot.
 * `MSB.Program.ops`: the source operations, with an unused placeholder at slot zero.
+* `MSB.Program.output`, `MSB.Program.zeroTest`: physical registers for the final scalar answer and
+  input-zero test.
+* `MSB.Program.positiveCode`, `MSB.Program.twoBitCode`, `MSB.Program.code`,
+  `MSB.Program.finishCode`: the compiled multiword graph, width-two fallback, and zero-dispatch
+  wrappers.
 * `MSB.Program.scalarCode`: composable register entry with charged workspace initialization.
 * `MSB.Program.program`: a halting program for the ordinary singleton input encoding.
 
@@ -465,6 +470,7 @@ def scalarCode (w : ℕ) : Code .standard (Bank.capacity 44 + 4) :=
   .seq (Bank.clear 44)
     (.seq (Transfer.split Bank.inputReg (Bank.regs (0 : Fin 44))) (finishCode w))
 
+/-- The scalar-entry MSB code has size at most `200000` at every word width. -/
 theorem size_scalarCode (w : ℕ) : (scalarCode w).size ≤ 200000 := by
   have hp := size_positiveCode w
   simp only [scalarCode, finishCode, Code.size, Bank.size_clear, Transfer.size_split,
@@ -503,6 +509,7 @@ theorem exec_scalarCode {w : ℕ} (hw : 3 ≤ w) (x : Data (Bank.capacity 44 + 4
 def program (w : ℕ) : Cslib.WordRAM.Program .standard (Bank.capacity 44 + 4) :=
   (code w).program output
 
+/-- The assembled halting MSB program has at most `200001` instructions. -/
 theorem length_program (w : ℕ) : (program w).length ≤ 200001 := by
   have hs := size_code w
   simp only [program, Code.program, List.length_append, Code.length_assemble,

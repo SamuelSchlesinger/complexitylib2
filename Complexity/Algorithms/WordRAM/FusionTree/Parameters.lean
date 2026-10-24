@@ -25,7 +25,18 @@ complete fusion-tree query remain separate.
 
 ## Main definitions
 
-* `NodeParameters`: actual compression witnesses for a node.
+* `relevantCount`, `sourcePositions`: number and ordered enumeration of distinguishing bit
+  positions.
+* `NodeParameters`, `NodeParameters.choose`: actual compression witnesses for a node and classical
+  selector.
+* `NodeParameters.r`, `NodeParameters.b`, `NodeParameters.C`, `NodeParameters.M`,
+  `NodeParameters.D`: selected-bit count, compressed payload width, input mask, multiplier, and
+  retained output mask.
+* `NodeParameters.compressed`, `NodeParameters.sketches`: arithmetic compressed sketch and stored
+  node sketches.
+* `NodeParameters.copies`, `NodeParameters.packed`, `NodeParameters.packedComplement`,
+  `NodeParameters.guards`, `NodeParameters.middle`, `NodeParameters.radix`,
+  `NodeParameters.maximum`: packed-comparison constants.
 * `NodeParameters.words`: fifteen physical parameter words, independent of the node header.
 
 ## Main results
@@ -131,6 +142,7 @@ private theorem diagonal_strictMono_sub (p : NodeParameters w keys) :
   dsimp only at *
   omega
 
+/-- The retained output mask fits in `p.b` bits. -/
 theorem D_lt (p : NodeParameters w keys) : p.D < 2 ^ p.b := by
   apply positionMask_lt _ p.diagonal_strictMono_sub.injective
   intro i
@@ -148,6 +160,7 @@ theorem M_lt (p : NodeParameters w keys) : p.M < 2 ^ (w + p.b) := by
   exact positionMask_lt _ hm
     (fun i => lt_of_le_of_lt (Nat.le_add_left _ _) (p.span i).2)
 
+/-- Every compressed sketch fits in `p.b` bits. -/
 theorem compressed_lt (p : NodeParameters w keys) (x : ℕ) :
     p.compressed x < 2 ^ p.b := Nat.and_le_right.trans_lt p.D_lt
 
@@ -190,6 +203,7 @@ private theorem C_fit (p : NodeParameters w keys) (hsorted : StrictMono keys)
   exact Finset.mem_range.mp (relevantBits_subset_range hsorted hbound
     (Finset.orderEmbOfFin_mem _ rfl i))
 
+/-- Every stored sketch fits in `p.b` bits. -/
 theorem sketches_lt (p : NodeParameters w keys) (i : ℕ) : p.sketches i < 2 ^ p.b :=
   p.compressed_lt _
 

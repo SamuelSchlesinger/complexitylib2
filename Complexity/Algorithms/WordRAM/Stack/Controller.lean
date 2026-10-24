@@ -20,9 +20,10 @@ needed because the reserved stack starts empty.
 
 ## Main definitions
 
-* `roundTrip`: push the argument register and pop its value back.
+* `roundTrip`, `setup`: push/pop round trip and four-instruction stack initialization.
 * `code`: initialize one reserved cell and execute the adaptive controller.
 * `client`: the same adaptive computation over the abstract stack interface.
+* `positive`: the word-valued function `max n 1` computed by the adaptive stack controller.
 
 ## Main results
 

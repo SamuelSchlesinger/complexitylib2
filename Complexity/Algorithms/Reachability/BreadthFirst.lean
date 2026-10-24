@@ -26,6 +26,7 @@ iteration, as polynomial-time certificates need.
 
 ## Main definitions
 
+* `Cslib.Reachability.insertNew`: append an element to a list if not already present.
 * `Cslib.Reachability.expand`: one round of breadth-first search.
 * `Cslib.Reachability.search`: a number of rounds from a start element.
 
@@ -59,8 +60,10 @@ def expand (succ : α → List α) (found : List α) : List α :=
 def search (succ : α → List α) (rounds : ℕ) (start : α) : List α :=
   (expand succ)^[rounds] [start]
 
+/-- Zero rounds of breadth-first search return the singleton list `[start]`. -/
 @[simp] theorem search_zero (start : α) : search succ 0 start = [start] := rfl
 
+/-- `rounds + 1` rounds of breadth-first search apply `expand` to the result of `rounds` rounds. -/
 theorem search_succ (rounds : ℕ) (start : α) :
     search succ (rounds + 1) start = expand succ (search succ rounds start) :=
   Function.iterate_succ_apply' _ _ _

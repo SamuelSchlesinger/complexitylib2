@@ -20,7 +20,13 @@ The retained window fits inside the third product digit, including at odd physic
 
 ## Main definitions
 
-* `CompressProgram.code`: a fixed standard-basis compression program.
+* `CompressProgram.embed`, `CompressProgram.query`, `CompressProgram.positions`,
+  `CompressProgram.retained`, `CompressProgram.offset`, `CompressProgram.out`,
+  `CompressProgram.base`, `CompressProgram.a₀`, `CompressProgram.a₁`, `CompressProgram.a₂`,
+  `CompressProgram.productDigit`: register embedding and named registers of the compression
+  workspace.
+* `CompressProgram.split`, `CompressProgram.code`: query digit-splitting fragment and fixed
+  standard-basis compression program.
 
 ## Main results
 
@@ -133,6 +139,7 @@ def code : Code .standard 21 :=
       out ← productDigit >>> offset;
       out ← out &&& retained ])))
 
+/-- The compression program consists of `94` primitive instructions. -/
 theorem size_code : code.size = 94 := by
   simp only [code, Code.size, Code.size_rename, Schoolbook.size_fixedProgram_eq]
   rfl

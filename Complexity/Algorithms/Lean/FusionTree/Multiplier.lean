@@ -27,6 +27,8 @@ Preprocessing is mathematical; no preprocessing-time or RAM-execution bound is a
 
 ## Main definitions
 
+* `positionMask`: bitmask selecting the significant bit positions `b`.
+* `approximateSketch`: product of the masked key with the multiplier formed from shifts `m`.
 * `spreadShift`: a bounded residue shifted by a multiple of the collision modulus.
 
 ## Main results

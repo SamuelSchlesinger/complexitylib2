@@ -29,6 +29,7 @@ values are live. No allocator or dynamically growing capacity is assumed.
 
 * `QueueRep`: the FIFO representation hiding the split into two stacks.
 * `certificate`: a semantic realization of the bounded queue interface.
+* `potential`: rear-stack credit read from the persistent length register.
 * `amortized`: the separate instruction-cost certificate with rear-stack potential.
 
 ## Main results

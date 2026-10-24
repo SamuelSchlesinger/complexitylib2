@@ -38,10 +38,13 @@ namespace Cslib.Algorithms.Lean.VanEmdeBoas.Tree
 
 variable {d : ℕ}
 
+/-- A leaf with bounds `some (m, M)` contains `y` iff `y = m` or `y = M`. -/
 @[simp] theorem contains_leaf_some (m M y : ℕ) :
     (leaf (some (m, M))).Contains y ↔ y = m ∨ y = M := by
   simp [Contains]
 
+/-- An internal node with bounds `some (m, M)` contains `y` iff `y = m` or `y` is in some
+cluster. -/
 @[simp] theorem contains_node_some (m M : ℕ) (s : Tree d)
     (c : Fin (universeSize d) → Tree d) (y : ℕ) :
     (node (some (m, M)) s c).Contains y ↔

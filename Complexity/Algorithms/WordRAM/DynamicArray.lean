@@ -22,12 +22,28 @@ the doubling array to `Cslib.Stateful` and `Cslib.Stateful.Amortized`.
 
 ## Main definitions
 
-* `Cslib.Algorithms.WordRAM.DynamicArray.program`: the fixed twelve-register append procedure.
+* `Cslib.Algorithms.WordRAM.DynamicArray.ptr`, `Cslib.Algorithms.WordRAM.DynamicArray.dest`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.len`, `Cslib.Algorithms.WordRAM.DynamicArray.idx`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.addr`, `Cslib.Algorithms.WordRAM.DynamicArray.temp`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.one`, `Cslib.Algorithms.WordRAM.DynamicArray.cap`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.frontier`, `Cslib.Algorithms.WordRAM.DynamicArray.arg`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.count`, `Cslib.Algorithms.WordRAM.DynamicArray.zero`:
+  the twelve register names.
+* `Cslib.Algorithms.WordRAM.DynamicArray.copy`, `Cslib.Algorithms.WordRAM.DynamicArray.grow`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.program`: the copy, growth, and append procedures.
 * `Cslib.Algorithms.WordRAM.DynamicArray.getProgram`: the two-instruction indexed read procedure.
 * `Cslib.Algorithms.WordRAM.DynamicArray.initProgram`: charged fifteen-instruction initializer.
 * `Cslib.Algorithms.WordRAM.DynamicArray.dispatch`: fixed append/get operation dispatcher.
-* `Cslib.Algorithms.WordRAM.DynamicArray.Rep`: the live array and allocator frontier invariant.
+* `Cslib.Algorithms.WordRAM.DynamicArray.Rep`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.BoundedRep`: the live array and allocator frontier
+  invariants.
 * `Cslib.Algorithms.WordRAM.DynamicArray.potential`: natural-valued credit `15 * (2 * |vs| - cap)`.
+* `Cslib.Algorithms.WordRAM.DynamicArray.Op`, `Cslib.Algorithms.WordRAM.DynamicArray.spec`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.implementation`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.charge`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.certificate`,
+  `Cslib.Algorithms.WordRAM.DynamicArray.appendAll`: the `Stateful` specification, dynamic
+  program realization, amortized charge, and bulk-append client.
 
 ## Main results
 

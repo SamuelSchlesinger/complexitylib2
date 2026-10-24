@@ -30,9 +30,25 @@ loop rule `Cslib.WordRAM.ExecWithin.loop_invariant`.
 
 ## Main definitions
 
-* `Cslib.Algorithms.WordRAM.ElementDistinctness.decider`,
+* `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.zero`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.one`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.len`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.front`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.cnt`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.base`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.cur`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.idx`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.val`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.tmp`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.seen`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.Reg.ans`: the twelve register names.
+* `Cslib.Algorithms.WordRAM.ElementDistinctness.setup`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.body`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.decider`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.setupAdditive`,
+  `Cslib.Algorithms.WordRAM.ElementDistinctness.bodyAdditive`,
   `Cslib.Algorithms.WordRAM.ElementDistinctness.deciderAdditive`: the structured decision
-  procedure over `Basis.standard` and `Basis.additive`.
+  procedure and its setup and loop body over `Basis.standard` and `Basis.additive`.
 * `Cslib.Algorithms.WordRAM.ElementDistinctness.Input`: lists whose entries are below their
   length.
 
@@ -141,6 +157,7 @@ def bodyAdditive : Code .additive 12 :=
 def deciderAdditive : Code .additive 12 :=
   .seq setupAdditive (.loop (.lt idx base) bodyAdditive)
 
+/-- Mapping additive-basis operations to the standard basis recovers `decider`. -/
 @[simp]
 theorem deciderAdditive_mapOp :
     deciderAdditive.mapOp Basis.additiveHomStandard = decider := rfl

@@ -30,8 +30,8 @@ initializer `initProgram` with arbitrary adaptive client histories (`run_initial
 ## Main definitions
 
 * `setupData`: mathematical description of the twelve charged setup instructions.
-* `Operation`, `spec`, `dynamicProgram`, `SetRep`, `certificate`: the stateful finite-set
-  specification and its fixed-program Word-RAM realization.
+* `Operation`, `Operation.Result`, `spec`, `dynamicProgram`, `SetRep`, `certificate`: the
+  stateful finite-set specification and its fixed-program Word-RAM realization.
 
 ## Main results
 
@@ -420,6 +420,7 @@ structure SetRep (d base stackBase₀ w : ℕ) (s : Finset ℕ) (x : Data 32) : 
   stackBase_eq : x.regs stackBase = stackBase₀
   tree : ∃ t : Tree d, t.Valid ∧ t.elements = s ∧ Rep t base x.mem
 
+/-- Every encoded argument of a valid van Emde Boas operation fits the machine word width. -/
 theorem arguments_fit {d w base stackBase₀ : ℕ}
     (hstk_lo : base + span d ≤ stackBase₀) (hstk_fit : Fits w (stackBase₀ + 4 * d))
     {s : Finset ℕ} (o : Operation) (ho : (spec d w).valid s o) (j : Fin 32) :

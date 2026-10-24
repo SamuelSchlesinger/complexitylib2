@@ -18,7 +18,8 @@ the array size, query position and tree pointer are register inputs.
 
 ## Main definitions
 
-* `queryLoop`: a fixed program for prefix queries.
+* `queryBody`, `queryLoop`, `queryNext`: one iteration of a prefix query, the fixed prefix-query
+  loop, and the state transition of one iteration.
 
 ## Main results
 
@@ -79,6 +80,7 @@ private theorem queryBody_exec (hx : Entry b n i δ x) (hi : i ≤ n) (hn : 0 < 
       ram_eval [queryBody, queryNext, hp, hn', hi', hxans, he, ho, ht, hc, hf, hb, hb',
         hb'', hi'', hs]
 
+/-- One prefix-query iteration leaves RAM memory unchanged. -/
 @[simp]
 theorem queryNext_mem : (queryNext x b n i a).mem = x.mem := by
   simp only [queryNext]

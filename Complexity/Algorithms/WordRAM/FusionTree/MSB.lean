@@ -25,10 +25,16 @@ MIT 6.851 Spring 2021 lecture 12 notes,
 
 ## Main definitions
 
+* `ones`, `powers`, `guards`, `powerCount`: packed all-ones multiplier, packed power ladder,
+  guard bits and comparison count for parallel power-of-two comparisons.
 * `powerFlags`: parallel comparisons against consecutive powers of two.
 * `smallMSB`: count the successful comparisons and subtract one.
+* `clusterMask`, `clusterMarkers`, `compressionShift`, `compressionMultiplier`: cluster mask,
+  nonzero-cluster markers, shift and multiplier for compressing cluster markers.
 * `clusterSummary`: compress the nonzero-cluster markers by multiplication.
-* `widthMSB`: two comparison/count stages for arbitrary input widths.
+* `msb`, `clusterSize`, `widthMSB`: two-stage MSB expression, cluster width `√w` and width-`w` MSB.
+* `powerStageValues`, `clusterStageValues`: virtual-register intermediate values for the
+  power-of-two and cluster stages.
 
 ## Main results
 

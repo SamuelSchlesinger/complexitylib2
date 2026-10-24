@@ -19,7 +19,17 @@ allows the same bounded program to handle cuts at either end of the array.
 
 ## Main definitions
 
+* `NeighborProgram.query`, `NeighborProgram.cut`, `NeighborProgram.count`,
+  `NeighborProgram.base`, `NeighborProgram.stride`, `NeighborProgram.one`,
+  `NeighborProgram.leftIndex`, `NeighborProgram.rightIndex`, `NeighborProgram.excess`,
+  `NeighborProgram.address`, `NeighborProgram.leftKey`, `NeighborProgram.rightKey`,
+  `NeighborProgram.leftXor`, `NeighborProgram.rightXor`, `NeighborProgram.chosen`,
+  `NeighborProgram.divergence`, `NeighborProgram.index`: register assignments for loading and
+  comparing sketch neighbors.
+* `NeighborProgram.left`, `NeighborProgram.right`: clamped predecessor and successor indices.
 * `NeighborProgram.code`: load two full keys and choose the smaller exclusive or.
+* `NeighborProgram.loaded`, `NeighborProgram.result`: register and memory states after loading
+  both keys and after selecting the neighbor.
 
 ## Main results
 

@@ -43,6 +43,7 @@ the exponent leaves four bits of slack for the fifth-power capacity bound. -/
 def branching (w : ℕ) : ℕ :=
   if 9 ≤ Nat.log 2 w then 2 ^ ((Nat.log 2 w - 4) / 5) else 2
 
+/-- The fusion-tree branching factor `branching w` is always at least `2`. -/
 theorem two_le_branching (w : ℕ) : 2 ≤ branching w := by
   unfold branching
   split
