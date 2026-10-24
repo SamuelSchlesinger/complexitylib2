@@ -50,4 +50,37 @@ example : (parallelEdges (Fin 3)).MaxDegreeLE 3 := by
 example (π : Layout Bool) : (parallelEdges (Fin 3)).width π ≤ 3 := by
   simpa using (parallelEdges (Fin 3)).width_le_card π
 
+-- The Mathlib `Graph` bridge for a multigraph given by its endpoint map agrees with `edgeCut`.
+example (S : Finset Bool) :
+    ((_root_.Cslib.Multigraph.edgeCut (parallelEdges (Fin 3)).ends S : Finset (Fin 3)) :
+        Set (Fin 3)) =
+      (_root_.Cslib.Multigraph.toGraph (parallelEdges (Fin 3)).ends).edgeCut S :=
+  _root_.Cslib.Multigraph.coe_edgeCut_eq_toGraph_edgeCut (parallelEdges (Fin 3)).ends S
+
+/--
+info: 'Cslib.Multigraph.toGraph_isLink' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Multigraph.toGraph_isLink
+
+/--
+info: 'Cslib.Multigraph.incidenceSet_toGraph' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Multigraph.incidenceSet_toGraph
+
+/--
+info: 'Cslib.Multigraph.coe_incidence_eq_incidenceSet_toGraph' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Multigraph.coe_incidence_eq_incidenceSet_toGraph
+
+/--
+info: 'Cslib.Multigraph.coe_edgeCut_eq_toGraph_edgeCut' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Multigraph.coe_edgeCut_eq_toGraph_edgeCut
+
 end ComplexityTests.FrontierFiniteEdges

@@ -75,6 +75,14 @@ example (mix : PMF {S : Finset (Fin 3) // S.card = 2 ^ 1}) :
       uniformOfFinset S.1 (card_ne_zero.mp (S.2.trans_ne (pow_ne_zero 1 two_ne_zero)))) :=
   (le_minEntropy_iff_exists_eq_bind_uniformOfFinset _ 1).mpr ⟨mix, rfl⟩
 
+-- The uniform distribution on a nonempty finset gives each subset its relative cardinality under
+-- both `toOuterMeasure` and `toMeasure`.
+example (t : Set (Fin 3)) [DecidablePred (· ∈ t)] :
+    (uniformOfFinset ({0, 1} : Finset (Fin 3)) (by decide)).toMeasure t =
+      (({0, 1} : Finset (Fin 3)).filter (· ∈ t)).card /
+        ({0, 1} : Finset (Fin 3)).card :=
+  toMeasure_uniformOfFinset ({0, 1} : Finset (Fin 3)) (by decide) trivial
+
 /-! ### Weak random sources -/
 
 -- Uniform bit strings are sources of their full length.
@@ -318,5 +326,26 @@ info: 'Cslib.Probability.HasBoundedDifferences.pi_abs_sub_mean_ge' depends on ax
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.HasBoundedDifferences.pi_abs_sub_mean_ge
+
+/--
+info: 'Cslib.Probability.PMF.toOuterMeasure_uniformOfFinset' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.toOuterMeasure_uniformOfFinset
+
+/--
+info: 'Cslib.Probability.PMF.toOuterMeasure_uniformOfFinset_toReal' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.toOuterMeasure_uniformOfFinset_toReal
+
+/--
+info: 'Cslib.Probability.PMF.toMeasure_uniformOfFinset' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.toMeasure_uniformOfFinset
 
 end ComplexityTests.ProbabilityToolkit3
