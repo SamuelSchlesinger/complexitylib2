@@ -209,6 +209,7 @@ import ComplexityTests.HessianSourceComplexity
 import ComplexityTests.HierarchyTheorems
 import ComplexityTests.Hypercontractivity
 import ComplexityTests.InductiveCounting
+import ComplexityTests.IntBinaryDecode
 import ComplexityTests.IntBinaryDiv
 import ComplexityTests.InteractiveProofs
 import ComplexityTests.Isolation
