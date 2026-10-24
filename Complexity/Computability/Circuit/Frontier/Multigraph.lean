@@ -112,6 +112,8 @@ def incidenceSet (v : V) : Set E :=
 /-- Every vertex is incident to at most `d` edges. In a loopless multigraph this says that the
 maximum degree is at most `d`. The finite edge type ensures that natural cardinalities
 count every incident edge. -/
+-- Finiteness restricts the public domain; `ncard` itself does not require it.
+@[nolint unusedArguments]
 def MaxDegreeLE [Finite E] (d : ℕ) : Prop :=
   ∀ v, (G.incidenceSet v).ncard ≤ d
 
@@ -462,6 +464,8 @@ def frontier (t : ℕ) : Set E :=
   G.edgeCut (π.initial t)
 
 /-- The *width* of a layout with finitely many edges: the size of its largest frontier. -/
+-- Finiteness restricts the public domain; `ncard` itself does not require it.
+@[nolint unusedArguments]
 noncomputable def width [Finite E] : ℕ :=
   (Finset.range (Nat.card V)).sup fun t => (G.frontier π t).ncard
 
