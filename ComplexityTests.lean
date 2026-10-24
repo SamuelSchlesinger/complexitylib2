@@ -122,6 +122,7 @@ import ComplexityTests.Crypto.MerkleDamgard
 import ComplexityTests.Crypto.PlainConstructors
 import ComplexityTests.Crypto.SchnorrDiscreteLog
 import ComplexityTests.Crypto.SigmaIdentification
+import ComplexityTests.Crypto.Lyubashevsky
 import ComplexityTests.Crypto.SigmaProtocol
 import ComplexityTests.Crypto.Signature
 import ComplexityTests.Crypto.UntilBad

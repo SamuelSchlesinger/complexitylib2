@@ -1263,6 +1263,17 @@ Jukna coverage below is an additional target beyond the V1 port:
   PRF give a PRP, four give a strong PRP), strongly unforgeable MACs and Carter–Wegman MACs from
   Δ-universal hashing, and the Naor–Reingold PRF from the decisional Diffie–Hellman assumption.
 
+* **Lattice Sigma protocols and post-quantum signatures (#640, track B).** Proved (#645): the
+  [SIS hypothesis](Complexity/Crypto/Computational/SIS/Basic.lean) for power-of-two moduli, exact
+  [box rejection sampling](Complexity/Probability/RejectionSampling.lean),
+  [Sigma protocols with aborts](Complexity/Crypto/Protocols/SigmaProtocol/Abort.lean), and
+  [Lyubashevsky identification](Complexity/Crypto/Protocols/SigmaProtocol/Lyubashevsky.lean) with
+  completeness up to aborts and its exact abort probability, special soundness extracting a short
+  integer solution of `[A | T]`, and exact zero knowledge up to aborts. Open: Fiat–Shamir with
+  aborts and its signatures (after track A's random-oracle Fiat–Shamir), strict-PPT samplers for
+  integer boxes, identification security under SIS, general moduli, module SIS and module
+  lattices toward Dilithium-style schemes.
+
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should
 return as independently scoped, reviewed developments rather than automatic legacy ports. Retain
