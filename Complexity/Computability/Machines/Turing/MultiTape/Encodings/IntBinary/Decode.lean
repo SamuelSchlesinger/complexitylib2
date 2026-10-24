@@ -40,7 +40,7 @@ def decodeIntBin (word : List Bool) : ℤ :=
   if word.headD false then -(magnitude : ℤ) else magnitude
 
 /-- Every canonical signed binary word decodes to its original integer. -/
-@[simp] theorem decodeIntBin_encIntBin (z : ℤ) : decodeIntBin (encIntBin z) = z := by
+theorem decodeIntBin_encIntBin (z : ℤ) : decodeIntBin (encIntBin z) = z := by
   simp only [decodeIntBin, encIntBin_apply, List.tail_cons, List.headD_cons]
   change (if decide (z < 0) then -((Decoder.nat.decode (encNat z.natAbs) : ℕ) : ℤ)
     else ((Decoder.nat.decode (encNat z.natAbs) : ℕ) : ℤ)) = z
