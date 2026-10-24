@@ -965,128 +965,7 @@ theorem weaken
 
 end Turing.MultiTapeTM.ComputableInO
 
-namespace Turing.MultiTapeTM.ComputableInPolySpace
 
-/-- Agreement with a function computable within polynomial space. -/
-theorem congr
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {f g : α → β}
-    (h : ComputableInPolySpace f encIn encMid)
-    (hfg : ∀ (a : α), f a = g a) :
-    ComputableInPolySpace g encIn encMid := by
-  simp only [computableInPolySpace_iff_computableTidilyInPolySpace] at *
-  exact @ComputableTidilyInPolySpace.congr α β encIn encMid f g h hfg
-
-/-- **Iteration within polynomial space**: iterating a step computable within polynomial space a
-number of times computed in polynomial time in binary, from a start computable within polynomial
-space, is within polynomial space when all the states along the way have polynomial length. -/
-theorem iterate
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    [inst_1 : Inhabited β]
-    {n : α → ℕ}
-    {init : α → β}
-    {step : β → β}
-    (hn : ComputableInPolyTime n encIn encNat)
-    (hinit : ComputableInPolySpace init encIn encMid)
-    (hstep : ComputableInPolySpace step encMid encMid)
-    {B : α → ℕ}
-    (hB : PolyBounded (fun (a : α) => ((encIn : α → List Bool) a).length) B)
-    (hstate : ∀ (a : α), ∀ k ≤ n a, ((encMid : β → List Bool) (step^[k] (init a))).length ≤ B a) :
-    ComputableInPolySpace (fun (a : α) => step^[n a] (init a)) encIn
-      encMid := by
-  simp only [
-    computableInPolyTime_iff_computableTidilyInPolyTime,
-    computableInPolySpace_iff_computableTidilyInPolySpace] at *
-  exact @ComputableTidilyInPolySpace.iterate α β encIn encMid inst_1 n init step hn hinit hstep
-    B hB hstate
-
-/-- A fold over a binary count is polynomial-space when its step and seed are polynomial-space
-and every accumulator prefix has polynomially bounded encoded length. -/
-theorem natFold
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encState : β ↪ List Bool}
-    [inst_1 : Inhabited α]
-    [inst_2 : Inhabited β]
-    {step : α → ℕ → β → β}
-    {init : α → β}
-    {count bound : α → ℕ}
-    (hcount : ComputableInPolyTime count encIn encNat)
-    (hinit : ComputableInPolySpace init encIn encState)
-    (hstep : ComputableInPolySpace (fun (p : α × ℕ × β) => step p.1 p.2.1 p.2.2)
-  (encPair encIn
-    (encPair encNat encState))
-  encState)
-    (hbound : PolyBounded (fun (x : α) => ((encIn : α → List Bool) x).length) bound)
-    (hstates : ∀ (x : α),
-  ∀ k ≤ count x,
-    ((encState : β → List Bool)
-          (k.fold (fun (i : ℕ) (_x_1 : i < k) (a : β) => step x i a) (init x))).length ≤
-      bound x) :
-    ComputableInPolySpace
-      (fun (x : α) =>
-        (count x).fold (fun (i : ℕ) (_x_1 : i < count x) (a : β) => step x i a) (init x))
-      encIn encState := by
-  simp only [
-    computableInPolyTime_iff_computableTidilyInPolyTime,
-    computableInPolySpace_iff_computableTidilyInPolySpace] at *
-  exact @ComputableTidilyInPolySpace.natFold α β encIn encState inst_1 inst_2 step init count
-    bound hcount hinit hstep hbound hstates
-
-/-- A prefix invariant proves the fold's polynomial-space certificate and its final
-postcondition. The invariant and bound are proof data; only the count, seed and step run. -/
-theorem natFold_spec
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encState : β ↪ List Bool}
-    [inst_1 : Inhabited α]
-    [inst_2 : Inhabited β]
-    {step : α → ℕ → β → β}
-    {init : α → β}
-    {count bound : α → ℕ}
-    (hcount : ComputableInPolyTime count encIn encNat)
-    (hinit : ComputableInPolySpace init encIn encState)
-    (hstep : ComputableInPolySpace (fun (p : α × ℕ × β) => step p.1 p.2.1 p.2.2)
-  (encPair encIn
-    (encPair encNat encState))
-  encState)
-    (invariant : α → ℕ → β → Prop)
-    (hzero : ∀ (x : α), invariant x 0 (init x))
-    (hnext : ∀ (x : α) (k : ℕ) (a : β),
-  k < count x → invariant x k a → invariant x (k + 1) (step x k a))
-    (hbound : PolyBounded (fun (x : α) => ((encIn : α → List Bool) x).length) bound)
-    (hsize : ∀ (x : α) (k : ℕ) (a : β),
-  k ≤ count x → invariant x k a → ((encState : β → List Bool) a).length ≤ bound x) :
-    ComputableInPolySpace
-        (fun (x : α) =>
-          (count x).fold (fun (i : ℕ) (_x_1 : i < count x) (a : β) => step x i a) (init x))
-        encIn encState ∧
-      ∀ (x : α),
-        invariant x (count x)
-          ((count x).fold (fun (i : ℕ) (_x_1 : i < count x) (a : β) => step x i a) (init x)) := by
-  simp only [
-    computableInPolyTime_iff_computableTidilyInPolyTime,
-    computableInPolySpace_iff_computableTidilyInPolySpace] at *
-  exact @ComputableTidilyInPolySpace.natFold_spec α β encIn encState inst_1 inst_2 step init
-    count bound hcount hinit hstep invariant hzero hnext hbound hsize
-
-/-- The encoded values have polynomial length. -/
-theorem polyBounded_length
-    {α β : Type}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {f : α → β}
-    (h : ComputableInPolySpace f encIn encMid) :
-    PolyBounded (fun (a : α) => ((encIn : α → List Bool) a).length)
-      fun (a : α) => ((encMid : β → List Bool) (f a)).length := by
-  simp only [computableInPolySpace_iff_computableTidilyInPolySpace] at *
-  exact @ComputableTidilyInPolySpace.polyBounded_length α β encIn encMid f h
-
-end Turing.MultiTapeTM.ComputableInPolySpace
 
 namespace Turing.MultiTapeTM.ComputableInPolyTime
 
@@ -1188,13 +1067,6 @@ theorem biTape_write
       (encBiTape enc) := by
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.biTape_write Symbol α input enc tape symbol htape hsymbol
-
-/-- The binary counter in polynomial time. -/
-theorem increment :
-    ComputableInPolyTime Cslib.BitString.increment
-      encBits encBits := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.increment
 
 /-- Prepend a cell without requiring a default symbol or case analysis over the alphabet. -/
 theorem stackTape_cons
@@ -2160,7 +2032,6 @@ theorem weaken
 
 end Turing.MultiTapeTM.ComputableInSpace
 
-attribute [fun_prop] ComputableInPolyTime.increment
 attribute [fun_prop] ComputableInPolyTime.stackTape_toList
 attribute [fun_prop] ComputableInPolyTime.stackTape_head
 attribute [fun_prop] ComputableInPolyTime.stackTape_tail
