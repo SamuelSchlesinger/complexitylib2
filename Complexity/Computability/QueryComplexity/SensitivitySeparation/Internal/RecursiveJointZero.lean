@@ -63,12 +63,13 @@ theorem recursive_joint_zero_at {k r h : ℕ} {I : Type} [Fintype I]
   let V := GC.biUnion fun i =>
     childJointChanges F (gateIndex q') (gateIndex q) x (w i) (A.label i (w i))
   have hsub : (Finset.univ.filter fun p =>
-      recursiveFamily T A.label F q (flip x {p}) ≠ recursiveFamily T A.label F q x ∧
-      recursiveFamily T A.label F q' (flip x {p}) ≠ recursiveFamily T A.label F q' x) ⊆ U ∪ V := by
+      recursiveFamily T A.label F q (BitString.flipOn {p} x) ≠ recursiveFamily T A.label F q x ∧
+      recursiveFamily T A.label F q' (BitString.flipOn {p} x) ≠
+        recursiveFamily T A.label F q' x) ⊆ U ∪ V := by
     rintro ⟨⟨j, c⟩, a⟩ hp
     have hchange := (Finset.mem_filter.mp hp).2
-    have hon' : recursiveFamily T A.label F q' (flip x {((j, c), a)}) = true := by
-      cases hy : recursiveFamily T A.label F q' (flip x {((j, c), a)})
+    have hon' : recursiveFamily T A.label F q' (BitString.flipOn {((j, c), a)} x) = true := by
+      cases hy : recursiveFamily T A.label F q' (BitString.flipOn {((j, c), a)} x)
       · exact False.elim (hchange.2 (hy.trans hx'.symm))
       · rfl
     obtain ⟨i, hi'⟩ := (recursiveFamily_eq_true_iff T A.label F q' _).mp hon'
@@ -81,7 +82,7 @@ theorem recursive_joint_zero_at {k r h : ℕ} {I : Type} [Fintype I]
       apply Finset.mem_union_left
       apply Finset.mem_biUnion.mpr
       refine ⟨i, hit, ?_⟩
-      have hn : F (Fin.last h) (flip (recursiveChild x i c) {a}) ≠
+      have hn : F (Fin.last h) (BitString.flipOn {a} (recursiveChild x i c)) ≠
           F (Fin.last h) (recursiveChild x i c) := by simp [hton, htoff]
       simpa [childChanges, hc] using hn
     · have hj := gateWitness_unique T A.label F q x i hig j hij hgon
@@ -92,9 +93,9 @@ theorem recursive_joint_zero_at {k r h : ℕ} {I : Type} [Fintype I]
       apply Finset.mem_biUnion.mpr
       refine ⟨i, hig, ?_⟩
       have hn :
-          F (gateIndex q') (flip (recursiveChild x j (A.label i j)) {a}) ≠
+          F (gateIndex q') (BitString.flipOn {a} (recursiveChild x j (A.label i j))) ≠
             F (gateIndex q') (recursiveChild x j (A.label i j)) ∧
-          F (gateIndex q) (flip (recursiveChild x j (A.label i j)) {a}) ≠
+          F (gateIndex q) (BitString.flipOn {a} (recursiveChild x j (A.label i j))) ≠
             F (gateIndex q) (recursiveChild x j (A.label i j)) := by
         simp [hgon, hgoff, hgon', hgoff']
       simpa [childJointChanges, w, hj] using hn
@@ -112,7 +113,9 @@ theorem recursive_joint_zero_at {k r h : ℕ} {I : Type} [Fintype I]
         Nat.mul_le_mul_right _ (gateCandidates_card T A.label F hF q x)
   calc
     jointSensitivityAt (recursiveFamily T A.label F q) (recursiveFamily T A.label F q') x ≤
-        (U ∪ V).card := Finset.card_le_card hsub
+        (U ∪ V).card := by
+      unfold jointSensitivityAt
+      convert Finset.card_le_card hsub
     _ ≤ U.card + V.card := Finset.card_union_le _ _
     _ ≤ _ := Nat.add_le_add hU hV
 

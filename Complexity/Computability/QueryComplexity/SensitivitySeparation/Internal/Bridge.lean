@@ -14,17 +14,16 @@ public import Cslib.Computability.QueryComplexity.Measures
 /-!
 # Superquadratic sensitivity separation: agreement with the CSLib measures
 
-The separation construction works with its own flips and measures over an arbitrary finite
-coordinate type (`Internal.flip`, `Internal.sensitivity`, `Internal.blockSensitivity`), since it
-composes functions on product coordinate types. On the coordinates `Fin n` these agree with
-CSLib's `BitString.flipBlock`, `BitString.sensitivity` and `QueryComplexity.blockSensitivity`.
+The separation construction works with its own measures over an arbitrary finite coordinate type
+(`Internal.sensitivity`, `Internal.blockSensitivity`), defined in terms of `BitString.flipOn`,
+since it composes functions on product coordinate types. On the coordinates `Fin n` these agree
+with CSLib's `BitString.flipBlock`, `BitString.sensitivity` and `QueryComplexity.blockSensitivity`.
 Internal block families must consist of nonempty blocks, but this is no restriction: flipping
 the empty block never changes the value of a function.
 
 ## Main results
 
 * `Cslib.BitString.flipOn_eq_flipBlock`: on `Fin n`, `BitString.flipOn` is `BitString.flipBlock`.
-* `Internal.flip_eq_flipOn`: the internal flip is `BitString.flipOn`.
 * `Internal.sensitivity_eq_bitString_sensitivity`: the internal sensitivity is
   `BitString.sensitivity`.
 * `Internal.blockSensitivityAt_eq_queryComplexity_blockSensitivityAt`,
@@ -49,17 +48,13 @@ variable {n : ℕ}
     BitString.flipOn T x = BitString.flipBlock T x :=
   rfl
 
-/-- The internal flip is `BitString.flipOn`, for any decidable equality on the coordinates. -/
-theorem flip_eq_flipOn {I : Type} [DecidableEq I] (x : I → Bool) (B : Finset I) :
-    flip x B = BitString.flipOn B x := by
-  unfold flip
-  congr
-  exact Subsingleton.elim _ _
-
-/-- On `Fin n`, the internal flip is CSLib's `BitString.flipBlock`. -/
-private theorem flip_eq_flipBlock (x : BitString n) (B : Finset (Fin n)) :
-    flip x B = BitString.flipBlock B x :=
-  (flip_eq_flipOn x B).trans (BitString.flipOn_eq_flipBlock B x)
+/-- On `Fin n`, `BitString.flipOn` with the classical `DecidableEq` instance used by the internal
+measures is CSLib's `BitString.flipBlock`. -/
+private theorem flipOn_classical_eq_flipBlock {inst : DecidableEq (Fin n)} (T : Finset (Fin n))
+    (x : BitString n) :
+    @BitString.flipOn (Fin n) inst T x = BitString.flipBlock T x := by
+  funext i
+  simp [BitString.flipOn, BitString.flipBlock]
 
 /-- On `Fin n`, the internal pointwise sensitivity is `BitString.sensitivityAt`. -/
 private theorem sensitivityAt_eq_bitString_sensitivityAt (f : BooleanFunction n) (x : BitString n) :
@@ -67,8 +62,8 @@ private theorem sensitivityAt_eq_bitString_sensitivityAt (f : BooleanFunction n)
   unfold sensitivityAt BitString.sensitivityAt BitString.sensitiveCoords
   congr 1
   ext i
-  simp only [mem_filter, mem_univ, true_and, BitString.IsSensitiveCoord, flip_eq_flipBlock,
-    BitString.flipBlock_singleton]
+  simp only [mem_filter, mem_univ, true_and, BitString.IsSensitiveCoord,
+    flipOn_classical_eq_flipBlock, BitString.flipBlock_singleton]
 
 /-- On `Fin n`, the internal sensitivity is `BitString.sensitivity`. -/
 theorem sensitivity_eq_bitString_sensitivity (f : BooleanFunction n) :
@@ -87,19 +82,20 @@ theorem blockSensitivityAt_eq_queryComplexity_blockSensitivityAt (f : BooleanFun
   refine le_antisymm (Finset.sup_le fun F _ => ?_) (Finset.sup_le fun F hF => ?_)
   · split_ifs with h
     · refine card_le_blockSensitivityAt ⟨fun B hB => ?_, fun A hA B hB hAB => h.1 A hA B hB hAB⟩
-      rw [IsSensitiveBlock, ← flip_eq_flipBlock]
-      exact (h.2 B hB).2
+      simpa only [IsSensitiveBlock, flipOn_classical_eq_flipBlock] using (h.2 B hB).2
     · exact Nat.zero_le _
   · obtain ⟨hsens, hdisj⟩ := mem_sensitiveFamilies.mp hF
-    have h : (∀ A ∈ F, ∀ B ∈ F, A ≠ B → Disjoint A B) ∧
-        ∀ B ∈ F, B.Nonempty ∧ f (flip x B) ≠ f x := by
+    refine Finset.le_sup_of_le (mem_univ F) ?_
+    split_ifs with h
+    · rfl
+    · exfalso
+      apply h
       refine ⟨fun A hA B hB hAB => hdisj hA hB hAB, fun B hB => ⟨?_, ?_⟩⟩
       · rw [Finset.nonempty_iff_ne_empty]
         rintro rfl
         exact hsens _ hB (by rw [BitString.flipBlock_empty])
-      · rw [flip_eq_flipBlock]
+      · rw [flipOn_classical_eq_flipBlock]
         exact hsens B hB
-    exact Finset.le_sup_of_le (mem_univ F) (le_of_eq (ite_eq_left h).symm)
 
 /-- On `Fin n`, the internal block sensitivity is `QueryComplexity.blockSensitivity`. -/
 theorem blockSensitivity_eq_queryComplexity_blockSensitivity (f : BooleanFunction n) :

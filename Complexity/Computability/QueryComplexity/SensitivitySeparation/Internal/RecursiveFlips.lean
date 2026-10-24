@@ -44,19 +44,21 @@ noncomputable section
 
 namespace Internal
 
+open scoped Classical in
 /-- Flipping the raw coordinate `((j, c), a)` flips coordinate `a` of the child at `(j, c)`. -/
-theorem recursiveChild_flip_same {k r : ℕ} {I : Type}
+theorem recursiveChild_flip_same {k r : ℕ} {I : Type} [DecidableEq ((Fin k × Fin r) × I)]
     (x : ((Fin k × Fin r) × I) → Bool) (j : Fin k) (c : Fin r) (a : I) :
-    recursiveChild (flip x {((j, c), a)}) j c = flip (recursiveChild x j c) {a} :=
-  flip_prod_same x (j, c) a
+    recursiveChild (BitString.flipOn {((j, c), a)} x) j c =
+      BitString.flipOn {a} (recursiveChild x j c) :=
+  BitString.flipOn_prod_same x (j, c) a
 
 /-- Flipping the raw coordinate `((j, c), a)` does not change the child at any position
 `(j', c') ≠ (j, c)`. -/
-theorem recursiveChild_flip_other {k r : ℕ} {I : Type}
+theorem recursiveChild_flip_other {k r : ℕ} {I : Type} [DecidableEq ((Fin k × Fin r) × I)]
     (x : ((Fin k × Fin r) × I) → Bool) (j j' : Fin k) (c c' : Fin r) (a : I)
     (h : (j', c') ≠ (j, c)) :
-    recursiveChild (flip x {((j, c), a)}) j' c' = recursiveChild x j' c' :=
-  flip_prod_other x a h
+    recursiveChild (BitString.flipOn {((j, c), a)} x) j' c' = recursiveChild x j' c' :=
+  BitString.flipOn_prod_of_ne x a h
 
 /-- If `x` and `y` give the same target values on all children of row `i` and the same gate values
 on the children `(j, label i j)` for all out-neighbours `j` of `i`, then the clause of row `i` takes
@@ -79,18 +81,20 @@ private theorem rowClause_eq_of_conditions {k r h : ℕ} {I : Type} (T : Tournam
     exact ⟨fun c => (ht c).trans (hyt c),
       fun j hij => (hg j hij).trans (hyg j hij)⟩
 
+open scoped Classical in
 /-- Flipping `((j, c), a)` does not change the clause of row `i`, provided it does not change the
 target value of the child at `(j, c)` when `j = i`, nor its gate value when `T.Adj i j` and
 `c = label i j`. -/
-theorem rowClause_flip_eq {k r h : ℕ} {I : Type} (T : Tournament k)
+theorem rowClause_flip_eq {k r h : ℕ} {I : Type} [DecidableEq ((Fin k × Fin r) × I)]
+    (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (F : Fin (h + 1) → (I → Bool) → Bool)
     (q : Fin h) (x : ((Fin k × Fin r) × I) → Bool) (i j : Fin k) (c : Fin r) (a : I)
-    (ht : j = i → F (Fin.last h) (flip (recursiveChild x j c) {a}) =
+    (ht : j = i → F (Fin.last h) (BitString.flipOn {a} (recursiveChild x j c)) =
       F (Fin.last h) (recursiveChild x j c))
     (hg : T.Adj i j → c = label i j →
-      F (gateIndex q) (flip (recursiveChild x j c) {a}) =
+      F (gateIndex q) (BitString.flipOn {a} (recursiveChild x j c)) =
         F (gateIndex q) (recursiveChild x j c)) :
-    rowClause T label F q (flip x {((j, c), a)}) i = rowClause T label F q x i := by
+    rowClause T label F q (BitString.flipOn {((j, c), a)} x) i = rowClause T label F q x i := by
   apply rowClause_eq_of_conditions
   · intro c'
     by_cases heq : (i, c') = (j, c)
@@ -105,17 +109,20 @@ theorem rowClause_flip_eq {k r h : ℕ} {I : Type} (T : Tournament k)
       exact hg hij' rfl
     · rw [recursiveChild_flip_other x j j' c (label i j') a heq]
 
+open scoped Classical in
 /-- If flipping `((j, c), a)` changes the clause of row `i`, then either `j = i` and the flip
 changes the target value of the child at `(j, c)`, or `T.Adj i j`, `c = label i j` and the flip
 changes the gate value of that child. -/
-theorem rowClause_flip_change {k r h : ℕ} {I : Type} (T : Tournament k)
+theorem rowClause_flip_change {k r h : ℕ} {I : Type} [DecidableEq ((Fin k × Fin r) × I)]
+    (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (F : Fin (h + 1) → (I → Bool) → Bool)
     (q : Fin h) (x : ((Fin k × Fin r) × I) → Bool) (i j : Fin k) (c : Fin r) (a : I)
-    (hc : rowClause T label F q (flip x {((j, c), a)}) i ≠ rowClause T label F q x i) :
-    (j = i ∧ F (Fin.last h) (flip (recursiveChild x j c) {a}) ≠
+    (hc : rowClause T label F q (BitString.flipOn {((j, c), a)} x) i ≠
+      rowClause T label F q x i) :
+    (j = i ∧ F (Fin.last h) (BitString.flipOn {a} (recursiveChild x j c)) ≠
       F (Fin.last h) (recursiveChild x j c)) ∨
     (T.Adj i j ∧ c = label i j ∧
-      F (gateIndex q) (flip (recursiveChild x j c) {a}) ≠
+      F (gateIndex q) (BitString.flipOn {a} (recursiveChild x j c)) ≠
         F (gateIndex q) (recursiveChild x j c)) := by
   by_contra hn
   apply hc

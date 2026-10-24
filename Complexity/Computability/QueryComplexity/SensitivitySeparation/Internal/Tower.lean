@@ -178,6 +178,7 @@ theorem towerFamily_zero {k r : ℕ} {I : Type} (T : Tournament k)
     rw [he]
     exact hbase
 
+open scoped Classical in
 /-- If `0 < r` and every predicate of `base (h + n)` rejects the all-false input and accepts it
 after flipping any base block, then every predicate of the `n`-level tower family with `h` indices
 accepts the all-false input flipped on any block `towerBlocks blocks n b`. -/
@@ -185,12 +186,12 @@ theorem towerFamily_blocks {k r : ℕ} {I K : Type} (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (base : (h : ℕ) → Fin h → (I → Bool) → Bool)
     (blocks : K → Finset I) (hr : 0 < r) (n h : ℕ)
     (hzero : ∀ q, base (h + n) q (fun _ => false) = false)
-    (hblocks : ∀ b q, base (h + n) q (flip (fun _ => false) (blocks b)) = true) :
+    (hblocks : ∀ b q, base (h + n) q (BitString.flipOn (blocks b) (fun _ => false)) = true) :
     ∀ b q, towerFamily T label base n h q
-      (flip (fun _ => false) (towerBlocks blocks n b)) = true := by
+      (BitString.flipOn (towerBlocks blocks n b) (fun _ => false)) = true := by
   induction n generalizing h with
   | zero =>
-    change ∀ b q, base h q (flip (fun _ => false) (blocks b)) = true
+    change ∀ b q, base h q (BitString.flipOn (blocks b) (fun _ => false)) = true
     simpa only [Nat.add_zero] using hblocks
   | succ n ih =>
     intro b q
@@ -198,7 +199,8 @@ theorem towerFamily_blocks {k r : ℕ} {I K : Type} (T : Tournament k)
     have hz : ∀ q, base ((h + 1) + n) q (fun _ => false) = false := by
       rw [he]
       exact hzero
-    have hb : ∀ b q, base ((h + 1) + n) q (flip (fun _ => false) (blocks b)) = true := by
+    have hb : ∀ b q,
+        base ((h + 1) + n) q (BitString.flipOn (blocks b) (fun _ => false)) = true := by
       rw [he]
       exact hblocks
     exact recursiveFamily_rowLift T label _

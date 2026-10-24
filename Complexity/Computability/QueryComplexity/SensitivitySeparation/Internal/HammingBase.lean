@@ -48,56 +48,57 @@ namespace Internal
 
 variable {I C : Type} [Fintype I]
 
-open scoped Classical in
 /-- Flipping one coordinate yields an input at Hamming distance `1` from the original. -/
-private theorem hammingDist_flip_self (x : I → Bool) (i : I) :
-    hammingDist x (flip x {i}) = 1 := by
-  have h : (Finset.univ.filter fun j => x j ≠ flip x {i} j) = {i} := by
+private theorem hammingDist_flip_self [DecidableEq I] (x : I → Bool) (i : I) :
+    hammingDist x (BitString.flipOn {i} x) = 1 := by
+  have h : (Finset.univ.filter fun j => x j ≠ BitString.flipOn {i} x j) = {i} := by
     ext j
     by_cases hj : j = i
     · subst j
-      cases x i <;> simp [flip_apply]
-    · simp [flip_apply, hj]
+      cases x i <;> simp [BitString.flipOn_apply]
+    · simp [BitString.flipOn_apply, hj]
   rw [hammingDist, h]
   simp
 
 /-- A one-bit flip decreases the Hamming distance to any `z` by at most one:
-`hammingDist x z ≤ hammingDist (flip x {i}) z + 1`. -/
-private theorem hammingDist_le_flip_add_one (x z : I → Bool) (i : I) :
-    hammingDist x z ≤ hammingDist (flip x {i}) z + 1 := by
-  have h := hammingDist_triangle x (flip x {i}) z
+`hammingDist x z ≤ hammingDist (BitString.flipOn {i} x) z + 1`. -/
+private theorem hammingDist_le_flip_add_one [DecidableEq I] (x z : I → Bool) (i : I) :
+    hammingDist x z ≤ hammingDist (BitString.flipOn {i} x) z + 1 := by
+  have h := hammingDist_triangle x (BitString.flipOn {i} x) z
   rw [hammingDist_flip_self] at h
   omega
 
 /-- A one-bit flip increases the Hamming distance to any `z` by at most one:
-`hammingDist (flip x {i}) z ≤ hammingDist x z + 1`. -/
-private theorem hammingDist_flip_le_add_one (x z : I → Bool) (i : I) :
-    hammingDist (flip x {i}) z ≤ hammingDist x z + 1 := by
-  have h := hammingDist_triangle (flip x {i}) x z
-  rw [hammingDist_comm (flip x {i}) x, hammingDist_flip_self] at h
+`hammingDist (BitString.flipOn {i} x) z ≤ hammingDist x z + 1`. -/
+private theorem hammingDist_flip_le_add_one [DecidableEq I] (x z : I → Bool) (i : I) :
+    hammingDist (BitString.flipOn {i} x) z ≤ hammingDist x z + 1 := by
+  have h := hammingDist_triangle (BitString.flipOn {i} x) x z
+  rw [hammingDist_comm (BitString.flipOn {i} x) x, hammingDist_flip_self] at h
   omega
 
-open scoped Classical in
 /-- If `x i = z i`, flipping coordinate `i` of `x` increases the Hamming distance to `z`
 by exactly one. -/
-private theorem hammingDist_flip_eq_add_one (x z : I → Bool) (i : I) (hi : x i = z i) :
-    hammingDist (flip x {i}) z = hammingDist x z + 1 := by
-  have h : (Finset.univ.filter fun j => flip x {i} j ≠ z j) =
+private theorem hammingDist_flip_eq_add_one [DecidableEq I] (x z : I → Bool) (i : I)
+    (hi : x i = z i) :
+    hammingDist (BitString.flipOn {i} x) z = hammingDist x z + 1 := by
+  have h : (Finset.univ.filter fun j => BitString.flipOn {i} x j ≠ z j) =
       insert i (Finset.univ.filter fun j => x j ≠ z j) := by
     ext j
     by_cases hj : j = i
     · subst j
-      cases hx : x i <;> simp_all [flip_apply]
-    · simp [flip_apply, hj]
+      cases hx : x i <;> simp_all [BitString.flipOn_apply]
+    · simp [BitString.flipOn_apply, hj]
   rw [hammingDist, h, Finset.card_insert_of_notMem]
   · rfl
   · simp [hi]
 
+open scoped Classical in
 /-- The union of equal-radius Hamming balls. -/
 def ballPredicate [Fintype C] (centers : C → I → Bool) (R : ℕ)
     (x : I → Bool) : Bool :=
   decide (∃ c, hammingDist x (centers c) ≤ R)
 
+open scoped Classical in
 /-- `ballPredicate centers R x` holds iff `x` is within Hamming distance `R` of some
 center. -/
 theorem ballPredicate_eq_true [Fintype C] (centers : C → I → Bool) (R : ℕ)
@@ -113,13 +114,14 @@ theorem ballPredicate_nested [Fintype C] (centers : C → I → Bool)
   rcases (ballPredicate_eq_true centers R x).1 h with ⟨c, hc⟩
   exact (ballPredicate_eq_true centers S x).2 ⟨c, hc.trans hRS⟩
 
-/-- If `x` is rejected at radius `R` but `flip x {i}` is accepted, then some center is at
-Hamming distance exactly `R + 1` from `x` and differs from `x` at coordinate `i`. -/
+open scoped Classical in
+/-- If `x` is rejected at radius `R` but `BitString.flipOn {i} x` is accepted, then some center is
+at Hamming distance exactly `R + 1` from `x` and differs from `x` at coordinate `i`. -/
 private theorem ballPredicate_zero_flip [Fintype C] (centers : C → I → Bool) (R : ℕ)
     (x : I → Bool) (i : I) (hx : ballPredicate centers R x = false)
-    (hi : ballPredicate centers R (flip x {i}) = true) :
+    (hi : ballPredicate centers R (BitString.flipOn {i} x) = true) :
     ∃ c, hammingDist x (centers c) = R + 1 ∧ x i ≠ centers c i := by
-  rcases (ballPredicate_eq_true centers R (flip x {i})).1 hi with ⟨c, hc⟩
+  rcases (ballPredicate_eq_true centers R (BitString.flipOn {i} x)).1 hi with ⟨c, hc⟩
   have hn : ¬ hammingDist x (centers c) ≤ R := by
     intro h
     have := (ballPredicate_eq_true centers R x).2 ⟨c, h⟩
@@ -130,6 +132,7 @@ private theorem ballPredicate_zero_flip [Fintype C] (centers : C → I → Bool)
   rw [hammingDist_flip_eq_add_one x (centers c) i heq] at hc
   omega
 
+open scoped Classical in
 /-- If distinct centers are at Hamming distance greater than `2 * (R + 1)`, then any two
 centers within distance `R + 1` of the same input coincide. -/
 private theorem near_center_unique (centers : C → I → Bool) (R : ℕ)
@@ -142,6 +145,7 @@ private theorem near_center_unique (centers : C → I → Bool) (R : ℕ)
   rw [hammingDist_comm (centers a) x] at ht
   omega
 
+open scoped Classical in
 /-- If distinct centers are at Hamming distance greater than `2 * (R + 1)`, then the
 radius-`R` ball predicate has sensitivity at most `R + 1` at every rejected input. -/
 theorem ballPredicate_sensitivityAt_zero_le [Fintype C]
@@ -150,16 +154,16 @@ theorem ballPredicate_sensitivityAt_zero_le [Fintype C]
     (x : I → Bool) (hx : ballPredicate centers R x = false) :
     sensitivityAt (ballPredicate centers R) x ≤ R + 1 := by
   let A := Finset.univ.filter fun i =>
-    ballPredicate centers R (flip x {i}) ≠ ballPredicate centers R x
+    ballPredicate centers R (BitString.flipOn {i} x) ≠ ballPredicate centers R x
   change A.card ≤ R + 1
   by_cases hA : A.Nonempty
   · obtain ⟨i, hi⟩ := hA
-    have hi' : ballPredicate centers R (flip x {i}) = true := by
+    have hi' : ballPredicate centers R (BitString.flipOn {i} x) = true := by
       simpa [A, hx] using hi
     obtain ⟨c, hc, _⟩ := ballPredicate_zero_flip centers R x i hx hi'
     have hsub : A ⊆ Finset.univ.filter fun j => x j ≠ centers c j := by
       intro j hj
-      have hj' : ballPredicate centers R (flip x {j}) = true := by
+      have hj' : ballPredicate centers R (BitString.flipOn {j} x) = true := by
         simpa [A, hx] using hj
       obtain ⟨c', hc', hjc⟩ := ballPredicate_zero_flip centers R x j hx hj'
       have heq : c' = c := near_center_unique centers R hsep x (by omega) (by omega)
@@ -170,24 +174,24 @@ theorem ballPredicate_sensitivityAt_zero_le [Fintype C]
 
 /-- For `R < S`, if `x` is rejected at radius `S`, then no one-bit flip of `x` is
 accepted at radius `R`. -/
-theorem ballPredicate_no_joint_zero [Fintype C] (centers : C → I → Bool)
+theorem ballPredicate_no_joint_zero [Fintype C] [DecidableEq I] (centers : C → I → Bool)
     {R S : ℕ} (hRS : R < S) (x : I → Bool) (i : I)
     (hS : ballPredicate centers S x = false)
-    (hR : ballPredicate centers R (flip x {i}) = true) : False := by
-  obtain ⟨c, hc⟩ := (ballPredicate_eq_true centers R (flip x {i})).1 hR
+    (hR : ballPredicate centers R (BitString.flipOn {i} x) = true) : False := by
+  obtain ⟨c, hc⟩ := (ballPredicate_eq_true centers R (BitString.flipOn {i} x)).1 hR
   have hd := hammingDist_le_flip_add_one x (centers c) i
   have ht := (ballPredicate_eq_true centers S x).2 ⟨c, by omega⟩
   simp_all
 
 /-- For `R < S`, if `x` is accepted at radius `R`, then no one-bit flip of `x` is
 rejected at radius `S`. -/
-theorem ballPredicate_no_joint_one [Fintype C] (centers : C → I → Bool)
+theorem ballPredicate_no_joint_one [Fintype C] [DecidableEq I] (centers : C → I → Bool)
     {R S : ℕ} (hRS : R < S) (x : I → Bool) (i : I)
     (hR : ballPredicate centers R x = true)
-    (hS : ballPredicate centers S (flip x {i}) = false) : False := by
+    (hS : ballPredicate centers S (BitString.flipOn {i} x) = false) : False := by
   obtain ⟨c, hc⟩ := (ballPredicate_eq_true centers R x).1 hR
   have hd := hammingDist_flip_le_add_one x (centers c) i
-  have ht := (ballPredicate_eq_true centers S (flip x {i})).2 ⟨c, by omega⟩
+  have ht := (ballPredicate_eq_true centers S (BitString.flipOn {i} x)).2 ⟨c, by omega⟩
   simp_all
 
 end Internal

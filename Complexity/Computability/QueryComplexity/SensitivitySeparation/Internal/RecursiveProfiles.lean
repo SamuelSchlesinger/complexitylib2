@@ -65,11 +65,12 @@ theorem NestedFamily.rejects_of_le {h : ℕ} {I : Type}
   · have := hF.accepts_of_le hqq h'
     simp [hx] at this
 
+open scoped Classical in
 /-- The number of coordinates whose one-bit flip changes both predicates. -/
 def jointSensitivityAt {I : Type} [Fintype I]
     (f g : (I → Bool) → Bool) (x : I → Bool) : ℕ :=
   (Finset.univ.filter fun i =>
-    f (flip x {i}) ≠ f x ∧ g (flip x {i}) ≠ g x).card
+    f (BitString.flipOn {i} x) ≠ f x ∧ g (BitString.flipOn {i} x) ≠ g x).card
 
 open scoped Classical in
 /-- Maximum sensitivity over all indices and inputs with the indicated output. -/

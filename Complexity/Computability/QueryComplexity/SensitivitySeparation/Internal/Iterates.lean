@@ -120,7 +120,7 @@ private theorem blockSensitivityAt_iterateCompose_zero (f : (I → Bool) → Boo
         intro B hB
         have hB' : B = {()} := Finset.mem_singleton.mp hB
         subst B
-        exact ⟨Finset.singleton_nonempty _, by simp [iterateCompose, flip_apply]⟩)
+        exact ⟨Finset.singleton_nonempty _, by simp [iterateCompose, BitString.flipOn_apply]⟩)
     simpa only [Finset.card_singleton, pow_zero] using h
   | succ m ih =>
     change _ ≤ blockSensitivityAt (compose f (iterateCompose f m)) (fun _ => false)
@@ -158,13 +158,14 @@ theorem blockSensitivityAt_iterateFin_zero (f : (I → Bool) → Bool)
   rw [iterateFin, blockSensitivityAt_reindex]
   exact blockSensitivityAt_iterateCompose_zero f hf m
 
+open scoped Classical in
 /-- A Boolean function with positive block sensitivity at some input takes two distinct values. -/
 theorem nonconstant_of_blockSensitivityAt_pos (f : (I → Bool) → Bool) (x : I → Bool)
     (h : 0 < blockSensitivityAt f x) : ∃ y z, f y ≠ f z := by
   obtain ⟨blocks, hc, _, hb⟩ := exists_blockSensitivityAt_family f x
   have hn : blocks.Nonempty := Finset.card_pos.mp (hc.symm ▸ h)
   obtain ⟨B, hB⟩ := hn
-  exact ⟨flip x B, x, (hb B hB).2⟩
+  exact ⟨BitString.flipOn B x, x, (hb B hB).2⟩
 
 /-- If `f` rejects the all-false input and has positive block sensitivity there, then every
 `iterateFin f m` takes two distinct values. -/

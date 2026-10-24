@@ -93,9 +93,9 @@ theorem baseBlock_disjoint {M L : ℕ} :
 
 /-- Flipping row `j` of the all-`false` input yields `blockCenter j`. -/
 private theorem flip_zero_baseBlock {M L : ℕ} (j : Fin M) :
-    flip (fun _ : Fin M × Fin L => false) (baseBlock j) = blockCenter j := by
+    BitString.flipOn (baseBlock j) (fun _ : Fin M × Fin L => false) = blockCenter j := by
   ext p
-  simp [flip_apply, blockCenter]
+  simp [BitString.flipOn_apply, blockCenter]
 
 /-- Each row center `blockCenter j` is at Hamming distance `L` from the all-`false`
 input. -/
@@ -143,7 +143,7 @@ theorem initialFamily_zero (d M : ℕ) (q : Fin (d + 1)) :
 /-- Every predicate of `initialFamily d M` accepts the all-`false` input with row `j`
 flipped. -/
 theorem initialFamily_baseBlock (d M : ℕ) (q : Fin (d + 1)) (j : Fin M) :
-    initialFamily d M q (flip (fun _ => false) (baseBlock j)) = true := by
+    initialFamily d M q (BitString.flipOn (baseBlock j) (fun _ => false)) = true := by
   rw [flip_zero_baseBlock]
   apply (ballPredicate_eq_true blockCenter (d - q.val) (blockCenter j)).2
   exact ⟨j, by simp⟩
@@ -180,23 +180,19 @@ theorem initialFamily_joint (d M : ℕ) (b : Bool) :
   intro q q' x hqq hx hx'
   have hrad : d - q'.val < d - q.val := by omega
   unfold jointSensitivityAt
-  have he : (Finset.univ.filter fun i =>
-      initialFamily d M q (flip x {i}) ≠ initialFamily d M q x ∧
-      initialFamily d M q' (flip x {i}) ≠ initialFamily d M q' x) = ∅ := by
-    apply Finset.filter_eq_empty_iff.mpr
-    intro i _ hi
-    obtain ⟨hi, hi'⟩ := hi
-    cases b with
-    | false =>
-        have hflip : initialFamily d M q' (flip x {i}) = true := by
-          simpa [hx'] using hi'
-        exact ballPredicate_no_joint_zero blockCenter hrad x i hx hflip
-    | true =>
-        have hflip : initialFamily d M q (flip x {i}) = false := by
-          simpa [hx] using hi
-        exact ballPredicate_no_joint_one blockCenter hrad x i hx' hflip
-  rw [he]
-  simp
+  rw [Nat.le_zero, Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+  intro i _ ⟨hi, hi'⟩
+  cases b with
+  | false =>
+      have hflip : initialFamily d M q' (BitString.flipOn {i} x) = true := by
+        rw [hx'] at hi'
+        convert Bool.eq_true_of_ne_false hi'
+      exact ballPredicate_no_joint_zero blockCenter hrad x i hx hflip
+  | true =>
+      have hflip : initialFamily d M q (BitString.flipOn {i} x) = false := by
+        rw [hx] at hi
+        convert Bool.eq_false_iff.mpr hi
+      exact ballPredicate_no_joint_one blockCenter hrad x i hx' hflip
 
 end Internal
 

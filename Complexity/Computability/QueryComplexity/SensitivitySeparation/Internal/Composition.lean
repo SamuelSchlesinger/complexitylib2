@@ -57,34 +57,36 @@ def compose (f : (I → Bool) → Bool) (g : (J → Bool) → Bool) :
     (I × J → Bool) → Bool :=
   fun x => f (fun i => g (fun j => x (i, j)))
 
+open scoped Classical in
 /-- Flipping coordinate `(i, j)` changes `compose f g x` iff flipping `j` changes the value of `g`
 on row `i` of `x`, and flipping `i` changes the value of `f` on the vector of row values
 `fun k => g (fun a => x (k, a))`. -/
-theorem compose_flip_sensitive_iff (f : (I → Bool) → Bool) (g : (J → Bool) → Bool)
+theorem compose_flip_sensitive_iff [DecidableEq (I × J)]
+    (f : (I → Bool) → Bool) (g : (J → Bool) → Bool)
     (x : I × J → Bool) (i : I) (j : J) :
-    compose f g (flip x {(i, j)}) ≠ compose f g x ↔
-      g (flip (fun a => x (i, a)) {j}) ≠ g (fun a => x (i, a)) ∧
-      f (flip (fun k => g (fun a => x (k, a))) {i}) ≠
+    compose f g (BitString.flipOn {(i, j)} x) ≠ compose f g x ↔
+      g (BitString.flipOn {j} (fun a => x (i, a))) ≠ g (fun a => x (i, a)) ∧
+      f (BitString.flipOn {i} (fun k => g (fun a => x (k, a)))) ≠
         f (fun k => g (fun a => x (k, a))) := by
-  by_cases hg : g (flip (fun a => x (i, a)) {j}) = g (fun a => x (i, a))
-  · have he : (fun k => g (fun a => flip x {(i, j)} (k, a))) =
+  by_cases hg : g (BitString.flipOn {j} (fun a => x (i, a))) = g (fun a => x (i, a))
+  · have he : (fun k => g (fun a => BitString.flipOn {(i, j)} x (k, a))) =
         fun k => g (fun a => x (k, a)) := by
       funext k
       by_cases hk : k = i
       · subst k
-        rw [flip_prod_same, hg]
-      · rw [flip_prod_other x j hk]
+        rw [BitString.flipOn_prod_same, hg]
+      · rw [BitString.flipOn_prod_of_ne x j hk]
     simp only [compose, he, ne_eq, not_true_eq_false, hg, false_and]
-  · have hn : g (flip (fun a => x (i, a)) {j}) = !(g (fun a => x (i, a))) := by
-      cases h₁ : g (flip (fun a => x (i, a)) {j}) <;>
+  · have hn : g (BitString.flipOn {j} (fun a => x (i, a))) = !(g (fun a => x (i, a))) := by
+      cases h₁ : g (BitString.flipOn {j} (fun a => x (i, a))) <;>
         cases h₂ : g (fun a => x (i, a)) <;> simp_all
-    have he : (fun k => g (fun a => flip x {(i, j)} (k, a))) =
-        flip (fun k => g (fun a => x (k, a))) {i} := by
+    have he : (fun k => g (fun a => BitString.flipOn {(i, j)} x (k, a))) =
+        BitString.flipOn {i} (fun k => g (fun a => x (k, a))) := by
       funext k
       by_cases hk : k = i
       · subst k
-        rw [flip_prod_same, flip_singleton_self, hn]
-      · rw [flip_prod_other x j hk, flip_singleton_other _ hk]
+        rw [BitString.flipOn_prod_same, BitString.flipOn_singleton_self, hn]
+      · rw [BitString.flipOn_prod_of_ne x j hk, BitString.flipOn_singleton_of_ne hk]
     simp only [compose, he, ne_eq, hg, not_false_eq_true, true_and]
 
 /-- If `g` rejects the all-false input, then `compose f g` and `f` take the same value on the
@@ -94,48 +96,52 @@ theorem compose_zero (f : (I → Bool) → Bool) (g : (J → Bool) → Bool)
     compose f g (fun _ => false) = f (fun _ => false) := by
   simp [compose, hg]
 
+open scoped Classical in
 /-- If `g` rejects the all-false input and flipping the block `D` changes its value there, then
 flipping the product block `C ×ˢ D` in the all-false input of `compose f g` gives the value of `f`
 on the all-false input with `C` flipped. -/
-private theorem compose_flip_product_zero (f : (I → Bool) → Bool) (g : (J → Bool) → Bool)
+private theorem compose_flip_product_zero {inst : DecidableEq (I × J)}
+    (f : (I → Bool) → Bool) (g : (J → Bool) → Bool)
     (C : Finset I) (D : Finset J) (hg : g (fun _ => false) = false)
-    (hD : g (flip (fun _ => false) D) ≠ g (fun _ => false)) :
-    compose f g (flip (fun _ => false) (C ×ˢ D)) = f (flip (fun _ => false) C) := by
-  have hD' : g (flip (fun _ => false) D) = true := by
-    cases he : g (flip (fun _ => false) D) <;> simp_all
+    (hD : g (BitString.flipOn D (fun _ => false)) ≠ g (fun _ => false)) :
+    compose f g (@BitString.flipOn (I × J) inst (C ×ˢ D) (fun _ => false)) =
+      f (BitString.flipOn C (fun _ => false)) := by
+  have hD' : g (BitString.flipOn D (fun _ => false)) = true := by
+    cases he : g (BitString.flipOn D (fun _ => false)) <;> simp_all
   apply congrArg f
   funext i
   by_cases hi : i ∈ C
-  · have he : (fun j => flip (fun _ => false) (C ×ˢ D) (i, j)) =
-        flip (fun _ => false) D := by
+  · have he : (fun j => BitString.flipOn (C ×ˢ D) (fun _ => false) (i, j)) =
+        BitString.flipOn D (fun _ => false) := by
       funext j
-      simp [flip_apply, hi]
+      simp [BitString.flipOn_apply, hi]
     rw [he, hD']
-    simp [flip_apply, hi]
-  · have he : (fun j => flip (fun _ => false) (C ×ˢ D) (i, j)) =
+    simp [BitString.flipOn_apply, hi]
+  · have he : (fun j => BitString.flipOn (C ×ˢ D) (fun _ => false) (i, j)) =
         fun _ => false := by
       funext j
-      simp [flip_apply, hi]
+      simp [BitString.flipOn_apply, hi]
     rw [he, hg]
-    simp [flip_apply, hi]
+    simp [BitString.flipOn_apply, hi]
 
 section Finite
 variable [Fintype I] [Fintype J]
 
+open scoped Classical in
 /-- The sensitivity of `compose f g` at `x` equals the sum, over the rows `i` that are sensitive for
 `f` at the vector of row values, of the sensitivity of `g` at row `i` of `x`. -/
 theorem sensitivityAt_compose (f : (I → Bool) → Bool) (g : (J → Bool) → Bool)
     (x : I × J → Bool) :
     sensitivityAt (compose f g) x =
       ∑ i ∈ Finset.univ.filter (fun i =>
-        f (flip (fun k => g (fun a => x (k, a))) {i}) ≠
+        f (BitString.flipOn {i} (fun k => g (fun a => x (k, a)))) ≠
           f (fun k => g (fun a => x (k, a)))),
         sensitivityAt g (fun a => x (i, a)) := by
   simp only [sensitivityAt, Finset.card_eq_sum_ones, Finset.sum_filter,
     compose_flip_sensitive_iff, Fintype.sum_prod_type]
   apply Finset.sum_congr rfl
   intro i _
-  by_cases hi : f (flip (fun k => g (fun a => x (k, a))) {i}) ≠
+  by_cases hi : f (BitString.flipOn {i} (fun k => g (fun a => x (k, a)))) ≠
       f (fun k => g (fun a => x (k, a)))
   · simp [hi]
   · simp [hi]
@@ -144,12 +150,13 @@ theorem sensitivityAt_compose (f : (I → Bool) → Bool) (g : (J → Bool) → 
 `sensitivity (compose f g) ≤ sensitivity f * sensitivity g`. -/
 theorem sensitivity_compose_le (f : (I → Bool) → Bool) (g : (J → Bool) → Bool) :
     sensitivity (compose f g) ≤ sensitivity f * sensitivity g := by
+  classical
   apply sensitivity_le
   intro x
   rw [sensitivityAt_compose]
   calc
     _ ≤ ∑ i ∈ Finset.univ.filter (fun i =>
-        f (flip (fun k => g (fun a => x (k, a))) {i}) ≠
+        f (BitString.flipOn {i} (fun k => g (fun a => x (k, a)))) ≠
           f (fun k => g (fun a => x (k, a)))), sensitivity g :=
       Finset.sum_le_sum fun i _ => sensitivityAt_le_sensitivity g _
     _ = sensitivityAt f (fun k => g (fun a => x (k, a))) * sensitivity g := by
@@ -163,6 +170,7 @@ theorem blockSensitivityAt_compose_zero_le (f : (I → Bool) → Bool)
     (g : (J → Bool) → Bool) (hg : g (fun _ => false) = false) :
     blockSensitivityAt f (fun _ => false) * blockSensitivityAt g (fun _ => false) ≤
       blockSensitivityAt (compose f g) (fun _ => false) := by
+  classical
   obtain ⟨S, hS, hdS, hbS⟩ := exists_blockSensitivityAt_family f (fun _ => false)
   obtain ⟨T, hT, hdT, hbT⟩ := exists_blockSensitivityAt_family g (fun _ => false)
   have h := le_blockSensitivityAt_of_family (compose f g) (fun _ => false)
