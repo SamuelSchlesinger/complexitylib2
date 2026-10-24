@@ -46,8 +46,7 @@ namespace Cslib.PCP.Encoded.Graph
 
 open Turing.MultiTapeTM ComputableTidilyInPolyTime Cslib.PCP.HadamardTester
 
-local notation "Alphabet" => (Bool × (Fin 6 → Bool))
-local notation "Constraint" => (Alphabet → Alphabet → Bool)
+local notation "Constraint" => (SelectedAlphabet → SelectedAlphabet → Bool)
 
 variable {D : Type} [Fintype D] [DecidableEq D] {width : ℕ}
 
@@ -57,8 +56,9 @@ contracts, or unfold the definition explicitly when reasoning about the program.
 @[irreducible]
 def amplifyIter (fallback : Constraint) (rotate : ℕ × (ℕ × D) → ℕ × D)
     (T q : ℕ) [NeZero q] (walks : List (PowerLabel D T q))
-    (number : SelectedComposeSlot (PowerAlphabet D Alphabet T) ≃ Fin width)
-    (coins : List (Fin 5 × Rand (PowerAlphabet D Alphabet T))) (queries : List (Fin 6)) (k : ℕ) :
+    (number : SelectedComposeSlot (PowerAlphabet D SelectedAlphabet T) ≃ Fin width)
+    (coins : List (Fin 5 × Rand (PowerAlphabet D SelectedAlphabet T)))
+    (queries : List (Fin 6)) (k : ℕ) :
     Graph Constraint → Graph Constraint :=
   (amplify id fallback rotate T q walks number coins queries)^[k]
 
@@ -75,14 +75,14 @@ theorem isPolyTime_amplifyIter_clog {Input : Type} {input : Input ↪ List Bool}
     (hcost : ComputableTidilyInPolyTime rotate
       (encPair encUnary (encPair encUnary labelEncoding)) (encPair encUnary labelEncoding))
     (fallback : Constraint) (T q : ℕ) [NeZero q] (walks : List (PowerLabel D T q))
-    (number : SelectedComposeSlot (PowerAlphabet D Alphabet T) ≃ Fin width)
-    (coins : List (Fin 5 × Rand (PowerAlphabet D Alphabet T))) (queries : List (Fin 6)) :
+    (number : SelectedComposeSlot (PowerAlphabet D SelectedAlphabet T) ≃ Fin width)
+    (coins : List (Fin 5 × Rand (PowerAlphabet D SelectedAlphabet T))) (queries : List (Fin 6)) :
     ComputableTidilyInPolyTime
       (fun x => amplifyIter fallback rotate T q walks number coins queries
         (Nat.clog 2 (graph x).edges.length) (graph x))
       input (encoding (encPi (encPi encBool))) := by
   let factor := (2 + 2 * walks.length) * width + 2 * walks.length * coins.length * queries.length
-  let descriptorBound := Fintype.card Alphabet * (6 * Fintype.card Alphabet + 1)
+  let descriptorBound := Fintype.card SelectedAlphabet * (6 * Fintype.card SelectedAlphabet + 1)
   have hgrowth (g : Graph Constraint) :
       (g.amplify id fallback rotate T q walks number coins queries).vertices +
         (g.amplify id fallback rotate T q walks number coins queries).edges.length ≤
@@ -91,7 +91,8 @@ theorem isPolyTime_amplifyIter_clog {Input : Type} {input : Input ↪ List Bool}
            simp only [vertices_amplify, length_edges_amplify, factor]
            ring
       _ ≤ _ := Nat.mul_le_mul_left _ (Nat.le_add_left _ _)
-  have heval := isPolyTime_constraintTableEval (α := Alphabet) (encPair encBool (encPi encBool))
+  have heval :=
+    isPolyTime_constraintTableEval (α := SelectedAlphabet) (encPair encBool (encPi encBool))
   unfold amplifyIter
   apply ComputableTidilyInPolyTime.iterate (by fun_prop) hgraph (by fun_prop)
     (polyBounded_iterationSize_clog hgraph factor descriptorBound)
@@ -108,8 +109,8 @@ variable [Nonempty D] (fallback : Constraint)
   (hrotate : ∀ n (v : Fin n) d, rotate (n, v.val, d) =
     (((family n).rot (v, d)).1.val, ((family n).rot (v, d)).2))
   (T q : ℕ) [NeZero q] (walks : List (PowerLabel D T q))
-  (number : SelectedComposeSlot (PowerAlphabet D Alphabet T) ≃ Fin width)
-  (coins : List (Fin 5 × Rand (PowerAlphabet D Alphabet T))) (queries : List (Fin 6))
+  (number : SelectedComposeSlot (PowerAlphabet D SelectedAlphabet T) ≃ Fin width)
+  (coins : List (Fin 5 × Rand (PowerAlphabet D SelectedAlphabet T))) (queries : List (Fin 6))
   (hwalks : walks.Nodup) (hmemWalks : ∀ d, d ∈ walks)
   (hcoins : coins.Nodup) (hqueries : queries.Nodup)
   (hmemCoins : ∀ ω, ω ∈ coins) (hmemQueries : ∀ i, i ∈ queries)
@@ -133,10 +134,10 @@ theorem satisfiable_amplifyIter_iff (hT : 1 ≤ T) (hq : 2 ≤ q) (k : ℕ)
 include hrotate hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries hgap hμ in
 /-- The complete rounds double the value until the fixed threshold is reached. -/
 theorem min_le_unsatVal_amplifyIter (hq : 2 ≤ q)
-    (hT : T = 4 * Fintype.card Alphabet * (q - 1))
+    (hT : T = 4 * Fintype.card SelectedAlphabet * (q - 1))
     {γ : ℝ} (hγ : 0 ≤ γ)
     (hgain : 2 ≤ ConstraintGraph.Amplification.gain 840
-      (Fintype.card Alphabet) (Fintype.card D) T q μ γ)
+      (Fintype.card SelectedAlphabet) (Fintype.card D) T q μ γ)
     (k : ℕ) (g : Graph Constraint) :
     min (2 ^ k * (g.toGraph id).unsatVal) γ ≤
       ((amplifyIter fallback rotate T q walks number coins queries k g).toGraph id).unsatVal := by
@@ -149,28 +150,26 @@ theorem min_le_unsatVal_amplifyIter (hq : 2 ≤ q)
 include hrotate hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries hgap hμ in
 /-- Enough complete rounds turn every unsatisfiable input into a graph above the fixed gap. -/
 theorem gap_le_unsatVal_amplifyIter (hq : 2 ≤ q)
-    (hT : T = 4 * Fintype.card Alphabet * (q - 1))
+    (hT : T = 4 * Fintype.card SelectedAlphabet * (q - 1))
     {γ : ℝ} (hγ : 0 ≤ γ) (hγ₁ : γ ≤ 1)
     (hgain : 2 ≤ ConstraintGraph.Amplification.gain 840
-      (Fintype.card Alphabet) (Fintype.card D) T q μ γ)
+      (Fintype.card SelectedAlphabet) (Fintype.card D) T q μ γ)
     {g : Graph Constraint} (hunsat : ¬ (g.toGraph id).Satisfiable) {k : ℕ}
     (hk : g.edges.length ≤ 2 ^ k) :
     γ ≤
-      ((amplifyIter fallback rotate T q walks number coins queries k g).toGraph id).unsatVal := by
-  refine le_trans (le_min ?_ le_rfl) (min_le_unsatVal_amplifyIter fallback family rotate hrotate
-    T q walks number coins queries hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries
-    μ hgap hμ hq hT hγ hgain k g)
-  exact hγ₁.trans (((g.toGraph id).one_le_card_mul_unsatVal hunsat).trans
-    (mul_le_mul_of_nonneg_right (by simpa only [Fintype.card_fin] using
-      (show (g.edges.length : ℝ) ≤ 2 ^ k by exact_mod_cast hk)) (g.toGraph id).unsatVal_nonneg))
+      ((amplifyIter fallback rotate T q walks number coins queries k g).toGraph id).unsatVal :=
+  (g.toGraph id).gap_le_of_min_two_pow_mul_le hγ₁ hunsat
+    (by simpa only [Fintype.card_fin] using hk)
+    (min_le_unsatVal_amplifyIter fallback family rotate hrotate T q walks number coins queries
+      hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries μ hgap hμ hq hT hγ hgain k g)
 
 include hrotate hwalks hmemWalks hcoins hqueries hmemCoins hmemQueries hgap hμ in
 /-- The logarithmic program has a constant soundness gap on every unsatisfiable input. -/
 theorem gap_le_unsatVal_amplifyIter_clog (hq : 2 ≤ q)
-    (hT : T = 4 * Fintype.card Alphabet * (q - 1))
+    (hT : T = 4 * Fintype.card SelectedAlphabet * (q - 1))
     {γ : ℝ} (hγ : 0 ≤ γ) (hγ₁ : γ ≤ 1)
     (hgain : 2 ≤ ConstraintGraph.Amplification.gain 840
-      (Fintype.card Alphabet) (Fintype.card D) T q μ γ)
+      (Fintype.card SelectedAlphabet) (Fintype.card D) T q μ γ)
     {g : Graph Constraint} (hunsat : ¬ (g.toGraph id).Satisfiable) :
     γ ≤
       ((amplifyIter fallback rotate T q walks number coins queries

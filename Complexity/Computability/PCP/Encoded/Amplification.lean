@@ -54,7 +54,7 @@ def amplify (eval : C → α → α → Bool) (fallback : C)
     (walks : List (PowerLabel D T q))
     (number : SelectedComposeSlot (PowerAlphabet D α T) ≃ Fin width)
     (coins : List (Fin 5 × Rand (PowerAlphabet D α T))) (queries : List (Fin 6)) (g : Graph C) :
-    Graph ((Bool × (Fin 6 → Bool)) → (Bool × (Fin 6 → Bool)) → Bool) :=
+    Graph (SelectedAlphabet → SelectedAlphabet → Bool) :=
   (g.powerPreprocess eval fallback rotate T q walks).composeSelectedTabulated number coins queries
 
 /-- Any certified graph expression can feed a round, with all internal finite encodings hidden. -/
