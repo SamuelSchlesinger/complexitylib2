@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.PCP.Approximation.MaxCSP
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
+public import Complexity.Logics.Propositional.CNF.UnsatVal
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
@@ -17,11 +18,11 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pi
 # MAX-3SAT is NP-hard to approximate
 
 The **unsatisfiability value** `CNF.unsatVal φ` of a formula is the least proportion of its clauses
-that an assignment falsifies, and `1 - CNF.unsatVal φ` is its value as an instance of MAX-SAT.
-`GapThreeSAT s` is the gap problem of MAX-3SAT with perfect completeness: its instances are formulas
-whose clauses have at most three literals, its yes-instances are the satisfiable ones (`ThreeSAT`)
-and its no-instances those in which every assignment satisfies at most the proportion `s` of the
-clauses.
+that an assignment falsifies (`Complexity.Logics.Propositional.CNF.UnsatVal`), and
+`1 - CNF.unsatVal φ` is its value as an instance of MAX-SAT. `GapThreeSAT s` is the gap problem of
+MAX-3SAT with perfect completeness: its instances are formulas whose clauses have at most three
+literals, its yes-instances are the satisfiable ones (`ThreeSAT`) and its no-instances those in
+which every assignment satisfies at most the proportion `s` of the clauses.
 
 A binary constraint on labels written in `k` bits is a conjunction of clauses of width `2 k`, one
 excluding each pair of labels the constraint forbids [Arora and Barak, Chapter 11][AroraBarak09].
@@ -36,17 +37,11 @@ Arora, Lund, Motwani, Sudan and Szegedy [AroraLundMotwaniSudanSzegedy1998].
 
 ## Main definitions
 
-* `Cslib.Logic.PL.CNF.unsatVal`: the least proportion of falsified clauses.
 * `Cslib.PCP.Encoded.Graph.toCNF`: a constraint graph written as a formula.
 * `Cslib.Complexity.GapThreeSAT`: the gap problem of MAX-3SAT with perfect completeness.
 
 ## Main results
 
-* `Cslib.Logic.PL.CNF.unsatVal_eq_zero_iff`: the value vanishes exactly on satisfiable formulas.
-* `Cslib.Logic.PL.CNF.length_pos_of_unsatVal_pos`: a formula of positive value has a clause.
-* `Cslib.Logic.PL.CNF.countUnsat_comp_inl_le_countUnsat_to3CNF`,
-  `Cslib.Logic.PL.CNF.length_to3CNF`: splitting clauses keeps every falsified clause falsified and
-  replaces a clause of width `w ≥ 3` by `w - 2` clauses.
 * `Cslib.PCP.Encoded.Graph.div_le_unsatVal_toThreeSAT_toCNF`: the gap-preserving bound.
 * `Cslib.Complexity.GapThreeSAT_npHard`: distinguishing satisfiable 3CNF formulas from those in
   which every assignment satisfies at most the proportion `1 - 1 / (3 * 2 ^ 77)` of the clauses is
@@ -61,146 +56,6 @@ Arora, Lund, Motwani, Sudan and Szegedy [AroraLundMotwaniSudanSzegedy1998].
 -/
 
 @[expose] public section
-
-namespace Cslib.Logic.PL
-
-variable {V W : Type*}
-
-/-! ### The value of a formula -/
-
-/-- The **unsatisfiability value** of a formula: the least proportion of its clauses, counted with
-multiplicity, that an assignment falsifies. The formula without clauses has value zero. -/
-noncomputable def CNF.unsatVal (φ : CNF V) : ℝ :=
-  ⨅ σ : V → Bool, (φ.countUnsat σ : ℝ) / φ.length
-
-namespace CNF
-
-variable (φ : CNF V)
-
-/-- The proportions of falsified clauses are bounded below, by zero. -/
-private theorem bddBelow_range_countUnsat_div :
-    BddBelow (Set.range fun σ : V → Bool => (φ.countUnsat σ : ℝ) / φ.length) :=
-  ⟨0, Set.forall_mem_range.2 fun _ => by positivity⟩
-
-/-- The value is at most the proportion of the clauses that any assignment falsifies. -/
-theorem unsatVal_le (σ : V → Bool) : φ.unsatVal ≤ φ.countUnsat σ / φ.length :=
-  ciInf_le (bddBelow_range_countUnsat_div φ) σ
-
-/-- The value is nonnegative. -/
-theorem unsatVal_nonneg : 0 ≤ φ.unsatVal :=
-  Real.iInf_nonneg fun _ => by positivity
-
-/-- A lower bound on the value bounds the proportion falsified by every assignment. -/
-theorem le_unsatVal_iff {c : ℝ} : c ≤ φ.unsatVal ↔ ∀ σ : V → Bool, c ≤ φ.countUnsat σ / φ.length :=
-  le_ciInf_iff (bddBelow_range_countUnsat_div φ)
-
-/-- The minimum is attained: the proportions take finitely many values. -/
-theorem exists_countUnsat_div_eq_unsatVal :
-    ∃ σ : V → Bool, (φ.countUnsat σ : ℝ) / φ.length = φ.unsatVal := by
-  have hfin : (Set.range fun σ : V → Bool => (φ.countUnsat σ : ℝ) / φ.length).Finite := by
-    refine (Set.finite_range fun j : Fin (φ.length + 1) => (j : ℝ) / φ.length).subset ?_
-    rintro _ ⟨σ, rfl⟩
-    exact ⟨⟨_, Nat.lt_succ_of_le (φ.countUnsat_le_length σ)⟩, rfl⟩
-  exact (Set.range_nonempty _).csInf_mem hfin
-
-/-- **The value vanishes exactly on satisfiable formulas.** -/
-theorem unsatVal_eq_zero_iff : φ.unsatVal = 0 ↔ φ.Satisfiable := by
-  constructor
-  · intro h
-    obtain ⟨σ, hσ⟩ := φ.exists_countUnsat_div_eq_unsatVal
-    rw [h, div_eq_zero_iff, Nat.cast_eq_zero, Nat.cast_eq_zero] at hσ
-    rcases hσ with hσ | hσ
-    · exact ⟨σ, countUnsat_eq_zero_iff.1 hσ⟩
-    · exact ⟨σ, by rw [List.length_eq_zero_iff.1 hσ]; rfl⟩
-  · rintro ⟨σ, hσ⟩
-    refine le_antisymm ?_ φ.unsatVal_nonneg
-    simpa [countUnsat_eq_zero_iff.2 hσ] using φ.unsatVal_le σ
-
-/-- A formula in which every assignment falsifies a positive proportion of the clauses has a
-clause. -/
-theorem length_pos_of_unsatVal_pos {φ : CNF V} (h : 0 < φ.unsatVal) : 0 < φ.length := by
-  refine Nat.pos_of_ne_zero fun h0 => ?_
-  have hsat : φ.Satisfiable := ⟨fun _ => false, by rw [List.length_eq_zero_iff.1 h0]; rfl⟩
-  rw [(unsatVal_eq_zero_iff φ).2 hsat] at h
-  exact lt_irrefl _ h
-
-/-- Relabelling counts the falsified clauses of the composite assignment. -/
-theorem countUnsat_relabel (f : V → W) (τ : W → Bool) :
-    (φ.relabel f).countUnsat τ = φ.countUnsat (τ ∘ f) := by
-  simp only [countUnsat, relabel, List.countP_map]
-  exact List.countP_congr fun c _ => by simp [Function.comp_def]
-
-end CNF
-
-/-! ### Splitting clauses -/
-
-/-- The chain for a clause `carry :: rest` has `rest.length - 1` clauses, and at least one. -/
-private theorem Clause.length_splitAux (fresh : ℕ → W) (j : ℕ) (carry : Literal W)
-    (rest : Clause W) :
-    (Clause.splitAux fresh j carry rest).length = max 1 (rest.length - 1) := by
-  induction j, carry, rest using Clause.splitAux.induct fresh with
-  | case1 j carry b c d rest ih =>
-    rw [Clause.splitAux, List.length_cons, ih]
-    simp only [List.length_cons]
-    omega
-  | case2 j carry rest hrest =>
-    rw [Clause.splitAux]
-    · match rest, hrest with
-      | [], _ | [_], _ | [_, _], _ => simp
-      | _ :: _ :: _ :: _, hrest => exact absurd rfl (hrest _ _ _ _)
-    · exact hrest
-
-/-- Splitting a clause of width `w` gives `w - 2` clauses, and at least one. -/
-private theorem Clause.length_split3 (fresh : ℕ → W) (j : ℕ) (c : Clause W) :
-    (Clause.split3 fresh j c).length = max 1 (c.length - 2) := by
-  cases c with
-  | nil => rfl
-  | cons carry rest =>
-    rw [Clause.split3, Clause.length_splitAux, List.length_cons]
-    rfl
-
-/-- The number of clauses after splitting. -/
-theorem CNF.length_to3CNF (φ : CNF V) :
-    φ.to3CNF.length = (φ.map fun c => max 1 (c.length - 2)).sum := by
-  rw [CNF.to3CNF, List.length_flatMap]
-  conv_rhs => rw [← List.zipIdx_map_fst 0 φ, List.map_map]
-  congr 1
-  refine List.map_congr_left fun x _ => ?_
-  rw [Clause.length_split3, Function.comp_apply, Clause.length_relabel]
-
-private theorem countP_le_sum_map {α : Type*} {p : α → Bool} {f : α → ℕ} {l : List α}
-    (h : ∀ x ∈ l, p x = true → 1 ≤ f x) : l.countP p ≤ (l.map f).sum := by
-  induction l with
-  | nil => simp
-  | cons a l ih =>
-    rw [List.countP_cons, List.map_cons, List.sum_cons]
-    have := ih fun x hx => h x (List.mem_cons_of_mem _ hx)
-    by_cases hp : p a = true
-    · have := h a List.mem_cons_self hp
-      simp only [hp, ite_true]
-      omega
-    · simp only [hp, Bool.false_eq_true, ite_false]
-      omega
-
-/-- **Splitting keeps falsified clauses falsified**: an assignment of the split formula falsifies
-at least as many clauses as its restriction to the original variables falsifies in the original
-formula. -/
-theorem CNF.countUnsat_comp_inl_le_countUnsat_to3CNF (φ : CNF V) (τ : V ⊕ (ℕ × ℕ) → Bool) :
-    φ.countUnsat (τ ∘ Sum.inl) ≤ φ.to3CNF.countUnsat τ := by
-  have hφ : φ.countUnsat (τ ∘ Sum.inl) =
-      φ.zipIdx.countP fun x => !x.1.eval (τ ∘ Sum.inl) := by
-    rw [CNF.countUnsat]
-    conv_lhs => rw [← List.zipIdx_map_fst 0 φ]
-    rw [List.countP_map]
-    rfl
-  rw [hφ, CNF.countUnsat, CNF.to3CNF, List.countP_flatMap]
-  refine countP_le_sum_map fun x _ hx => Nat.one_le_iff_ne_zero.2 fun h0 => ?_
-  have h := Clause.eval_of_eval_split3 _ τ 0 _
-    (CNF.countUnsat_eq_zero_iff.1 (show CNF.countUnsat τ _ = 0 from h0))
-  rw [Clause.eval_relabel] at h
-  simp [h] at hx
-
-end Cslib.Logic.PL
 
 namespace Cslib.PCP.Encoded.Graph
 
@@ -308,6 +163,20 @@ private theorem card_unsatEdges_toGraph (g : Graph (α → α → Bool)) (σ : �
   congr 1
   ext i
   simp [ConstraintGraph.Satisfies, toGraph]
+
+private theorem countP_le_sum_map {β : Type*} {p : β → Bool} {f : β → ℕ} {l : List β}
+    (h : ∀ x ∈ l, p x = true → 1 ≤ f x) : l.countP p ≤ (l.map f).sum := by
+  induction l with
+  | nil => simp
+  | cons a l ih =>
+    rw [List.countP_cons, List.map_cons, List.sum_cons]
+    have := ih fun x hx => h x (List.mem_cons_of_mem _ hx)
+    by_cases hp : p a = true
+    · have := h a List.mem_cons_self hp
+      simp only [hp, ite_true]
+      omega
+    · simp only [hp, Bool.false_eq_true, ite_false]
+      omega
 
 /-- **Every violated edge leaves a falsified clause**: an assignment falsifies at least as many
 clauses of the formula as the labelling it writes violates edges, when `pairs` lists all pairs of
