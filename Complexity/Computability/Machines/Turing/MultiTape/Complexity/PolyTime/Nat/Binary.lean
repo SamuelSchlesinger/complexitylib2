@@ -636,3 +636,29 @@ theorem binary_shiftRight' {α : Type} {input : α ↪ List Bool} {left right : 
   binary_shiftRight.comp (hleft.prod hright)
 
 end Turing.MultiTapeTM.ComputableInPolyTime
+
+/-! ### Plain polynomial-time automation -/
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+/-- Multiply computed binary values, fixing their intermediate encodings for proof search. -/
+@[fun_prop]
+theorem binary_mul' {α : Type}
+    {input : α ↪ List Bool}
+    {left : α → ℕ}
+    {right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encNat)
+    (hright : ComputableInPolyTime right input encNat) :
+    ComputableInPolyTime (fun (a : α) => left a * right a) input
+  encNat :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_mul' α input left right
+      hleft.tidy hright.tidy)
+
+/-- `2 ^ k` in binary, from `k` in unary, by doubling. -/
+@[fun_prop]
+theorem binary_two_pow :
+    ComputableInPolyTime (fun (k : ℕ) => 2 ^ k)
+  encUnary encNat :=
+  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_two_pow
+
+end Turing.MultiTapeTM.ComputableInPolyTime

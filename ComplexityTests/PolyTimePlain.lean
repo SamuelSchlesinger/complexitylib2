@@ -168,17 +168,16 @@ example {f : α → List ℕ} (hf : ComputableTidilyInPolyTime f enc (encList en
 example {f : α → ℕ × Bool} (hf : ComputableTidilyInPolyTime f enc (encPair encNat encBool)) :
     ComputableInPolyTime (fun a => !(f a).2) enc encBool := by fun_prop
 
-/-- Limitation: `fun_prop` decomposes a plain goal before trying tidy certificates, so a tidy
-certificate for the whole composite, here
-`Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsAnyWithInput`, is not reached. `polytime`
-reaches it, and so does `.of_tidy` around a tidy `fun_prop` proof. -/
+/-- The ordinary plain scan rule certifies the complete captured callback. Both the list and
+callback certificate remain necessary, including when they are supplied as known raw facts. -/
 example {list : α → List Bool} {test : α → Bool → Bool}
     (hlist : ComputableTidilyInPolyTime list enc encBits)
     (htest : ComputableTidilyInPolyTime (fun p : α × Bool => test p.1 p.2) (encPair enc encBool)
       encBool) :
     ComputableInPolyTime (fun a => (list a).any (test a)) enc encBool := by
-  fail_if_success fun_prop
-  exact .of_tidy (by fun_prop)
+  fail_if_success (clear hlist; fun_prop)
+  fail_if_success (clear htest; fun_prop)
+  fun_prop
 
 example {list : α → List Bool} {test : α → Bool → Bool}
     (hlist : ComputableTidilyInPolyTime list enc encBits)

@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Polynomial-time membership tests
@@ -55,3 +57,38 @@ theorem decide_mem {list : γ → List α} {value : γ → α} [∀ x, Decidable
     (decide_eq' (snd _ _) (hvalue.comp (fst _ _)))
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+/-! ### Plain polynomial-time automation -/
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+/-- Membership of a computed value in a computed list is decided by scanning the list for an equal
+element. -/
+@[fun_prop]
+theorem decide_mem {γ : Type}
+    {α : Type}
+    {encIn : γ ↪ List Bool}
+    {encA : α ↪ List Bool}
+    {list : γ → List α}
+    {value : γ → α}
+    [_inst6 : (x : γ) → Decidable (value x ∈ list x)]
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (hvalue : ComputableInPolyTime value encIn encA) :
+    ComputableInPolyTime
+  (fun (x : γ) => Decidable.decide (value x ∈ list x)) encIn encBool :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_mem γ α encIn encA list value
+      _inst6 hlist.tidy hvalue.tidy)
+
+/-- Negation of an efficiently decidable proposition uses the standard Boolean encoding. -/
+@[fun_prop]
+theorem decide_not {γ : Type}
+    {encIn : γ ↪ List Bool}
+    {p : γ → Prop}
+    [_inst3 : (x : γ) → Decidable (p x)]
+    (h : ComputableInPolyTime (fun (x : γ) => Decidable.decide (p x)) encIn
+  encBool) :
+    ComputableInPolyTime (fun (x : γ) => Decidable.decide ¬p x) encIn
+  encBool :=
+  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.decide_not γ encIn p _inst3 h.tidy)
+
+end Turing.MultiTapeTM.ComputableInPolyTime

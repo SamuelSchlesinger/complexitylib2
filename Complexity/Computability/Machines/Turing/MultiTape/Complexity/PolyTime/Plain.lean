@@ -40,9 +40,9 @@ statements; the tidy notion is a proof device. Proofs switch between them with
 The closure rules of the plain notion are proved through the tidy calculus and registered with
 `fun_prop`, together with the transition from tidy to plain computability. `fun_prop` decomposes a
 plain goal with the plain closure rules and proves the remaining atoms from plain hypotheses or,
-through the transition, from tidy certificates. A tidy certificate stated for a whole composite,
-such as the `…WithInput` scans, is not reached this way; use `polytime`, or `.of_tidy` around a
-tidy `fun_prop` proof.
+through the transition, from tidy certificates. Ordinary plain rules for captured scans and list
+operations are supplied by `PolyTime.List` and `PolyTime.BitString`. If a routine has only a tidy
+construction certificate, its proof can switch explicitly with `.of_tidy`.
 
 ## Mixing plain hypotheses with tidy certificates
 
@@ -334,5 +334,15 @@ theorem ite' {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β}
     (hg : ComputableInPolyTime g encIn encMid) :
     ComputableInPolyTime (fun x => if c x then f x else g x) encIn encMid :=
   .of_tidy (hc.tidy.ite' hf.tidy hg.tidy)
+
+
+/-- Return the encoded word of an already computed value. The source and result encodings of
+that value remain fixed; this reads the representation already produced by its certificate. -/
+@[fun_prop]
+theorem encoding_comp {δ : Type*} {ε : Type*} {input : δ ↪ List Bool}
+    {output : ε ↪ List Bool} {f : δ → ε} (hf : ComputableInPolyTime f input output) :
+    ComputableInPolyTime (fun a => output (f a)) input encBits :=
+  (ComputableInPolyTime.of_eq (fun _ => rfl) :
+    ComputableInPolyTime output output encBits).comp hf
 
 end Turing.MultiTapeTM.ComputableInPolyTime
