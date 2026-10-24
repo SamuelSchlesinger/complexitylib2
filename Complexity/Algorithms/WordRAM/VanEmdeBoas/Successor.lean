@@ -26,7 +26,8 @@ reconstruct the universe key in `out` while restoring `sp = stackBase₀`.
 ## Main definitions
 
 * `SuccessorEntry`: register invariant at entry to `successorDescent`.
-* `successorDescentNext`: mathematical description of one `successorDescentBody` iteration.
+* `pushFrameData`, `successorDescentNext`: mathematical descriptions of pushing a continuation
+  frame and one `successorDescentBody` iteration.
 * `UnwindState`: register and memory invariant during `successorUnwind`.
 * `successorUnwindNext`: mathematical description of one `successorUnwindBody` iteration.
 

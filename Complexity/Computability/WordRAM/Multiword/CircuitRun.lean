@@ -19,6 +19,7 @@ basis. It tracks the encoded prefix, instruction count, and preservation of memo
 ## Main definitions
 
 * `Circuit.prefix`: completed node values, with future entries zeroed.
+* `Circuit.nop`: one-instruction no-op terminator.
 * `Circuit.run`: sequential composition of a supplied node compiler.
 
 ## Main results

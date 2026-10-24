@@ -45,7 +45,8 @@ The time and space of the algorithm on multi-tape machines are in
 * `Cslib.Reachability.reach`: the midpoint recursion.
 * `Cslib.Reachability.Savitch.next`: the binary counter of fixed width.
 * `Cslib.Reachability.Savitch.Frame`, `Cslib.Reachability.Savitch.Reg`,
-  `Cslib.Reachability.Savitch.State`, `Cslib.Reachability.Savitch.step`: the stack machine.
+  `Cslib.Reachability.Savitch.Reg.answer`, `Cslib.Reachability.Savitch.State`,
+  `Cslib.Reachability.Savitch.step`: the stack machine.
 * `Cslib.Reachability.Savitch.callSteps`, `Cslib.Reachability.Savitch.steps`: the number of steps
   of a call, and of the algorithm.
 * `Cslib.Reachability.savitch`: Savitch's algorithm.

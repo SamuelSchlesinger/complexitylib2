@@ -27,6 +27,8 @@ authoritative MIT 6.851 Spring 2021 lecture 12 notes, rather than the accompanyi
 * `packedNode`: guarded sketches, in little-endian field order.
 * `queryMultiplier`: replicates a query by multiplication.
 * `packedDifference`: simultaneous guarded subtraction.
+* `parallelCompareCode`, `parallelCompareResult`: the two-instruction standard-basis parallel
+  comparison program and its final data state.
 
 ## Main results
 

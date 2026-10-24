@@ -19,9 +19,11 @@ of a RAM execution, not the full cell-probe model with arbitrary free computatio
 
 ## Main definitions
 
-* `Probe`: a read or write event with address and value.
+* `Probe`, `Op.probes`: a read or write event with address and value, and the probes of a primitive
+  instruction.
 * `TraceExec`: structured execution with its memory-access transcript.
-* `Probe.readCount`, `Probe.writeCount`: additive resource interpretations.
+* `Probe.readCount`, `Probe.writeCount`, `Probe.writes`: additive resource interpretations and the
+  set of written addresses.
 
 ## Main results
 

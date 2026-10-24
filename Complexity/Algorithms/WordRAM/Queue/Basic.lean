@@ -20,8 +20,12 @@ not require clearing the reserved memory.
 
 ## Main definitions
 
-* `Rep`: the bounded shared-memory representation of the two top-first lists.
-* `program`: one fixed operation dispatcher.
+* `tag`, `arg`, `frontLen`, `frontBase`, `backLen`, `backBase`, `addr`, `out`, `present`, `zero`,
+  `one`: register allocation for the two-stack queue.
+* `Rep`, `footprint`: the bounded shared-memory representation of the two top-first lists and its
+  reserved memory footprint.
+* `enqueue`, `move`, `transfer`, `pop`, `dequeue`, `program`, `bodyCost`: structured queue
+  operations, the fixed operation dispatcher, and its per-operation instruction count.
 * `implementation`: its argument and result conventions.
 * `initializeCode`: six charged writes installing an empty representation.
 
@@ -281,6 +285,7 @@ def bodyCost (front back : List ℕ) : QueueOp ℕ → ℕ
   | .enqueue _ => 5
   | .dequeue => if front = [] then 8 * back.length + (if back = [] then 8 else 11) else 10
 
+/-- Encoded operation arguments for any valid queue operation fit in a `w`-bit word. -/
 theorem arguments_fit {w capacity : ℕ} (h1 : Fits w 1) {q : List ℕ} (o : QueueOp ℕ)
     (hv : (spec w capacity).valid q o) (i : Fin 11) :
     Fits w ((implementation w capacity).encode o i) := by

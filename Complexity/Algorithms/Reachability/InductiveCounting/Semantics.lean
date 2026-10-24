@@ -22,7 +22,12 @@ of its selected count with the round count then forces exhaustiveness.
 ## Main definitions
 
 * `Cslib.InductiveCounting.Graph`: the graph restricted to the vertex interval.
-* `Cslib.InductiveCounting.roundSet`: the finite set represented by a round count.
+* `Cslib.InductiveCounting.roundSet`, `Cslib.InductiveCounting.prefixCount`: the finite set
+  represented by a round count and the next-round count below the current target.
+* `Cslib.InductiveCounting.Observed`: the predicate observed for one included candidate.
+* `Cslib.InductiveCounting.RoundCorrect`, `Cslib.InductiveCounting.ScanContext`,
+  `Cslib.InductiveCounting.ScanPrefix`: ghost invariants for the round count and scan loop.
+* `Cslib.InductiveCounting.Safe`: no bad vertex is reachable in the restricted input graph.
 * `Cslib.InductiveCounting.Invariant`: the semantic assertion at each instruction.
 
 ## References
@@ -54,10 +59,12 @@ private theorem reachable_lt (hsource : source < N)
   | refl => exact hsource
   | tail _ huv _ => exact huv.2.1
 
+/-- Every vertex reachable within `k` steps in the restricted graph lies below `N`. -/
 theorem within_lt (hsource : source < N)
     (h : Relation.RelatesWithinSteps (Graph N edge) source u k) : u < N :=
   reachable_lt hsource h.reflTransGen
 
+/-- Membership in `roundSet` characterizes reachability from `source` within `k` steps. -/
 theorem mem_roundSet (hsource : source < N) :
     u ∈ roundSet N edge source k ↔
       Relation.RelatesWithinSteps (Graph N edge) source u k := by
@@ -70,6 +77,7 @@ private theorem roundSet_zero (hsource : source < N) : roundSet N edge source 0 
   rw [mem_roundSet hsource, ← Relation.mem_reachableWithin, Relation.reachableWithin_zero]
   simp
 
+/-- Every round set contains at most `N` vertices. -/
 theorem roundSet_card_le : (roundSet N edge source k).card ≤ N := by
   classical
   exact (Finset.card_le_card (Finset.filter_subset _ _)).trans_eq (Finset.card_range N)
@@ -109,6 +117,7 @@ private theorem mem_roundSet_final (hsource : source < N) (hk : k + 1 = N) :
 noncomputable def prefixCount (N : ℕ) (edge : ℕ → ℕ → Bool) (source k v : ℕ) : ℕ :=
   ((roundSet N edge source (k + 1)).filter (· < v)).card
 
+/-- The prefix count below target `0` is zero. -/
 @[simp] theorem prefixCount_zero : prefixCount N edge source k 0 = 0 := by
   simp [prefixCount]
 
@@ -192,6 +201,7 @@ def Invariant (N : ℕ) (edge : ℕ → ℕ → Bool) (bad : ℕ → Bool)
   | .accept => Safe N source edge bad
   | .reject => True
 
+/-- When the selected count matches the round count, `s.hit` reflects the entire round set. -/
 theorem scan_exhaustive (hc : RoundCorrect N edge source s)
     (hp : ScanPrefix N edge bad source s) (he : s.selected = s.count) :
     s.hit = true ↔ ∃ u ∈ roundSet N edge source s.round, Observed edge bad s u := by
@@ -247,6 +257,7 @@ private theorem scan_final_safe (hsource : source < N) (hc : RoundCorrect N edge
     simp_all
   exact Bool.eq_false_iff.mpr hno
 
+/-- The initial state satisfies the semantic invariant whenever `source < N`. -/
 theorem invariant_initial (hsource : source < N) :
     Invariant N edge bad source (initial N source) := by
   have hN : 0 < N := by omega

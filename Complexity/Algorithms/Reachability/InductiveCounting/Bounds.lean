@@ -18,6 +18,10 @@ Every branch halts in `O((N + 1)^4 * (width + 1))` instructions. Every register 
 fixed register tuple therefore uses `O(log N + width)` bits when the width is chosen to encode
 vertex identifiers.
 
+## Main definitions
+
+* `Cslib.InductiveCounting.budget`: the uniform polynomial instruction budget.
+
 ## Main results
 
 * `Cslib.InductiveCounting.halted_replay_budget`: a uniform all-branch time bound.

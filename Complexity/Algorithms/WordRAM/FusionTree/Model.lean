@@ -27,8 +27,16 @@ It asserts neither preprocessing time nor a query running time.
 
 ## Main definitions
 
-* `span`, `encode`: allocation length and concrete list of RAM words.
-* `Rep`: actual memory realizes that list using `WordRAM.Block.Realizes`.
+* `headerWords`, `HeaderOffset.tag`, `HeaderOffset.count`, `HeaderOffset.minimum`,
+  `HeaderOffset.compression`, `HeaderOffset.multiplierLow`, `HeaderOffset.multiplierMiddle`,
+  `HeaderOffset.multiplierHigh`, `HeaderOffset.maskD`, `HeaderOffset.copies`,
+  `HeaderOffset.packedComplements`, `HeaderOffset.packedNormal`, `HeaderOffset.guards`,
+  `HeaderOffset.bits`, `HeaderOffset.middle`, `HeaderOffset.radix`, `HeaderOffset.maximum`,
+  `HeaderOffset.globalOffset`, `HeaderOffset.reserved`: record header length and named offsets.
+* `span`, `childAddress`, `header`, `childTable`, `encode`, `encodeForest`, `decode`:
+  allocation length, serialized RAM word lists, and load-based decoder.
+* `Stores`, `Rep`, `arena`, `memory`: contiguous memory realization, heap assertion, and
+  concrete zero-extended RAM realization.
 * `ArenaFits`, `ContentFits`: separate address/frontier and stored-content contracts.
 
 ## Main results

@@ -22,7 +22,13 @@ Singleton branches are collapsed, so leaves need not all have the same depth.
 ## Main definitions
 
 * `Tree`: singleton leaves and internal nodes with cached subtree minima.
+* `Tree.keys`, `Tree.minimum`, `Tree.height`, `Tree.slots`: stored keys, cached minimum, height
+  and scalar-slot count of a tree.
+* `Tree.Valid`: occupancy and cached-minimum invariants.
+* `Tree.join`, `Tree.chunks`, `Tree.buildAux`: node formation, block splitting and recursive
+  height-bounded tree construction.
 * `Tree.build`: executable construction from a list, with branching parameter `B`.
+* `Tree.selectChild`, `Tree.listPredecessor`: linear child selection and list predecessor scan.
 * `Tree.predecessor`: inclusive predecessor, using an explicit linear scan of child minima.
 
 ## Main results
@@ -285,6 +291,7 @@ def selectChild (q : ℕ) : List Tree → Option Tree
   | [] => none
   | t :: ts => (selectChild q ts).or (if t.minimum ≤ q then some t else none)
 
+/-- Any child selected by `selectChild` belongs to the input child list. -/
 theorem selectChild_mem {q : ℕ} {cs : List Tree} {t : Tree}
     (h : selectChild q cs = some t) : t ∈ cs := by
   induction cs with
@@ -322,6 +329,7 @@ decreasing_by
   simp_wf
   omega
 
+/-- In a valid tree, `minimum` equals the first stored key (or `0` when empty). -/
 theorem minimum_eq_headD {B : ℕ} {t : Tree} (ht : Valid B t) :
     t.minimum = t.keys.headD 0 := by
   cases t with
@@ -330,6 +338,7 @@ theorem minimum_eq_headD {B : ℕ} {t : Tree} (ht : Valid B t) :
     simp only [Valid] at ht
     simpa only [minimum, keys] using ht.2.2.1
 
+/-- `listPredecessor` returns `none` iff every element of the list exceeds `q`. -/
 theorem listPredecessor_eq_none_iff (q : ℕ) (xs : List ℕ) :
     listPredecessor q xs = none ↔ ∀ x ∈ xs, q < x := by
   induction xs with

@@ -16,6 +16,10 @@ Each iteration reads a tag, compares a leaf or runs an actual node query, and ei
 or loads a child pointer. The proof descends through the represented tree; every followed
 child has smaller height. No execution or correctness assumption is hidden in the invariant.
 
+## Main definitions
+
+* `QueryProgram.Done`: postcondition for a stopped fusion-tree traversal.
+
 ## Main results
 
 * `QueryProgram.exec_loop`: inclusive predecessor in at most
@@ -23,7 +27,8 @@ child has smaller height. No execution or correctness assumption is hidden in th
 
 ## References
 
-* [FredmanWillard1993]
+* [M. L. Fredman and D. E. Willard, *Surpassing the information theoretic bound with fusion
+  trees*][FredmanWillard1993]
 -/
 
 @[expose] public section

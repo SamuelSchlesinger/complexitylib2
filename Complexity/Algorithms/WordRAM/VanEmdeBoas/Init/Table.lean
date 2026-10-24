@@ -23,7 +23,14 @@ recursive van Emde Boas trees and certifies its first two phases:
 
 ## Main definitions
 
+* `initSetup`, `sizeBody`, `sizeLoop`: Phase 1 constant setup and `(universeSize, span)` recurrence
+  loop.
+* `tableSetup`, `tableBody`, `tableLoop`: Phase 2 setup and `(splitSize, childSpan)` lookup-table
+  loop.
+* `dfsSetup`, `dfsEnterBody`, `dfsExitBody`, `dfsBody`, `dfsLoop`: Phase 3 setup and iterative
+  depth-first header initialization loop.
 * `initProgram`: the fixed 32-register structured initializer program.
+* `initSetupData`, `tableSetupData`: register and memory state after `initSetup` and `tableSetup`.
 * `TableInv`: the lookup-table invariant for `(splitSize j, childSpan j)`.
 
 ## Main results
@@ -122,8 +129,10 @@ def initProgram : Code .standard 32 := ram[
   ⟪dfsLoop⟫;
   out ← payload ]
 
+/-- The structured initializer program `initProgram` does not read the word width. -/
 theorem initProgram_not_readsWidth : ¬initProgram.ReadsWidth := by decide
 
+/-- The compiled flat initializer program does not read the word width. -/
 theorem compiled_initProgram_not_readsWidth : ¬(initProgram.program out).ReadsWidth :=
   Code.not_readsWidth_program initProgram_not_readsWidth out
 
@@ -134,6 +143,7 @@ def initSetupData (s : Data 32) : Data 32 :=
   ((((((((s.set zero 0).set one 1).set two 2).set three 3).set four 4).set five 5).set q 2).set
     t 5).set high 0
 
+/-- `initSetup` executes in 9 instructions and produces `initSetupData s`. -/
 theorem initSetup_exec {w : ℕ} {s : Data 32} (hw : Fits w 5) :
     Exec w initSetup s (initSetupData s) 9 := by
   have h0 := hw.of_le (by decide : 0 ≤ 5)
@@ -222,6 +232,7 @@ def tableSetupData (s : Data 32) (base d : ℕ) : Data 32 :=
   ((((((((((s.set payload tbl).set tableBase tbl).set stackBase tbl).set sp tbl).write
     tbl 0).set sp (tbl + 1)).write (tbl + 1) 0).set sp (tbl + 1 + 1)).set q 2).set t 5).set high 0
 
+/-- `tableSetup` executes in 11 instructions and produces `tableSetupData s base d`. -/
 theorem tableSetup_exec {w base d : ℕ} {s : Data 32} (ha : Fits w (base + span d + 4 * (d + 1)))
     (h0 : s.regs zero = 0) (h1 : s.regs one = 1) (h2 : s.regs two = 2) (h5 : s.regs five = 5)
     (hroot : s.regs root = base) (ht : s.regs t = span d) :

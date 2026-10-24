@@ -230,6 +230,7 @@ theorem searchVisits_le_eraseVisits (x : α) (t : BinaryTree α) :
     · omega
     · split <;> omega
 
+/-- Deletion visits at most `t.height` internal nodes. -/
 theorem eraseVisits_le_height (x : α) (t : BinaryTree α) :
     eraseVisits x t ≤ t.height := by
   induction t with

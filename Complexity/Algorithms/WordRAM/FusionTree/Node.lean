@@ -26,6 +26,8 @@ claimed. No correctness or execution oracle is a parameter of the representation
 
 ## Main definitions
 
+* `NodeProgram.boundaryQuery`, `NodeProgram.correction`, `NodeProgram.finish`: second sketch-rank
+  query at the prefix boundary, neighbor correction and output writeback stages.
 * `NodeProgram.code`: the actual node query, depending only on physical width.
 
 ## Main results

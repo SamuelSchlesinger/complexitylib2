@@ -19,6 +19,7 @@ They are used only to construct a successful binary-choice replay.
 ## Main definitions
 
 * `Cslib.InductiveCounting.BinaryExtension`: a vertex extends a partial binary guess.
+* `Cslib.InductiveCounting.FullPrefix`: the selected count equals the reachable prefix count.
 * `Cslib.InductiveCounting.Honest`: the assertion maintained by honest choices.
 
 ## References
@@ -327,6 +328,7 @@ private theorem exists_honest_step (hsource : source < N) (hwidth : N ≤ 2 ^ wi
   have hr := rank_instruction_lt (width := width) hi (Bool.eq_false_iff.mpr hs) b
   simpa only [step, advance, hs, Bool.false_eq_true, ↓reduceIte, hb', hr, and_self] using hh'
 
+/-- The initial controller state satisfies the uniform register bound. -/
 theorem bounded_initial : Bounded N width (initial N source) := by
   unfold initial
   split

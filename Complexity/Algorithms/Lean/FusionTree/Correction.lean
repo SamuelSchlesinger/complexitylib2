@@ -21,6 +21,11 @@ is asserted.
 ## Main definitions
 
 * `upperRank`, `lowerRank`: inclusive and strict ranks in a finite sequence.
+* `IsSketchNeighbor`: predicate for the indices `t - 1` and `t` around inclusive sketch rank `t`.
+* `boundaryRank`: inclusive sketch rank at the highest-differing-bit prefix boundary.
+* `sketchRank`: inclusive rank in the stored compressed sketches.
+* `sketchPredecessor`, `sketchSuccessor`: neighboring stored indices around `sketchRank`.
+* `chooseByScore`, `divergenceScore`: longest-common-prefix tie-breaking between sketch neighbors.
 * `bestSketchNeighbor`: select between indices `t-1` and `t` at inclusive sketch rank `t`.
 * `correctedRank`: the resulting arbitrary-query correction.
 
