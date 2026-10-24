@@ -12,8 +12,8 @@ import Mathlib.Tactic.NormNum.Prime
 # Tests for the sumcheck protocol
 
 The polynomial `X₀` in one variable over `ZMod 3` has individual degree `1`. Its hypercube sum is
-`0 + 1 = 1`, so the claim `(r, 1)` is true and `(r, 0)` is false. The end-to-end theorems apply:
-sumcheck with the final check is perfectly complete and has soundness error `1 / 3`.
+`0 + 1 = 1`, so the initial claim `(![], 1)` is true and `(![], 0)` is false. The end-to-end
+theorems apply: sumcheck with the final check is perfectly complete and has soundness error `1 / 3`.
 -/
 
 namespace ComplexityTests.Sumcheck
@@ -32,15 +32,16 @@ theorem degreeOf_P_le (j : Fin 1) : P.degreeOf j ≤ 1 := by
   split_ifs <;> simp
 
 /-- The hypercube sum of `X₀` is `1`. -/
-theorem partialSum_P (r : Fin 1 → ZMod 3) : partialSum P 0 r = 1 := by
-  rw [partialSum, ← (Equiv.funUnique (Fin 1) Bool).symm.sum_comp]
-  simp [splice]
+theorem partialSum_P : partialSum P (![] : Fin 0 → ZMod 3) = 1 := by
+  change ∑ b : Fin 1 → Bool, MvPolynomial.eval (point ![] b) P = 1
+  rw [← (Equiv.funUnique (Fin 1) Bool).symm.sum_comp]
+  simp [point]
 
 /-- The true claim. -/
-example (r : Fin 1 → ZMod 3) : rel P 0 (r, 1) () := partialSum_P r
+example : rel P 0 (![], 1) () := partialSum_P
 
 /-- A false claim. -/
-example (r : Fin 1 → ZMod 3) : ¬ rel P 0 (r, 0) () := by
+example : ¬ rel P 0 (![], 0) () := by
   simp [rel, partialSum_P]
 
 /-- Sumcheck with the final check is perfectly complete on this instance. -/
