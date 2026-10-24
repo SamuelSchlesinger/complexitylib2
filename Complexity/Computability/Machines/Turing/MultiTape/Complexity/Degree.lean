@@ -16,9 +16,9 @@ import Mathlib.Tactic.Ring
 import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 
 /-!
-# Tidy computability with polynomial bounds of a given degree
+# Computability with polynomial bounds of a given degree
 
-`ComputableTidilyInDegree f encIn encOut d e`: `f` is tidily computable within time and space
+`ComputableInDegree f encIn encOut d e`: `f` is computable within time and space
 `O(n ^ d)`, and its encoded values have length `O(n ^ e)`, where `n` is the length of the encoded
 input. The constants are existential, the degrees are explicit. The closure properties compute the
 degrees: composition multiplies the degree of the outer function by the output degree of the inner
@@ -34,14 +34,14 @@ an already shared degree.
 ## Main definitions
 
 * `Turing.MultiTapeTM.DegreeBounded`: a function bounded by `c * (size + 1) ^ d`.
-* `Turing.MultiTapeTM.ComputableTidilyInDegree`: tidy computability with bounds of given degrees.
+* `Turing.MultiTapeTM.ComputableInDegree`: plain computability with bounds of given degrees.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.computableTidilyInPolyTime`: polynomial time.
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.comp`, `.ite`, `.append`, `.pair`, `.prod`: closure
+* `Turing.MultiTapeTM.ComputableInDegree.computableInPolyTime`: polynomial time.
+* `Turing.MultiTapeTM.ComputableInDegree.comp`, `.ite`, `.append`, `.pair`, `.prod`: closure
   properties.
-* `Turing.MultiTapeTM.ComputableTidilyInDegree.of_finite`: functions on finite types.
+* `Turing.MultiTapeTM.ComputableInDegree.of_finite`: functions on finite types.
 -/
 
 namespace Turing.MultiTapeTM
@@ -60,15 +60,6 @@ end DegreeBounded
 
 /-! ### Tidy computability with bounds of given degrees -/
 
-/-- `f` is tidily computable within time and space bounded by polynomials of degree `d` in the
-length of the encoded input, and its encoded values have length bounded by a polynomial of
-degree `e`. -/
-@[expose] public def ComputableTidilyInDegree {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
-    (encOut : β ↪ List Bool) (d e : ℕ) : Prop :=
-  (∃ t s, DegreeBounded (fun a => (encIn a).length) t d ∧
-    DegreeBounded (fun a => (encIn a).length) s d ∧
-    ComputableTidilyInTimeAndSpace f encIn encOut t s) ∧
-  DegreeBounded (fun a => (encIn a).length) (fun a => (encOut (f a)).length) e
 
 namespace ComputableTidilyInDegree
 
@@ -76,31 +67,31 @@ variable {α β γ δ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List 
   {encOut : γ ↪ List Bool} {d e d₁ e₁ d₂ e₂ : ℕ}
 
 /-- Moving to larger degrees. -/
-public theorem mono {f : α → β} {d' e' : ℕ} (h : ComputableTidilyInDegree f encIn encMid d e)
+private theorem mono {f : α → β} {d' e' : ℕ} (h : ComputableTidilyInDegree f encIn encMid d e)
     (hd : d ≤ d' := by first | decide | omega) (he : e ≤ e' := by first | decide | omega) :
     ComputableTidilyInDegree f encIn encMid d' e' :=
   let ⟨⟨t, s, ht, hs, hf⟩, hl⟩ := h
   ⟨⟨t, s, ht.mono_deg hd, hs.mono_deg hd, hf⟩, hl.mono_deg he⟩
 
 /-- Bounds of degree `d` give tidy computability of degree `d`, with output of degree `d`. -/
-public theorem of_bounds {f : α → β} {t s : α → ℕ}
+private theorem of_bounds {f : α → β} {t s : α → ℕ}
     (ht : DegreeBounded (fun a => (encIn a).length) t d)
     (hs : DegreeBounded (fun a => (encIn a).length) s d)
     (hf : ComputableTidilyInTimeAndSpace f encIn encMid t s) :
     ComputableTidilyInDegree f encIn encMid d d :=
   ⟨⟨t, s, ht, hs, hf⟩, ht.mono hf.length_le⟩
 
-public theorem computableTidilyInPolyTime {f : α → β}
+private theorem computableTidilyInPolyTime {f : α → β}
     (h : ComputableTidilyInDegree f encIn encMid d e) : ComputableTidilyInPolyTime f encIn encMid :=
   let ⟨⟨_, _, ht, hs, hf⟩, _⟩ := h
   ⟨_, _, ht.polyBounded, hs.polyBounded, hf⟩
 
-public theorem of_linear {f : α → β} (h : ComputableInLinearTimeAndSpace f encIn encMid) :
+private theorem of_linear {f : α → β} (h : ComputableInLinearTimeAndSpace f encIn encMid) :
     ComputableTidilyInDegree f encIn encMid 1 1 :=
   let ⟨c, hc⟩ := Internal.normalizeLinear h
   of_bounds ⟨c, fun _ => by simp⟩ ⟨c, fun _ => by simp⟩ hc
 
-public theorem comp {f : β → γ} {g : α → β} (hf : ComputableTidilyInDegree f encMid encOut d₂ e₂)
+private theorem comp {f : β → γ} {g : α → β} (hf : ComputableTidilyInDegree f encMid encOut d₂ e₂)
     (hg : ComputableTidilyInDegree g encIn encMid d₁ e₁) :
     ComputableTidilyInDegree (f ∘ g) encIn encOut (max d₁ (e₁ * d₂)) (e₁ * e₂) := by
   obtain ⟨⟨t₁, s₁, ht₁, hs₁, h₁⟩, hl₁⟩ := hg
@@ -115,14 +106,14 @@ public theorem comp {f : β → γ} {g : α → β} (hf : ComputableTidilyInDegr
     (hs₁.add_max (hs₂.comp hl₁)).add (hm.mono_deg hd₁), h⟩,
     hl₂.comp hl₁⟩
 
-public theorem restrict {f : α → β} (h : ComputableTidilyInDegree f encIn encMid d e)
+private theorem restrict {f : α → β} (h : ComputableTidilyInDegree f encIn encMid d e)
     (p : α → Prop) :
     ComputableTidilyInDegree (f ∘ Subtype.val) ((Function.Embedding.subtype p).trans encIn) encMid
       d e :=
   let ⟨⟨_, _, ⟨ct, ht⟩, ⟨cs, hs⟩, hf⟩, ⟨cl, hl⟩⟩ := h
   ⟨⟨_, _, ⟨ct, fun a => ht a⟩, ⟨cs, fun a => hs a⟩, hf.restrict p⟩, ⟨cl, fun a => hl a⟩⟩
 
-public theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β} {dc ec : ℕ}
+private theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β} {dc ec : ℕ}
     (hc : ComputableTidilyInDegree c encIn encC dc ec)
     (hf : ComputableTidilyInDegree (f ∘ Subtype.val)
       ((Function.Embedding.subtype (c · = true)).trans encIn) encMid d₁ e₁)
@@ -155,14 +146,14 @@ public theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → �
     h.mono (fun x => ?_) (fun x => ?_)⟩, (hext hlf hlg).mono fun x => ?_⟩ <;>
   · by_cases hx : c x = true <;> simp [ext, hx]
 
-public theorem const (b : β) : ComputableTidilyInDegree (fun _ : α => b) encIn encMid 1 0 :=
+private theorem const (b : β) : ComputableTidilyInDegree (fun _ : α => b) encIn encMid 1 0 :=
   ⟨(of_linear (.const b)).1, .const _⟩
 
-public theorem of_eq {f : α → β} (h : ∀ a, encMid (f a) = encIn a) :
+private theorem of_eq {f : α → β} (h : ∀ a, encMid (f a) = encIn a) :
     ComputableTidilyInDegree f encIn encMid 1 1 :=
   of_linear (.of_eq h)
 
-public theorem append {enc₂ : δ ↪ List Bool} {f₁ : α → β} {f₂ : α → δ} {g : α → γ}
+private theorem append {enc₂ : δ ↪ List Bool} {f₁ : α → β} {f₂ : α → δ} {g : α → γ}
     (h₁ : ComputableTidilyInDegree f₁ encIn encMid d₁ e₁)
     (h₂ : ComputableTidilyInDegree f₂ encIn enc₂ d₂ e₂)
     (hg : ∀ x, encOut (g x) = encMid (f₁ x) ++ enc₂ (f₂ x)) :
@@ -175,14 +166,14 @@ public theorem append {enc₂ : δ ↪ List Bool} {f₁ : α → β} {f₂ : α 
       simp [hg]⟩
 
 /-- A function whose encoded values are those of a function computable with given degrees. -/
-public theorem of_enc_eq {f : α → β} {g : α → γ}
+private theorem of_enc_eq {f : α → β} {g : α → γ}
     (hf : ComputableTidilyInDegree f encIn encMid d e) (h : ∀ x, encOut (g x) = encMid (f x)) :
     ComputableTidilyInDegree g encIn encOut d e :=
   -- vendored: reuse the exact-bound output transport rule.
   let ⟨⟨t, s, ht, hs, hf⟩, hl⟩ := hf
   ⟨⟨t, s, ht, hs, hf.of_enc_eq h⟩, hl.mono fun a => by rw [h]⟩
 
-public theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
+private theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
     {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
     {enc : β₁ × β₂ ↪ List Bool} [hP : PairEncoding enc₁ enc₂ enc] {f : α → β₁} {g : α → β₂}
     (hf : ComputableTidilyInDegree f encIn enc₁ d₁ e₁)
@@ -199,7 +190,7 @@ public theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
   omega
 
 /-- Pairing with the framed encoding of pairs. -/
-public theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
+private theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
     {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
     {f : α → β₁} {g : α → β₂} (hf : ComputableTidilyInDegree f encIn enc₁ d₁ e₁)
     (hg : ComputableTidilyInDegree g encIn enc₂ d₂ e₂) :
@@ -208,31 +199,31 @@ public theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
   ⟨(hf.pair hg).1, (((hf.2.smul 2).add_const 1).add_max hg.2).mono fun x => by simp⟩
 
 /-- The first projection of the framed encoding of pairs. -/
-public theorem fst {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
+private theorem fst {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
     ComputableTidilyInDegree Prod.fst (encPair enc₁ enc₂) enc₁ 1 1 :=
   of_linear (.of_unframe fun p => by simp)
 
 /-- The second projection of the framed encoding of pairs. -/
-public theorem snd {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
+private theorem snd {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
     ComputableTidilyInDegree Prod.snd (encPair enc₁ enc₂) enc₂ 1 1 :=
   of_linear (.of_dropFrame fun p => by simp)
 
 /-- The first component of a pair computed with given degrees. -/
-public theorem fst' {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
+private theorem fst' {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
     {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
     {f : α → β₁ × β₂} (h : ComputableTidilyInDegree f encIn (encPair enc₁ enc₂) d e) :
     ComputableTidilyInDegree (fun x => (f x).1) encIn enc₁ (max d e) e :=
   ((fst enc₁ enc₂).comp h).mono
 
 /-- The second component of a pair computed with given degrees. -/
-public theorem snd' {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
+private theorem snd' {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
     {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
     {f : α → β₁ × β₂} (h : ComputableTidilyInDegree f encIn (encPair enc₁ enc₂) d e) :
     ComputableTidilyInDegree (fun x => (f x).2) encIn enc₂ (max d e) e :=
   ((snd enc₁ enc₂).comp h).mono
 
 /-- Functions on finite types, in linear time and zero space, with output of constant length. -/
-public theorem of_finite [Finite α] (f : α → β) : ComputableTidilyInDegree f encIn encMid 1 0 := by
+private theorem of_finite [Finite α] (f : α → β) : ComputableTidilyInDegree f encIn encMid 1 0 := by
   obtain ⟨c, h⟩ := computableInTimeAndSpace_of_finite (encIn := encIn) (encOut := encMid) f
   refine ⟨(of_linear ⟨c, h.mono
     (fun _ => Nat.le_mul_of_pos_right _ (Nat.succ_pos _)) (fun _ => Nat.zero_le _)⟩).1, ?_⟩
@@ -244,33 +235,198 @@ public theorem of_finite [Finite α] (f : α → β) : ComputableTidilyInDegree 
 variable {enc₁ : β ↪ List Bool}
 
 /-- `Option.some`. -/
-public theorem optionSome {enc : Option β ↪ List Bool} [OptionEncoding enc₁ enc] :
+private theorem optionSome {enc : Option β ↪ List Bool} [OptionEncoding enc₁ enc] :
     ComputableTidilyInDegree some enc₁ enc 1 1 :=
   of_linear OptionEncoding.some
 
 /-- `Option.getD`. -/
-public theorem getD {enc : Option β ↪ List Bool} [OptionEncoding enc₁ enc] (d : β) :
+private theorem getD {enc : Option β ↪ List Bool} [OptionEncoding enc₁ enc] (d : β) :
     ComputableTidilyInDegree (fun o => o.getD d) enc enc₁ 1 1 :=
   of_linear ((OptionEncoding.getD d))
 
 /-- `List.headD`. -/
-public theorem headD {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] (d : β) :
+private theorem headD {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] (d : β) :
     ComputableTidilyInDegree (fun l => l.headD d) enc enc₁ 1 1 :=
   of_linear ((ListEncoding.headD d))
 
 /-- `List.tail`. -/
-public theorem tail {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] :
+private theorem tail {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] :
     ComputableTidilyInDegree List.tail enc enc 1 1 :=
   of_linear ((ListEncoding.tail (enc₁ := enc₁)))
 
 /-- `List.isEmpty`. -/
-public theorem isEmpty {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] :
+private theorem isEmpty {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] :
     ComputableTidilyInDegree List.isEmpty enc encBool 1 1 :=
   of_linear ((ListEncoding.isEmpty (enc₁ := enc₁)))
 
 end ComputableTidilyInDegree
 
 namespace ComputableInDegree
+
+variable {α β γ δ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
+  {encOut : γ ↪ List Bool} {d e d₁ e₁ d₂ e₂ : ℕ} {enc₁ : β ↪ List Bool}
+
+/-- Moving to larger degrees. -/
+public theorem mono {f : α → β} {d' e' : ℕ} (h : ComputableInDegree f encIn encMid d e)
+    (hd : d ≤ d' := by first | decide | omega) (he : e ≤ e' := by first | decide | omega) :
+    ComputableInDegree f encIn encMid d' e' := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.mono (Internal.normalizeDegree h) hd he
+
+/-- Bounds of degree `d` give plain computability of degree `d`, with output of degree `d`. -/
+public theorem of_bounds {f : α → β} {t s : α → ℕ}
+    (ht : DegreeBounded (fun a => (encIn a).length) t d)
+    (hs : DegreeBounded (fun a => (encIn a).length) s d)
+    (hf : ComputableInTimeAndSpace f encIn encMid t s) :
+    ComputableInDegree f encIn encMid d d := by
+  exact ⟨⟨t, s, ht, hs, hf⟩, ht.mono hf.length_le⟩
+
+/-- Plain of linear at the stated independent cost and output degrees. -/
+public theorem of_linear {f : α → β} (h : ComputableInLinearTimeAndSpace f encIn encMid) :
+    ComputableInDegree f encIn encMid 1 1 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.of_linear h
+
+/-- Composition multiplies the outer cost and output degrees by the intermediate output degree. -/
+public theorem comp {f : β → γ} {g : α → β} (hf : ComputableInDegree f encMid encOut d₂ e₂)
+    (hg : ComputableInDegree g encIn encMid d₁ e₁) :
+    ComputableInDegree (f ∘ g) encIn encOut (max d₁ (e₁ * d₂)) (e₁ * e₂) := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.comp (Internal.normalizeDegree hf) (Internal.normalizeDegree hg)
+
+/-- Restricting the input type preserves both degrees. -/
+public theorem restrict {f : α → β} (h : ComputableInDegree f encIn encMid d e)
+    (p : α → Prop) :
+    ComputableInDegree (f ∘ Subtype.val) ((Function.Embedding.subtype p).trans encIn) encMid
+      d e := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.restrict (Internal.normalizeDegree h) p
+
+/-- A computed case distinction takes the maximum cost degree and the maximum branch
+output degree. -/
+public theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β} {dc ec : ℕ}
+    (hc : ComputableInDegree c encIn encC dc ec)
+    (hf : ComputableInDegree (f ∘ Subtype.val)
+      ((Function.Embedding.subtype (c · = true)).trans encIn) encMid d₁ e₁)
+    (hg : ComputableInDegree (g ∘ Subtype.val)
+      ((Function.Embedding.subtype (c · = false)).trans encIn) encMid d₂ e₂) :
+    ComputableInDegree (fun x => if c x then f x else g x) encIn encMid
+      (max dc (max d₁ d₂)) (max e₁ e₂) := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.ite (Internal.normalizeDegree hc)
+    (Internal.normalizeDegree hf) (Internal.normalizeDegree hg)
+
+/-- A constant function has linear cost and constant output length. -/
+public theorem const (b : β) : ComputableInDegree (fun _ : α => b) encIn encMid 1 0 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.const b
+
+/-- Plain of eq at the stated independent cost and output degrees. -/
+public theorem of_eq {f : α → β} (h : ∀ a, encMid (f a) = encIn a) :
+    ComputableInDegree f encIn encMid 1 1 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.of_eq h
+
+/-- Appending encoded results takes the maximum cost degree and output degree. -/
+public theorem append {enc₂ : δ ↪ List Bool} {f₁ : α → β} {f₂ : α → δ} {g : α → γ}
+    (h₁ : ComputableInDegree f₁ encIn encMid d₁ e₁)
+    (h₂ : ComputableInDegree f₂ encIn enc₂ d₂ e₂)
+    (hg : ∀ x, encOut (g x) = encMid (f₁ x) ++ enc₂ (f₂ x)) :
+    ComputableInDegree g encIn encOut (max d₁ d₂) (max e₁ e₂) := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.append (Internal.normalizeDegree h₁)
+    (Internal.normalizeDegree h₂) hg
+
+/-- A function whose encoded values are those of a function computable with given degrees. -/
+public theorem of_enc_eq {f : α → β} {g : α → γ}
+    (hf : ComputableInDegree f encIn encMid d e) (h : ∀ x, encOut (g x) = encMid (f x)) :
+    ComputableInDegree g encIn encOut d e := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.of_enc_eq (Internal.normalizeDegree hf) h
+
+/-- Plain pair at the stated independent cost and output degrees. -/
+public theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
+    {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
+    {enc : β₁ × β₂ ↪ List Bool} [hP : PairEncoding enc₁ enc₂ enc] {f : α → β₁} {g : α → β₂}
+    (hf : ComputableInDegree f encIn enc₁ d₁ e₁)
+    (hg : ComputableInDegree g encIn enc₂ d₂ e₂) :
+    ComputableInDegree (fun x => (f x, g x)) encIn enc (max d₁ d₂) (max d₁ d₂) := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.pair (Internal.normalizeDegree hf) (Internal.normalizeDegree hg)
+
+/-- Pairing with the framed encoding of pairs. -/
+public theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
+    {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
+    {f : α → β₁} {g : α → β₂} (hf : ComputableInDegree f encIn enc₁ d₁ e₁)
+    (hg : ComputableInDegree g encIn enc₂ d₂ e₂) :
+    ComputableInDegree (fun x => (f x, g x)) encIn (encPair enc₁ enc₂) (max d₁ d₂)
+      (max e₁ e₂) := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.prod (Internal.normalizeDegree hf) (Internal.normalizeDegree hg)
+
+/-- The first projection of the framed encoding of pairs. -/
+public theorem fst {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
+    ComputableInDegree Prod.fst (encPair enc₁ enc₂) enc₁ 1 1 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.fst enc₁ enc₂
+
+/-- The second projection of the framed encoding of pairs. -/
+public theorem snd {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
+    ComputableInDegree Prod.snd (encPair enc₁ enc₂) enc₂ 1 1 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.snd enc₁ enc₂
+
+/-- The first component of a pair computed with given degrees. -/
+public theorem fst' {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
+    {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
+    {f : α → β₁ × β₂} (h : ComputableInDegree f encIn (encPair enc₁ enc₂) d e) :
+    ComputableInDegree (fun x => (f x).1) encIn enc₁ (max d e) e := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.fst' (Internal.normalizeDegree h)
+
+/-- The second component of a pair computed with given degrees. -/
+public theorem snd' {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
+    {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
+    {f : α → β₁ × β₂} (h : ComputableInDegree f encIn (encPair enc₁ enc₂) d e) :
+    ComputableInDegree (fun x => (f x).2) encIn enc₂ (max d e) e := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.snd' (Internal.normalizeDegree h)
+
+/-- Functions on finite types, in linear time and zero space, with output of constant length. -/
+public theorem of_finite [Finite α] (f : α → β) : ComputableInDegree f encIn encMid 1 0 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.of_finite f
+
+/-- `Option.some`. -/
+public theorem optionSome {enc : Option β ↪ List Bool} [OptionEncoding enc₁ enc] :
+    ComputableInDegree some enc₁ enc 1 1 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.optionSome
+
+/-- `Option.getD`. -/
+public theorem getD {enc : Option β ↪ List Bool} [OptionEncoding enc₁ enc] (d : β) :
+    ComputableInDegree (fun o => o.getD d) enc enc₁ 1 1 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.getD d
+
+/-- `List.headD`. -/
+public theorem headD {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] (d : β) :
+    ComputableInDegree (fun l => l.headD d) enc enc₁ 1 1 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.headD d
+
+/-- `List.tail`. -/
+public theorem tail {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] :
+    ComputableInDegree List.tail enc enc 1 1 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.tail (enc₁ := enc₁)
+
+/-- `List.isEmpty`. -/
+public theorem isEmpty {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] :
+    ComputableInDegree List.isEmpty enc encBool 1 1 := by
+  apply Internal.forgetDegree
+  exact ComputableTidilyInDegree.isEmpty (enc₁ := enc₁)
+
 
 /-- Fixed time and work-space degrees give plain polynomial-time computability. This includes
 zero cost degree and does not charge the encoded value to the work-space bound. -/

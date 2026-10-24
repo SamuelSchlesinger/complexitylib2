@@ -418,6 +418,17 @@ theorem ComputableInTimeAndSpace.exists_computableTidilyInTimeAndSpace {α β : 
   exact Nat.add_le_add this (by generalize 4 * k * k = m; omega)
 
 
+/-- `f` is tidily computable within time and space bounded by polynomials of degree `d` in the
+length of the encoded input, and its encoded values have length bounded by a polynomial of
+degree `e`. -/
+public def ComputableTidilyInDegree {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) (d e : ℕ) : Prop :=
+  (∃ t s, DegreeBounded (fun a => (encIn a).length) t d ∧
+    DegreeBounded (fun a => (encIn a).length) s d ∧
+    ComputableTidilyInTimeAndSpace f encIn encOut t s) ∧
+  DegreeBounded (fun a => (encIn a).length) (fun a => (encOut (f a)).length) e
+
+
 /-- `f` is tidily computable within time and space bounded by a polynomial in the length of the
 encoded input. -/
 public def ComputableTidilyInPolyTime {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
