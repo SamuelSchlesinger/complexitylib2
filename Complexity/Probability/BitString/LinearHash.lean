@@ -96,7 +96,7 @@ theorem isDeltaUniversalHash (n m : ℕ) :
 /-- Uniform Boolean matrices are a universal hash family, including zero-width outputs. -/
 theorem isTwoUniversal (n m : ℕ) :
     IsTwoUniversal (PMF.uniformOfFintype (Fin m → BitString n)) hash :=
-  isTwoUniversal_iff_isUniversalHash.mpr (isDeltaUniversalHash n m).isUniversalHash
+  (isDeltaUniversalHash n m).isUniversalHash
 
 /-- Any initial block of a uniform matrix is itself uniform. Unused rows may remain public. -/
 private theorem uniform_prefix {n m count : ℕ} (h : m ≤ count) :
@@ -114,7 +114,7 @@ private theorem uniform_prefix {n m count : ℕ} (h : m ≤ count) :
 theorem isTwoUniversal_prefix {n m count : ℕ} (h : m ≤ count) :
     IsTwoUniversal (PMF.uniformOfFintype (Fin count → BitString n))
       (fun rows => hash (rows ∘ Fin.castLE h)) := by
-  apply IsTwoUniversal.precompose_seed
+  apply IsUniversalHash.precompose_seed
   rw [uniform_prefix]
   exact isTwoUniversal n m
 
@@ -122,7 +122,7 @@ theorem isTwoUniversal_prefix {n m count : ℕ} (h : m ≤ count) :
 theorem isTwoUniversal_flat (inputBits outputBits : ℕ) :
     IsTwoUniversal (PMF.uniformOfFintype (BitString (outputBits * inputBits)))
       (fun seed => hash (blocksEquiv (m := outputBits) (k := inputBits) seed)) := by
-  apply IsTwoUniversal.precompose_seed
+  apply IsUniversalHash.precompose_seed
   rw [PMF.uniformOfFintype_map_equiv]
   exact isTwoUniversal inputBits outputBits
 

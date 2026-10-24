@@ -17,16 +17,19 @@ private def xorHash (seed value : Bool) : Bool := value ^^ seed
 -- The seed distribution need not be uniform: every individual hash here is injective.
 private theorem xor_twoUniversal (seed : PMF Bool) : IsTwoUniversal seed xorHash := by
   intro x y hxy
-  cases x <;> cases y <;> simp_all [xorHash]
+  have hempty : {s | xorHash s x = xorHash s y} = ∅ := by
+    ext s
+    cases x <;> cases y <;> cases s <;> simp_all [xorHash]
+  simp [hempty]
 
 example : IsTwoUniversal (PMF.pure false) xorHash := xor_twoUniversal _
 
 -- Choosing one of two coordinates is not injective; its collision bound can be tight.
 example : IsTwoUniversal (PMF.uniformOfFintype Bool)
     (fun key (input : Bool × Bool) => if key then input.1 else input.2) := by
-  rintro ⟨a, b⟩ ⟨c, d⟩ hne
-  cases a <;> cases b <;> cases c <;> cases d <;>
-    norm_num [Fintype.sum_bool, PMF.uniformOfFintype_apply] at *
+  have h := IsUniversalHash.of_card_le (ι := Bool) (c := 1)
+    (hash := fun key (input : Bool × Bool) => if key then input.1 else input.2) (by decide)
+  simpa [IsTwoUniversal] using h
 
 example : (∑ key : Bool,
     if (if key then (false, false).1 else (false, false).2) =

@@ -71,11 +71,10 @@ example : (PMF.uniformOfFintype Bool).toOuterMeasure
 
 example : IsUniversalHash (PMF.uniformOfFintype Bool)
     (fun key (input : Bool × Bool) => if key then input.1 else input.2)
-    (Fintype.card Bool : ℝ≥0∞)⁻¹ :=
-  isTwoUniversal_iff_isUniversalHash.mp <| by
-    rintro ⟨a, b⟩ ⟨c, d⟩ hne
-    cases a <;> cases b <;> cases c <;> cases d <;>
-      norm_num [Fintype.sum_bool, PMF.uniformOfFintype_apply] at *
+    (Fintype.card Bool : ℝ≥0∞)⁻¹ := by
+  have h := IsUniversalHash.of_card_le (ι := Bool) (c := 1)
+    (hash := fun key (input : Bool × Bool) => if key then input.1 else input.2) (by decide)
+  simpa using h
 
 /-! ### Carter–Wegman polynomial evaluation over `ZMod 5` -/
 

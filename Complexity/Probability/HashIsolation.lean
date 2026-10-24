@@ -110,9 +110,10 @@ theorem IsTwoUniversal.fiber_collision_le {seed : PMF Seed} {hash : Seed → Inp
     simpa only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.card_erase_of_mem hx,
       ← Fintype.card_subtype, Nat.card_eq_fintype_card, and_comm, and_left_comm, and_assoc] using h
 
+omit [Fintype Seed] in
 /-- Conditional entropy after revealing the seed, the function image, and the hash value is
 bounded by the expected probability that the hash leaves more than one possible preimage. -/
-theorem IsTwoUniversal.conditionalEntropy_hash_le {seed : PMF Seed}
+theorem IsTwoUniversal.conditionalEntropy_hash_le [Finite Seed] {seed : PMF Seed}
     {hash : Seed → Input → Output} (hhash : IsTwoUniversal seed hash)
     (source : PMF Input) (f : Input → Image) (predicate : Seed → Input → Bool) :
     conditionalEntropy (seed.bind (fun s => source.map
@@ -120,6 +121,7 @@ theorem IsTwoUniversal.conditionalEntropy_hash_le {seed : PMF Seed}
       ∑ x, (source x).toReal *
         min 1 ((Nat.card {y // f y = f x} - 1 : ℕ) / (Fintype.card Output : ℝ)) := by
   classical
+  let := Fintype.ofFinite Seed
   let pair := seed.bind (fun s => source.map (s, ·))
   let observe (p : Seed × Input) := (p.1, f p.2, hash p.1 p.2)
   have hcollision (s : Seed) (x : Input) :
@@ -152,10 +154,11 @@ theorem IsTwoUniversal.conditionalEntropy_hash_le {seed : PMF Seed}
     _ ≤ _ := Finset.sum_le_sum (fun x _ =>
       mul_le_mul_of_nonneg_left (hhash.fiber_collision_le f x) ENNReal.toReal_nonneg)
 
-omit [Fintype Output] in
+omit [Fintype Seed] [Fintype Output] in
 /-- Averaging over hash lengths `1, …, count` leaves at most the average logarithmic fiber size
 plus two bits, divided by `count`. This is the entropy bound in Holenstein's Lemma 3. -/
-private theorem mean_conditionalEntropy_hash_le (count : ℕ) (seed : PMF Seed) (source : PMF Input)
+private theorem mean_conditionalEntropy_hash_le [Finite Seed] (count : ℕ) (seed : PMF Seed)
+    (source : PMF Input)
     (f : Input → Image) (hash : (i : Fin count) → Seed → Input → (Fin (i.val + 1) → Bool))
     (hhash : ∀ i, IsTwoUniversal seed (hash i)) (predicate : Fin count → Seed → Input → Bool) :
     (∑ i, conditionalEntropy (seed.bind (fun s => source.map
@@ -187,10 +190,10 @@ private theorem mean_conditionalEntropy_hash_le (count : ℕ) (seed : PMF Seed) 
       exact Fintype.card_pos_iff.mpr ⟨⟨x, rfl⟩⟩
     _ = _ := by simp only [mul_add, Finset.sum_add_distrib, ← Finset.sum_mul, sum_toReal, one_mul]
 
-omit [Fintype Output] in
+omit [Fintype Seed] [Fintype Output] in
 /-- The averaged bound applies to the actual joint experiment with a public uniform hash
 length. The dependent observation type records exactly the number of revealed hash bits. -/
-theorem conditionalEntropy_random_hash_le (count : ℕ) [NeZero count]
+theorem conditionalEntropy_random_hash_le [Finite Seed] (count : ℕ) [NeZero count]
     (seed : PMF Seed) (source : PMF Input) (f : Input → Image)
     (hash : (i : Fin count) → Seed → Input → (Fin (i.val + 1) → Bool))
     (hhash : ∀ i, IsTwoUniversal seed (hash i)) (predicate : Fin count → Seed → Input → Bool) :
