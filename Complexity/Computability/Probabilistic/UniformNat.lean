@@ -66,7 +66,7 @@ theorem Turing.MultiTapeTM.ComputableInPolyTime.unary_dyadicSize :
 
 namespace Cslib.Probability
 
-open Turing.MultiTapeTM
+open ProbComp Turing.MultiTapeTM
 
 /-- A unary bit width gives a uniformly strict PPT sampler with binary natural output. -/
 theorem isPPTOn_sampleBinaryNat : IsPPTOn encUnary encNat sampleBinaryNat :=
@@ -106,12 +106,12 @@ theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleBinaryNat {α : Type
     {input : α ↪ List Bool} {width : α → ℕ}
     (hwidth : ComputableTidilyInPolyTime width input encUnary) :
     Cslib.Probability.IsPPTOn input encNat
-      (fun a => Cslib.Probability.sampleBinaryNat (width a)) :=
+      (fun a => Cslib.ProbComp.sampleBinaryNat (width a)) :=
   Cslib.Probability.isPPTOn_sampleBinaryNat.preprocess hwidth
 
 namespace Cslib.Probability
 
-open Turing.MultiTapeTM
+open ProbComp Turing.MultiTapeTM
 
 /-- Approximately uniform residues: reducing a computed number of fair bits modulo a computed
 modulus is uniformly strict PPT, with binary output. -/

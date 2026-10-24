@@ -52,7 +52,7 @@ nonnegative game API.
 
 namespace Cslib.Crypto
 
-open Probability Turing.MultiTapeTM
+open ProbComp Probability Turing.MultiTapeTM
 open scoped NNReal
 
 namespace UniformChoice

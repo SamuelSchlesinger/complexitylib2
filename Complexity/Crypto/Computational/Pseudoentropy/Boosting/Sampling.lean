@@ -50,7 +50,7 @@ Crypto/Computational/Pseudoentropy/Boosting/Sampling.lean on the cslib `crypto` 
 
 namespace Cslib.Crypto.Pseudoentropy.Boosting
 
-open Probability BitString Turing.MultiTapeTM
+open ProbComp Probability BitString Turing.MultiTapeTM
 
 /-- The numerator of a clipped linear weight, computed entirely with natural numbers.
 The excess of correct over incorrect votes is `2 * votes.count truth - votes.length` in

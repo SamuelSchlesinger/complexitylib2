@@ -4979,11 +4979,11 @@ info: 'Cslib.BitString.uniformList_binaryValue' depends on axioms:
 #print axioms Cslib.BitString.uniformList_binaryValue
 
 /--
-info: 'Cslib.Probability.eval_sampleBoundedIndex' depends on axioms:
+info: 'Cslib.ProbComp.eval_sampleBoundedIndex' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.Probability.eval_sampleBoundedIndex
+#print axioms Cslib.ProbComp.eval_sampleBoundedIndex
 
 /--
 info: 'Cslib.Probability.isPPTOn_sampleBoundedIndex' depends on axioms:
