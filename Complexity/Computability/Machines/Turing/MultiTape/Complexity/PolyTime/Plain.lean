@@ -37,11 +37,11 @@ The plain notion, `Turing.MultiTapeTM.ComputableInPolyTime`, is the one for defi
 statements; the tidy notion is a proof device. Proofs switch between them with
 `Turing.MultiTapeTM.ComputableInPolyTime.tidy` and
 `Turing.MultiTapeTM.ComputableInPolyTime.of_tidy`.
-The basic plain closure rules below are proved through the internal tidy calculus.
-Plain structural and primitive counterparts are derived mechanically in `PolyTime.Plain.Calculus`, which is
-imported by `Complexity.Tactic.PolyTime`. With that entry point, `fun_prop` uses plain hypotheses
-directly, including captured list callbacks and whole-composite routine certificates. The
-transition from tidy to plain also accepts existing internal certificates as proof inputs.
+The basic plain closure rules below are proved through the internal tidy calculus. Plain
+structural and primitive counterparts are derived mechanically in `PolyTime.Plain.Calculus`,
+which is imported by `Complexity.Tactic.PolyTime`. With that entry point, `fun_prop` uses plain
+hypotheses directly, including captured list callbacks and whole-composite routine certificates.
+The transition from tidy to plain also accepts existing internal certificates as proof inputs.
 
 ## Plain statements and internal machine proofs
 

@@ -97,6 +97,14 @@ private def globalEntries {α σ : Type} (ext : SimpleScopedEnvExtension α σ) 
   return (state.importedEntries.foldl (fun es entries => es ++ collect entries) #[]) ++
     collect state.state.newEntries.toArray
 
+private def registerSupportedProperties : MetaM Unit := do
+  let entries ← globalEntries Mathlib.Meta.FunProp.funPropDeclsExt
+  let env ← getEnv
+  for (source, target, equivalence) in equivalences do
+    if env.contains target && env.contains equivalence &&
+        entries.any (·.funPropName == source) && !entries.any (·.funPropName == target) then
+      Mathlib.Meta.FunProp.addFunPropDecl target
+
 open Mathlib.Meta.FunProp in
 private def registerFunProp (source target : Name) (kind : AttributeKind) : MetaM Unit := do
   let functions ← globalEntries functionTheoremsExt
@@ -174,6 +182,7 @@ def mirrorDeclaration (source target : Name) (kind : AttributeKind := .global) :
   let info ← getConstInfo source
   unless ← isProp info.type do
     throwError "plain mirror expects a proposition-valued declaration"
+  registerSupportedProperties
   let type ← plainType info.type
   if type.find? (fun e => match e with
       | .const name _ => (name.toString.splitOn "Tidily").length > 1

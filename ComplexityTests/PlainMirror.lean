@@ -96,3 +96,10 @@ example {α β γ : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
     (hf : Cslib.Complexity.ComputableInFPTTime f encA encB κA) {h : ℕ → ℕ}
     (hκ : ∀ a, κB (f a) ≤ h (κA a)) :
     Cslib.Complexity.ComputableInFPTTime (g ∘ f) encA encC κA := hg.comp hf hκ
+
+-- Quantitative registers the tidy big-O property. Its plain property and sum rules must receive
+-- the same registration; otherwise an actual GenericRAM projection client fails immediately.
+example {α β : Type} (left : α ↪ List Bool) (right : β ↪ List Bool) :
+    ComputableInO (Sum.getLeft? : α ⊕ β → Option α) (encSum left right) (encOption left)
+      (fun s => ((encSum left right) s).length)
+      (fun s => ((encSum left right) s).length) := by fun_prop
