@@ -35,8 +35,9 @@ walk from a function `f` are log-convex, as the walk operator is self-adjoint, s
 ## Main results
 
 * `Cslib.RotationMap.powRot_involutive`: reversing a walk twice gives it back.
-* `Cslib.RotationMap.neighbor_pow_succ`, `Cslib.RotationMap.neighbor_pow_succ'`: a walk of length
-  `t + 1` is a step followed by a walk of length `t`, and a walk of length `t` followed by a step.
+* `Cslib.RotationMap.rot_pow_succ`, `Cslib.RotationMap.neighbor_pow_succ`,
+  `Cslib.RotationMap.neighbor_pow_succ'`: a walk of length `t + 1` is a step followed by a walk of
+  length `t`, and a walk of length `t` followed by a step.
 * `Cslib.RotationMap.walk_pow`: the walk operator of `G ^ t` is the `t`-th power of that of `G`.
 * `Cslib.RotationMap.spectralExpansion_pow_le`, `Cslib.RotationMap.spectralExpansion_pow`:
   `λ(G ^ t) ≤ λ(G) ^ t`, with equality for `t ≠ 0`.
@@ -69,8 +70,13 @@ def powRot : (t : ℕ) → V × (Fin t → D) → V × (Fin t → D)
     let r := powRot t (q.1, Fin.tail p.2)
     (r.1, Fin.snoc r.2 q.2)
 
+/-- A walk of length `0` is the identity. -/
+@[simp]
+theorem powRot_zero (p : V × (Fin 0 → D)) : G.powRot 0 p = p :=
+  rfl
+
 /-- A walk of length `t + 1` is a first step followed by a walk of length `t`. -/
-private theorem powRot_succ (t : ℕ) (p : V × (Fin (t + 1) → D)) :
+theorem powRot_succ (t : ℕ) (p : V × (Fin (t + 1) → D)) :
     G.powRot (t + 1) p =
       ((G.powRot t ((G.rot (p.1, p.2 0)).1, Fin.tail p.2)).1,
         Fin.snoc (G.powRot t ((G.rot (p.1, p.2 0)).1, Fin.tail p.2)).2 (G.rot (p.1, p.2 0)).2) :=
@@ -106,6 +112,20 @@ same vertices with an edge for every walk of length `t` in `G`, labelled by the 
 def pow (t : ℕ) : RotationMap V (Fin t → D) where
   rot := G.powRot t
   rot_involutive := G.powRot_involutive t
+
+/-- In `G ^ 0`, the rotation map is the identity. -/
+@[simp]
+theorem rot_pow_zero (p : V × (Fin 0 → D)) : (G.pow 0).rot p = p :=
+  rfl
+
+/-- In `G ^ (t + 1)`, the rotation map takes the first edge and then reverses the remaining walk,
+appending the return label of the first edge at the end. -/
+theorem rot_pow_succ (t : ℕ) (p : V × (Fin (t + 1) → D)) :
+    (G.pow (t + 1)).rot p =
+      (((G.pow t).rot ((G.rot (p.1, p.2 0)).1, Fin.tail p.2)).1,
+        Fin.snoc ((G.pow t).rot ((G.rot (p.1, p.2 0)).1, Fin.tail p.2)).2
+          (G.rot (p.1, p.2 0)).2) :=
+  rfl
 
 /-- In `G ^ 0`, every edge is a self-loop. -/
 @[simp]

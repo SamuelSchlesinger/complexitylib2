@@ -145,13 +145,7 @@ theorem powRot_map (φ : Hom G G') :
       G'.powRot t (φ v, k) = Prod.map φ id (G.powRot t (v, k))
   | 0, _, _ => rfl
   | t + 1, v, k => by
-    change ((G'.powRot t ((G'.rot (φ v, k 0)).1, Fin.tail k)).1,
-        Fin.snoc (α := fun _ ↦ D) (G'.powRot t ((G'.rot (φ v, k 0)).1, Fin.tail k)).2
-          (G'.rot (φ v, k 0)).2) =
-      Prod.map φ id ((G.powRot t ((G.rot (v, k 0)).1, Fin.tail k)).1,
-        Fin.snoc (α := fun _ ↦ D) (G.powRot t ((G.rot (v, k 0)).1, Fin.tail k)).2
-          (G.rot (v, k 0)).2)
-    rw [φ.rot_map, Prod.map_fst, Prod.map_snd, id_eq, powRot_map φ t]
+    rw [powRot_succ, powRot_succ, φ.rot_map, Prod.map_fst, Prod.map_snd, id_eq, powRot_map φ t]
     rfl
 
 /-- A homomorphism of rotation maps is a homomorphism of their `t`-th powers. -/
@@ -213,6 +207,12 @@ def restrict (S : Set V) (hS : ∀ v ∈ S, ∀ i, G.neighbor v i ∈ S) : Rotat
     · exact G.neighbor_neighbor_rot p.1 p.2
     · change (G.rot ((G.rot (p.1.1, p.2)).1, (G.rot (p.1.1, p.2)).2)).2 = p.2
       rw [Prod.mk.eta, rot_rot]
+
+/-- The rotation map of a restriction of `G` is the rotation map of `G`. -/
+@[simp]
+theorem rot_restrict (S : Set V) (hS : ∀ v ∈ S, ∀ i, G.neighbor v i ∈ S) (p : S × D) :
+    (G.restrict S hS).rot p = (⟨G.neighbor p.1 p.2, hS p.1 p.1.2 p.2⟩, (G.rot (p.1, p.2)).2) :=
+  rfl
 
 /-- The inclusion of a restriction of `G` into `G` is a homomorphism. -/
 def restrictHom (S : Set V) (hS : ∀ v ∈ S, ∀ i, G.neighbor v i ∈ S) : Hom (G.restrict S hS) G where

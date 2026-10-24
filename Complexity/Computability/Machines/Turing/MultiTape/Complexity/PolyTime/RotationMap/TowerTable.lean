@@ -169,11 +169,6 @@ private theorem lookup_next (H : RotationMap (Fin b) D)
     (next H e hb table).lookup vertex label = nextRow H e hb table vertex label := by
   simp [lookup, next, hv]
 
-private theorem reindex_rotation {B : Type*} (H : RotationMap B D) (numbering : B ≃ Fin b)
-    (p : Fin b × D) : (H.reindex numbering).rot p =
-      (numbering (H.rot (numbering.symm p.1, p.2)).1,
-        (H.rot (numbering.symm p.1, p.2)).2) := rfl
-
 /-- A table built from a numbered base retains the original tower's exact rotation. -/
 theorem lookup_iterate_numbered {B : Type*} (H : RotationMap B D)
     (e : B ≃ (Fin 2 → D × D)) (numbering : B ≃ Fin b) (hb : 0 < b)
@@ -190,7 +185,7 @@ theorem lookup_iterate_numbered {B : Type*} (H : RotationMap B D)
     rw [Function.iterate_zero_apply]
     change (initial (H.reindex numbering)).lookup (numbering vertex).val label = _
     rw [lookup_initial]
-    simp only [reindex_rotation, Equiv.symm_apply_apply]
+    simp only [rot_reindex, Equiv.symm_apply_apply]
     rfl
   | succ level ih =>
     rcases vertex with ⟨vertex, cloud⟩
@@ -215,10 +210,10 @@ theorem lookup_iterate_numbered {B : Type*} (H : RotationMap B D)
           (ZigzagTowerVertex.equivFin numbering level vertex).val := by
       rw [Nat.mul_comm (ZigzagTowerVertex.equivFin numbering level vertex).val,
         Nat.mul_add_div hb, Nat.div_eq_of_lt (numbering cloud).isLt, Nat.add_zero]
-    simp only [nextRow, hmod, hdiv, reindex_rotation, Equiv.trans_apply, Fin.eta,
+    simp only [nextRow, hmod, hdiv, rot_reindex, Equiv.trans_apply, Fin.eta,
       Equiv.symm_apply_apply, Equiv.symm_trans_apply, Equiv.apply_symm_apply]
     rw [ih, ih]
-    simp only [zigzagTower_succ, zigzag, zigzagRot, square_relabel_rotation, hstep]
+    simp only [rot_zigzagTower_succ, rot_zigzag, square_relabel_rotation, hstep]
 
 /-- The selected complete table has the exact cardinality used by the tower family. -/
 theorem length_build (H : RotationMap (Fin b) D) (e : Fin b ≃ (Fin 2 → D × D))
@@ -234,7 +229,7 @@ theorem lookup_build {B : Type*} (H : RotationMap B D) (e : B ≃ (Fin 2 → D �
       let target := ((zigzagTower H e (Nat.clog b size - 1)).reindex
         (ZigzagTowerVertex.equivFin numbering (Nat.clog b size - 1))).rot (vertex, label)
       (target.1.val, target.2) := by
-  simpa only [build, Equiv.apply_symm_apply, reindex_rotation] using
+  simpa only [build, Equiv.apply_symm_apply, rot_reindex] using
     lookup_iterate_numbered H e numbering hb (Nat.clog b size - 1)
       ((ZigzagTowerVertex.equivFin numbering (Nat.clog b size - 1)).symm vertex) label
 

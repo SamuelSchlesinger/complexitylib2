@@ -125,9 +125,14 @@ theorem neighbor_extendLabels_apply (v : V) (i : D) :
   simp only [neighbor, rot_extendLabels_apply, Prod.map_fst, id_eq]
 
 /-- A label outside the range of `enc` is a self-loop of `G.extendLabels enc`. -/
+theorem rot_extendLabels_of_forall_ne (v : V) {b : B} (hb : ∀ i, enc i ≠ b) :
+    (G.extendLabels enc).rot (v, b) = (v, b) := by
+  simp only [extendLabels, (decodeLabel_eq_none_iff enc).2 hb, Option.elim_none]
+
+/-- A label outside the range of `enc` is a self-loop of `G.extendLabels enc`. -/
 theorem neighbor_extendLabels_of_forall_ne (v : V) {b : B} (hb : ∀ i, enc i ≠ b) :
-    (G.extendLabels enc).neighbor v b = v := by
-  simp only [neighbor, extendLabels, (decodeLabel_eq_none_iff enc).2 hb, Option.elim_none]
+    (G.extendLabels enc).neighbor v b = v :=
+  congrArg Prod.fst (G.rot_extendLabels_of_forall_ne enc v hb)
 
 /-- Extending the labels does not change the simple graph: the new edges are self-loops. -/
 @[simp]
@@ -191,6 +196,26 @@ def slotGraph (σ : Equiv.Perm V) : RotationMap (V × V) SlotLabel :=
     ((loops V Unit).tensor (ofPerms fun _ : Unit ↦ σ))
 
 variable (σ : Equiv.Perm V)
+
+/-- The edge `inl ()` of `slotGraph G σ` exchanges the two ends of an edge of `G`. -/
+@[simp]
+theorem rot_slotGraph_inl (p : V × V) :
+    (slotGraph G σ).rot (p, .inl ()) = (slotSwap G p, .inl ()) :=
+  rfl
+
+/-- The edge `inr ((), (), false)` of `slotGraph G σ` at `(v, w)` leads to `(v, σ w)` and
+returns along `inr ((), (), true)`. -/
+@[simp]
+theorem rot_slotGraph_inr_false (p : V × V) :
+    (slotGraph G σ).rot (p, .inr ((), (), false)) = ((p.1, σ p.2), .inr ((), (), true)) :=
+  rfl
+
+/-- The edge `inr ((), (), true)` of `slotGraph G σ` at `(v, w)` leads to `(v, σ⁻¹ w)` and
+returns along `inr ((), (), false)`. -/
+@[simp]
+theorem rot_slotGraph_inr_true (p : V × V) :
+    (slotGraph G σ).rot (p, .inr ((), (), true)) = ((p.1, σ.symm p.2), .inr ((), (), false)) :=
+  rfl
 
 /-- The edge `inl ()` exchanges the two ends of an edge of `G`. -/
 @[simp]

@@ -247,11 +247,7 @@ theorem walkDart_rot_pow (p : V × (Fin t → D)) (i : Fin t) :
     obtain ⟨v, k⟩ := p
     -- the reverse of `(v, k)` is the reverse of the walk from the first neighbor, followed by the
     -- first edge seen from its other end
-    have hrot : (G.pow (t + 1)).rot (v, k) =
-        (((G.pow t).rot ((G.rot (v, k 0)).1, Fin.tail k)).1,
-          Fin.snoc ((G.pow t).rot ((G.rot (v, k 0)).1, Fin.tail k)).2 (G.rot (v, k 0)).2) :=
-      rfl
-    rw [hrot]
+    rw [rot_pow_succ]
     induction i using Fin.lastCases with
     | last =>
       rw [Fin.rev_last]

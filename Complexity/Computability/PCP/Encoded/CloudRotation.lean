@@ -92,7 +92,7 @@ theorem cloudRotation_eq (g : Graph C) (eval : C → α → α → Bool) (fallba
   rw [g.endpoint_eq eval fallback, p.property]
   dsimp only
   rw [← g.cloudEquiv_symm_apply eval fallback vertex p, hrotate]
-  simp only [cloudFamily, RotationMap.reindex, RotationMap.reindexRot]
+  simp only [cloudFamily, RotationMap.rot_reindex]
   rw [← List.getD_eq_getElem?_getD, List.getD_eq_get]
   rfl
 

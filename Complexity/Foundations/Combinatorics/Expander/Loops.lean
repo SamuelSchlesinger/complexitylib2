@@ -98,13 +98,6 @@ theorem walk_relabel [Fintype D] [Fintype E] (G : RotationMap V D) (e : D ≃ E)
     (G.relabel e).walk = G.walk :=
   LinearMap.ext fun _ ↦ funext fun _ ↦ Fintype.expect_equiv e.symm _ _ fun _ ↦ rfl
 
-/-- Two regular multigraphs on the same vertices with the same walk operator have the same
-spectral expansion, whatever their edge labels. -/
-theorem spectralExpansion_eq_of_walk_eq [Fintype V] [Fintype D] [Fintype E]
-    {G : RotationMap V D} {H : RotationMap V E} (h : G.walk = H.walk) :
-    G.spectralExpansion = H.spectralExpansion := by
-  simp only [spectralExpansion, h]
-
 /-- Relabelling the edges does not change the spectral expansion. -/
 @[simp]
 theorem spectralExpansion_relabel [Fintype V] [Fintype D] [Fintype E] (G : RotationMap V D)
@@ -216,6 +209,17 @@ def addLoops (G : RotationMap V D) (E : Type*) : RotationMap V (D ⊕ E) :=
   G.union (loops V E)
 
 variable (G : RotationMap V D)
+
+/-- The rotation map of `G.addLoops E` on an edge of `G`. -/
+@[simp]
+theorem rot_addLoops_inl (v : V) (i : D) :
+    (G.addLoops E).rot (v, .inl i) = Prod.map id Sum.inl (G.rot (v, i)) :=
+  rfl
+
+/-- The rotation map of `G.addLoops E` on an added self-loop. -/
+@[simp]
+theorem rot_addLoops_inr (v : V) (j : E) : (G.addLoops E).rot (v, .inr j) = (v, .inr j) :=
+  rfl
 
 /-- The neighbors of a vertex in `G.addLoops E` along the edges of `G`. -/
 @[simp]

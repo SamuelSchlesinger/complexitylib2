@@ -359,6 +359,7 @@ def zigzag : RotationMap (V × D) (E × E) where
 [Reingold, Vadhan and Wigderson, Definition 3.1][ReingoldVadhanWigderson2002]: with
 `(k', i') = H.rot (k, i)`, `(w, ℓ') = G.rot (v, k')` and `(ℓ, j') = H.rot (ℓ', j)`, the edge
 `(i, j)` at `(v, k)` is the edge `(j', i')` at `(w, ℓ)`. -/
+@[simp]
 theorem rot_zigzag (v : V) (k : D) (i j : E) :
     (G.zigzag H).rot ((v, k), (i, j)) =
       (((G.rot (v, (H.rot (k, i)).1)).1, (H.rot ((G.rot (v, (H.rot (k, i)).1)).2, j)).1),

@@ -65,7 +65,8 @@ def affinePlane : RotationMap (K × K) K where
     ring
 
 /-- The rotation of the affine-plane graph is given directly by field arithmetic. -/
-theorem affinePlane_rot (a b c : K) :
+@[simp]
+theorem rot_affinePlane (a b c : K) :
     (affinePlane K).rot ((a, b), c) = ((c, a * c - b), a) := rfl
 
 variable [Fintype K]

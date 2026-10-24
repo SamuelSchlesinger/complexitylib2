@@ -23,6 +23,7 @@ vertices into an indexed graph without choosing an enumeration.
 
 ## Main results
 
+* `Cslib.RotationMap.rot_reindex`: the rotation map of a reindexed graph.
 * `Cslib.RotationMap.walk_reindex`: the walk operator transforms by composition.
 * `Cslib.RotationMap.spectralExpansion_reindex`: spectral expansion is unchanged.
 
@@ -51,7 +52,15 @@ def reindex (G : RotationMap V D) (e : V ≃ W) : RotationMap W D where
   rot := reindexRot e e.symm G.rot
   rot_involutive p := by simp [reindexRot]
 
+/-- The rotation map of a reindexed graph decodes the vertex, rotates in `G`, and re-encodes the
+resulting vertex. -/
+@[simp]
+theorem rot_reindex (G : RotationMap V D) (e : V ≃ W) (p : W × D) :
+    (G.reindex e).rot p = (e (G.rot (e.symm p.1, p.2)).1, (G.rot (e.symm p.1, p.2)).2) :=
+  rfl
+
 /-- The neighbor after renaming vertices is the renamed original neighbor. -/
+@[simp]
 theorem neighbor_reindex (G : RotationMap V D) (e : V ≃ W) (w : W) (d : D) :
     (G.reindex e).neighbor w d = e (G.neighbor (e.symm w) d) :=
   rfl
