@@ -13,6 +13,7 @@ public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Algebra.CharP.Defs
 import Complexity.Foundations.Combinatorics.LineCode.HighRate.Monomial
 import Complexity.Foundations.Combinatorics.LineCode.HighRate.Systematic
+import Complexity.Foundations.FieldTheory.Finite.ReducedMonomial
 import Mathlib.Algebra.CharP.Two
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
@@ -34,7 +35,7 @@ rotated exponent is below `2 ^ (h * (m - 1))`, and with `ℓ ≤ 2 ^ h` coordina
 below `q - 1`; the Frobenius twist `HighRate.sum_prod_add_mul_pow_eq_zero` applies. Removing the
 term at the point itself, its value is the sum over the punctured line, since `-1 = 1` in
 characteristic two. The retained monomials are distinct and reduced, hence linearly independent
-(`HighRate.linearIndependent_prod_pow`), so they span a line code with that many information
+(`FiniteField.linearIndependent_prod_pow`), so they span a line code with that many information
 symbols (`LineCode.exists_card_info_eq_of_linearIndependent`).
 
 Every codeword restricts on each line to a function of degree at most `q - 2`, so these codes are
@@ -138,7 +139,7 @@ theorem exists_lineCode [DecidableEq K] [CharP K 2] (h m : ℕ) (hℓ : ℓ ≤ 
     rw [hK, pow_mul]
     exact (finFunctionFinEquiv _).isLt
   obtain ⟨C, hC⟩ := exists_card_info_eq_of_linearIndependent
-    (fun D (x : Fin ℓ → K) => ∏ i, x i ^ e D i) (linearIndependent_prod_pow e he hlt)
+    (fun D (x : Fin ℓ → K) => ∏ i, x i ^ e D i) (FiniteField.linearIndependent_prod_pow e he hlt)
     fun D u v _ => by
       obtain ⟨j, hj⟩ := D.2
       have hline := sum_prod_digits_eq_zero hℓ hK D.1 hj u v
