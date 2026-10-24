@@ -32,8 +32,11 @@ area's rewrite plan, without writing anything.
 in the three libraries, at the exact ranges recorded in the `.ilean` files (full names, names
 relative to namespaces and `open`s, dot notation), and in comments and READMEs. No edit is made
 at a span whose text does not spell the referenced constant, and a replacement name is written
-only if it resolves to its target, and nothing else, from its position (namespaces, `open`s,
-private names of the module, local binders); `rewrite` therefore needs current build outputs.
+only if Lean surely resolves it to its target, and nothing else could bind it, from its position:
+namespaces and `open`s by kind, every constant and alias of the import closure, private names of
+the module, local binders, section variables, renaming and `export` aliases, and the notation,
+syntax and macro tokens of the import closure and the module. `rewrite` therefore needs current
+build outputs.
 
 A declaration is *deferred* (left tidy, with its references unchanged) when its statement names
 another tidy declaration, gets a tidy hypothesis from a `variable` command, or is written inside
@@ -356,7 +359,8 @@ class Model:
         self.allowlist = allowlist
         out = qr.run(["lake", "env", "lean", "--run", "scripts/QualityReport.lean", "--names",
                       *qr.ROOTS], capture_output=True).stdout
-        self.names = set(out.split())
+        names, _, tokens = out.partition("\n--tokens--\n")
+        self.names, self.tokens = set(names.split()), set(tokens.split("\n")) - {""}
         self._users: dict[str, list[tuple[str, list]]] | None = None
         self._known: set[str] | None = None
 
@@ -668,8 +672,41 @@ def collapse(text: str) -> str:
 SCOPE_COMMAND = re.compile(
     r"^(?P<mods>(?:@\[[^\]\n]*\]\s*)?(?:(?:public|private|noncomputable|protected|meta)\s+)*)"
     r"(?P<kw>namespace|section|end|open|mutual|variable|export)\b", re.M)
-NOTATION_NAME = re.compile(
-    r"^(?:@\[[^\]\n]*\]\s*)?(?:(?:local|scoped)\s+)?(?:notation3?|syntax|macro)\b[^\n]*", re.M)
+NOTATION_COMMAND = re.compile(
+    r"(?:@\[[^\]\n]*\]\s*)*(?:(?:local|scoped|private|public|meta)\s+)*"
+    r"(?:notation3?|infixl?|infixr|prefix|postfix|syntax|macro|elab|binder_predicate)\b")
+STRING_LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
+
+
+def notation_tokens(text: str, mask: str) -> set[str]:
+    """The tokens the notation, syntax and macro commands of a source declare: the string
+    literals of each whole command, across continuation lines."""
+    starts = [m.start() for m in qr.COMMAND_START.finditer(mask)] + [len(mask)]
+    tokens = set()
+    for start, end in zip(starts, starts[1:]):
+        if NOTATION_COMMAND.match(mask, start):
+            tokens.update(t.strip() for t in STRING_LITERAL.findall(text, start, end))
+    return tokens - {""}
+
+
+def token_capture(written: str, following: str, tokens) -> str | None:
+    """A token that Lean's tokenizer reads instead of the identifier `written` followed by
+    `following`: a token wins over an identifier at least as short as it. `tokens` maps first
+    characters to tokens."""
+    text = written + following
+    lexeme = IDENT.match(text)
+    length = lexeme.end() if lexeme else len(written)
+    for token in tokens.get(written[:1], ()):
+        if len(token) >= length and text.startswith(token):
+            return token
+    return None
+
+
+def by_first(tokens) -> dict[str, list[str]]:
+    out: dict[str, list[str]] = defaultdict(list)
+    for token in tokens:
+        out[token[:1]].append(token)
+    return out
 
 
 def namespaces_of(names) -> set[str]:
@@ -721,7 +758,7 @@ def binder_names(text: str) -> set[str]:
 
 class Scopes:
     """The namespace, opened namespaces, aliases and section variables at each offset of a
-    masked source, and the identifier-like tokens its notations and macros declare."""
+    masked source, and the tokens its notations, syntax and macros declare."""
 
     def __init__(self, mask: str, namespaces: set[str], text: str | None = None):
         self.points: list[tuple[int, Scope]] = [(0, Scope(""))]
@@ -729,9 +766,7 @@ class Scopes:
         # frames: [kind, name, opens, aliases, variables]
         stack: list[list] = [["file", "", [], set(), set()]]
         starts = [m.start() for m in qr.COMMAND_START.finditer(mask)] + [len(mask)]
-        self.notation: set[str] = set()
-        for m in NOTATION_NAME.finditer(text if text is not None else mask):
-            self.notation.update(re.findall(r'"([^\W\d][\w\'.]*)"', m[0]))
+        self.tokens = by_first(notation_tokens(text if text is not None else mask, mask))
 
         def namespace() -> str:
             return ".".join(f[1] for f in stack if f[0] == "namespace" and f[1])
@@ -1175,6 +1210,7 @@ class Planner:
         self._refs: dict[str, list[Ref]] = {}
         self._locals: dict[tuple[str, int, int], set[str]] = {}
         self._decl_spans: dict[str, list[tuple[int, int]]] = {}
+        self.tokens = by_first(model.tokens)
         self.reset()
 
     def reset(self) -> None:
@@ -1276,12 +1312,15 @@ class Planner:
             self._locals[key] = names - KEYWORDS
         return self._locals[key]
 
-    def resolves(self, module: str, src: SourceFile, offset: int, written: str) -> set[str]:
-        """Everything `written` (without `@`) might denote at `offset`, over-approximated:
-        constants reached through the enclosing namespaces and every opened namespace (selective
-        and hiding opens counted whole), private constants of the module, and `"<local>"` when
-        its first component is a local binder, a section variable, an alias from
-        `open … renaming` or `export`, or a notation token. Names come from the whole import
+    def resolves(self, module: str, src: SourceFile, offset: int, written: str,
+                 following: str = "") -> set[str]:
+        """Everything `written` (without `@`, followed by `following`) might denote at
+        `offset`, over-approximated: constants reached through the enclosing namespaces and
+        every opened namespace (selective and hiding opens counted whole), private constants of
+        the module, `"<local>"` when its first component is a local binder, a section variable
+        or an alias from `open … renaming` or `export`, and `"<token>"` when the tokenizer would
+        read a notation, syntax or macro token there instead (from the import closure, scoped
+        ones included, or from the module's own commands). Names come from the whole import
         closure, not only the referenced ones."""
         privates = self.privates.get(module, set())
 
@@ -1294,8 +1333,11 @@ class Planner:
                for h in [p + "." + written if p else written] if exists(h)}
         first = written.split(".")[0]
         if first in self.local_names(module, src, offset) or first in scope.variables \
-                or first in scope.aliases or first in src.scopes.notation:
+                or first in scope.aliases:
             out.add("<local>")
+        if token_capture(written, following, self.tokens) \
+                or token_capture(written, following, src.scopes.tokens):
+            out.add("<token>")
         return out
 
     def reachable(self, src: SourceFile, offset: int, written: str, target: str) -> bool:
@@ -1310,14 +1352,15 @@ class Planner:
                    and (o.only is None or written in o.only) for o in src.scopes.at(offset).opens)
 
     def write_name(self, module: str, src: SourceFile, offset: int, target: str,
-                   first: str | None = None) -> str | None:
-        """The shortest written form of `target` that Lean surely resolves to it, and to nothing
-        else, at `offset` (`first` is tried before the suffixes), or None."""
+                   first: str | None = None, following: str = "") -> str | None:
+        """The shortest written form of `target`, followed by `following`, that Lean surely
+        resolves to it, and to nothing else, at `offset` (`first` is tried before the
+        suffixes), or None."""
         parts = target.split(".")
         candidates = [first] + [".".join(parts[-k:]) for k in range(1, len(parts) + 1)]
         for candidate in candidates + ["_root_." + target]:
             if candidate and self.reachable(src, offset, candidate, target) \
-                    and self.resolves(module, src, offset, candidate) == {target}:
+                    and self.resolves(module, src, offset, candidate, following) == {target}:
                 return candidate
         return None
 
@@ -1344,13 +1387,14 @@ class Planner:
                     and namespace_of(new) == plain_name(namespace_of(old)) != namespace_of(old):
                 return token, ""
             if leading:
-                name = self.write_name(module, src, start, new)
+                name = self.write_name(module, src, start, new, None, src.text[end:end + 200])
                 if name is not None:
                     return name, ""
             return None, "field notation whose new binding cannot be established"
         at = "@" if token.startswith("@") else ""
         name = self.write_name(module, src, start, new,
-                               renamed_token(token.removeprefix("@"), old, new))
+                               renamed_token(token.removeprefix("@"), old, new),
+                               src.text[end:end + 200])
         if name is None:
             return None, f"no written form of `{new}` surely resolves to it here"
         return at + name, ""

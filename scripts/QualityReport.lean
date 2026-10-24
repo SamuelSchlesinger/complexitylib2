@@ -37,8 +37,9 @@ flag `1` when the type is an application of a listed tidy predicate, `2` when it
 constant otherwise, and `0` when it mentions none.
 
 Run as `lake env lean --run scripts/QualityReport.lean --names <module>...`, it instead prints
-every name the given modules and their transitive imports export: constants and `export` aliases,
-one per line, for the name resolution of `scripts/tidy_sweep.py`.
+every name the given modules and their transitive imports export (constants and `export`
+aliases), one per line, then a line `--tokens--` and the parser tokens they declare (global and
+scoped notations, syntax and macros), for the name resolution of `scripts/tidy_sweep.py`.
 
 It then prints `{"dup": [...], "k": ...}` lines grouping exported constants of different modules
 whose types are alpha-equivalent (`k = "thm"`), or whose types and exposed bodies are
@@ -202,7 +203,7 @@ unsafe def run (libDir : System.FilePath) (pairs : Option String := none) : IO U
   if regions.isEmpty then stdout.flush
 
 /-- Print the exported constants and `export` aliases of `roots` and their transitive imports,
-found through the search path that `lake env` sets. -/
+found through the search path that `lake env` sets, then `--tokens--` and their parser tokens. -/
 unsafe def names (roots : List Name) : IO Unit := do
   initSearchPath (← findSysroot)
   let stdout ← IO.getStdout
@@ -210,6 +211,7 @@ unsafe def names (roots : List Name) : IO Unit := do
   let mut todo := roots.toArray
   -- The mapped regions stay alive until the end of the program.
   let mut regions : Array CompactedRegion := #[]
+  let mut tokens : Std.HashSet String := {}
   while h : todo.size > 0 do
     let mod := todo.back
     todo := todo.pop
@@ -225,6 +227,15 @@ unsafe def names (roots : List Name) : IO Unit := do
       if ext == `Lean.aliasExtension then
         for e in es do
           stdout.putStrLn (unsafeCast e : Name × Name).1.toString
+      if ext == `Lean.Parser.parserExtension then
+        for e in es do
+          let entry :=
+            match (unsafeCast e : ScopedEnvExtension.Entry Parser.ParserExtension.OLeanEntry) with
+            | .global a => a
+            | .scoped _ a => a
+          if let .token t := entry then tokens := tokens.insert t
+  stdout.putStrLn "--tokens--"
+  for t in tokens do stdout.putStrLn t
   if regions.isEmpty then stdout.flush
 
 end ComplexityScripts.QualityReport

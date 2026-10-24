@@ -315,8 +315,8 @@ def fake_source(text: str, namespaces: set[str]) -> t.SourceFile:
     return src
 
 
-def fake_planner(text: str, constants: dict, known=(), privates=None, refs=()):
-    """A planner over one source `Fake.lean` (module `M`) without a build."""
+def fake_planner(text: str, constants: dict, known=(), privates=None, refs=(), tokens=()):
+    """A planner over one source (module `M`) without a build; `tokens` are imported."""
     p = object.__new__(t.Planner)
     p.model = SimpleNamespace(constants=constants, owners={},
                               lib=SimpleNamespace(ileans={}))
@@ -329,6 +329,7 @@ def fake_planner(text: str, constants: dict, known=(), privates=None, refs=()):
     p._refs = {"M": [t.Ref(n, a, b, None) for n, a, b in refs]}
     p._locals = {}
     p._decl_spans = {}
+    p.tokens = t.by_first(tokens)
     p.deferred = {}
     p.batch = {}
     p.reset()
@@ -446,12 +447,13 @@ class CaptureTests(unittest.TestCase):
     """Review 5636433742: section variables, aliases, notations, selective opens and the types
     behind dot notation can capture a written name."""
 
-    def written(self, text: str, token: str, old: str, new: str, known=(), nth: int = 0):
+    def written(self, text: str, token: str, old: str, new: str, known=(), nth: int = 0,
+                tokens=()):
         start = -1
         for _ in range(nth + 1):
             start = text.index(token, start + 1)
         p, src = fake_planner(text, {old: {"m": "M"}, new: {"m": "M"}}, known,
-                              refs=[(old, start, start + len(token))])
+                              refs=[(old, start, start + len(token))], tokens=tokens)
         return p.written("M", src, start, start + len(token), old, new)[0]
 
     def test_section_variables(self) -> None:
@@ -468,6 +470,31 @@ class CaptureTests(unittest.TestCase):
                        'local notation "bar" => 0\n'):
             text = prefix + "open N\n\ndef d : Nat := foo\n"
             self.assertEqual(self.written(text, "foo", "N.foo", "N.bar"), "N.bar", prefix)
+
+    def test_multiline_notation(self) -> None:
+        """Review 5636686550: the notation's token is on a continuation line."""
+        text = ("namespace N\ndef foo : Nat := 1\ndef bar : Nat := 2\nend N\nopen N\n"
+                'local notation\n  "bar" => (3 : Nat)\n'
+                "def before : Nat := foo\ndef after : Nat := foo\n")
+        self.assertEqual(self.written(text, "foo", "N.foo", "N.bar", nth=2), "N.bar")
+        self.assertEqual(t.notation_tokens(text, masks(text)[1]), {"bar"})
+
+    def test_imported_notation(self) -> None:
+        """Reply 4365874664: `notation "bar" => (3 : Nat)` in a dependency."""
+        text = "open N\ndef before : Nat := foo\ndef after : Nat := foo\n"
+        self.assertEqual(self.written(text, "foo", "N.foo", "N.bar", nth=1, tokens={"bar"}),
+                         "N.bar")
+        self.assertEqual(self.written(text, "foo", "N.foo", "N.bar", nth=1), "bar")
+
+    def test_tokens_win_over_identifiers_no_longer_than_them(self) -> None:
+        tokens = t.by_first({"bar", "ba", "barx.y", "∑"})
+        self.assertEqual(t.token_capture("bar", " + 1", tokens), "bar")
+        self.assertIsNone(t.token_capture("bars", "", tokens))  # the identifier is longer
+        self.assertIsNone(t.token_capture("bar", ".baz", tokens))  # `bar.baz` is longer
+        self.assertEqual(t.token_capture("barx", ".y z", tokens), "barx.y")
+        text = ('infixl:65 " ⊕⊕ " => f\nmacro "qq" x:term : term => `($x)\n'
+                'syntax (name := s) "ss"\n  "tt" : tactic\ndef x := "notatoken"\n')
+        self.assertEqual(t.notation_tokens(text, masks(text)[1]), {"⊕⊕", "qq", "ss", "tt"})
 
     def test_opens_that_do_not_surely_make_the_target_visible(self) -> None:
         for line in ("open N (foo)", "open N hiding bar", "open scoped N"):
