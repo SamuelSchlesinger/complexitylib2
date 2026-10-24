@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Selection
+import Complexity.Probability.PMF.Event
 import Complexity.Tactic.PPT
 
 /-!

@@ -11,6 +11,7 @@ public import Complexity.Probability.Product
 public import Cslib.MachineLearning.PACLearning.Defs
 public import Cslib.Probability.PMF
 public import Mathlib.InformationTheory.Hamming
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.PMF
 
 /-!

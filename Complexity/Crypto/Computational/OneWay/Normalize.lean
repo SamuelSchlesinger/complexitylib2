@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Computability.BitString.Padding
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Probability.PMF
 import Complexity.Tactic.PPT

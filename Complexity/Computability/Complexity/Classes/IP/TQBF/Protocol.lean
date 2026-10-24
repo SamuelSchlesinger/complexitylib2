@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Problems.TQBF
 public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Languages.Probabilistic.Oracle.Interaction
 public import Complexity.Logics.Propositional.QBF.Arithmetization
+import Complexity.Probability.PMF.Bind
 import Complexity.Probability.PMF
 import Mathlib.Algebra.Polynomial.Roots
 import Mathlib.Tactic.Ring

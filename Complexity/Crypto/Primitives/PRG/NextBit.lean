@@ -10,6 +10,8 @@ module
 public import Complexity.Init
 public import Cslib.Crypto.Primitives.PRG.Defs
 public import Mathlib.Data.Fin.Tuple.Take
+import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Uniform
 import Complexity.Probability.PMF
 
 /-!

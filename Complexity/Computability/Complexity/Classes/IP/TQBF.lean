@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.IP.TQBF.Verifier
+import Complexity.Probability.PMF.Bind
 import Complexity.Probability.PMF
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.Data.List.GetD

@@ -9,6 +9,7 @@ module
 
 public import Complexity.Probability.HashFamily
 public import Complexity.Probability.PairwiseIndependentHash
+import Complexity.Probability.PMF.Uniform
 import Complexity.Probability.PMF
 
 /-!

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Probability.PMF.Bind
 import Complexity.Crypto.Protocols.SigmaProtocol.FiatShamir
 import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
 import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature

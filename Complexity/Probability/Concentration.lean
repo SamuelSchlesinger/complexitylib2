@@ -10,6 +10,7 @@ module
 public import Complexity.Probability.Product
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Analysis.SpecialFunctions.Exp
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.PMF
 import Mathlib.Probability.Moments.SubGaussian
 import Mathlib.Probability.ProbabilityMassFunction.Integrals

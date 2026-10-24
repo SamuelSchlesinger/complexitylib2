@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Clipped
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Loop
 public import Complexity.Languages.Probabilistic.Selection
+import Complexity.Probability.PMF.Event
 import Complexity.Computability.Probabilistic.Selection
 import Complexity.Tactic.PPT
 

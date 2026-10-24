@@ -11,6 +11,7 @@ public import Complexity.Computability.Communication.Operations
 public import Complexity.Computability.Communication.Randomized
 public import Complexity.Foundations.Data.BitString.Weight
 public import Complexity.Probability.IID
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.PMF
 
 /-!

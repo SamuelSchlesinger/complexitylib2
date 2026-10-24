@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Encoding
 public import Complexity.Crypto.Computational.Homomorphic.Efficiency
+import Complexity.Probability.PMF.Bind
 import Complexity.Tactic.PPT
 
 /-!

@@ -9,6 +9,7 @@ module
 
 public import Cslib.Probability.StatisticalDistance
 public import Complexity.Probability.PMF
+import Complexity.Probability.PMF.Event
 
 /-!
 # Statistical distance with public side information

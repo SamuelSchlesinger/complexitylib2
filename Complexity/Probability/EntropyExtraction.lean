@@ -9,6 +9,7 @@ module
 
 public import Complexity.Probability.UniversalHash
 public import Complexity.Probability.EntropyConcentration
+import Complexity.Probability.PMF.Event
 
 /-!
 # Extracting from concentrated conditional entropy

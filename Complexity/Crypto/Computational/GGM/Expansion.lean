@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.GGM.Hybrid
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Probabilistic.Memoize
 import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString

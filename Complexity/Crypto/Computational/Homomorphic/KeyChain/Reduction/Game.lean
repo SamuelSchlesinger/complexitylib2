@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Reduction
 public import Complexity.Crypto.Computational.Homomorphic.KeyChain.Hybrid.Game
+import Complexity.Probability.PMF.Bind
 
 /-!
 # Exact games of the encrypted-link reduction

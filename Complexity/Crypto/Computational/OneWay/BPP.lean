@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.BPP.Amplification
 public import Complexity.Crypto.Computational.OneWay.NP
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Complexity.Classes.BPP.Reduction
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString

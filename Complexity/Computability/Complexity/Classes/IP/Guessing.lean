@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.IP
 public import Complexity.Computability.Probabilistic.PPT
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.Sampling
 

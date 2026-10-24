@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Probabilistic.PPT
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.CoinTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
+import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Map
 import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayInput
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat

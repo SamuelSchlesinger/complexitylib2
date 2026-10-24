@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
+import Complexity.Probability.PMF.Uniform
 import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Randomness
 import Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Serialized
 

@@ -10,6 +10,8 @@ module
 public import Complexity.Crypto.Protocols.SigmaProtocol.Identification
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
 public import Complexity.Languages.Probabilistic.Forking
+import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Event
 import Complexity.Languages.Probabilistic.Presample
 import Complexity.Languages.Probabilistic.Simulation
 import Complexity.Languages.Probabilistic.UntilBad

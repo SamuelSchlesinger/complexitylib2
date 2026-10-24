@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Halting
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.Sequential
 
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Machines.Turing.MultiTape.Machine.Simulation
 
 /-!

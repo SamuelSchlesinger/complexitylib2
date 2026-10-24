@@ -11,6 +11,7 @@ public import Complexity.Computability.Communication.Randomized
 public import Complexity.Computability.Communication.Rectangle
 public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Mathlib.Data.Matrix.Mul
+import Complexity.Probability.PMF.Event
 import Complexity.Foundations.BooleanAnalysis.HadamardRectangles
 import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Probability.PMF

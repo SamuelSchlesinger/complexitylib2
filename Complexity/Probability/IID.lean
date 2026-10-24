@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.Product
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.PMF
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity

@@ -13,6 +13,7 @@ public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.Signature
 public import Complexity.Languages.Probabilistic.Repeat
 public import Complexity.Languages.Probabilistic.UniformNat
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 import Complexity.Computability.Probabilistic.CoinTape

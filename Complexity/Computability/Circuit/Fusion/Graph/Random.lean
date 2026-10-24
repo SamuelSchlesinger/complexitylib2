@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Circuit.Fusion.Encoding
 public import Complexity.Computability.Circuit.Fusion.Graph
 public import Complexity.Probability.PMF
+import Complexity.Probability.PMF.Event
+import Complexity.Probability.PMF.Uniform
 import Mathlib.Data.Fintype.Powerset
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Linarith

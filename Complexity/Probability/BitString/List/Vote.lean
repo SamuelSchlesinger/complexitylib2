@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Data.BitString.List.Vote
 public import Complexity.Probability.PMF
+import Complexity.Probability.PMF.Event
 
 /-!
 # Majority prediction and its training test

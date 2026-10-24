@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Sampling
+import Complexity.Probability.PMF.Event
 import Complexity.Computability.Probabilistic.Repeat
 import Complexity.Probability.BitString.List.Vote
 import Complexity.Languages.Probabilistic.Concentration

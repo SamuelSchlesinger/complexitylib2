@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.GMW.PolyTime
 public import Complexity.Crypto.Computational.Hybrid.Sequence
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Probabilistic.Sampling
 import Complexity.Probability.BitString.List

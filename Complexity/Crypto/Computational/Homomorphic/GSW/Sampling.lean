@@ -11,6 +11,7 @@ public import Complexity.Crypto.Computational.Homomorphic.GSW.Basic
 public import Complexity.Languages.Probabilistic.CenteredBinomial
 public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Languages.Probabilistic.Vector
+import Complexity.Probability.PMF.Uniform
 
 /-!
 # Finite sampling for the GSW construction

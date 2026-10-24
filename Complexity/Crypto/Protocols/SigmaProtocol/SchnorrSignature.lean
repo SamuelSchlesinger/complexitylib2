@@ -9,6 +9,7 @@ module
 
 public import Complexity.Crypto.Protocols.SigmaProtocol.FiatShamir
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
+import Complexity.Probability.PMF.Uniform
 import Complexity.Probability.PMF
 
 /-!

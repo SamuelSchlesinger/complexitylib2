@@ -10,6 +10,7 @@ module
 public import Complexity.Probability.Collision
 public import Complexity.Probability.HashFamily
 public import Complexity.Probability.StatisticalDistance
+import Complexity.Probability.PMF.Map
 import Complexity.Probability.PMF.Expect
 
 /-!

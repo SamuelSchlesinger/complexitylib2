@@ -11,6 +11,7 @@ public import Complexity.Computability.DecisionTree.Leaves
 public import Complexity.MachineLearning.UniformLearning.LowDegree
 public import Complexity.MachineLearning.UniformLearning.MembershipQuery
 public import Complexity.Foundations.BooleanAnalysis.BucketWeight
+import Complexity.Probability.PMF.Event
 import Complexity.Computability.DecisionTree.SpectralNorm
 import Complexity.Probability.Concentration
 import Complexity.Probability.PMF

@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Computational.GeneratorPadding
 public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Mathlib.Data.Nat.Find
+import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Search
 import Complexity.Crypto.Computational.UniformChoice
 import Complexity.Crypto.Negligible.Basic

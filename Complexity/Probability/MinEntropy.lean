@@ -9,6 +9,7 @@ module
 
 public import Complexity.Probability.Collision
 public import Complexity.Probability.Entropy
+import Complexity.Probability.PMF.Event
 import Complexity.Probability.StatisticalDistance
 
 /-!

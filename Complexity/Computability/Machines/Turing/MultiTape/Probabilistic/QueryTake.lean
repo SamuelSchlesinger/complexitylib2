@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.RunsWords
 public import Cslib.Computability.Machines.Turing.MultiTape.Plumbing.RewindInput
+import Complexity.Probability.PMF.Bind
 
 /-!
 # Fair-bit and bounded-prefix oracle query machines

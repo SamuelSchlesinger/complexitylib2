@@ -11,6 +11,8 @@ public import Complexity.Init
 public import Complexity.Crypto.Primitives.PRG.NextBit
 public import Mathlib.Data.Finset.Sort
 public import Mathlib.Logic.Function.DependsOn
+import Complexity.Probability.PMF.Bind
+import Complexity.Probability.PMF.Uniform
 import Complexity.Probability.PMF
 
 /-!

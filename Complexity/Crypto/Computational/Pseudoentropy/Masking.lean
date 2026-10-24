@@ -11,6 +11,7 @@ public import Complexity.Probability.Entropy
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.Pseudoentropy.Boosting.Sampling
+import Complexity.Probability.PMF.Event
 import Complexity.Languages.Probabilistic.Notation
 import Complexity.Tactic.PPT
 
