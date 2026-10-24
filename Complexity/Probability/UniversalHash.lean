@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Probability.Collision
+public import Complexity.Probability.HashFamily
 public import Complexity.Probability.StatisticalDistance
 import Complexity.Probability.PMF.Expect
 
@@ -28,6 +29,8 @@ information-theoretic results; efficient sampling and evaluation require separat
 
 ## Main results
 
+* `Cslib.Probability.isTwoUniversal_iff_isUniversalHash`: two-universality is
+  `1 / |Output|`-universality.
 * `Cslib.Probability.IsTwoUniversal.collision_with_set_le`: isolation by a union bound.
 * `Cslib.Probability.IsTwoUniversal.leftover_hash`: the strong leftover hash lemma.
 * `Cslib.Probability.IsTwoUniversal.leftover_hash_conditional`: extraction with side information.
@@ -51,6 +54,7 @@ Adapted from `Probability/UniversalHash.lean` on the cslib `crypto` branch at
 namespace Cslib.Probability
 
 open Cslib.Probability.PMF
+open scoped ENNReal
 
 variable {Seed Input Output : Type*} [Fintype Seed] [Finite Input] [Fintype Output]
 
@@ -59,6 +63,23 @@ open Classical in
 def IsTwoUniversal (seed : PMF Seed) (hash : Seed → Input → Output) : Prop :=
   ∀ x y, x ≠ y → (∑ s, if hash s x = hash s y then (seed s).toReal else 0) ≤
     (Fintype.card Output : ℝ)⁻¹
+
+omit [Finite Input] in
+open Classical in
+/-- Two-universality is `1 / |Output|`-universality in the sense of
+`Cslib.Probability.IsUniversalHash`. -/
+theorem isTwoUniversal_iff_isUniversalHash [Nonempty Output] {seed : PMF Seed}
+    {hash : Seed → Input → Output} :
+    IsTwoUniversal seed hash ↔ IsUniversalHash seed hash (Fintype.card Output : ℝ≥0∞)⁻¹ := by
+  have hinv : ((Fintype.card Output : ℝ≥0∞)⁻¹).toReal = (Fintype.card Output : ℝ)⁻¹ := by
+    rw [ENNReal.toReal_inv, ENNReal.toReal_natCast]
+  refine ⟨fun hhash => ?_, fun hhash x y hxy => ?_⟩
+  · have h := IsUniversalHash.of_sum_ite_toReal_le (seed := seed) (hash := hash) hhash
+    rwa [ENNReal.ofReal_inv_of_pos (by exact_mod_cast Fintype.card_pos),
+      ENNReal.ofReal_natCast] at h
+  · rw [← hinv]
+    exact hhash.sum_ite_toReal_le
+      (ENNReal.inv_ne_top.mpr (by exact_mod_cast Fintype.card_ne_zero)) hxy
 
 omit [Finite Input] in
 /-- An injective input representation preserves two-universality. -/

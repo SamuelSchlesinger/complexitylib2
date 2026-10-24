@@ -30,7 +30,8 @@ an AND/XOR fold. It reuses the existing block representation and ordinary list o
 
 ## Main results
 
-* `Cslib.BitString.LinearHash.isTwoUniversal`: the uniform matrix family is two-universal.
+* `Cslib.BitString.LinearHash.isDeltaUniversalHash`, `Cslib.BitString.LinearHash.isTwoUniversal`:
+  the uniform matrix family is `2⁻ᵐ`-XOR-universal, hence universal.
 * `Cslib.BitString.LinearHash.isTwoUniversal_prefix`: universality with unused public rows.
 * `Cslib.BitString.LinearHash.wordHash_eq_ofFn`: exact agreement of the two representations.
 
@@ -51,6 +52,7 @@ Adapted from `Probability/LinearHash.lean` on the cslib `crypto` branch at
 namespace Cslib.BitString.LinearHash
 
 open Cslib.Probability Cslib.Probability.PMF
+open scoped ENNReal
 
 /-- Hash an `n`-bit input to `m` bits using the `m` rows of a Boolean matrix. -/
 def hash {n m : ℕ} (rows : Fin m → BitString n) (input : BitString n) : BitString m :=
@@ -84,14 +86,17 @@ theorem uniform_hash_sub {n m : ℕ} (x y : BitString n) (hxy : x ≠ y) :
   simp only [hsub]
   exact uniform_hash_nonzero (x - y) (sub_ne_zero.mpr hxy)
 
-/-- Uniform Boolean matrices are a two-universal hash family, including zero-width outputs. -/
+/-- Uniform Boolean matrices are a `2⁻ᵐ`-Δ-universal hash family: the bitwise XOR of two hashes
+of distinct inputs is uniform. -/
+theorem isDeltaUniversalHash (n m : ℕ) :
+    IsDeltaUniversalHash (PMF.uniformOfFintype (Fin m → BitString n)) hash
+      (Fintype.card (BitString m) : ℝ≥0∞)⁻¹ :=
+  IsDeltaUniversalHash.of_map_sub_eq_uniform fun x y hxy => uniform_hash_sub x y hxy
+
+/-- Uniform Boolean matrices are a universal hash family, including zero-width outputs. -/
 theorem isTwoUniversal (n m : ℕ) :
-    IsTwoUniversal (PMF.uniformOfFintype (Fin m → BitString n)) hash := by
-  intro x y hxy
-  have h := congrArg (fun p : PMF (BitString m) => (p 0).toReal) (uniform_hash_sub x y hxy)
-  rw [map_apply_toReal] at h
-  simpa only [eq_comm (a := (0 : BitString m)), sub_eq_zero, PMF.uniformOfFintype_apply,
-    ENNReal.toReal_inv, ENNReal.toReal_natCast] using h.le
+    IsTwoUniversal (PMF.uniformOfFintype (Fin m → BitString n)) hash :=
+  isTwoUniversal_iff_isUniversalHash.mpr (isDeltaUniversalHash n m).isUniversalHash
 
 /-- Any initial block of a uniform matrix is itself uniform. Unused rows may remain public. -/
 private theorem uniform_prefix {n m count : ℕ} (h : m ≤ count) :
