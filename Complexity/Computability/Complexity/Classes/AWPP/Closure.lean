@@ -188,19 +188,28 @@ theorem inter_mem_AWPP (hA : A ∈ AWPP enc) (hB : B ∈ AWPP enc) : A ∩ B ∈
     · have hm := mul_le_mul (hgn ha) hh1 hh0 hD
       nlinarith [mul_nonneg hg0 hh0]
 
+/-- `AWPP` as a Boolean subalgebra of `Set α`. -/
+def AWPP.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (AWPP enc) (BPP_subset_AWPP (P_subset_BPP empty_mem_P)) (fun _ => compl_mem_AWPP)
+    (fun _ _ => inter_mem_AWPP)
+
+@[simp]
+theorem AWPP.coe_booleanSubalgebra : (AWPP.booleanSubalgebra enc : Set (Set α)) = AWPP enc := rfl
+
+@[simp]
+theorem AWPP.mem_booleanSubalgebra : A ∈ AWPP.booleanSubalgebra enc ↔ A ∈ AWPP enc := Iff.rfl
+
 /-- Union follows by De Morgan's law. -/
-theorem union_mem_AWPP (hA : A ∈ AWPP enc) (hB : B ∈ AWPP enc) : A ∪ B ∈ AWPP enc := by
-  simpa [Set.compl_inter] using
-    compl_mem_AWPP (inter_mem_AWPP (compl_mem_AWPP hA) (compl_mem_AWPP hB))
+theorem union_mem_AWPP (hA : A ∈ AWPP enc) (hB : B ∈ AWPP enc) : A ∪ B ∈ AWPP enc :=
+  (AWPP.booleanSubalgebra enc).sup_mem hA hB
 
 /-- AWPP is closed under set difference. -/
 theorem diff_mem_AWPP (hA : A ∈ AWPP enc) (hB : B ∈ AWPP enc) : A \ B ∈ AWPP enc :=
-  inter_mem_AWPP hA (compl_mem_AWPP hB)
+  (AWPP.booleanSubalgebra enc).sdiff_mem hA hB
 
 /-- AWPP is closed under symmetric difference. -/
 theorem symmDiff_mem_AWPP (hA : A ∈ AWPP enc) (hB : B ∈ AWPP enc) :
-    A ∆ B ∈ AWPP enc := by
-  rw [Set.symmDiff_def]
-  exact union_mem_AWPP (diff_mem_AWPP hA hB) (diff_mem_AWPP hB hA)
+    A ∆ B ∈ AWPP enc :=
+  (AWPP.booleanSubalgebra enc).symmDiff_mem hA hB
 
 end Cslib.Complexity

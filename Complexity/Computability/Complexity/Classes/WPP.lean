@@ -187,19 +187,28 @@ theorem inter_mem_WPP (hA : A ∈ WPP enc) (hB : B ∈ WPP enc) : A ∩ B ∈ WP
   · rcases hr a with h | h <;> rcases hr' a with h' | h' <;>
       simp [hA a, hB a, h, h', hn a, hn' a, (hn a).symm, (hn' a).symm]
 
+/-- `WPP` as a Boolean subalgebra of `Set α`. -/
+def WPP.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (WPP enc) (UP_subset_WPP (P_subset_UP empty_mem_P)) (fun _ => compl_mem_WPP)
+    (fun _ _ => inter_mem_WPP)
+
+@[simp]
+theorem WPP.coe_booleanSubalgebra : (WPP.booleanSubalgebra enc : Set (Set α)) = WPP enc := rfl
+
+@[simp]
+theorem WPP.mem_booleanSubalgebra : A ∈ WPP.booleanSubalgebra enc ↔ A ∈ WPP enc := Iff.rfl
+
 /-- Union follows by De Morgan's law. -/
-theorem union_mem_WPP (hA : A ∈ WPP enc) (hB : B ∈ WPP enc) : A ∪ B ∈ WPP enc := by
-  simpa [Set.compl_inter] using
-    compl_mem_WPP (inter_mem_WPP (compl_mem_WPP hA) (compl_mem_WPP hB))
+theorem union_mem_WPP (hA : A ∈ WPP enc) (hB : B ∈ WPP enc) : A ∪ B ∈ WPP enc :=
+  (WPP.booleanSubalgebra enc).sup_mem hA hB
 
 /-- `WPP` is closed under set difference. -/
 theorem diff_mem_WPP (hA : A ∈ WPP enc) (hB : B ∈ WPP enc) : A \ B ∈ WPP enc :=
-  inter_mem_WPP hA (compl_mem_WPP hB)
+  (WPP.booleanSubalgebra enc).sdiff_mem hA hB
 
 /-- `WPP` is closed under symmetric difference. -/
-theorem symmDiff_mem_WPP (hA : A ∈ WPP enc) (hB : B ∈ WPP enc) : A ∆ B ∈ WPP enc := by
-  rw [Set.symmDiff_def]
-  exact union_mem_WPP (diff_mem_WPP hA hB) (diff_mem_WPP hB hA)
+theorem symmDiff_mem_WPP (hA : A ∈ WPP enc) (hB : B ∈ WPP enc) : A ∆ B ∈ WPP enc :=
+  (WPP.booleanSubalgebra enc).symmDiff_mem hA hB
 
 /-- Polynomial-time precomposition preserves the target and the exact gap. -/
 theorem PolyTimeReducible.mem_WPP {encB : β ↪ List Bool} {B : Set β}
@@ -230,19 +239,28 @@ theorem inter_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A ∩ B ∈
   · rcases hr a with h | h <;> rcases hr' a with h' | h' <;>
       simp [hA a, hB a, h, h', hn _, hn' _, (hn _).symm, (hn' _).symm]
 
+/-- `LWPP` as a Boolean subalgebra of `Set α`. -/
+def LWPP.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (LWPP enc) (UP_subset_LWPP (P_subset_UP empty_mem_P)) (fun _ => compl_mem_LWPP)
+    (fun _ _ => inter_mem_LWPP)
+
+@[simp]
+theorem LWPP.coe_booleanSubalgebra : (LWPP.booleanSubalgebra enc : Set (Set α)) = LWPP enc := rfl
+
+@[simp]
+theorem LWPP.mem_booleanSubalgebra : A ∈ LWPP.booleanSubalgebra enc ↔ A ∈ LWPP enc := Iff.rfl
+
 /-- Union preserves length-dependent targets. -/
-theorem union_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A ∪ B ∈ LWPP enc := by
-  simpa [Set.compl_inter] using
-    compl_mem_LWPP (inter_mem_LWPP (compl_mem_LWPP hA) (compl_mem_LWPP hB))
+theorem union_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A ∪ B ∈ LWPP enc :=
+  (LWPP.booleanSubalgebra enc).sup_mem hA hB
 
 /-- `LWPP` is closed under set difference. -/
 theorem diff_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A \ B ∈ LWPP enc :=
-  inter_mem_LWPP hA (compl_mem_LWPP hB)
+  (LWPP.booleanSubalgebra enc).sdiff_mem hA hB
 
 /-- `LWPP` is closed under symmetric difference. -/
-theorem symmDiff_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A ∆ B ∈ LWPP enc := by
-  rw [Set.symmDiff_def]
-  exact union_mem_LWPP (diff_mem_LWPP hA hB) (diff_mem_LWPP hB hA)
+theorem symmDiff_mem_LWPP (hA : A ∈ LWPP enc) (hB : B ∈ LWPP enc) : A ∆ B ∈ LWPP enc :=
+  (LWPP.booleanSubalgebra enc).symmDiff_mem hA hB
 
 /-! ### Finite multiple-target robustness -/
 

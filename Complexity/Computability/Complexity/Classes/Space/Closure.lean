@@ -36,8 +36,11 @@ in place and reusing the space of the decider for each.
 * `Cslib.Complexity.mem_PSPACE_iff_computableTidilyInO`: `PSPACE` in the quantitative calculus.
 * `Cslib.Complexity.mem_PSPACE_iff_computableTidilyInPolySpace`,
   `Cslib.Complexity.mem_PSPACE_of_computableTidilyInPolySpace`: `PSPACE` within polynomial space.
-* `Cslib.Complexity.compl_mem_PSPACE`, `Cslib.Complexity.PolyTimeReducible.mem_PSPACE`,
-  `Cslib.Complexity.setOf_exists_mem_PSPACE`: closure properties of `PSPACE`.
+* `Cslib.Complexity.compl_mem_PSPACE`, `Cslib.Complexity.inter_mem_PSPACE`,
+  `Cslib.Complexity.union_mem_PSPACE`, `Cslib.Complexity.diff_mem_PSPACE`,
+  `Cslib.Complexity.symmDiff_mem_PSPACE`, `Cslib.Complexity.PSPACE.booleanSubalgebra`,
+  `Cslib.Complexity.PolyTimeReducible.mem_PSPACE`, `Cslib.Complexity.setOf_exists_mem_PSPACE`:
+  closure properties of `PSPACE`.
 
 ## References
 
@@ -97,6 +100,46 @@ theorem compl_mem_PSPACE (hA : A ∈ PSPACE enc) : Aᶜ ∈ PSPACE enc := by
     Bool.not).inO_one.comp_linear hf
   refine mem_PSPACE_iff_computableTidilyInO.mpr ⟨_, T, S, hnot, hS, fun a => ?_⟩
   simp [hA a]
+
+open scoped symmDiff
+
+/-- **`PSPACE` is closed under intersection.** -/
+theorem inter_mem_PSPACE {B : Set α} (hA : A ∈ PSPACE enc) (hB : B ∈ PSPACE enc) :
+    A ∩ B ∈ PSPACE enc := by
+  obtain ⟨f, hf, hA⟩ := mem_PSPACE_iff_computableTidilyInPolySpace.mp hA
+  obtain ⟨g, hg, hB⟩ := mem_PSPACE_iff_computableTidilyInPolySpace.mp hB
+  exact mem_PSPACE_of_computableTidilyInPolySpace
+    ((ComputableTidilyInPolySpace.of_polyTime ComputableTidilyInPolyTime.bool_and).comp
+      (hf.prod hg))
+    fun a => by simp [hA a, hB a]
+
+/-- `PSPACE` as a Boolean subalgebra of `Set α`. -/
+def PSPACE.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (PSPACE enc) (P_subset_PSPACE empty_mem_P) (fun _ => compl_mem_PSPACE)
+    (fun _ _ => inter_mem_PSPACE)
+
+@[simp]
+theorem PSPACE.coe_booleanSubalgebra :
+    (PSPACE.booleanSubalgebra enc : Set (Set α)) = PSPACE enc := rfl
+
+@[simp]
+theorem PSPACE.mem_booleanSubalgebra : A ∈ PSPACE.booleanSubalgebra enc ↔ A ∈ PSPACE enc :=
+  Iff.rfl
+
+/-- `PSPACE` is closed under union. -/
+theorem union_mem_PSPACE {B : Set α} (hA : A ∈ PSPACE enc) (hB : B ∈ PSPACE enc) :
+    A ∪ B ∈ PSPACE enc :=
+  (PSPACE.booleanSubalgebra enc).sup_mem hA hB
+
+/-- `PSPACE` is closed under set difference. -/
+theorem diff_mem_PSPACE {B : Set α} (hA : A ∈ PSPACE enc) (hB : B ∈ PSPACE enc) :
+    A \ B ∈ PSPACE enc :=
+  (PSPACE.booleanSubalgebra enc).sdiff_mem hA hB
+
+/-- `PSPACE` is closed under symmetric difference. -/
+theorem symmDiff_mem_PSPACE {B : Set α} (hA : A ∈ PSPACE enc) (hB : B ∈ PSPACE enc) :
+    A ∆ B ∈ PSPACE enc :=
+  (PSPACE.booleanSubalgebra enc).symmDiff_mem hA hB
 
 /-- **`PSPACE` is closed under polynomial-time reductions.** -/
 theorem PolyTimeReducible.mem_PSPACE {β : Type} {encB : β ↪ List Bool} {B : Set β}

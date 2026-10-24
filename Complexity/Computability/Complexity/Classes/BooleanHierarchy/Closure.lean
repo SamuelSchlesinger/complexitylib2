@@ -135,9 +135,9 @@ theorem diff_mem_BH (hA : A ∈ BH enc n) (hB : B ∈ BH enc m) :
 
 /-- The union of two finite `BH` levels stays at a finite level. -/
 theorem union_mem_BH (hA : A ∈ BH enc n) (hB : B ∈ BH enc m) :
-    A ∪ B ∈ BH enc ((n + 1) * (m + 1) + 1) := by
-  have h := compl_mem_BH_succ (inter_mem_BH (compl_mem_BH_succ hA) (compl_mem_BH_succ hB))
-  simpa only [Set.compl_inter, compl_compl] using h
+    A ∪ B ∈ BH enc ((n + 1) * (m + 1) + 1) :=
+  union_mem_differenceHierarchy (P_subset_NP univ_mem_P)
+    (fun _ h₁ _ h₂ => union_mem_NP h₁ h₂) (fun _ h₁ _ h₂ => inter_mem_NP h₁ h₂) hA hB
 
 /-- The Boolean hierarchy is closed under intersection. -/
 theorem inter_mem_BooleanHierarchy (hA : A ∈ BooleanHierarchy enc)
@@ -146,23 +146,32 @@ theorem inter_mem_BooleanHierarchy (hA : A ∈ BooleanHierarchy enc)
   obtain ⟨m, hm⟩ := Set.mem_iUnion.mp hB
   exact Set.mem_iUnion.mpr ⟨n * m, inter_mem_BH hn hm⟩
 
+/-- `BooleanHierarchy` as a Boolean subalgebra of `Set α`. -/
+def BooleanHierarchy.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (BooleanHierarchy enc) (NP_subset_BooleanHierarchy (P_subset_NP empty_mem_P))
+    (fun _ => compl_mem_BooleanHierarchy) (fun _ _ => inter_mem_BooleanHierarchy)
+
+@[simp]
+theorem BooleanHierarchy.coe_booleanSubalgebra :
+    (BooleanHierarchy.booleanSubalgebra enc : Set (Set α)) = BooleanHierarchy enc := rfl
+
+@[simp]
+theorem BooleanHierarchy.mem_booleanSubalgebra :
+    A ∈ BooleanHierarchy.booleanSubalgebra enc ↔ A ∈ BooleanHierarchy enc := Iff.rfl
+
 /-- The Boolean hierarchy is closed under difference. -/
 theorem diff_mem_BooleanHierarchy (hA : A ∈ BooleanHierarchy enc)
-    (hB : B ∈ BooleanHierarchy enc) : A \ B ∈ BooleanHierarchy enc := by
-  obtain ⟨n, hn⟩ := Set.mem_iUnion.mp hA
-  obtain ⟨m, hm⟩ := Set.mem_iUnion.mp hB
-  exact Set.mem_iUnion.mpr ⟨n * (m + 1), diff_mem_BH hn hm⟩
+    (hB : B ∈ BooleanHierarchy enc) : A \ B ∈ BooleanHierarchy enc :=
+  (BooleanHierarchy.booleanSubalgebra enc).sdiff_mem hA hB
 
 /-- The Boolean hierarchy is closed under union. -/
 theorem union_mem_BooleanHierarchy (hA : A ∈ BooleanHierarchy enc)
-    (hB : B ∈ BooleanHierarchy enc) : A ∪ B ∈ BooleanHierarchy enc := by
-  obtain ⟨n, hn⟩ := Set.mem_iUnion.mp hA
-  obtain ⟨m, hm⟩ := Set.mem_iUnion.mp hB
-  exact Set.mem_iUnion.mpr ⟨(n + 1) * (m + 1) + 1, union_mem_BH hn hm⟩
+    (hB : B ∈ BooleanHierarchy enc) : A ∪ B ∈ BooleanHierarchy enc :=
+  (BooleanHierarchy.booleanSubalgebra enc).sup_mem hA hB
 
 /-- The Boolean hierarchy is closed under symmetric difference. -/
 theorem symmDiff_mem_BooleanHierarchy (hA : A ∈ BooleanHierarchy enc)
     (hB : B ∈ BooleanHierarchy enc) : symmDiff A B ∈ BooleanHierarchy enc :=
-  union_mem_BooleanHierarchy (diff_mem_BooleanHierarchy hA hB) (diff_mem_BooleanHierarchy hB hA)
+  (BooleanHierarchy.booleanSubalgebra enc).symmDiff_mem hA hB
 
 end Cslib.Complexity

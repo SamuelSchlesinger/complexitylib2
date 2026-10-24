@@ -8,15 +8,20 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.ParityP
+public import Complexity.Computability.Complexity.Reduction.ManyOne
 public import Mathlib.Data.Set.SymmDiff
 import Complexity.Computability.Complexity.Classes.SharpP.Closure
 
 /-!
 # Boolean closure of ParityP
 
+## Main definitions
+
+* `Cslib.Complexity.ParityP.booleanSubalgebra`: `⊕P` as a Boolean subalgebra of `Set α`.
+
 ## Main results
 
-`ParityP` is closed under union, intersection and symmetric difference.
+`ParityP` is closed under union, intersection, set difference, and symmetric difference.
 
 ## References
 
@@ -39,19 +44,32 @@ theorem inter_mem_ParityP (hA : A ∈ ParityP enc) (hB : B ∈ ParityP enc) :
   exact mem_ParityP_iff_exists_SharpP.mpr
     ⟨f * g, SharpP.mul_mem hf hg, fun a => by simp [hA a, hB a, Nat.odd_mul]⟩
 
+/-- `⊕P` as a Boolean subalgebra of `Set α`. -/
+def ParityP.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (ParityP enc) (P_subset_ParityP empty_mem_P) (fun _ => compl_mem_ParityP)
+    (fun _ _ => inter_mem_ParityP)
+
+@[simp]
+theorem ParityP.coe_booleanSubalgebra :
+    (ParityP.booleanSubalgebra enc : Set (Set α)) = ParityP enc := rfl
+
+@[simp]
+theorem ParityP.mem_booleanSubalgebra : A ∈ ParityP.booleanSubalgebra enc ↔ A ∈ ParityP enc :=
+  Iff.rfl
+
 /-- `⊕P` is closed under union. -/
 theorem union_mem_ParityP (hA : A ∈ ParityP enc) (hB : B ∈ ParityP enc) :
-    A ∪ B ∈ ParityP enc := by
-  simpa [Set.compl_inter] using
-    compl_mem_ParityP (inter_mem_ParityP (compl_mem_ParityP hA) (compl_mem_ParityP hB))
+    A ∪ B ∈ ParityP enc :=
+  (ParityP.booleanSubalgebra enc).sup_mem hA hB
+
+/-- `⊕P` is closed under set difference. -/
+theorem diff_mem_ParityP (hA : A ∈ ParityP enc) (hB : B ∈ ParityP enc) :
+    A \ B ∈ ParityP enc :=
+  (ParityP.booleanSubalgebra enc).sdiff_mem hA hB
 
 /-- `⊕P` is closed under symmetric difference. -/
 theorem symmDiff_mem_ParityP (hA : A ∈ ParityP enc) (hB : B ∈ ParityP enc) :
-    A ∆ B ∈ ParityP enc := by
-  obtain ⟨f, hf, hA⟩ := mem_ParityP_iff_exists_SharpP.mp hA
-  obtain ⟨g, hg, hB⟩ := mem_ParityP_iff_exists_SharpP.mp hB
-  refine mem_ParityP_iff_exists_SharpP.mpr ⟨f + g, SharpP.add_mem hf hg, fun a => ?_⟩
-  simp only [Set.mem_symmDiff, hA a, hB a, Pi.add_apply, Nat.odd_add, ← Nat.not_odd_iff_even]
-  tauto
+    A ∆ B ∈ ParityP enc :=
+  (ParityP.booleanSubalgebra enc).symmDiff_mem hA hB
 
 end Cslib.Complexity

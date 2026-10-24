@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.PH
+public import Complexity.Computability.Complexity.Reduction.ManyOne
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -191,15 +192,15 @@ theorem inter_mem_PiP (hA : A ∈ PiP k enc) (hB : B ∈ PiP k enc) :
 
 /-- Each existential level is closed under union, by intersection and quantifier duality. -/
 theorem union_mem_SigmaP (hA : A ∈ SigmaP k enc) (hB : B ∈ SigmaP k enc) :
-    A ∪ B ∈ SigmaP k enc := by
-  simpa only [Set.compl_inter, compl_compl] using compl_mem_SigmaP_of_mem_PiP (inter_mem_PiP
-    (compl_mem_PiP_of_mem_SigmaP hA) (compl_mem_PiP_of_mem_SigmaP hB))
+    A ∪ B ∈ SigmaP k enc :=
+  SigmaP_eq_preimage_compl_PiP ▸ compl_union_mem inter_mem_PiP
+    (compl_mem_PiP_of_mem_SigmaP hA) (compl_mem_PiP_of_mem_SigmaP hB)
 
 /-- Each universal level is closed under union, by intersection and quantifier duality. -/
 theorem union_mem_PiP (hA : A ∈ PiP k enc) (hB : B ∈ PiP k enc) :
-    A ∪ B ∈ PiP k enc := by
-  simpa only [Set.compl_inter, compl_compl] using compl_mem_PiP_of_mem_SigmaP (inter_mem_SigmaP
-    (compl_mem_SigmaP_of_mem_PiP hA) (compl_mem_SigmaP_of_mem_PiP hB))
+    A ∪ B ∈ PiP k enc :=
+  PiP_eq_preimage_compl_SigmaP ▸ compl_union_mem inter_mem_SigmaP
+    (compl_mem_SigmaP_of_mem_PiP hA) (compl_mem_SigmaP_of_mem_PiP hB)
 
 /-- Complementation swaps quantifier polarities, remaining within the polynomial hierarchy. -/
 theorem compl_mem_PH (hA : A ∈ PH enc) : Aᶜ ∈ PH enc := by
@@ -213,15 +214,29 @@ theorem inter_mem_PH (hA : A ∈ PH enc) (hB : B ∈ PH enc) : A ∩ B ∈ PH en
   exact SigmaP_subset_PH (max k l)
     (inter_mem_SigmaP (SigmaP_mono (le_max_left k l) hk) (SigmaP_mono (le_max_right k l) hl))
 
+open scoped symmDiff
+
+/-- `PH` as a Boolean subalgebra of `Set α`. -/
+def PH.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (PH enc) (P_subset_PH empty_mem_P) (fun _ => compl_mem_PH)
+    (fun _ _ => inter_mem_PH)
+
+@[simp]
+theorem PH.coe_booleanSubalgebra : (PH.booleanSubalgebra enc : Set (Set α)) = PH enc := rfl
+
+@[simp]
+theorem PH.mem_booleanSubalgebra : A ∈ PH.booleanSubalgebra enc ↔ A ∈ PH enc := Iff.rfl
+
 /-- Two PH languages can be united at the larger of their two existential levels. -/
-theorem union_mem_PH (hA : A ∈ PH enc) (hB : B ∈ PH enc) : A ∪ B ∈ PH enc := by
-  obtain ⟨k, hk⟩ := mem_PH.mp hA
-  obtain ⟨l, hl⟩ := mem_PH.mp hB
-  exact SigmaP_subset_PH (max k l)
-    (union_mem_SigmaP (SigmaP_mono (le_max_left k l) hk) (SigmaP_mono (le_max_right k l) hl))
+theorem union_mem_PH (hA : A ∈ PH enc) (hB : B ∈ PH enc) : A ∪ B ∈ PH enc :=
+  (PH.booleanSubalgebra enc).sup_mem hA hB
 
 /-- The polynomial hierarchy is closed under set difference. -/
 theorem diff_mem_PH (hA : A ∈ PH enc) (hB : B ∈ PH enc) : A \ B ∈ PH enc :=
-  inter_mem_PH hA (compl_mem_PH hB)
+  (PH.booleanSubalgebra enc).sdiff_mem hA hB
+
+/-- The polynomial hierarchy is closed under symmetric difference. -/
+theorem symmDiff_mem_PH (hA : A ∈ PH enc) (hB : B ∈ PH enc) : A ∆ B ∈ PH enc :=
+  (PH.booleanSubalgebra enc).symmDiff_mem hA hB
 
 end Cslib.Complexity

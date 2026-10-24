@@ -72,19 +72,28 @@ theorem inter_mem_SPP (hA : A ∈ SPP enc) (hB : B ∈ SPP enc) : A ∩ B ∈ SP
   · rcases hr a with h | h <;> rcases hs a with k | k <;> simp [h, k]
   · rcases hr a with h | h <;> rcases hs a with k | k <;> simp [hA a, hB a, h, k]
 
+/-- `SPP` as a Boolean subalgebra of `Set α`. -/
+def SPP.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (SPP enc) (UP_subset_SPP (P_subset_UP empty_mem_P)) (fun _ => compl_mem_SPP)
+    (fun _ _ => inter_mem_SPP)
+
+@[simp]
+theorem SPP.coe_booleanSubalgebra : (SPP.booleanSubalgebra enc : Set (Set α)) = SPP enc := rfl
+
+@[simp]
+theorem SPP.mem_booleanSubalgebra : A ∈ SPP.booleanSubalgebra enc ↔ A ∈ SPP enc := Iff.rfl
+
 /-- Union follows from intersection and complement. -/
-theorem union_mem_SPP (hA : A ∈ SPP enc) (hB : B ∈ SPP enc) : A ∪ B ∈ SPP enc := by
-  simpa [Set.compl_inter] using
-    compl_mem_SPP (inter_mem_SPP (compl_mem_SPP hA) (compl_mem_SPP hB))
+theorem union_mem_SPP (hA : A ∈ SPP enc) (hB : B ∈ SPP enc) : A ∪ B ∈ SPP enc :=
+  (SPP.booleanSubalgebra enc).sup_mem hA hB
 
 /-- `SPP` is closed under set difference. -/
 theorem diff_mem_SPP (hA : A ∈ SPP enc) (hB : B ∈ SPP enc) : A \ B ∈ SPP enc :=
-  inter_mem_SPP hA (compl_mem_SPP hB)
+  (SPP.booleanSubalgebra enc).sdiff_mem hA hB
 
 /-- `SPP` is closed under symmetric difference. -/
-theorem symmDiff_mem_SPP (hA : A ∈ SPP enc) (hB : B ∈ SPP enc) : A ∆ B ∈ SPP enc := by
-  rw [Set.symmDiff_def]
-  exact union_mem_SPP (diff_mem_SPP hA hB) (diff_mem_SPP hB hA)
+theorem symmDiff_mem_SPP (hA : A ∈ SPP enc) (hB : B ∈ SPP enc) : A ∆ B ∈ SPP enc :=
+  (SPP.booleanSubalgebra enc).symmDiff_mem hA hB
 
 /-- Subtracting one turns the characteristic function into an exact-zero test. -/
 theorem SPP_subset_CeqP : SPP enc ⊆ CeqP enc := by

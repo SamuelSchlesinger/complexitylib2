@@ -8,8 +8,10 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Reduction.ManyOne
+public import Mathlib.Data.Set.SymmDiff
 public import Mathlib.Logic.Embedding.Basic
-import Mathlib.Order.BooleanAlgebra.Set
+public import Mathlib.Order.BooleanAlgebra.Set
+public import Mathlib.Order.BooleanSubalgebra
 
 /-!
 # Many-one reductions by a class of maps
@@ -56,6 +58,8 @@ on `Primcodable` types, the instance of this shape for computable maps; it is no
 * `Cslib.Complexity.compl_union_mem`, `Cslib.Complexity.compl_inter_mem`,
   `Cslib.Complexity.exists_forall_mem_compl_iff`: De Morgan and existential complement-class
   helpers.
+* `BooleanSubalgebra.ofComplInf`, `BooleanSubalgebra.symmDiff_mem`: Boolean subalgebra constructor
+  from `⊥`, complement, and meet, together with symmetric-difference closure.
 * `Cslib.Complexity.ManyOneReducibleBy.lift`: transfer along partial decodings.
 * `Cslib.Complexity.HardUnder.trans`: hardness transfers along reductions.
 * `Cslib.Complexity.HardUnder.mono`, `Cslib.Complexity.CompleteUnder.mono`: a weaker reducibility
@@ -70,6 +74,41 @@ on `Primcodable` types, the instance of this shape for computable maps; it is no
 -/
 
 @[expose] public section
+
+namespace BooleanSubalgebra
+
+/-- Construct a `BooleanSubalgebra` from closure under `⊥`, complement, and meet (`⊓`), deriving
+join (`⊔`) closure by De Morgan's law (`x ⊔ y = (xᶜ ⊓ yᶜ)ᶜ`). -/
+def ofComplInf {α : Type*} [BooleanAlgebra α] (s : Set α)
+    (hbot : ⊥ ∈ s)
+    (hcompl : ∀ ⦃x⦄, x ∈ s → xᶜ ∈ s)
+    (hinf : ∀ ⦃x y⦄, x ∈ s → y ∈ s → x ⊓ y ∈ s) : BooleanSubalgebra α where
+  carrier := s
+  bot_mem' := hbot
+  compl_mem' hx := hcompl hx
+  infClosed' _ hx _ hy := hinf hx hy
+  supClosed' _ hx _ hy := by
+    simpa only [compl_inf, compl_compl] using hcompl (hinf (hcompl hx) (hcompl hy))
+
+@[simp]
+theorem coe_ofComplInf {α : Type*} [BooleanAlgebra α] (s : Set α)
+    (hbot : ⊥ ∈ s) (hcompl : ∀ ⦃x⦄, x ∈ s → xᶜ ∈ s)
+    (hinf : ∀ ⦃x y⦄, x ∈ s → y ∈ s → x ⊓ y ∈ s) :
+    (ofComplInf s hbot hcompl hinf : Set α) = s := rfl
+
+@[simp]
+theorem mem_ofComplInf {α : Type*} [BooleanAlgebra α] {s : Set α}
+    {hbot : ⊥ ∈ s} {hcompl : ∀ ⦃x⦄, x ∈ s → xᶜ ∈ s}
+    {hinf : ∀ ⦃x y⦄, x ∈ s → y ∈ s → x ⊓ y ∈ s} {x : α} :
+    x ∈ ofComplInf s hbot hcompl hinf ↔ x ∈ s := Iff.rfl
+
+/-- Every `BooleanSubalgebra` is closed under symmetric difference `x ∆ y = (x \ y) ⊔ (y \ x)`. -/
+theorem symmDiff_mem {α : Type*} [BooleanAlgebra α] (S : BooleanSubalgebra α) {x y : α}
+    (hx : x ∈ S) (hy : y ∈ S) : symmDiff x y ∈ S := by
+  rw [symmDiff_def]
+  exact S.sup_mem (S.sdiff_mem hx hy) (S.sdiff_mem hy hx)
+
+end BooleanSubalgebra
 
 namespace Cslib.Complexity
 
