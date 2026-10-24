@@ -641,6 +641,31 @@ class BuildOutputTests(unittest.TestCase):
                          "ComplexityAbstracts.X")
 
 
+class PartialBuildTests(unittest.TestCase):
+    def test_partial_outputs_are_listed(self) -> None:
+        self.assertEqual(t.qr.listed_modules("module\npublic import A.B\nimport C\n-- import D\n"),
+                         ["A.B", "C"])
+        with tempfile.TemporaryDirectory() as tmp:
+            build = pathlib.Path(tmp)
+            listed = t.qr.listed_modules(t.qr.source_path("Complexity").read_text())
+            present = listed[0]
+            path = build / (present.replace(".", "/") + ".ilean")
+            path.parent.mkdir(parents=True)
+            path.write_text(json.dumps({"module": present, "directImports": [],
+                                        "references": {}, "decls": {}}))
+            missing: list[str] = []
+            ileans = t.qr.load_ileans(build, missing)
+            self.assertEqual(list(ileans), [present])
+            self.assertIn(listed[1], missing)
+            with self.assertRaises(SystemExit):  # strict by default
+                t.qr.load_ileans(build)
+
+    def test_rewrite_refuses_partial_builds(self) -> None:
+        with contextlib.redirect_stderr(io.StringIO()) as err, self.assertRaises(SystemExit):
+            t.main(["rewrite", "--area", "Logics", "--partial"])
+        self.assertIn("--partial is only for report", err.getvalue())
+
+
 class SummaryTests(unittest.TestCase):
     def test_counts_by_area_and_case(self) -> None:
         entries = [t.Entry("a", "M", "p", "Logics", "theorem", "2"),

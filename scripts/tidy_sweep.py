@@ -348,17 +348,19 @@ def registry_problems(registry: dict[str, str], constants: dict[str, dict]) -> l
 class Model:
     """Declarations, constants and references of the built libraries."""
 
-    def __init__(self, build_dir: Path, allowlist: set[str]):
+    def __init__(self, build_dir: Path, allowlist: set[str], partial: bool = False):
         pairs = ",".join(f"{n.tidy}={n.plain}" for n in NOTIONS)
-        self.lib = qr.Library(build_dir, pairs)
+        self.missing: list[str] | None = [] if partial else None
+        self.lib = qr.Library(build_dir, pairs, self.missing)
         self.constants = self.lib.constants
         self.decls, self.owners, _ = qr.collect_declarations(self.lib)
         qr.annotate_headers(self.lib, self.decls)
         qr.collect_references(self.lib, self.decls, self.owners)
         qr.classify(self.decls)
         self.allowlist = allowlist
+        roots = sorted(self.lib.ileans) if partial else qr.ROOTS
         out = qr.run(["lake", "env", "lean", "--run", "scripts/QualityReport.lean", "--names",
-                      *qr.ROOTS], capture_output=True).stdout
+                      *roots], capture_output=True).stdout
         names, _, tokens = out.partition("\n--tokens--\n")
         self.names, self.tokens = set(names.split()), set(tokens.split("\n")) - {""}
         self._users: dict[str, list[tuple[str, list]]] | None = None
@@ -419,10 +421,17 @@ def markdown_report(report: dict, limit: int = 40) -> str:
                 if report["registry"] else "")
     out = [f"Revision `{report['revision']}`{dirty}; build outputs {report['outputs']}. "
            f"Allowlist: {report['allowlist_size']} modules. Plain twins of tidy theorems: "
-           f"{twins}{registry}.", "",
-           "### Public declarations whose statement mentions a tidy predicate", "",
-           "| Area | Total | (1) Plain twin | (2) Rename and restate | "
-           "(3) Definition or field | Unclassifiable |", "|---|--:|--:|--:|--:|--:|"]
+           f"{twins}{registry}.", ""]
+    if report.get("missing") is not None:
+        by_area = Counter(qr.area_of(m.removeprefix("Complexity.").replace(".", "/") + "/")
+                          if m.startswith("Complexity.") else qr.module_role(m)
+                          for m in report["missing"])
+        out += [f"**Partial build:** {len(report['missing'])} modules have no build outputs and "
+                "are not analysed (" + ", ".join(f"{a} {n}" for a, n in by_area.most_common())
+                + "). Their declarations, and references from them, are missing below.", ""]
+    out += ["### Public declarations whose statement mentions a tidy predicate", "",
+            "| Area | Total | (1) Plain twin | (2) Rename and restate | "
+            "(3) Definition or field | Unclassifiable |", "|---|--:|--:|--:|--:|--:|"]
     for area, c in list(s["areas"].items()) + [("Total", s["total"])]:
         out.append(f"| {area} | {c.get('total', 0):,} | {c.get('1', 0):,} | {c.get('2', 0):,} | "
                    f"{c.get('3', 0):,} | {c.get('unclassifiable', 0):,} |")
@@ -2091,6 +2100,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--build-dir", type=Path, default=qr.DEFAULT_BUILD_DIR)
     parser.add_argument("--no-build-check", action="store_true",
                         help="report only: do not check that the build outputs are current")
+    parser.add_argument("--partial", action="store_true",
+                        help="report only: accept a partial build (a tree that does not build "
+                        "completely); modules without outputs are listed, not analysed")
     parser.add_argument("--json", type=Path, help="write the full report as JSON")
     parser.add_argument("--markdown", type=Path, help="write the report as Markdown")
     parser.add_argument("--no-plan", action="store_true", help="report: skip rewrite plans")
@@ -2111,6 +2123,8 @@ def main(argv: list[str] | None = None) -> int:
                      "choose one")
     if args.diff and args.command != "rewrite":
         parser.error("--diff is a rewrite option")
+    if args.command == "rewrite" and args.partial:
+        parser.error("rewrite needs complete build outputs; --partial is only for report")
     if args.command == "rewrite" and args.no_build_check:
         parser.error("rewrite edits at the recorded reference spans, so it needs current build "
                      "outputs; --no-build-check is only for report")
@@ -2118,8 +2132,8 @@ def main(argv: list[str] | None = None) -> int:
         registry = load_registry(args.registry)
     except ValueError as error:
         parser.error(str(error))
-    outputs = qr.check_outputs(args.build_dir, args.no_build_check)
-    model = Model(args.build_dir, load_allowlist(args.allowlist))
+    outputs = qr.check_outputs(args.build_dir, args.no_build_check or args.partial)
+    model = Model(args.build_dir, load_allowlist(args.allowlist), args.partial)
     twins = twin_map(model.constants, registry)
     entries = classify_all(model, twins)
     shown = [e for e in entries if not args.area or e.area in args.area]
@@ -2132,7 +2146,8 @@ def main(argv: list[str] | None = None) -> int:
               "registry_size": len(registry),
               "twins": dict(Counter(kind for _, kind in twins.values())),
               "registry_problems": registry_problems(registry, model.constants),
-              "summary": summary(shown), "entries": [entry_json(e) for e in shown]}
+              "summary": summary(shown), "entries": [entry_json(e) for e in shown],
+              "missing": model.missing}
     plain_twins = {o: p for o, (p, _) in twins.items()}
     plans = []
     if args.command == "rewrite" and args.diff:
