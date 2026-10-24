@@ -69,9 +69,14 @@ theorem isPolyTime_combinedGenerate {pair : SamplablePair} (saved : pair.SeedRea
   have hcommon := hcommon.tidy
   refine .of_tidy ?_
   have hlength := saved.length_isPolyTime.tidy
+  have hsize := (isPolyTime_size saved.length_isPolyTime (.of_tidy hdensity)).tidy
+  have houtput : ComputableTidilyInPolyTime
+      (fun n => size (saved.length n) (densityBound n) * common n + 1) encUnary encUnary := by
+    fun_prop
   unfold combinedGenerate
   refine (GeneratorXor.isPolyTime_generate (.of_tidy (by polytime)) (.of_tidy (by polytime))
-    (.of_tidy (by polytime)) (.of_tidy ?_) (.of_tidy (by polytime))).tidy
+    (.of_tidy (houtput.comp (ComputableTidilyInPolyTime.fst encUnary encBits)))
+    (.of_tidy ?_) (.of_tidy (by polytime))).tidy
   have hgenerate := (isPolyTime_amplifiedGenerate saved (.of_tidy hobservation) (.of_tidy
     hdensity) (.of_tidy hcommon)).tidy
   exact hgenerate.comp (g := fun input : ((ℕ × List Bool) × ℕ) × List Bool =>
@@ -101,6 +106,7 @@ theorem combinedGenerate_indistinguishable {pair : SamplablePair} {gap : ℕ →
   have hdensity := hdensityPlain.tidy
   have hcommon := hcommonPlain.tidy
   have hlength := saved.length_isPolyTime.tidy
+  have hsize := (isPolyTime_size saved.length_isPolyTime (.of_tidy hdensity)).tidy
   unfold combinedGenerate
   refine GeneratorXor.indistinguishable (choose := choose)
     (count := fun n => size (saved.length n) (densityBound n)) (seedBits := common)
