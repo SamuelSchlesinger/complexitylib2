@@ -253,6 +253,11 @@ class EditTests(unittest.TestCase):
         reps = [t.Replace(3, 4, "Y")]
         self.assertEqual(t.render(text, reps, wraps, 0, len(text)), "f (.of_tidy (Y a).tidy) b")
 
+    def test_new_long_lines_are_reported(self) -> None:
+        old = "a\n" + "x" * 120 + "\nshort\n"
+        new = "a\n" + "x" * 120 + "\n" + "y" * 101 + "\n"
+        self.assertEqual(t.long_lines(old, new), [3])
+
     def test_regions_transform_their_edited_text(self) -> None:
         text = "a := X\nb"
         out = t.apply_edits(text, [t.Replace(5, 6, "Y")], [],
@@ -331,6 +336,7 @@ def fake_planner(text: str, constants: dict, known=(), privates=None, refs=(), t
     p._decl_spans = {}
     p.tokens = t.by_first(tokens)
     p.deferred = {}
+    p.bridge = frozenset()
     p.batch = {}
     p.reset()
     return p, src
@@ -556,7 +562,7 @@ class VerificationTests(unittest.TestCase):
         self.assertEqual(calls, [["lake", "build", "--wfail", "--iofail", "Complexity"]])
 
     def check(self, output: str, code: int) -> dict:
-        planner = SimpleNamespace(decls={}, force_wrap=frozenset())
+        planner = SimpleNamespace(decls={}, force_wrap=frozenset(), bridged=[])
         return t.check_build(planner, {}, output, code, 1)
 
     def test_status_is_passed_only_without_errors(self) -> None:
@@ -574,7 +580,7 @@ class VerificationTests(unittest.TestCase):
 
             class FakePlanner:
                 def __init__(self, *args):
-                    self.decls, self.force_wrap = {}, frozenset()
+                    self.decls, self.force_wrap, self.bridged = {}, frozenset(), []
 
                 def plan(self):
                     return self
@@ -602,6 +608,51 @@ class VerificationTests(unittest.TestCase):
                 "area": "Logics", "declarations": 0, "modes": {}, "sites": {}, "imports": [],
                 "manual": {}}, "manual": [], "build": result}))
             self.assertEqual(t.exit_status([{"build": None}]), 0)
+
+    def test_failing_clients_get_the_local_transition(self) -> None:
+        """A client whose tidy `fun_prop` used a restated lemma is preceded by
+        `attribute [local fun_prop] ComputableInPolyTime.tidy in` in the next round."""
+        rounds = []
+
+        class FakePlanner:
+            def __init__(self, model, entries, twins, area, force, bridge):
+                self.decls, self.force_wrap, self.bridged = {}, force, sorted(bridge)
+                rounds.append(bridge)
+
+            def plan(self):
+                return self
+
+            def render(self):
+                return {}
+
+        def build(_):
+            if len(rounds) == 1:
+                return 1, "error: Complexity/C.lean:3:2: `fun_prop` was unable to prove\n"
+            return 0, ""
+        original, client = t.Planner, t.client_decl
+        t.Planner = FakePlanner
+        t.client_decl = lambda *args: ("Complexity.C", "C.lemma")
+        try:
+            _, result = t.rewrite(SimpleNamespace(decls={}), [], {}, "Logics", True, 3, build)
+        finally:
+            t.Planner, t.client_decl = original, client
+        self.assertEqual(rounds, [frozenset(), frozenset({("Complexity.C", "C.lemma")})])
+        self.assertEqual(result["status"], "passed")
+        self.assertEqual(result["bridged"], [("Complexity.C", "C.lemma")])
+
+    def test_transition_is_inserted_with_a_checked_name(self) -> None:
+        text = ("namespace Turing.MultiTapeTM\n\n/-- doc -/\n@[fun_prop]\n"
+                "theorem c : True := by\n  fun_prop\n\nend Turing.MultiTapeTM\n")
+        decl_line = text.split("\n").index("/-- doc -/")
+        p, src = fake_planner(text, {"T": {"m": "M", "tidy": [POLY]}}, known={PLAIN + ".tidy"})
+        p.renames = {"T": "U"}
+        p.bridge = frozenset({("M", f"line:{decl_line + 2}")})
+        p.plan_bridges()
+        fe = p.files[src.path]
+        out = t.render(text, fe.replaces, fe.wraps, 0, len(text))
+        self.assertIn("\nattribute [local fun_prop] ComputableInPolyTime.tidy in\n/-- doc -/",
+                      out)
+        self.assertEqual(t.command_start_line(src, decl_line + 2), decl_line)
 
     def test_measurement_stubs_and_unchecked_rewrites_are_refused(self) -> None:
         with tempfile.TemporaryDirectory() as tmp, \
@@ -659,6 +710,17 @@ class PartialBuildTests(unittest.TestCase):
             self.assertIn(listed[1], missing)
             with self.assertRaises(SystemExit):  # strict by default
                 t.qr.load_ileans(build)
+
+    def test_partial_outputs_must_be_current(self) -> None:
+        calls = []
+
+        def runner(cmd, **_):
+            calls.append(cmd)
+            return SimpleNamespace(returncode=calls[-1][-1] == "Stale")
+        t.check_partial_outputs(["A", "B"], runner)
+        with self.assertRaises(SystemExit):
+            t.check_partial_outputs(["A", "Stale"], runner)
+        self.assertEqual(calls[0], ["lake", "build", "--no-build", "A", "B"])
 
     def test_rewrite_refuses_partial_builds(self) -> None:
         with contextlib.redirect_stderr(io.StringIO()) as err, self.assertRaises(SystemExit):

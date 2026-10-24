@@ -4,7 +4,7 @@
 Usage: python3 scripts/tidy_sweep.py report [--area AREA]... [--json OUT] [--markdown OUT]
        python3 scripts/tidy_sweep.py rewrite --area AREA [--diff OUT | --verify [--rounds N]]
 Common options: [--registry FILE] [--allowlist FILE] [--build-dir DIR]; report also accepts
-[--no-build-check] and [--no-plan].
+[--no-build-check], [--partial] and [--no-plan].
 
 Plain computability is the API and tidy computability is how the machine layer proves it: outside
 the raw machine constructions of the allowlist (`scripts/tidy_allowlist.txt`, from #608), no
@@ -49,11 +49,15 @@ reference from a proof that stays tidy keeps its old type: the application becom
 `(lemma args).tidy`, with `.of_tidy` around tidy arguments; references to case 1 originals stay
 there, and the plan counts them. `.of_tidy (x.tidy)` round trips are then removed.
 
-With `--verify`, the three libraries are built strictly (`--wfail --iofail`) after the rewrite; a
-translated proof that fails is wrapped instead and the build repeated. Failures that remain, such
-as a tidy `fun_prop` that relied on a lemma the batch made plain, mark plain-calculus gaps: they
-are reported, the status is `failed` and the exit code nonzero. `--diff` writes the plan as a
-patch instead of rewriting files.
+With `--verify`, the three libraries are built strictly (`--wfail --iofail`) after the rewrite,
+and repaired and rebuilt a few times: a translated proof that fails is wrapped instead, and a
+wrapped proof or another declaration that fails (typically a tidy `fun_prop` that used a lemma
+the batch made plain) is preceded by `attribute [local fun_prop] ComputableInPolyTime.tidy in`.
+Tidy reasoning inside proofs is fine; the report lists these declarations for information, as
+gaps of the plain calculus. Failures that remain are reported, the status is `failed` and the
+exit code nonzero. Lines the rewrite pushes past 100 characters are listed for reflowing.
+`--diff` writes the plan as a patch instead of rewriting files. `report --partial` analyses a
+tree that does not build completely, listing the modules without outputs.
 
 Declarations, statements and references come from `scripts/quality_report.py` and
 `scripts/QualityReport.lean`, which read the build outputs of
@@ -345,13 +349,25 @@ def registry_problems(registry: dict[str, str], constants: dict[str, dict]) -> l
 
 # --- Loading ------------------------------------------------------------------------------------
 
+def check_partial_outputs(modules: list[str], runner=subprocess.run) -> None:
+    """Exit unless Lake finds the outputs of the given (built) modules current."""
+    check = runner(["lake", "build", "--no-build", *modules], cwd=ROOT, capture_output=True,
+                   text=True)
+    if check.returncode:
+        sys.exit("the outputs of some built modules are stale; rebuild them (for instance "
+                 "`lake build " + " ".join(qr.ROOTS) + "`) and retry")
+
+
 class Model:
     """Declarations, constants and references of the built libraries."""
 
-    def __init__(self, build_dir: Path, allowlist: set[str], partial: bool = False):
+    def __init__(self, build_dir: Path, allowlist: set[str], partial: bool = False,
+                 check: bool = True):
         pairs = ",".join(f"{n.tidy}={n.plain}" for n in NOTIONS)
         self.missing: list[str] | None = [] if partial else None
         self.lib = qr.Library(build_dir, pairs, self.missing)
+        if partial and check:
+            check_partial_outputs(sorted(self.lib.ileans))
         self.constants = self.lib.constants
         self.decls, self.owners, _ = qr.collect_declarations(self.lib)
         qr.annotate_headers(self.lib, self.decls)
@@ -1206,8 +1222,10 @@ class Planner:
     (left tidy), so that skipped references stay unchanged."""
 
     def __init__(self, model: Model, entries: list[Entry], twins: dict[str, str], area: str,
-                 force_wrap: frozenset[str] = frozenset()):
+                 force_wrap: frozenset[str] = frozenset(),
+                 bridge: frozenset[tuple[str, str]] = frozenset()):
         self.model, self.area, self.force_wrap = model, area, force_wrap
+        self.bridge = bridge
         self.entries = {e.name: e for e in entries}
         self.batch = {e.name: e for e in entries if e.area == area and e.case == "2"}
         self.twins = {o: p for o, p in twins.items() if p in model.constants}
@@ -1234,6 +1252,7 @@ class Planner:
         self.twin_refs: Counter = Counter()
         self.imports: list[tuple[str, str, bool]] = []
         self.blockers: dict[str, list[str]] = defaultdict(list)
+        self.bridged: list[str] = []
         self.round_trips = 0
 
     # Sources and references.
@@ -1430,6 +1449,7 @@ class Planner:
                 self.deferred[name] = sorted(set(reasons))
         for name in sorted(self.deferred):
             self.defer(name, analyses.get(name))
+        self.plan_bridges()
         self.plan_comments()
         self.plan_imports()
         return self
@@ -1503,6 +1523,40 @@ class Planner:
                                f"(`{other}`) at {self.where(path, start)}")
                     return out
         return out
+
+    def plan_bridges(self) -> None:
+        """Precede the declarations of `bridge` (a module and a declaration name, or `line:N`
+        for the 0-based line of an anonymous command) by
+        `attribute [local fun_prop] ComputableInPolyTime.tidy in`: their tidy `fun_prop` calls
+        may then use restated plain certificates. Tidy reasoning stays inside proofs; needing
+        this marks a gap in the plain calculus."""
+        notions = {n for name in self.renames for n in self.notions_of(name)}
+        for module, name in sorted(self.bridge):
+            if name in self.deferred:
+                continue
+            path = qr.source_path(module)
+            src = self.source(path)
+            ranges = self.model.lib.ileans.get(module, {}).get("decls", {})
+            if name.startswith("line:"):
+                start = src.starts[command_start_line(src, int(name[5:]))]
+            elif name in ranges:
+                start = src.at(ranges[name][0], ranges[name][1])
+            else:
+                continue
+            own = set(self.notions_of(name)) if name in self.renames else notions
+            lines = []
+            for notion in sorted(own, key=lambda n: n.tidy):
+                written = self.write_name(module, src, start, notion.to_tidy, None, " in")
+                if written is None:
+                    self.note(path, start, name, "local transition not written",
+                              f"no written form of `{notion.to_tidy}` resolves here")
+                    continue
+                lines.append(f"attribute [local fun_prop] {written} in\n")
+                self.need(module, notion.to_tidy, False)
+            if lines:
+                self.files[path].replaces.append(Replace(start, start, "".join(lines)))
+                self.bridged.append(name if not name.startswith("line:")
+                                    else f"{path.relative_to(ROOT)}:{int(name[5:]) + 1}")
 
     def defer(self, name: str, a: dict | None) -> None:
         """A declaration left tidy in this batch; references to it stay unchanged."""
@@ -1855,7 +1909,9 @@ class Planner:
     # Output.
 
     def render(self) -> dict[Path, str]:
+        """The rewritten texts; lines the rewrite pushes past the style limit are noted."""
         out = {}
+        self.manual = [m for m in self.manual if m.kind != LONG_LINE]
         for path, fe in self.files.items():
             if not (fe.replaces or fe.wraps or fe.regions):
                 continue
@@ -1865,6 +1921,9 @@ class Planner:
             self.round_trips += removed
             if text != src.text:
                 out[path] = text
+                for line in long_lines(src.text, text) if path.suffix == ".lean" else ():
+                    self.manual.append(Manual(str(path.relative_to(ROOT)), line, "", LONG_LINE,
+                                              "reflow by hand"))
         return out
 
     def summary(self) -> dict:
@@ -1873,7 +1932,17 @@ class Planner:
         return {"area": self.area, "declarations": len(self.batch), "modes": dict(modes),
                 "manual": dict(kinds.most_common()), "sites": dict(self.sites),
                 "twin_references": dict(self.twin_refs),
-                "imports": [list(i) for i in self.imports]}
+                "imports": [list(i) for i in self.imports], "bridged": sorted(self.bridged)}
+
+
+LONG_LINE = "line longer than 100 characters after rewriting"
+
+
+def long_lines(old: str, new: str, limit: int = 100) -> list[int]:
+    """The 1-based lines of `new` longer than `limit` that are not lines of `old`."""
+    before = set(old.split("\n"))
+    return [i for i, line in enumerate(new.split("\n"), 1)
+            if len(line) > limit and line not in before]
 
 
 def spells(token: str, name: str) -> bool:
@@ -1888,6 +1957,18 @@ def spells(token: str, name: str) -> bool:
 
 def namespace_of(name: str) -> str:
     return name.rsplit(".", 1)[0] if "." in name else ""
+
+
+def command_start_line(src: SourceFile, line: int) -> int:
+    """The first line of the docstring and attributes above the 0-based `line`."""
+    mask_lines = src.mask.split("\n")
+    while line > 0:
+        above, above_mask = src.lines[line - 1], mask_lines[line - 1]
+        if above.strip() and (not above_mask.strip() or above_mask.lstrip().startswith("@[")):
+            line -= 1
+        else:
+            break
+    return line
 
 
 def enclosing_opener(mask: str, pos: int) -> int:
@@ -1943,6 +2024,10 @@ def plan_markdown(plan: dict, limit: int = 40) -> str:
                        f"{m['detail']} |")
         if len(plan["manual"]) > limit:
             out.append(f"| … {len(plan['manual']) - limit} more in the JSON report | | | | |")
+    if s.get("bridged"):
+        out.append(f"Declarations given `attribute [local fun_prop] ComputableInPolyTime.tidy "
+                   f"in` (plain-calculus gaps, for information): {len(s['bridged'])}: "
+                   + ", ".join(f"`{n}`" for n in s["bridged"][:limit]) + ".")
     if s.get("twin_references"):
         out.append("References to case 1 originals in restated proofs: " + ", ".join(
             f"{n} {k}" for k, n in sorted(s["twin_references"].items())) + ".")
@@ -2011,15 +2096,20 @@ def lake_build(targets: list[str], runner=subprocess.run) -> tuple[int, str]:
 def rewrite(model: Model, entries: list[Entry], twins: dict[str, str], area: str,
             verify: bool, rounds: int, build=lake_build) -> tuple[Planner, dict | None]:
     """Write the area's rewrite into the checkout. With `verify`, build the three libraries
-    strictly and, up to `rounds` times, wrap the translated proofs that fail and rebuild.
-    Remaining failures are reported, never patched over."""
+    strictly and, up to `rounds` times, repair and rebuild: a translated proof that fails is
+    wrapped, and a wrapped proof or another declaration that fails is preceded by
+    `attribute [local fun_prop] ComputableInPolyTime.tidy in` (proof-local tidy reasoning; its
+    use is reported as a plain-calculus gap). Remaining failures are reported, never patched
+    over with `sorry`."""
     originals: dict[Path, str] = {}
     force: set[str] = set()
+    bridge: set[tuple[str, str]] = set()
     result, history = None, []
     for round_ in range(1, rounds + 1):
         for path, text in originals.items():  # plan against the sources of the build
             path.write_text(text, encoding="utf-8")
-        planner = Planner(model, entries, twins, area, frozenset(force)).plan()
+        planner = Planner(model, entries, twins, area, frozenset(force),
+                          frozenset(bridge)).plan()
         texts = planner.render()
         for path, text in texts.items():
             originals.setdefault(path, planner.source(path).text)
@@ -2028,12 +2118,17 @@ def rewrite(model: Model, entries: list[Entry], twins: dict[str, str], area: str
             return planner, None
         code, output = build(list(qr.ROOTS))
         result = check_build(planner, texts, output, code, round_)
-        history.append({k: result[k] for k in ("round", "status", "failing", "forced_wrap")})
+        history.append({k: result[k] for k in ("round", "status", "failing", "forced_wrap",
+                                               "failing_clients")})
         retry = {d for d in result["failing"]
                  if planner.decls.get(d, {}).get("mode") == "translate"}
-        if not retry or round_ == rounds:
+        wrapped = {(model.decls[d]["module"], d) for d in result["failing"]
+                   if planner.decls.get(d, {}).get("mode") == "wrap"}
+        new_bridges = (wrapped | {tuple(c) for c in result["failing_clients"]}) - bridge
+        if not (retry or new_bridges) or round_ == rounds:
             break
         force |= retry
+        bridge |= new_bridges
     result["history"] = history
     return planner, result
 
@@ -2047,7 +2142,7 @@ def check_build(planner: Planner, texts: dict[Path, str], output: str, code: int
     for name, info in planner.decls.items():
         by_written[(info["path"], name.rsplit(".", 1)[-1])] = name
         by_written[(info["path"], info["target"].rsplit(".", 1)[-1])] = name
-    failing, clients, problems = set(), [], []
+    failing, clients, problems, failing_clients = set(), [], [], set()
     for d in diagnostics(output):
         path = ROOT / d["path"]
         text = texts.get(path) or (path.read_text() if path.exists() else "")
@@ -2060,12 +2155,43 @@ def check_build(planner: Planner, texts: dict[Path, str], output: str, code: int
             failing.add(decl)
             planner.decls[decl].setdefault("errors", []).append(d["message"])
         elif d["level"] == "error":
+            client = client_decl(planner, path, text, texts, d["line"], header)
+            if client:
+                failing_clients.add(client)
+                item["decl"] = client[1] if not client[1].startswith("line:") else header
             clients.append(item)
         problems.append(item)
     errors = any(d["level"] == "error" for d in problems)
     return {"round": round_, "status": "passed" if code == 0 and not errors else "failed",
             "exit_code": code, "failing": sorted(failing), "client_errors": clients,
-            "diagnostics": problems, "forced_wrap": sorted(planner.force_wrap)}
+            "failing_clients": sorted(failing_clients), "diagnostics": problems,
+            "forced_wrap": sorted(planner.force_wrap), "bridged": sorted(planner.bridged)}
+
+
+def client_decl(planner: Planner, path: Path, text: str, texts: dict[Path, str], line: int,
+                header: str) -> tuple[str, str] | None:
+    """The declaration (module and name) of an error outside the restated declarations, or
+    `line:N` for an anonymous command, located in the sources the plan was made from."""
+    if not text or not path.is_relative_to(ROOT):
+        return None
+    module = module_of(path)
+    names = [n for n in planner.model.lib.ileans.get(module, {}).get("decls", {})
+             if header and qr.matches(n, header)]
+    if len(names) == 1:
+        return module, names[0]
+    at = command_line(text, line) - 1
+    block = text.split("\n")[at:min(at + 3, line)]
+    original = planner.source(path).lines if path in texts else text.split("\n")
+    hits = [i for i in range(len(original)) if original[i:i + len(block)] == block]
+    return (module, f"line:{hits[0]}") if len(hits) == 1 else None
+
+
+def command_line(text: str, line: int) -> int:
+    """The 1-based line where the command containing a 1-based line starts."""
+    mask = masks(text)[1]
+    offset = sum(len(x) + 1 for x in text.split("\n")[:line - 1])
+    starts = [m.start() for m in qr.COMMAND_START.finditer(mask) if m.start() <= offset]
+    return text.count("\n", 0, starts[-1]) + 1 if starts else line
 
 
 def unified_diff(planner: Planner) -> str:
@@ -2102,7 +2228,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="report only: do not check that the build outputs are current")
     parser.add_argument("--partial", action="store_true",
                         help="report only: accept a partial build (a tree that does not build "
-                        "completely); modules without outputs are listed, not analysed")
+                        "completely); modules without outputs are listed, not analysed, and "
+                        "the others must be current")
     parser.add_argument("--json", type=Path, help="write the full report as JSON")
     parser.add_argument("--markdown", type=Path, help="write the report as Markdown")
     parser.add_argument("--no-plan", action="store_true", help="report: skip rewrite plans")
@@ -2110,7 +2237,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="rewrite: build strictly, wrap failing translations, report the rest")
     parser.add_argument("--diff", type=Path,
                         help="rewrite: write a unified diff of the plan instead of the files")
-    parser.add_argument("--rounds", type=int, default=3)
+    parser.add_argument("--rounds", type=int, default=6)
     parser.add_argument("--limit", type=int, default=40, help="rows per Markdown table")
     args = parser.parse_args(argv)
     for area in args.area:
@@ -2132,8 +2259,15 @@ def main(argv: list[str] | None = None) -> int:
         registry = load_registry(args.registry)
     except ValueError as error:
         parser.error(str(error))
-    outputs = qr.check_outputs(args.build_dir, args.no_build_check or args.partial)
-    model = Model(args.build_dir, load_allowlist(args.allowlist), args.partial)
+    outputs = ("partial; every loaded module checked current by `lake build --no-build`"
+               if args.partial and not args.no_build_check
+               else qr.check_outputs(args.build_dir, args.no_build_check or args.partial))
+    if args.partial and args.build_dir.resolve() != qr.DEFAULT_BUILD_DIR.resolve() \
+            and not args.no_build_check:
+        parser.error("--partial checks the default build directory; pass --no-build-check "
+                     "to report on another one unchecked")
+    model = Model(args.build_dir, load_allowlist(args.allowlist), args.partial,
+                  not args.no_build_check)
     twins = twin_map(model.constants, registry)
     entries = classify_all(model, twins)
     shown = [e for e in entries if not args.area or e.area in args.area]
