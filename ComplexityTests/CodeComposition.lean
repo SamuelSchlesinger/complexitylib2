@@ -13,7 +13,7 @@ references, repeated outputs, zero-input constants and empty circuits. -/
 namespace ComplexityTests.CodeComposition
 
 open Cslib.Circuits Cslib.Circuits.Boolean
-open Turing.MultiTapeTM ComputableTidilyInPolyTime
+open Turing.MultiTapeTM ComputableInPolyTime
 
 private def left : List (Op × List ℕ) × List ℕ := ([(.not, [0])], [2])
 
@@ -39,11 +39,11 @@ example : appendCode 0 ([], []) ([], []) = ([], []) := by decide
 
 /-- The constructor handles arbitrary raw codes and a binary input count uniformly. -/
 theorem constructor_polynomialTime :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun p : ℕ × (List (Op × List ℕ) × List ℕ) × (List (Op × List ℕ) × List ℕ) =>
         appendCode p.1 p.2.1 p.2.2)
       (encPair encNat (encPair encCode encCode)) encCode :=
-  computableTidilyInPolyTime_appendCode (fst _ _) (snd _ _).fst' (snd _ _).snd'
+  computableInPolyTime_appendCode (fst _ _) (snd _ _).fst' (snd _ _).snd'
 
 /-- The typed correspondence and resource theorem apply at zero dimensions. -/
 example (c d : Circuit signature 0 0) :
@@ -92,7 +92,7 @@ example : [evalOutput [] [] 0, evalOutput [] [(.const true, [])] 0] =
 
 /-- Varying-size construction is certified uniformly on all raw codes and binary input counts. -/
 theorem varying_bundler_polynomialTime :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun p : ℕ × List (List (Op × List ℕ) × List ℕ) => appendCodes p.1 p.2)
       (encPair encNat (encList encCode)) encCode := by fun_prop
 
@@ -115,11 +115,11 @@ example (cs : Fin 0 → Circuit signature 0 1) :
 
 /-- The bundler has no block-size or well-formedness promise in its runtime certificate. -/
 theorem bundler_polynomialTime :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun p : (ℕ × ℕ) × List (List (Op × List ℕ) × List ℕ) =>
         bundleCode p.1.1 p.1.2 p.2)
       (encPair (encPair encNat encNat) (encList encCode)) encCode :=
-  computableTidilyInPolyTime_bundleCode (fst _ _).fst' (fst _ _).snd' (snd _ _)
+  computableInPolyTime_bundleCode (fst _ _).fst' (fst _ _).snd' (snd _ _)
 
 /-- The typed family corollary includes an empty output family at zero input dimension. -/
 example (cs : Fin 0 → Circuit signature 0 1) :
