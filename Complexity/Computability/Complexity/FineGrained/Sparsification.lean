@@ -372,7 +372,7 @@ private theorem computableTidilyInPolyTime_root (k : ℕ) :
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 private theorem computableTidilyInPolyTime_rounds (M : ℕ) :
     ComputableTidilyInPolyTime (rounds M) encCNF encNat := by
-  have hvars := ThreeSAT.computableInPolyTime_distinctVars.tidy
+  have hvars := SAT.computableInPolyTime_distinctVars.tidy
   have h := unary_div_const M
   unfold rounds
   fun_prop

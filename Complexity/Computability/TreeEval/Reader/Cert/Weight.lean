@@ -17,7 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Pla
 # The weights of table entries within linear work space
 
 The weight `Cslib.TreeEval.Reader.weight p ℓ k x y`, the product of `x j` or `1 - x j` over the low
-bits of `k` and the same over its high bits for `y`, is tidily computable within work space
+bits of `k` and the same over its high bits for `y`, is computable within work space
 linear in the lengths of its encoded arguments and in `ℓ`. Its products are taken over a counter
 rather than a list of indices, and they stay short: below `p`, or, for `p = 0`, no longer than the
 registers together.

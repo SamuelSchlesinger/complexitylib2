@@ -361,16 +361,6 @@ private theorem computableTidilyInPolyTime_adjIndex
       (.of_tidy hj)))
 
 @[local fun_prop]
-private theorem computableTidilyInPolyTime_image
-    {γ : Type} {input : γ ↪ List Bool} {n i : γ → ℕ}
-    {w : γ → List Bool} (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hw : ComputableTidilyInPolyTime w input encBits)
-    (hi : ComputableTidilyInPolyTime i input encUnary) :
-    ComputableTidilyInPolyTime (fun x => GraphIsomorphism.image (n x) (w x) (i x)) input encUnary :=
-  (ComputableInPolyTime.tidy (GraphIsomorphism.computableInPolyTime_image (.of_tidy hn)
-      (.of_tidy hw) (.of_tidy hi)))
-
-@[local fun_prop]
 private theorem computableTidilyInPolyTime_distinctVertices :
     ComputableTidilyInPolyTime Graph.distinctVertices encGraph (encList encNat) :=
   (ComputableInPolyTime.tidy (Graph.computableInPolyTime_distinctVertices))

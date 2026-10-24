@@ -14,7 +14,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Pla
 /-!
 # The Tree Evaluation read machine within its space budget
 
-The halting test, the address and the step of `Cslib.TreeEval.Reader.machine` are tidily computable
+The halting test, the address and the step of `Cslib.TreeEval.Reader.machine` are computable
 within the space budget `Cslib.TreeEval.Reader.stateBudget` of its states, and the step machine
 simulating it is tidy.
 

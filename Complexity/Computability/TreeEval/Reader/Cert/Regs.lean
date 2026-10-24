@@ -14,7 +14,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Pla
 /-!
 # Register operations within linear work space
 
-The register operations of `Cslib.TreeEval.Reader` are tidily computable within work space linear
+The register operations of `Cslib.TreeEval.Reader` are computable within work space linear
 in the lengths of their encoded arguments.
 
 ## Main results

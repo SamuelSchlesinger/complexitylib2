@@ -13,7 +13,7 @@ public import Complexity.Computability.TreeEval.Reader.Size
 /-!
 # Tree Evaluation in small space
 
-**Cook and Mertz**: Tree Evaluation of value length `ℓ` and height `H` is tidily computable on
+**Cook and Mertz**: Tree Evaluation of value length `ℓ` and height `H` is computable on
 multi-tape Turing machines in space `O((ℓ + H + 1) · log (ℓ + 2) + log (n + 2))`, where `n`
 is the length of the encoded instance. On nontrivial instances (`1 ≤ ℓ` and `1 ≤ H`), both `2 ^ ℓ`
 and `2 ^ H` are at most `n`, so `ℓ, H < |n|` and `|ℓ| ≤ ||n||` (writing `|m|` for the binary length

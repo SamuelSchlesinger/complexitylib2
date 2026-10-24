@@ -162,7 +162,8 @@ theorem computableInPolyTime_verifier :
         ((length_list encNat).comp (by fun_prop))) ?_))).tidy
   refine allWithInput (by fun_prop) (allWithInput (by fun_prop) ?_)
   exact bool_beq.comp ((hadj (by fun_prop) (by fun_prop) (by fun_prop)).prod
-    (Graph.computableInPolyTime_adjIndex (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))).tidy)
+    (Graph.computableInPolyTime_adjIndex (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))
+      (.of_tidy (by fun_prop))).tidy)
 
 /-- `verifier` is a verifier for `GraphIsomorphism` with certificates whose length is the square
 of the length of the encoded pair of graphs. -/

@@ -17,7 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Pla
 # The step of the Tree Evaluation read machine within its space budget
 
 The halting test, the address and the step of `Cslib.TreeEval.Reader.machine`, on tuples, are
-tidily computable within the space budget `Cslib.TreeEval.Reader.stepBudget`: the length of the
+computable within the space budget `Cslib.TreeEval.Reader.stepBudget`: the length of the
 encoded tuple, the value length, the height, and the registers with every entry as long as the
 prime and the round of the top frame together. On the states the machine reaches, the budget is
 `O((h + ℓ) log ℓ)`.

@@ -348,7 +348,7 @@ theorem computableInPolyTime_toSparseDirHamPath :
       (encPair encGraph (encPair encNat encNat)) := by
   have hgraph := computableInPolyTime_sparseDiamondGraph.tidy
   have htop := Diamond.computableInPolyTime_topNode.tidy
-  have hvars := ThreeSAT.computableInPolyTime_distinctVars.tidy
+  have hvars := SAT.computableInPolyTime_distinctVars.tidy
   refine .of_tidy ?_
   have hn := computableTidilyInPolyTime_numDiamonds
   unfold toSparseDirHamPath

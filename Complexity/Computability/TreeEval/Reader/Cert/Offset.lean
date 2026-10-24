@@ -16,7 +16,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Pla
 
 The offset of the node at a path is a fold over the path from the root: a step adds the length of
 a table and, to the right child, the length of the body of the left one. With the lengths computed
-by iteration, and the path read off the stack, it is tidily computable within work space linear in
+by iteration, and the path read off the stack, it is computable within work space linear in
 the encoded stack, the height and the value length.
 
 ## Main results

@@ -17,9 +17,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Pla
 /-!
 # The read machine for undirected connectivity within linear work space
 
-The halting test, the address and the step of `Cslib.USTCON.Reader.machine` are tidily computable
-within work space linear in the length of the encoded state (and the bit read): every step is a
-bounded number of operations on the numbers and the heads of the lists of the state — comparisons,
+The halting test, the address and the step of `Cslib.USTCON.Reader.machine` are computable within
+work space linear in the length of the encoded state (and the bit read): every step is a bounded
+number of operations on the numbers and the heads of the lists of the state — comparisons,
 successors and predecessors, products for the address, divisions by the number of labels, and
 functions of the finitely many controls, labels and frames. So the step machine simulating the read
 machine is tidy within space linear in its states and the position of its head
@@ -473,17 +473,17 @@ private theorem stepBudget_bool (x : Tuple) (b : Bool) : stepBudget (x, b) = ste
     (x, false) := by
   cases b <;> simp [stepBudget, encBool_apply]
 
-/-- The halting test of `machine` is tidily computable within the space budget of the state. -/
+/-- The halting test of `machine` is computable within the space budget of the state. -/
 theorem halt_inSpace : ComputableInSpace machine.halt encState encBool stateBudget :=
   .of_tidy ((haltT_inSpace.of_encIn_eq State.toTuple fun _ ↦ rfl).of_enc_eq fun _ ↦ rfl)
 
-/-- The address of `machine` is tidily computable within the space budget of the state. -/
+/-- The address of `machine` is computable within the space budget of the state. -/
 theorem addr_inSpace : ComputableInSpace machine.addr encState (encOption encNat)
     stateBudget :=
   .of_tidy ((addrT_inSpace.of_encIn_eq State.toTuple fun _ ↦ rfl).of_enc_eq fun _ ↦ rfl)
 
-/-- The step of `machine`, on a state and the bit read, is tidily computable within the space
-budget of the state. -/
+/-- The step of `machine`, on a state and the bit read, is computable within the space budget of
+the state. -/
 theorem step_inSpace :
     ComputableInSpace (fun p : State × Bool => machine.step p.1 p.2)
       (encPair encState encBool) (encPair encState encBits) fun p => stateBudget p.1 := by

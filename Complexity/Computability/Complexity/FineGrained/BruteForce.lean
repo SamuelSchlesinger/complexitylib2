@@ -134,7 +134,7 @@ open ComputableTidilyInPolyTime in
 /-- The initial state is computed in polynomial time. -/
 private theorem computableTidilyInPolyTime_init
     : ComputableTidilyInPolyTime init encCNF encState := by
-  have hvars := ThreeSAT.computableInPolyTime_distinctVars.tidy
+  have hvars := SAT.computableInPolyTime_distinctVars.tidy
   unfold init
   fun_prop
 

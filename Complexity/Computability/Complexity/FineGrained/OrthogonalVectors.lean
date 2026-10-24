@@ -468,7 +468,7 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 open ComputableTidilyInPolyTime in
 theorem computableInPolyTime_firstVars :
     ComputableInPolyTime firstVars encCNF (encList encNat) := by
-  have hvars := ThreeSAT.computableInPolyTime_distinctVars.tidy
+  have hvars := SAT.computableInPolyTime_distinctVars.tidy
   refine .of_tidy ?_
   have h : ComputableTidilyInPolyTime (fun φ => (φ.distinctVars.reverse.drop
       (φ.distinctVars.length - φ.distinctVars.length / 2)).reverse)
@@ -486,7 +486,7 @@ attribute [local fun_prop] ComputableInPolyTime.tidy in
 open ComputableTidilyInPolyTime in
 theorem computableInPolyTime_secondVars :
     ComputableInPolyTime secondVars encCNF (encList encNat) := by
-  have hvars := ThreeSAT.computableInPolyTime_distinctVars.tidy
+  have hvars := SAT.computableInPolyTime_distinctVars.tidy
   refine .of_tidy ?_
   exact (dropUnary (encA := encNat)).comp (SAT.computableInPolyTime_distinctVars.tidy.prod
     (show ComputableTidilyInPolyTime (fun φ => φ.distinctVars.length / 2) encCNF
