@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Layered
 public import Complexity.Computability.Circuit.Boolean.DepthTime
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Lookup
 import Mathlib.Data.List.GetD
 
 /-!

@@ -7,9 +7,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: candidate
 
-public import Complexity.Computability.TreeEval.Basic
-public import Complexity.Foundations.BooleanAnalysis.MultilinearExtension
-public import Complexity.Foundations.FieldTheory.Finite.UnitSum
+public import Complexity.Computability.TreeEval.Ary.CookMertz
 
 /-!
 # The Cook–Mertz procedure for Tree Evaluation
@@ -27,8 +25,12 @@ scaling. Summed over all units, the masks cancel (`FiniteField.sum_units_eval_mu
 the extension has degree at most `2ℓ < |K| - 1`, and register `t` has gained `c • f v₀ v₁`.
 
 Only the recursion depth, the round counter and the stage within a round are local to a level;
-this is what makes the procedure space-efficient. This file proves its correctness; space bounds
-are separate.
+this is what makes the procedure space-efficient. It is the fan-in-`d` procedure
+`Cslib.TreeEval.Ary.proc` at `d = 2`, step for step, on the embedded tree: child `0` uses register
+`t + 1` and child `1` register `t + 2`, and the extensions of a binary gate and of its fan-in-`2`
+reading differ only by the naming of their variables. Its correctness is therefore the case
+`d = 2` of `Cslib.TreeEval.Ary.proc_eq`. This file proves correctness only; space bounds are
+separate.
 
 ## Main definitions
 
@@ -37,6 +39,8 @@ are separate.
 
 ## Main results
 
+* `Cslib.TreeEval.Ary.proc_ofBinary`: on an embedded binary tree, the fan-in-`d` procedure at
+  `d = 2` is the binary procedure.
 * `Cslib.TreeEval.proc_eq`: the procedure adds `c` times the value of the tree to the target
   register and leaves the other registers unchanged.
 * `Cslib.TreeEval.proc_zero`: started from zero registers, it leaves the value of the tree in the
@@ -61,9 +65,6 @@ variable {K : Type*} [Field K] {ℓ : ℕ}
 
 /-- The global storage: three registers of `ℓ` field elements. -/
 abbrev State (K : Type*) (ℓ : ℕ) := Fin 3 → Fin ℓ → K
-
-/-- An `ℓ`-bit value read as `0`/`1` field elements. -/
-def embed (v : Fin ℓ → Bool) : Fin ℓ → K := fun i => bitVal K (v i)
 
 /-- The multilinear extension of output bit `i` of a gate, in the bits of both inputs. -/
 noncomputable def gatePoly (f : Gate ℓ) (i : Fin ℓ) :
@@ -98,56 +99,50 @@ noncomputable def proc (us : List Kˣ) :
   | _, .leaf v, c, t, S => Function.update S t (S t + c • embed v)
   | _, .node f l r, c, t, S => us.foldl (fun S u => gateRound (proc us l) (proc us r) f c t u S) S
 
-private theorem add_one_ne (t : Fin 3) : t + 1 ≠ t := by revert t; decide
-private theorem add_two_ne (t : Fin 3) : t + 2 ≠ t := by revert t; decide
-private theorem add_two_ne_add_one (t : Fin 3) : t + 2 ≠ t + 1 := by revert t; decide
+/-- The coordinates of the two inputs of a binary gate as the coordinates of the two children of
+a gate of fan-in `2`. -/
+private def sumEquivProd (ℓ : ℕ) : Fin ℓ ⊕ Fin ℓ ≃ Fin 2 × Fin ℓ :=
+  (Equiv.boolProdEquivSum _).symm.trans (finTwoEquiv.symm.prodCongr (Equiv.refl _))
 
-/-- A round, when both subtree procedures meet their specification, changes only the target
-register, subtracting `c` times the gate's extension at the masked children's values. -/
-private theorem gateRound_eq {pl pr : K → Fin 3 → State K ℓ → State K ℓ} {vl vr : Fin ℓ → K}
-    (hl : ∀ c t S, pl c t S = Function.update S t (S t + c • vl))
-    (hr : ∀ c t S, pr c t S = Function.update S t (S t + c • vr))
-    (f : Gate ℓ) (c : K) (t : Fin 3) (u : Kˣ)
-    (S : State K ℓ) :
-    gateRound pl pr f c t u S = Function.update S t fun i =>
-      S t i - c * eval (Sum.elim ((u : K) • S (t + 1) + vl) ((u : K) • S (t + 2) + vr))
-        (gatePoly f i) := by
-  have h1 := add_one_ne t
-  have h2 := add_two_ne t
-  have h21 := add_two_ne_add_one t
-  funext r i
-  simp only [gateRound, gateUpdate, hl, hr, scale, Function.update_apply]
-  by_cases hrt : r = t
-  · subst hrt
-    simp [h1.symm, h2.symm, h21, h21.symm]
-  by_cases hr1 : r = t + 1
-  · subst hr1
-    simp [h1, h21.symm]
-  by_cases hr2 : r = t + 2
-  · subst hr2
-    simp [h2, h21]
-  simp [hrt, hr1, hr2]
+/-- The extension of a binary gate is that of its fan-in-`2` reading, up to naming the
+variables. -/
+private theorem rename_gatePoly (f : Gate ℓ) (i : Fin ℓ) :
+    rename (sumEquivProd ℓ) (gatePoly (K := K) f i) = Ary.gatePoly (Ary.Gate.ofBinary f) i := by
+  rw [gatePoly, rename_multilinearExtension]
+  rfl
 
-/-- The rounds for all units in `us` change only the target register, subtracting `c` times
-the sum of the gate's extension at the masked children's values. -/
-private theorem foldl_gateRound_eq {pl pr : K → Fin 3 → State K ℓ → State K ℓ} {vl vr : Fin ℓ → K}
-    (hl : ∀ c t S, pl c t S = Function.update S t (S t + c • vl))
-    (hr : ∀ c t S, pr c t S = Function.update S t (S t + c • vr))
-    (f : Gate ℓ) (c : K) (t : Fin 3) (us : List Kˣ)
-    (S : State K ℓ) :
-    us.foldl (fun S u => gateRound pl pr f c t u S) S = Function.update S t fun i =>
-      S t i - c * (us.map fun u : Kˣ =>
-        eval (Sum.elim ((u : K) • S (t + 1) + vl) ((u : K) • S (t + 2) + vr))
-          (gatePoly f i)).sum := by
-  induction us generalizing S with
-  | nil => simp
-  | cons u us ih =>
-    rw [List.foldl_cons, gateRound_eq hl hr, ih, Function.update_of_ne (add_one_ne t),
-      Function.update_of_ne (add_two_ne t), Function.update_idem, Function.update_self]
-    congr 1
-    funext i
-    simp only [List.map_cons, List.sum_cons]
-    ring
+/-- The update of a round of fan-in `2` is the binary update. -/
+private theorem gateUpdate_ofBinary (f : Gate ℓ) (c : K) (t : Fin 3) (S : State K ℓ) :
+    Ary.gateUpdate (Ary.Gate.ofBinary f) c t S = gateUpdate f c t S := by
+  have hS : (fun q => S (Ary.reg t q.1) q.2) ∘ sumEquivProd ℓ =
+      Sum.elim (S (t + 1)) (S (t + 2)) := by
+    funext x
+    cases x <;> rfl
+  simp only [Ary.gateUpdate, gateUpdate, ← rename_gatePoly, eval_rename, hS]
+
+/-- A round of fan-in `2` performs the calls, the update and the scalings of a binary round, in
+the same order. -/
+private theorem gateRound_ofBinary (pl pr : K → Fin 3 → State K ℓ → State K ℓ) (f : Gate ℓ)
+    (c : K) (t : Fin 3) (u : Kˣ) (S : State K ℓ) :
+    Ary.gateRound ![pl, pr] (Ary.Gate.ofBinary f) c t u S = gateRound pl pr f c t u S := by
+  simp only [Ary.gateRound, gateRound, gateUpdate_ofBinary]
+  rfl
+
+/-- **The binary procedure is the fan-in-`d` procedure at `d = 2`.** On a binary tree embedded
+with fan-in `2`, the fan-in-`d` procedure is the binary procedure, step for step: it acts on the
+same three registers (`Fin (2 + 1)` is `Fin 3`), calls the children in the same order with the
+same coefficients and target registers, and performs the same updates and scalings. -/
+theorem Ary.proc_ofBinary (us : List Kˣ) {h : ℕ} (T : TreeEval.Tree ℓ h) :
+    Ary.proc us (Ary.Tree.ofBinary T) = TreeEval.proc us T := by
+  induction T with
+  | leaf v => rfl
+  | node f l r ihl ihr =>
+    funext c t S
+    have hch : (fun j => Ary.proc us (![Ary.Tree.ofBinary l, Ary.Tree.ofBinary r] j)) =
+        ![TreeEval.proc us l, TreeEval.proc us r] := by
+      funext j
+      fin_cases j <;> assumption
+    simp only [Ary.Tree.ofBinary, Ary.proc, TreeEval.proc, hch, gateRound_ofBinary]
 
 variable [Fintype K]
 
@@ -157,39 +152,20 @@ target register and leaves the other registers unchanged, whatever their initial
 theorem proc_eq {us : List Kˣ} (hnd : us.Nodup) (hmem : ∀ u, u ∈ us)
     (hK : 2 * ℓ < Fintype.card K - 1) {h : ℕ} (T : Tree ℓ h) (c : K) (t : Fin 3)
     (S : State K ℓ) : proc us T c t S = Function.update S t (S t + c • embed T.eval) := by
-  classical
-  induction T generalizing c t S with
-  | leaf v => rfl
-  | node f l r ihl ihr =>
-    rw [proc, foldl_gateRound_eq ihl ihr]
-    congr 1
-    funext i
-    have hdeg : (gatePoly (K := K) f i).totalDegree < Fintype.card K - 1 :=
-      (totalDegree_multilinearExtension_le _).trans_lt <| by simpa [two_mul] using hK
-    rw [← List.sum_toFinset _ hnd, show us.toFinset = Finset.univ by ext; simp [hmem]]
-    have hsum := FiniteField.sum_units_eval_mul_add hdeg
-      (Sum.elim (S (t + 1)) (S (t + 2))) (fun j => bitVal K (Sum.elim l.eval r.eval j))
-    have hpt (u : Kˣ) : Sum.elim ((u : K) • S (t + 1) + embed l.eval)
-        ((u : K) • S (t + 2) + embed r.eval) = fun j => (u : K) *
-          Sum.elim (S (t + 1)) (S (t + 2)) j + bitVal K (Sum.elim l.eval r.eval j) := by
-      funext j; cases j <;> rfl
-    simp only [hpt]
-    rw [hsum, gatePoly, eval_multilinearExtension]
-    simp [embed]
+  rw [← Ary.proc_ofBinary, Ary.proc_eq hnd hmem hK, Ary.Tree.eval_ofBinary]
 
 /-- Started from zero registers, the procedure leaves the value of the tree in the target
 register. -/
 theorem proc_zero {us : List Kˣ} (hnd : us.Nodup) (hmem : ∀ u, u ∈ us)
     (hK : 2 * ℓ < Fintype.card K - 1) {h : ℕ} (T : Tree ℓ h) (t : Fin 3) :
     proc us T 1 t 0 t = embed T.eval := by
-  simp [proc_eq hnd hmem hK]
+  rw [← Ary.proc_ofBinary, Ary.proc_zero hnd hmem hK, Ary.Tree.eval_ofBinary]
 
 /-- **Tree Evaluation by the Cook–Mertz procedure.** Run over the units of `K` in any order with
 `2ℓ < |K| - 1`, from zero registers, the procedure computes the value of the tree into the
 target register. -/
 theorem embed_eval_eq_proc [DecidableEq K] (hK : 2 * ℓ < Fintype.card K - 1) {h : ℕ} (T : Tree ℓ h)
-    (t : Fin 3) : embed T.eval = proc (Finset.univ : Finset Kˣ).toList T 1 t 0 t :=
-  (proc_zero (Finset.nodup_toList _) (fun _ => Finset.mem_toList.mpr (Finset.mem_univ _)) hK T
-    t).symm
+    (t : Fin 3) : embed T.eval = proc (Finset.univ : Finset Kˣ).toList T 1 t 0 t := by
+  rw [← Ary.proc_ofBinary, ← Ary.embed_eval_eq_proc hK, Ary.Tree.eval_ofBinary]
 
 end Cslib.TreeEval

@@ -9,7 +9,7 @@ module
 
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Serialized
 import Mathlib.Algebra.BigOperators.Fin
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Lookup
 
 /-!
 # Exact bridges for the serialized GSW algorithms

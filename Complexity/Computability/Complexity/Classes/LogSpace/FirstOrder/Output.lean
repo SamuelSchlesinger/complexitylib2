@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Output
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Lookup
 
 /-!
 # Shared output routines for first-order interpretation transducers

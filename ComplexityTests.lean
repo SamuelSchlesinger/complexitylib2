@@ -220,6 +220,7 @@ import ComplexityTests.KeyedSort
 import ComplexityTests.KolmogorovCrypto
 import ComplexityTests.Ladner
 import ComplexityTests.LinearHash
+import ComplexityTests.ListBasicImports
 import ComplexityTests.ListEnumeration
 import ComplexityTests.ListZipIdx
 import ComplexityTests.LogSpace

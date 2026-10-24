@@ -8,16 +8,19 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.TreeEval.Ary.Basic
-public import Complexity.Computability.TreeEval.CookMertz
+public import Complexity.Foundations.BooleanAnalysis.MultilinearExtension
+public import Complexity.Foundations.FieldTheory.Finite.UnitSum
 
 /-!
 # The Cook–Mertz procedure for Tree Evaluation with fan-in `d`
 
-This generalizes `Cslib.TreeEval.proc` from fan-in `2` to fan-in `d`. The procedure keeps `d + 1`
-registers, each holding `ℓ` elements of a finite field `K`, as global storage shared by all levels
-of the recursion. Called on a subtree, a coefficient `c` and a target register `t`, it adds `c`
-times the value of the subtree (read as `0`/`1` field elements) to register `t` and leaves the
-other `d` registers unchanged, whatever their contents.
+This generalizes the binary procedure `Cslib.TreeEval.proc` to fan-in `d`; at `d = 2` it is that
+procedure step for step (`Cslib.TreeEval.Ary.proc_ofBinary`, proved beside the binary procedure,
+which derives its correctness from this file). The procedure keeps `d + 1` registers, each
+holding `ℓ` elements of a finite field `K`, as global storage shared by all levels of the
+recursion. Called on a subtree, a coefficient `c` and a target register `t`, it adds `c` times the
+value of the subtree (read as `0`/`1` field elements) to register `t` and leaves the other `d`
+registers unchanged, whatever their contents.
 
 The child `j` of a target `t` uses the register `reg t j = t + (j + 1)`, so the `d` children use
 exactly the registers other than `t`; for `d = 2` these are the registers `t + 1` and `t + 2` of
@@ -32,6 +35,7 @@ This file proves correctness only; space bounds are separate.
 
 ## Main definitions
 
+* `Cslib.TreeEval.embed`: an `ℓ`-bit value read as `0`/`1` field elements, for any fan-in.
 * `Cslib.TreeEval.Ary.reg`: the register of a child.
 * `Cslib.TreeEval.Ary.gatePoly`: the multilinear extension of an output bit of a gate.
 * `Cslib.TreeEval.Ary.proc`: the procedure, parametrized by an enumeration of the units of `K`.
@@ -56,9 +60,14 @@ This file proves correctness only; space bounds are separate.
 
 open MvPolynomial Cslib.BitString
 
-namespace Cslib.TreeEval.Ary
+namespace Cslib.TreeEval
 
 variable {K : Type*} [Field K] {d ℓ : ℕ}
+
+/-- An `ℓ`-bit value read as `0`/`1` field elements. -/
+def embed (v : Fin ℓ → Bool) : Fin ℓ → K := fun i => bitVal K (v i)
+
+namespace Ary
 
 /-- The global storage: `d + 1` registers of `ℓ` field elements. -/
 abbrev State (K : Type*) (d ℓ : ℕ) := Fin (d + 1) → Fin ℓ → K
@@ -243,4 +252,6 @@ theorem embed_eval_eq_proc [DecidableEq K] (hK : d * ℓ < Fintype.card K - 1) {
   (proc_zero (Finset.nodup_toList _) (fun _ => Finset.mem_toList.mpr (Finset.mem_univ _)) hK T
     t).symm
 
-end Cslib.TreeEval.Ary
+end Ary
+
+end Cslib.TreeEval

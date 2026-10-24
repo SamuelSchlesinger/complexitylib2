@@ -9,7 +9,7 @@ module
 
 public import Complexity.Logics.Propositional.Pigeonhole
 public import Complexity.Logics.Propositional.Resolution.TreeLike
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Counting
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Finset.Sort
 import Mathlib.Tactic.Linarith

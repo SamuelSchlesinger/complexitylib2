@@ -11,7 +11,7 @@ public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Formula
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram
 public import Complexity.Logics.FirstOrder.Encoding.Layout
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Lookup
 
 /-!
 # First-order model checking in logarithmic space

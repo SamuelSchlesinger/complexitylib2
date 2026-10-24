@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Algorithms.Reachability.Reingold
 import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
 import Complexity.Foundations.Combinatorics.Expander.LowerBound
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Append
 
 /-!
 # Reingold's transformation tests
