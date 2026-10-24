@@ -117,20 +117,8 @@ theorem naorCommit_eq_comp_id (generator : List Bool → List Bool) (r : List Bo
     (naorCommit generator r b seed).length = (generator seed).length := by
   cases b <;> simp [naorCommit]
 
-/-- Naor commitment is computable in polynomial time when its inputs are. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_naorCommit {α : Type} {input : α ↪ List Bool}
-    {generator : List Bool → List Bool} {r : α → List Bool} {b : α → Bool} {seed : α → List Bool}
-    (hg : ComputableTidilyInPolyTime generator encBits encBits)
-    (hr : ComputableTidilyInPolyTime r input encBits)
-    (hb : ComputableTidilyInPolyTime b input encBool)
-    (hseed : ComputableTidilyInPolyTime seed input encBits) :
-    ComputableTidilyInPolyTime (fun a => naorCommit generator (r a) (b a) (seed a))
-      input encBits := by
-  unfold naorCommit
-  fun_prop
-
 /-- Naor commitment is computable in plain polynomial time when its inputs are. -/
+@[fun_prop]
 theorem computableInPolyTime_naorCommit {α : Type} {input : α ↪ List Bool}
     {generator : List Bool → List Bool} {r : α → List Bool} {b : α → Bool} {seed : α → List Bool}
     (hg : ComputableInPolyTime generator encBits encBits)
@@ -138,8 +126,14 @@ theorem computableInPolyTime_naorCommit {α : Type} {input : α ↪ List Bool}
     (hb : ComputableInPolyTime b input encBool)
     (hseed : ComputableInPolyTime seed input encBits) :
     ComputableInPolyTime (fun a => naorCommit generator (r a) (b a) (seed a))
-      input encBits :=
-  .of_tidy (computableTidilyInPolyTime_naorCommit hg.tidy hr.tidy hb.tidy hseed.tidy)
+      input encBits := by
+  have hg := hg.tidy
+  have hr := hr.tidy
+  have hb := hb.tidy
+  have hseed := hseed.tidy
+  refine .of_tidy ?_
+  unfold naorCommit
+  fun_prop
 
 /-! ### Algebraic and distributional laws -/
 
@@ -181,7 +175,8 @@ theorem PseudorandomGenerator.naorCommit_indistinguishable_uniform
   have hmap : ComputableTidilyInPolyTime
       (fun p : ℕ × List Bool => naorCommit id (r p.1) (b p.1) p.2)
       (encPair encUnary encBits) encBits := by
-    apply computableTidilyInPolyTime_naorCommit <;> fun_prop
+    apply ComputableInPolyTime.tidy
+    apply computableInPolyTime_naorCommit <;> exact .of_tidy (by fun_prop)
   have hind := hG.indistinguishable.map (f := fun n y => naorCommit id (r n) (b n) y)
     (.of_tidy hmap)
   simpa only [← naorCommitEnsemble_eq_map, uniformList_map_naorCommit_id] using hind
@@ -384,7 +379,7 @@ theorem isPPT_naorReceiverDistinguisher {receiver : CommitmentReceiver}
   have haux_tidy := haux.tidy
   have hchoose := hR.choose
   have hguess := hR.guess
-  unfold naorReceiverDistinguisher
+  unfold naorReceiverDistinguisher naorCommit
   ppt
 
 /-- Running `commitmentHidingGame (naorCommit generator)` against `receiver` coincides with running
@@ -654,6 +649,10 @@ theorem computableTidilyInPolyTime_naorCommitAt {α : Type} {input : α ↪ List
     ComputableTidilyInPolyTime
       (fun a => naorCommitAt generator (r a) (openFlag a) (b a) (seed a) (pad a))
       input encBits := by
+  have hopened := (computableInPolyTime_naorCommit
+    (.of_tidy hg) (.of_tidy hr) (.of_tidy hb) (.of_tidy hseed)).tidy
+  have hclosed := (computableInPolyTime_naorCommit
+    (.of_tidy ComputableTidilyInPolyTime.id') (.of_tidy hr) (.of_tidy hb) (.of_tidy hpad)).tidy
   unfold naorCommitAt
   fun_prop
 
@@ -1066,23 +1065,8 @@ def naorVerify (generator : List Bool → List Bool) (n : ℕ) (r c : List Bool)
     (seed : List Bool) : Bool :=
   decide (seed.length = n) && (c == naorCommit generator r b seed)
 
-@[fun_prop]
-theorem computableTidilyInPolyTime_naorVerify {α : Type} {input : α ↪ List Bool}
-    {generator : List Bool → List Bool} {n : α → ℕ} {r c : α → List Bool}
-    {b : α → Bool} {seed : α → List Bool}
-    (hg : ComputableTidilyInPolyTime generator encBits encBits)
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hr : ComputableTidilyInPolyTime r input encBits)
-    (hc : ComputableTidilyInPolyTime c input encBits)
-    (hb : ComputableTidilyInPolyTime b input encBool)
-    (hseed : ComputableTidilyInPolyTime seed input encBits) :
-    ComputableTidilyInPolyTime
-      (fun a => naorVerify generator (n a) (r a) (c a) (b a) (seed a))
-      input encBool := by
-  dsimp only [naorVerify]
-  fun_prop
-
 /-- Naor commitment verification is computable in plain polynomial time when its inputs are. -/
+@[fun_prop]
 theorem computableInPolyTime_naorVerify {α : Type} {input : α ↪ List Bool}
     {generator : List Bool → List Bool} {n : α → ℕ} {r c : α → List Bool}
     {b : α → Bool} {seed : α → List Bool}
@@ -1094,9 +1078,14 @@ theorem computableInPolyTime_naorVerify {α : Type} {input : α ↪ List Bool}
     (hseed : ComputableInPolyTime seed input encBits) :
     ComputableInPolyTime
       (fun a => naorVerify generator (n a) (r a) (c a) (b a) (seed a))
-      input encBool :=
-  .of_tidy (computableTidilyInPolyTime_naorVerify
-    hg.tidy hn.tidy hr.tidy hc.tidy hb.tidy hseed.tidy)
+      input encBool := by
+  have hcommit := (computableInPolyTime_naorCommit hg hr hb hseed).tidy
+  have hn := hn.tidy
+  have hc := hc.tidy
+  have hseed := hseed.tidy
+  refine .of_tidy ?_
+  dsimp only [naorVerify]
+  fun_prop
 
 theorem naorVerify_naorCommit {generator : List Bool → List Bool} {n : ℕ}
     (r : List Bool) (b : Bool) {seed : List Bool} (hseed : seed.length = n) :
@@ -1176,42 +1165,6 @@ theorem BitCommitmentScheme.computational_hiding (h : BitCommitmentScheme) :
         (fun n => (BitString.uniformList n).map (h.commit (r n) (b₀ n)))
         (fun n => (BitString.uniformList n).map (h.commit (r n) (b₁ n))) :=
   fun _ _ _ hr hb₀ hb₁ => h.stateful_hiding.computational_hiding hr hb₀ hb₁
-
-/-- The equivalent tidy contract used internally by compositional proofs. -/
-theorem BitCommitmentScheme.polyTime_challengeLength_tidy (h : BitCommitmentScheme) :
-    ComputableTidilyInPolyTime h.challengeLength encUnary encUnary := by
-  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using
-      h.polyTime_challengeLength
-
-/-- The equivalent tidy contract used internally by compositional proofs. -/
-theorem BitCommitmentScheme.polyTime_commitLength_tidy (h : BitCommitmentScheme) :
-    ComputableTidilyInPolyTime h.commitLength encUnary encUnary := by
-  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.polyTime_commitLength
-
-/-- The equivalent tidy contract used internally by compositional proofs. -/
-theorem BitCommitmentScheme.polyTime_commit_tidy (h : BitCommitmentScheme) :
-    ComputableTidilyInPolyTime (fun p : List Bool × Bool × List Bool => h.commit p.1 p.2.1 p.2.2)
-      (encPair encBits (encPair encBool encBits)) encBits := by
-  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.polyTime_commit
-
-/-- The equivalent tidy contract used internally by compositional proofs. -/
-theorem BitCommitmentScheme.polyTime_verify_tidy (h : BitCommitmentScheme) :
-    ComputableTidilyInPolyTime
-      (fun p : ℕ × List Bool × List Bool × Bool × List Bool =>
-        h.verify p.1 p.2.1 p.2.2.1 p.2.2.2.1 p.2.2.2.2)
-      (encPair encUnary (encPair encBits (encPair encBits (encPair encBool encBits)))) encBool := by
-  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.polyTime_verify
-
-/-- The equivalent tidy contract used internally by compositional proofs. -/
-theorem BitCommitmentScheme.computational_hiding_tidy (h : BitCommitmentScheme) :
-    ∀ (r : ℕ → List Bool) (b₀ b₁ : ℕ → Bool),
-      ComputableTidilyInPolyTime r encUnary encBits →
-      ComputableTidilyInPolyTime b₀ encUnary encBool →
-      ComputableTidilyInPolyTime b₁ encUnary encBool →
-      ComputationallyIndistinguishable
-        (fun n => (BitString.uniformList n).map (h.commit (r n) (b₀ n)))
-        (fun n => (BitString.uniformList n).map (h.commit (r n) (b₁ n))) := by
-  simpa only [← computableInPolyTime_iff_computableTidilyInPolyTime] using h.computational_hiding
 
 /-- **Naor's bit commitment scheme** built from any pseudorandom generator with stretch at least
 `3 * n` [Naor1991]. -/
