@@ -1,0 +1,82 @@
+[
+ {
+  "original": "Cslib.Complexity.computableTidilyInPolyTime_andVerifier",
+  "plain": "Cslib.Complexity.computableInPolyTime_andVerifier",
+  "module": "Complexity.Computability.Complexity.Classes.SharpP.Combinators"
+ },
+ {
+  "original": "Cslib.Complexity.computableTidilyInPolyTime_orVerifier",
+  "plain": "Cslib.Complexity.computableInPolyTime_orVerifier",
+  "module": "Complexity.Computability.Complexity.Classes.SharpP.Combinators"
+ },
+ {
+  "original": "Cslib.Complexity.computableTidilyInPolyTime_selectVerifier",
+  "plain": "Cslib.Complexity.computableInPolyTime_selectVerifier",
+  "module": "Complexity.Computability.Complexity.Classes.SharpP.Combinators"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableInTimeAndSpace.computableTidilyInPolyTime",
+  "plain": "Turing.MultiTapeTM.ComputableInTimeAndSpace.computableInPolyTime",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolySpace.id'",
+  "plain": "Turing.MultiTapeTM.ComputableInPolySpace.id'",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.comp",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.comp",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.comp'",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.comp'",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.const",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.const",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.fst",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.fst",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.id'",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.id'",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.ite'",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.ite'",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_eq",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.of_eq",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.pair",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.pair",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.polyBounded_length",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.polyBounded_length",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.prod",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.prod",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ },
+ {
+  "original": "Turing.MultiTapeTM.ComputableTidilyInPolyTime.snd",
+  "plain": "Turing.MultiTapeTM.ComputableInPolyTime.snd",
+  "module": "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime"
+ }
+]

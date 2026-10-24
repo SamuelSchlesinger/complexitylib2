@@ -422,8 +422,12 @@ def load_ileans(build_dir: Path) -> dict[str, dict]:
     return ileans
 
 
-def load_constants(build_dir: Path, modules: list[str]) -> tuple[dict[str, dict], list[dict]]:
-    out = run(["lake", "env", "lean", "--run", "scripts/QualityReport.lean", str(build_dir)],
+def load_constants(build_dir: Path, modules: list[str], pairs: str | None = None
+                   ) -> tuple[dict[str, dict], list[dict]]:
+    """Constants of `modules`; `pairs` (`tidy=plain,…`) adds the fields that
+    `scripts/tidy_sweep.py` reads (see `scripts/QualityReport.lean`)."""
+    out = run(["lake", "env", "lean", "--run", "scripts/QualityReport.lean", str(build_dir)]
+              + ([pairs] if pairs else []),
               input="\n".join(modules) + "\n", capture_output=True).stdout
     constants, duplicates = {}, []
     for line in out.splitlines():
@@ -463,10 +467,10 @@ class Source:
 class Library:
     """Build outputs and sources of the three libraries, loaded lazily where possible."""
 
-    def __init__(self, build_dir: Path):
+    def __init__(self, build_dir: Path, pairs: str | None = None):
         self.ileans = load_ileans(build_dir)
         self.modules = sorted(m for m in self.ileans if m.startswith("Complexity."))
-        self.constants, self.duplicate_rows = load_constants(build_dir, self.modules)
+        self.constants, self.duplicate_rows = load_constants(build_dir, self.modules, pairs)
         self.sources: dict[str, Source] = {}
 
     def source(self, module: str) -> Source:
