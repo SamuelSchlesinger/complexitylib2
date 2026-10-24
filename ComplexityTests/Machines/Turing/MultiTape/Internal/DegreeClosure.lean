@@ -31,3 +31,23 @@ example {α : Type*} (a : α ↪ List Bool) {f _g : α → List Bool}
         (Function.Embedding.refl _) 0 0 := by
       exact _hf.append (by assumption) (fun _ => rfl)
   trivial
+
+universe u
+example {α β γ : Type u} {a : α ↪ List Bool} {b : β ↪ List Bool}
+    {c : γ ↪ List Bool} {p : β × γ ↪ List Bool} [PairEncoding b c p]
+    {f : α → β} {g : α → γ} {d₁ e₁ d₂ e₂ : ℕ}
+    (hf : ComputableInDegree f a b d₁ e₁) (hg : ComputableInDegree g a c d₂ e₂) :
+    ComputableInDegree (fun x => (f x, g x)) a p (max d₁ d₂) (max d₁ d₂) :=
+  hf.pair hg
+
+example {α β γ : Type u} {a : α ↪ List Bool} {b : β ↪ List Bool}
+    {c : γ ↪ List Bool} {f : α → β} {g : α → γ}
+    (hf : ComputableInDegree f a b 0 0) (hg : ComputableInDegree g a c 0 0) :
+    ComputableInDegree (fun x => (f x, g x)) a (encPair b c) 0 0 :=
+  hf.prod hg
+
+example {α β γ : Type u} {a : α ↪ List Bool} {b : β ↪ List Bool}
+    {c : γ ↪ List Bool} {f : α → β} {g : α → γ}
+    (hf : ComputableInDegree f a b 2 0) (hg : ComputableInDegree g a c 0 3) :
+    ComputableInDegree (fun x => (f x, g x)) a (encPair b c) 2 3 :=
+  hf.prod hg
