@@ -9,7 +9,6 @@ module
 
 public import Complexity.Init
 public import Mathlib.Algebra.BigOperators.Fin
-public import Mathlib.Computability.Primrec.List
 public import Mathlib.Data.Nat.Bits
 public import Mathlib.Data.Nat.Size
 import Mathlib.Data.List.OfFn
@@ -26,7 +25,6 @@ with initial value zero reconstructs the original number.
 * `Nat.foldr_bit_lt`, `Nat.foldr_bit_testBit`: fixed-width little-endian reconstruction.
 * `Nat.foldr_bit_ofFn`: reconstruction is the sum of the digits' binary place values.
 * `Nat.size_div_two_add_one`: halving a positive number removes one binary digit.
-* `Primrec.list_foldr_nat_bit`: folding `Nat.bit` over a binary string is primitive recursive.
 -/
 
 @[expose] public section
@@ -82,12 +80,3 @@ theorem Nat.size_div_two_add_one {n : ℕ} (hn : n ≠ 0) : Nat.size (n / 2) + 1
     List.length_tail]
   rw [← Nat.size_eq_bits_len] at hpos
   omega
-
-/-- Folding `Nat.bit` over a binary string, which inverts `Nat.bits` (`Nat.foldr_bit_bits`), is
-primitive recursive. -/
-theorem Primrec.list_foldr_nat_bit : Primrec fun l : List Bool => l.foldr Nat.bit 0 := by
-  have hbit : Primrec₂ fun (_ : List Bool) (bn : Bool × ℕ) => Nat.bit bn.1 bn.2 :=
-    Primrec₂.mk <| (Primrec.cond (Primrec.fst.comp Primrec.snd)
-      (Primrec.nat_double_succ.comp (Primrec.snd.comp Primrec.snd))
-      (Primrec.nat_double.comp (Primrec.snd.comp Primrec.snd))).of_eq fun _ => rfl
-  exact (Primrec.list_foldr Primrec.id (Primrec.const 0) hbit).of_eq fun _ => rfl

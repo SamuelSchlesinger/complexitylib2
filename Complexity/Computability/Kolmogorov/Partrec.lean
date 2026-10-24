@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Kolmogorov.Invariance
 public import Complexity.Computability.Kolmogorov.SelfDelimiting
-public import Complexity.Foundations.Data.Nat.Bits
+public import Complexity.Foundations.Data.Nat.Primrec
 public import Mathlib.Computability.PartrecCode
 import Mathlib.Computability.Primrec.List
 

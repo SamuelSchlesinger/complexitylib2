@@ -1700,6 +1700,7 @@ public import Complexity.Foundations.Data.Nat.Log
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 public import Complexity.Foundations.Data.Nat.PolynomialBound.Log
+public import Complexity.Foundations.Data.Nat.Primrec
 public import Complexity.Foundations.Data.Nat.Radix
 public import Complexity.Foundations.Data.OrderedSet
 public import Complexity.Foundations.Data.Polynomial.CoeffList
