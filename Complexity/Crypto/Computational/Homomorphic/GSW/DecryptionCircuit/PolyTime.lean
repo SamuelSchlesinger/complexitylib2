@@ -46,12 +46,10 @@ private def rowCode (n w : ℕ) : Code :=
 
 private theorem rowCode_eq (n w : ℕ) (hw : 0 < w) :
     rowCode n w = (Circuit.wiring signature (rowInputs n w hw 0)).code := by
-  apply Prod.ext
-  · rfl
-  · apply List.ext_getElem (by simp [rowCode, Circuit.code, Circuit.wiring])
-    intro i hi hi'
-    simp [rowCode, Circuit.code, Circuit.wiring, rowInputs, selectedRow,
-      finProdFinEquiv, Nat.mul_comm, Nat.add_comm, Nat.add_left_comm]
+  symm
+  exact Circuit.code_wiring_eq_map fun i => by
+    simp [rowInputs, selectedRow, finProdFinEquiv, Nat.mul_comm, Nat.add_comm,
+      Nat.add_left_comm]
 
 private def productInputsCode (n w : ℕ) : Code :=
   ([], List.range (n * w) ++ (List.range (n * w)).map
