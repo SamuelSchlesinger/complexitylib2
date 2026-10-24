@@ -66,13 +66,14 @@ def orBits (x : K → Bool) : Bool := decide (∃ k, x k = true)
 @[simp] theorem orBits_zero : orBits (fun _ : K => false) = false := by
   simp [orBits]
 
+open scoped Classical in
 /-- If some coordinate `j ≠ i` of `x` is true, then flipping coordinate `i` does not change
 `orBits x`. -/
 private theorem orBits_flip_of_witness (x : K → Bool) {i j : K}
-    (hji : j ≠ i) (hj : x j = true) : orBits (flip x {i}) = orBits x := by
+    (hji : j ≠ i) (hj : x j = true) : orBits (BitString.flipOn {i} x) = orBits x := by
   have h₁ : orBits x = true := (orBits_eq_true x).mpr ⟨j, hj⟩
-  have h₂ : orBits (flip x {i}) = true :=
-    (orBits_eq_true _).mpr ⟨j, by rw [flip_singleton_other x hji, hj]⟩
+  have h₂ : orBits (BitString.flipOn {i} x) = true :=
+    (orBits_eq_true _).mpr ⟨j, by rw [BitString.flipOn_singleton_of_ne hji x, hj]⟩
   exact h₂.trans h₁.symm
 
 /-- Disjunction of independent copies of a Boolean function. -/
@@ -91,12 +92,13 @@ theorem sensitivity_orCopies_le (f : (I → Bool) → Bool) (S₀ S₁ : ℕ)
     (h₀ : ∀ x, f x = false → sensitivityAt f x ≤ S₀)
     (h₁ : ∀ x, f x = true → sensitivityAt f x ≤ S₁) :
     sensitivity (orCopies (K := K) f) ≤ max (Fintype.card K * S₀) S₁ := by
+  classical
   apply sensitivity_le
   intro x
   change sensitivityAt (compose orBits f) x ≤ _
   rw [sensitivityAt_compose]
   let y : K → Bool := fun k => f (fun a => x (k, a))
-  let s : Finset K := Finset.univ.filter fun i => orBits (flip y {i}) ≠ orBits y
+  let s : Finset K := Finset.univ.filter fun i => orBits (BitString.flipOn {i} y) ≠ orBits y
   change (∑ i ∈ s, sensitivityAt f (fun a => x (i, a))) ≤ _
   by_cases hy : orBits y = false
   · have hall := (orBits_eq_false y).mp hy
@@ -123,13 +125,14 @@ theorem sensitivity_orCopies_le (f : (I → Bool) → Bool) (S₀ S₁ : ℕ)
 /-- The block sensitivity of `orBits` at the all-false input is at least `Fintype.card K`. -/
 theorem card_le_blockSensitivityAt_orBits_zero :
     Fintype.card K ≤ blockSensitivityAt (orBits (K := K)) (fun _ => false) := by
+  classical
   apply le_blockSensitivityAt_of_family orBits (fun _ => false) (fun k : K => {k})
   · intro k
     simp
   · intro k l hkl
     simpa using hkl
   · intro k
-    have h : orBits (flip (fun _ : K => false) {k}) = true :=
+    have h : orBits (BitString.flipOn {k} (fun _ : K => false)) = true :=
       (orBits_eq_true _).mpr ⟨k, by simp⟩
     simp [h]
 

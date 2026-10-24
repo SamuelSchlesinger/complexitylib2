@@ -45,11 +45,12 @@ namespace Internal
 
 /-- If the row clause `i` holds after flipping the bit `((j, c), a)` of `x` and the final predicate
 rejects the target child `(i, c')` of `x`, then `(i, c') = (j, c)`. -/
-theorem repaired_target_location {k r h : ℕ} {I : Type} (T : Tournament k)
+theorem repaired_target_location {k r h : ℕ} {I : Type} [DecidableEq ((Fin k × Fin r) × I)]
+    (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (F : Fin (h + 1) → (I → Bool) → Bool)
     (q : Fin h) (x : ((Fin k × Fin r) × I) → Bool)
     (i j : Fin k) (c c' : Fin r) (a : I)
-    (hf : rowClause T label F q (flip x {((j, c), a)}) i = true)
+    (hf : rowClause T label F q (BitString.flipOn {((j, c), a)} x) i = true)
     (hz : F (Fin.last h) (recursiveChild x i c') = false) : (i, c') = (j, c) := by
   by_contra hne
   have ht := ((rowClause_eq_true_iff T label F q _ i).mp hf).1 c'
@@ -59,11 +60,12 @@ theorem repaired_target_location {k r h : ℕ} {I : Type} (T : Tournament k)
 /-- If the row clause `i` holds after flipping the bit `((j, c), a)` of `x` and, along an edge
 `i → j'`, the gate predicate accepts the child `(j', label i j')` of `x`, then
 `(j', label i j') = (j, c)`. -/
-theorem repaired_gate_location {k r h : ℕ} {I : Type} (T : Tournament k)
+theorem repaired_gate_location {k r h : ℕ} {I : Type} [DecidableEq ((Fin k × Fin r) × I)]
+    (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (F : Fin (h + 1) → (I → Bool) → Bool)
     (q : Fin h) (x : ((Fin k × Fin r) × I) → Bool)
     (i j j' : Fin k) (c : Fin r) (a : I)
-    (hf : rowClause T label F q (flip x {((j, c), a)}) i = true)
+    (hf : rowClause T label F q (BitString.flipOn {((j, c), a)} x) i = true)
     (hij' : T.Adj i j') (hon : F (gateIndex q) (recursiveChild x j' (label i j')) = true) :
     (j', label i j') = (j, c) := by
   by_contra hne
@@ -76,19 +78,21 @@ open scoped Classical in
 a target candidate, `j = i`, and the flip changes the final predicate on the child `(j, c)` from
 `false` to `true`; or `i` is a gate candidate, `T.Adj i j`, `c = label i j`, and the flip changes
 the gate predicate on the child `(j, c)` from `true` to `false`. -/
-theorem rowClause_repair_cases {k r h : ℕ} {I : Type} (T : Tournament k)
+theorem rowClause_repair_cases {k r h : ℕ} {I : Type} [DecidableEq ((Fin k × Fin r) × I)]
+    (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (F : Fin (h + 1) → (I → Bool) → Bool)
     (q : Fin h) (x : ((Fin k × Fin r) × I) → Bool)
     (i j : Fin k) (c : Fin r) (a : I)
     (hi : rowClause T label F q x i = false)
-    (hf : rowClause T label F q (flip x {((j, c), a)}) i = true) :
+    (hf : rowClause T label F q (BitString.flipOn {((j, c), a)} x) i = true) :
     (i ∈ targetCandidates T label F q x ∧ j = i ∧
       F (Fin.last h) (recursiveChild x j c) = false ∧
-      F (Fin.last h) (flip (recursiveChild x j c) {a}) = true) ∨
+      F (Fin.last h) (BitString.flipOn {a} (recursiveChild x j c)) = true) ∨
     (i ∈ gateCandidates T label F q x ∧ T.Adj i j ∧ c = label i j ∧
       F (gateIndex q) (recursiveChild x j c) = true ∧
-      F (gateIndex q) (flip (recursiveChild x j c) {a}) = false) := by
-  have hchange : rowClause T label F q (flip x {((j, c), a)}) i ≠ rowClause T label F q x i := by
+      F (gateIndex q) (BitString.flipOn {a} (recursiveChild x j c)) = false) := by
+  have hchange : rowClause T label F q (BitString.flipOn {((j, c), a)} x) i ≠
+      rowClause T label F q x i := by
     simp [hi, hf]
   rcases rowClause_flip_change T label F q x i j c a hchange with
     ⟨hji, ht⟩ | ⟨hij, rfl, hg⟩

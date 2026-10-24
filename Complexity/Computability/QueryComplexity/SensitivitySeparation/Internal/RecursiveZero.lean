@@ -63,12 +63,13 @@ theorem recursive_sensitivity_zero_at {k r h : ℕ} {I : Type} [Fintype I]
     childJointChanges F (gateIndex q) (Fin.last h) x (w i) (A.label i (w i))
   let W := SC.biUnion fun i => childChanges F (gateIndex q) x (w i) (A.label i (w i))
   have hsub : (Finset.univ.filter fun p =>
-      recursiveFamily T A.label F q (flip x {p}) ≠ recursiveFamily T A.label F q x) ⊆
+      recursiveFamily T A.label F q (BitString.flipOn {p} x) ≠
+        recursiveFamily T A.label F q x) ⊆
       U ∪ (V ∪ W) := by
     rintro ⟨⟨j, c⟩, a⟩ hp
     have hchange := (Finset.mem_filter.mp hp).2
-    have hon : recursiveFamily T A.label F q (flip x {((j, c), a)}) = true := by
-      cases hy : recursiveFamily T A.label F q (flip x {((j, c), a)})
+    have hon : recursiveFamily T A.label F q (BitString.flipOn {((j, c), a)} x) = true := by
+      cases hy : recursiveFamily T A.label F q (BitString.flipOn {((j, c), a)} x)
       · exact False.elim (hchange (hy.trans hx.symm))
       · rfl
     obtain ⟨i, hi⟩ := (recursiveFamily_eq_true_iff T A.label F q _).mp hon
@@ -80,7 +81,7 @@ theorem recursive_sensitivity_zero_at {k r h : ℕ} {I : Type} [Fintype I]
       apply Finset.mem_union_left
       apply Finset.mem_biUnion.mpr
       refine ⟨i, hit, ?_⟩
-      have hn : F (Fin.last h) (flip (recursiveChild x i c) {a}) ≠
+      have hn : F (Fin.last h) (BitString.flipOn {a} (recursiveChild x i c)) ≠
           F (Fin.last h) (recursiveChild x i c) := by simp [hton, htoff]
       simpa [childChanges, hc] using hn
     · have hj := gateWitness_unique T A.label F q x i hig j hij hgon
@@ -89,7 +90,7 @@ theorem recursive_sensitivity_zero_at {k r h : ℕ} {I : Type} [Fintype I]
       · apply Finset.mem_union_right
         apply Finset.mem_biUnion.mpr
         refine ⟨i, hs, ?_⟩
-        have hn : F (gateIndex q) (flip (recursiveChild x j (A.label i j)) {a}) ≠
+        have hn : F (gateIndex q) (BitString.flipOn {a} (recursiveChild x j (A.label i j))) ≠
             F (gateIndex q) (recursiveChild x j (A.label i j)) := by simp [hgon, hgoff]
         simpa [childChanges, w, hj] using hn
       · have hwg := nonsink_gateWitness_mem T A.label F hF q x i hig hs
@@ -101,9 +102,9 @@ theorem recursive_sensitivity_zero_at {k r h : ℕ} {I : Type} [Fintype I]
         apply Finset.mem_biUnion.mpr
         refine ⟨i, Finset.mem_sdiff.mpr ⟨hig, hs⟩, ?_⟩
         have hn :
-            F (gateIndex q) (flip (recursiveChild x j (A.label i j)) {a}) ≠
+            F (gateIndex q) (BitString.flipOn {a} (recursiveChild x j (A.label i j))) ≠
               F (gateIndex q) (recursiveChild x j (A.label i j)) ∧
-            F (Fin.last h) (flip (recursiveChild x j (A.label i j)) {a}) ≠
+            F (Fin.last h) (BitString.flipOn {a} (recursiveChild x j (A.label i j))) ≠
               F (Fin.last h) (recursiveChild x j (A.label i j)) := by
           simp [hgon, hgoff, hton, htoff]
         simpa [childJointChanges, w, hj] using hn
@@ -135,7 +136,9 @@ theorem recursive_sensitivity_zero_at {k r h : ℕ} {I : Type} [Fintype I]
       _ ≤ 1 * sideSensitivity F true := Nat.mul_le_mul_right _ (gateSinks_card T A.label F q x)
       _ = _ := Nat.one_mul _
   calc
-    sensitivityAt (recursiveFamily T A.label F q) x ≤ (U ∪ (V ∪ W)).card := Finset.card_le_card hsub
+    sensitivityAt (recursiveFamily T A.label F q) x ≤ (U ∪ (V ∪ W)).card := by
+      unfold sensitivityAt
+      convert Finset.card_le_card hsub
     _ ≤ U.card + (V ∪ W).card := Finset.card_union_le _ _
     _ ≤ U.card + (V.card + W.card) := Nat.add_le_add_left (Finset.card_union_le _ _) _
     _ ≤ 15 * sideSensitivity F false + (3 * jointSensitivity F true + sideSensitivity F true) :=

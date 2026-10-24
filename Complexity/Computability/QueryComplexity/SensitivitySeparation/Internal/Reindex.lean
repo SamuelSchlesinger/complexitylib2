@@ -52,15 +52,16 @@ open scoped Classical in
 /-- Pulling back along `e` the input `x` with the image block `B.map e.toEmbedding` flipped gives
 the pullback `fun i => x (e i)` with `B` flipped. -/
 private theorem flip_reindex (e : I ≃ J) (x : J → Bool) (B : Finset I) :
-    (fun i => flip x (B.map e.toEmbedding) (e i)) =
-      flip (fun i => x (e i)) B := by
+    (fun i => BitString.flipOn (B.map e.toEmbedding) x (e i)) =
+      BitString.flipOn B (fun i => x (e i)) := by
   funext i
-  simp [flip_apply]
+  simp [BitString.flipOn_apply]
 
-/-- Singleton case of `flip_reindex`: pulling back `flip x {e i}` along `e` gives the pullback of
-`x` with `i` flipped. -/
+open scoped Classical in
+/-- Singleton case of `flip_reindex`: pulling back `BitString.flipOn {e i} x` along `e` gives the
+pullback of `x` with `i` flipped. -/
 private theorem flip_reindex_singleton (e : I ≃ J) (x : J → Bool) (i : I) :
-    (fun a => flip x {e i} (e a)) = flip (fun a => x (e a)) {i} := by
+    (fun a => BitString.flipOn {e i} x (e a)) = BitString.flipOn {i} (fun a => x (e a)) := by
   simpa using flip_reindex e x {i}
 
 /-- Reindexing along `e` and then along `e.symm` recovers the original function. -/
@@ -76,14 +77,15 @@ variable [Fintype I] [Fintype J]
 `fun i => x (e i)`. -/
 private theorem sensitivityAt_reindex (e : I ≃ J) (f : (I → Bool) → Bool) (x : J → Bool) :
     sensitivityAt (reindex e f) x = sensitivityAt f (fun i => x (e i)) := by
+  classical
   have hs : (Finset.univ.filter fun j =>
-      reindex e f (flip x {j}) ≠ reindex e f x).map e.symm.toEmbedding =
+      reindex e f (BitString.flipOn {j} x) ≠ reindex e f x).map e.symm.toEmbedding =
       Finset.univ.filter (fun i =>
-        f (flip (fun a => x (e a)) {i}) ≠ f (fun a => x (e a))) := by
+        f (BitString.flipOn {i} (fun a => x (e a))) ≠ f (fun a => x (e a))) := by
     ext i
     simp only [Finset.mem_map_equiv, Equiv.symm_symm, Finset.mem_filter,
       Finset.mem_univ, true_and]
-    change f (fun a => flip x {e i} (e a)) ≠ f (fun a => x (e a)) ↔ _
+    change f (fun a => BitString.flipOn {e i} x (e a)) ≠ f (fun a => x (e a)) ↔ _
     rw [flip_reindex_singleton]
   simpa only [sensitivityAt, Finset.card_map] using congrArg Finset.card hs
 
@@ -106,6 +108,7 @@ of `reindex e f` at `x`. -/
 private theorem blockSensitivityAt_le_reindex (e : I ≃ J) (f : (I → Bool) → Bool)
     (x : J → Bool) :
     blockSensitivityAt f (fun i => x (e i)) ≤ blockSensitivityAt (reindex e f) x := by
+  classical
   apply blockSensitivityAt_le
   intro blocks hd hb
   have h := le_blockSensitivityAt_of_family (reindex e f) x
@@ -117,7 +120,7 @@ private theorem blockSensitivityAt_le_reindex (e : I ≃ J) (f : (I → Bool) �
       exact hd A.val A.property B.val B.property (fun h => hAB (Subtype.ext h)))
     (by
       intro B
-      change f (fun i => flip x (B.val.map e.toEmbedding) (e i)) ≠ _
+      change f (fun i => BitString.flipOn (B.val.map e.toEmbedding) x (e i)) ≠ _
       rw [flip_reindex]
       exact (hb B.val B.property).2)
   simpa only [Fintype.card_coe] using h

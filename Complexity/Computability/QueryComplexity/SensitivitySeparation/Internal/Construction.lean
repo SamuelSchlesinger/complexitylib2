@@ -92,11 +92,12 @@ private theorem construction_base_zero (d M : ℕ) :
 
 /-- Every predicate of the base family at index count `1 + d` accepts the all-false input with any
 row block `baseBlock b` flipped. -/
-private theorem construction_base_blocks (d M : ℕ) :
+private theorem construction_base_blocks (d M : ℕ) {inst : DecidableEq (Fin M × Fin (d + 2))} :
     ∀ b q, constructionBase d M (1 + d) q
-      (flip (fun _ => false) (baseBlock b)) = true := by
+      (@BitString.flipOn _ inst (baseBlock b) (fun _ => false)) = true := by
   rw [Nat.add_comm 1 d]
   intro b q
+  rw [BitString.flipOn_congr_decidableEq]
   simpa only [constructionBase, baseExtension_same] using
       initialFamily_baseBlock d M q b
 
@@ -107,13 +108,14 @@ private theorem terminalPredicate_zero {M r : ℕ} (d : ℕ) (T : RegularTournam
   towerFamily_zero T.toTournament A.label (constructionBase d M) hr d 1
     (construction_base_zero d M) 0
 
+open scoped Classical in
 /-- For `0 < r`, the terminal predicate accepts the all-false input with any lifted base block
 `towerBlocks baseBlock d b` flipped. -/
 private theorem terminalPredicate_blocks {M r : ℕ} (d : ℕ) (T : RegularTournament M)
     (A : GoodLabeling T.toTournament r) (hr : 0 < r)
     (b : TowerBlockIndex (2 * M ^ 2 + 1) (Fin M) d) :
-    terminalPredicate d T A (flip (fun _ => false)
-      (towerBlocks (r := r) (baseBlock (L := d + 2)) d b)) = true :=
+    terminalPredicate d T A (BitString.flipOn
+      (towerBlocks (r := r) (baseBlock (L := d + 2)) d b) (fun _ => false)) = true :=
   towerFamily_blocks T.toTournament A.label (constructionBase d M)
     (baseBlock (L := d + 2)) hr d 1 (construction_base_zero d M)
     (construction_base_blocks d M) b 0

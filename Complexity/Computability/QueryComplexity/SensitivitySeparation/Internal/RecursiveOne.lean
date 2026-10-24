@@ -62,15 +62,17 @@ theorem recursive_sensitivity_one_at {k r h : ℕ} {I : Type} [Fintype I]
   let V := (Finset.univ.filter (T.Adj i)).biUnion fun j =>
     childChanges F (gateIndex q) x j (label i j)
   have hsub : (Finset.univ.filter fun p =>
-      recursiveFamily T label F q (flip x {p}) ≠ recursiveFamily T label F q x) ⊆ U ∪ V := by
+      recursiveFamily T label F q (BitString.flipOn {p} x) ≠
+        recursiveFamily T label F q x) ⊆ U ∪ V := by
     rintro ⟨⟨j, c⟩, a⟩ hp
     have hchange := (Finset.mem_filter.mp hp).2
-    have hf : recursiveFamily T label F q (flip x {((j, c), a)}) = false := by
-      cases hy : recursiveFamily T label F q (flip x {((j, c), a)})
+    have hf : recursiveFamily T label F q (BitString.flipOn {((j, c), a)} x) = false := by
+      cases hy : recursiveFamily T label F q (BitString.flipOn {((j, c), a)} x)
       · rfl
       · exact False.elim (hchange (hy.trans hx.symm))
     have hif := (recursiveFamily_eq_false_iff T label F q _).mp hf i
-    have hic : rowClause T label F q (flip x {((j, c), a)}) i ≠ rowClause T label F q x i := by
+    have hic : rowClause T label F q (BitString.flipOn {((j, c), a)} x) i ≠
+        rowClause T label F q x i := by
       simp [hi, hif]
     rcases rowClause_flip_change T label F q x i j c a hic with ⟨rfl, ht⟩ | ⟨hij, rfl, hg⟩
     · apply Finset.mem_union_left
@@ -94,7 +96,9 @@ theorem recursive_sensitivity_one_at {k r h : ℕ} {I : Type} [Fintype I]
         exact sensitivityAt_le_sideSensitivity F false _ _
           (hcond.2 j (Finset.mem_filter.mp hj).2))
   calc
-    sensitivityAt (recursiveFamily T label F q) x ≤ (U ∪ V).card := Finset.card_le_card hsub
+    sensitivityAt (recursiveFamily T label F q) x ≤ (U ∪ V).card := by
+      unfold sensitivityAt
+      convert Finset.card_le_card hsub
     _ ≤ U.card + V.card := Finset.card_union_le _ _
     _ ≤ r * sideSensitivity F true + o * sideSensitivity F false := Nat.add_le_add hU hV
     _ = _ := Nat.add_comm _ _
@@ -132,23 +136,26 @@ theorem recursive_joint_one_at {k r h : ℕ} {I : Type} [Fintype I]
   let V := (Finset.univ.filter (T.Adj i)).biUnion fun j =>
     childJointChanges F (gateIndex q') (gateIndex q) x j (label i j)
   have hsub : (Finset.univ.filter fun p =>
-      recursiveFamily T label F q (flip x {p}) ≠ recursiveFamily T label F q x ∧
-      recursiveFamily T label F q' (flip x {p}) ≠ recursiveFamily T label F q' x) ⊆ U ∪ V := by
+      recursiveFamily T label F q (BitString.flipOn {p} x) ≠ recursiveFamily T label F q x ∧
+      recursiveFamily T label F q' (BitString.flipOn {p} x) ≠
+        recursiveFamily T label F q' x) ⊆ U ∪ V := by
     rintro ⟨⟨j, c⟩, a⟩ hp
     have hchange := (Finset.mem_filter.mp hp).2
-    have hf : recursiveFamily T label F q (flip x {((j, c), a)}) = false := by
-      cases hy : recursiveFamily T label F q (flip x {((j, c), a)})
+    have hf : recursiveFamily T label F q (BitString.flipOn {((j, c), a)} x) = false := by
+      cases hy : recursiveFamily T label F q (BitString.flipOn {((j, c), a)} x)
       · rfl
       · exact False.elim (hchange.1 (hy.trans hx.symm))
-    have hf' : recursiveFamily T label F q' (flip x {((j, c), a)}) = false := by
-      cases hy : recursiveFamily T label F q' (flip x {((j, c), a)})
+    have hf' : recursiveFamily T label F q' (BitString.flipOn {((j, c), a)} x) = false := by
+      cases hy : recursiveFamily T label F q' (BitString.flipOn {((j, c), a)} x)
       · rfl
       · exact False.elim (hchange.2 (hy.trans hx'.symm))
     have hif := (recursiveFamily_eq_false_iff T label F q _).mp hf i
     have hif' := (recursiveFamily_eq_false_iff T label F q' _).mp hf' i
-    have hic : rowClause T label F q (flip x {((j, c), a)}) i ≠ rowClause T label F q x i := by
+    have hic : rowClause T label F q (BitString.flipOn {((j, c), a)} x) i ≠
+        rowClause T label F q x i := by
       simp [hi, hif]
-    have hic' : rowClause T label F q' (flip x {((j, c), a)}) i ≠ rowClause T label F q' x i := by
+    have hic' : rowClause T label F q' (BitString.flipOn {((j, c), a)} x) i ≠
+        rowClause T label F q' x i := by
       simp [hi', hif']
     rcases rowClause_joint_flip_change T label F q q' x i j c a hic hic' with
       ⟨rfl, ht⟩ | ⟨hij, rfl, hg, hg'⟩
@@ -175,7 +182,9 @@ theorem recursive_joint_one_at {k r h : ℕ} {I : Type} [Fintype I]
           (gateIndex_strictAnti hqq) (hcond'.2 j hij) (hcond.2 j hij))
   calc
     jointSensitivityAt (recursiveFamily T label F q) (recursiveFamily T label F q') x ≤
-        (U ∪ V).card := Finset.card_le_card hsub
+        (U ∪ V).card := by
+      unfold jointSensitivityAt
+      convert Finset.card_le_card hsub
     _ ≤ U.card + V.card := Finset.card_union_le _ _
     _ ≤ r * sideSensitivity F true + o * jointSensitivity F false := Nat.add_le_add hU hV
     _ = _ := Nat.add_comm _ _

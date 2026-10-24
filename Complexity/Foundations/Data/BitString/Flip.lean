@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 OpenAI, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Samuel Schlesinger
+Authors: OpenAI, Samuel Schlesinger
 -/
 
 module
@@ -33,12 +33,25 @@ each isolated true input, and parity has only isolated inputs.
 ## Main results
 
 * `Cslib.BitString.flipOn_apply`: coordinatewise evaluation of `flipOn`.
-* `Cslib.BitString.flipOn_singleton`: flipping one bit.
+* `Cslib.BitString.flipOn_congr_decidableEq`: `flipOn` is independent of the `DecidableEq`
+  instance.
+* `Cslib.BitString.flipOn_singleton`, `Cslib.BitString.flipOn_singleton_self`,
+  `Cslib.BitString.flipOn_singleton_of_ne`: flipping one bit.
 * `Cslib.BitString.flipOn_flipOn`, `Cslib.BitString.flipOn_involutive`: flipping is an involution.
+* `Cslib.BitString.flipOn_insert`: flipping `insert i T` for `i ∉ T`.
+* `Cslib.BitString.flipOn_false`: flipping the all-`false` vector gives the indicator of the set.
+* `Cslib.BitString.flipOn_filter_ne`: flipping the positions where two vectors differ turns one
+  into the other.
+* `Cslib.BitString.flipOn_prod_same`, `Cslib.BitString.flipOn_prod_of_ne`: row projections of a
+  single-coordinate flip on a product index type.
 
 ## References
 
 * [N. Nisan, *CREW PRAMs and decision trees*][Nisan1991]
+* Adapted in part from OpenAI's formalization [OpenAI2026Sensitivity] at revision
+  adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
+  lean/OAI/Combinatorics/Sensitivity/Basic.lean), via the complexitylib port
+  [Schlesinger2026Sensitivity] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
 -/
 
 @[expose] public section
@@ -57,6 +70,13 @@ def flipOn (T : Finset ι) (x : ι → Bool) : ι → Bool :=
 theorem flipOn_apply (T : Finset ι) (x : ι → Bool) (i : ι) :
     flipOn T x i = if i ∈ T then !x i else x i :=
   rfl
+
+omit [DecidableEq ι] in
+/-- `flipOn` is independent of the `DecidableEq` instance. -/
+theorem flipOn_congr_decidableEq {inst₁ inst₂ : DecidableEq ι} (T : Finset ι) (x : ι → Bool) :
+    @flipOn ι inst₁ T x = @flipOn ι inst₂ T x := by
+  congr
+  exact Subsingleton.elim inst₁ inst₂
 
 /-- `flipOn T x` is `x` with its bits at the positions in `T` replaced by their negations. -/
 theorem flipOn_eq_piecewise (T : Finset ι) (x : ι → Bool) :
@@ -77,7 +97,7 @@ theorem flipOn_apply_of_notMem (h : i ∉ T) : flipOn T x i = x i := by
   simp [flipOn]
 
 /-- Flipping one bit. -/
-@[simp] theorem flipOn_singleton (i : ι) (x : ι → Bool) :
+theorem flipOn_singleton (i : ι) (x : ι → Bool) :
     flipOn {i} x = Function.update x i (!x i) := by
   funext j
   by_cases h : j = i
@@ -100,6 +120,49 @@ theorem flipOn_apply_eq_of_iff (h : i ∈ T ↔ i ∈ U) : flipOn T x i = flipOn
 /-- Flipping at a fixed set of positions is an involution. -/
 theorem flipOn_involutive (T : Finset ι) : Function.Involutive (flipOn T) :=
   flipOn_flipOn T
+
+/-- Flipping `{i}` negates bit `i`. -/
+@[simp] theorem flipOn_singleton_self (i : ι) (x : ι → Bool) : flipOn {i} x i = !x i := by
+  simp [flipOn]
+
+/-- Flipping `{i}` leaves every bit `j ≠ i` unchanged. -/
+theorem flipOn_singleton_of_ne {i j : ι} (h : j ≠ i) (x : ι → Bool) : flipOn {i} x j = x j := by
+  simp [flipOn, h]
+
+/-- For `i ∉ T`, flipping `insert i T` is flipping `T` and then `{i}`. -/
+theorem flipOn_insert {x : ι → Bool} {i : ι} {T : Finset ι} (hi : i ∉ T) :
+    flipOn (insert i T) x = flipOn {i} (flipOn T x) := by
+  funext j
+  by_cases hji : j = i
+  · subst hji
+    simp [flipOn, hi]
+  · simp [flipOn, hji]
+
+/-- Flipping the bits of the all-`false` vector in `T` gives the indicator of `T`. -/
+@[simp] theorem flipOn_false (T : Finset ι) (i : ι) :
+    flipOn T (fun _ => false) i = decide (i ∈ T) := by
+  by_cases h : i ∈ T <;> simp [flipOn, h]
+
+/-- Flipping `x` at the positions where `x` and `y` differ gives `y`. -/
+@[simp] theorem flipOn_filter_ne [Fintype ι] (x y : ι → Bool) :
+    flipOn (Finset.univ.filter fun i => x i ≠ y i) x = y := by
+  funext i
+  cases hx : x i <;> cases hy : y i <;> simp [flipOn, hx, hy]
+
+/-- On a product index type `κ × ι`, row `j` of `flipOn {(j, i)} x` is row `j` of `x` with
+coordinate `i` flipped. -/
+theorem flipOn_prod_same {κ : Type*} [DecidableEq (κ × ι)] (x : κ × ι → Bool) (j : κ) (i : ι) :
+    (fun a => flipOn {(j, i)} x (j, a)) = flipOn {i} (fun a => x (j, a)) := by
+  funext a
+  simp [flipOn]
+
+omit [DecidableEq ι] in
+/-- On a product index type `κ × ι`, every row `k ≠ j` of `flipOn {(j, i)} x` is row `k` of `x`. -/
+theorem flipOn_prod_of_ne {κ : Type*} [DecidableEq (κ × ι)] (x : κ × ι → Bool) {j k : κ} (i : ι)
+    (hk : k ≠ j) :
+    (fun a => flipOn {(j, i)} x (k, a)) = fun a => x (k, a) := by
+  funext a
+  simp [flipOn, hk]
 
 section Isolated
 

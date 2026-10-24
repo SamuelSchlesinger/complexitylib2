@@ -75,22 +75,24 @@ def childLift {J I : Type} (j : J) (A : Finset I) : Finset (J × I) :=
 @[simp] theorem childLift_card {J I : Type} (j : J) (A : Finset I) :
     (childLift j A).card = A.card := Finset.card_map _
 
+open scoped Classical in
 /-- Lift the individually sensitive coordinates of a child predicate. -/
 def childChanges {k r h : ℕ} {I : Type} [Fintype I]
     (F : Fin h → (I → Bool) → Bool) (q : Fin h)
     (x : ((Fin k × Fin r) × I) → Bool) (j : Fin k) (c : Fin r) :
     Finset ((Fin k × Fin r) × I) :=
   childLift (j, c) (Finset.univ.filter fun a =>
-    F q (flip (recursiveChild x j c) {a}) ≠ F q (recursiveChild x j c))
+    F q (BitString.flipOn {a} (recursiveChild x j c)) ≠ F q (recursiveChild x j c))
 
+open scoped Classical in
 /-- Lift coordinates that simultaneously change two predicates in one child. -/
 def childJointChanges {k r h : ℕ} {I : Type} [Fintype I]
     (F : Fin h → (I → Bool) → Bool) (q q' : Fin h)
     (x : ((Fin k × Fin r) × I) → Bool) (j : Fin k) (c : Fin r) :
     Finset ((Fin k × Fin r) × I) :=
   childLift (j, c) (Finset.univ.filter fun a =>
-    F q (flip (recursiveChild x j c) {a}) ≠ F q (recursiveChild x j c) ∧
-    F q' (flip (recursiveChild x j c) {a}) ≠ F q' (recursiveChild x j c))
+    F q (BitString.flipOn {a} (recursiveChild x j c)) ≠ F q (recursiveChild x j c) ∧
+    F q' (BitString.flipOn {a} (recursiveChild x j c)) ≠ F q' (recursiveChild x j c))
 
 /-- The cardinality of `childChanges F q x j c` is `sensitivityAt (F q) (recursiveChild x j c)`. -/
 @[simp] theorem childChanges_card {k r h : ℕ} {I : Type} [Fintype I]
@@ -116,22 +118,26 @@ theorem card_biUnion_le_mul {J I : Type} [DecidableEq I] (A : Finset J) (B : J �
     _ ≤ ∑ _j ∈ A, n := Finset.sum_le_sum hn
     _ = A.card * n := by simp
 
+open scoped Classical in
 /-- If flipping `((j, c), a)` changes the clause of row `i` both at index `q` and at index `q'`,
 then either `j = i` and the flip changes the target value of the child at `(j, c)`, or `T.Adj i j`,
 `c = label i j` and the flip changes both gate values `F (gateIndex q)` and `F (gateIndex q')` of
 that child. -/
-theorem rowClause_joint_flip_change {k r h : ℕ} {I : Type} (T : Tournament k)
+theorem rowClause_joint_flip_change {k r h : ℕ} {I : Type} [DecidableEq ((Fin k × Fin r) × I)]
+    (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (F : Fin (h + 1) → (I → Bool) → Bool)
     (q q' : Fin h) (x : ((Fin k × Fin r) × I) → Bool)
     (i j : Fin k) (c : Fin r) (a : I)
-    (hc : rowClause T label F q (flip x {((j, c), a)}) i ≠ rowClause T label F q x i)
-    (hc' : rowClause T label F q' (flip x {((j, c), a)}) i ≠ rowClause T label F q' x i) :
-    (j = i ∧ F (Fin.last h) (flip (recursiveChild x j c) {a}) ≠
+    (hc : rowClause T label F q (BitString.flipOn {((j, c), a)} x) i ≠
+      rowClause T label F q x i)
+    (hc' : rowClause T label F q' (BitString.flipOn {((j, c), a)} x) i ≠
+      rowClause T label F q' x i) :
+    (j = i ∧ F (Fin.last h) (BitString.flipOn {a} (recursiveChild x j c)) ≠
       F (Fin.last h) (recursiveChild x j c)) ∨
     (T.Adj i j ∧ c = label i j ∧
-      F (gateIndex q) (flip (recursiveChild x j c) {a}) ≠
+      F (gateIndex q) (BitString.flipOn {a} (recursiveChild x j c)) ≠
         F (gateIndex q) (recursiveChild x j c) ∧
-      F (gateIndex q') (flip (recursiveChild x j c) {a}) ≠
+      F (gateIndex q') (BitString.flipOn {a} (recursiveChild x j c)) ≠
         F (gateIndex q') (recursiveChild x j c)) := by
   rcases rowClause_flip_change T label F q x i j c a hc with ht | ⟨hij, hcl, hq⟩
   · exact Or.inl ht
