@@ -86,6 +86,7 @@ theorem PWithPPOracle_subset_PWithSharpPOracle :
     simp only [handler, OracleComp.interpret_map, OracleComp.interpret_query,
       languageOracle_apply, B', Set.mem_preimage]
     rfl
+  dsimp only
   rw [hL B' hB' a, OracleComp.interpret_interpret, hhandler]
 
 /-- **`P^PP = P^#P`** under the encoded, bit-by-bit counting oracle convention. -/

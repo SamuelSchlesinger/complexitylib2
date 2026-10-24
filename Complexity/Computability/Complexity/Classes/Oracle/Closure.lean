@@ -38,6 +38,8 @@ reduced instance requires.
   `Cslib.Complexity.ComputableInPolyTimeWithOracle.map`,
   `Cslib.Complexity.ComputableInPolyTimeWithOracle.map_with`: pre- and postprocessing.
 * `Cslib.Complexity.ComputableInPolyTimeWithOracle.prod`: retain two oracle results.
+* `Cslib.Complexity.PolyTimeOracleProgram.of_query`: one polynomial-time request decides membership
+  in every admissible oracle language.
 * `Cslib.Complexity.computableInPolyTimeWithOracle_mem`, `Cslib.Complexity.mem_PWithOracle_self`:
   one request decides the oracle language.
 * `Cslib.Complexity.PWithOracle_subset_NPWithOracle`.
@@ -108,18 +110,31 @@ theorem prod {f : α → β} {g : α → γ}
 end ComputableInPolyTimeWithOracle
 
 open Classical in
+/-- One polynomial-time request `req a` to the oracle language decides whether `req a ∈ A` against
+every admissible oracle language `A`. -/
+theorem PolyTimeOracleProgram.of_query {req : α → List Bool} {input : α ↪ List Bool}
+    {Admissible : Set (List Bool) → Prop} {Spec : (α → Bool) → Prop}
+    (hreq : ComputableInPolyTime req input encBits)
+    (hSpec : ∀ A : Set (List Bool), Admissible A → Spec (fun a => decide (req a ∈ A))) :
+    PolyTimeOracleProgram input encBool Admissible Spec := by
+  refine ⟨fun a => (fun reply => decide (reply = [true])) <$>
+    (List.take 1 <$> OracleComp.query ((), req a)), ?_, fun A hA => ?_⟩
+  · simp only [OracleComp.interpret_map, OracleComp.interpret_query]
+    exact (IsOraclePPTOn.query_take () hreq.tidy (limit := fun _ => 1) (by fun_prop)).map
+      (by fun_prop)
+  · convert hSpec A hA using 1
+    funext a
+    change decide (List.take 1 (languageOracle A ((), req a)) = [true]) = decide (req a ∈ A)
+    rw [languageOracle_apply]
+    cases decide (req a ∈ A) <;> rfl
+
+open Classical in
 /-- **One request decides the oracle language.** The word is copied onto the query buffer and
 the first bit of the reply is read. -/
 theorem computableInPolyTimeWithOracle_mem (A : Set (List Bool)) :
     ComputableInPolyTimeWithOracle A (fun w => decide (w ∈ A)) encBits encBool := by
-  refine ⟨fun w => (fun reply => decide (reply = [true])) <$>
-    (List.take 1 <$> OracleComp.query ((), w)), ?_, fun w => ?_⟩
-  · simp only [OracleComp.interpret_map, OracleComp.interpret_query]
-    exact (IsOraclePPTOn.query_take () (request := id) (limit := fun _ => 1) (by fun_prop)
-      (by fun_prop)).map (by fun_prop)
-  · change decide (List.take 1 (languageOracle A ((), w)) = [true]) = decide (w ∈ A)
-    rw [languageOracle_apply]
-    cases decide (w ∈ A) <;> rfl
+  rw [computableInPolyTimeWithOracle_iff_polyTimeOracleProgram]
+  exact PolyTimeOracleProgram.of_query (req := id) ComputableInPolyTime.id' fun _ hA => hA ▸ rfl
 
 /-- **`P` relative to `A` contains `A`.** -/
 theorem mem_PWithOracle_self (A : Set (List Bool)) : A ∈ PWithOracle A encBits := by

@@ -146,7 +146,8 @@ theorem ph_eq {α : Type} (enc : α ↪ List Bool) : PH enc = Cslib.Complexity.P
 
 theorem psharp_eq {α : Type} (enc : α ↪ List Bool) :
     PWithSharpPOracle enc = Cslib.Complexity.PWithSharpPOracle enc := by
-  simp only [PWithSharpPOracle, Cslib.Complexity.PWithSharpPOracle, sharpP_eq, strict_iff]
+  simp only [PWithSharpPOracle, Cslib.Complexity.PWithSharpPOracle,
+    Cslib.Complexity.PolyTimeOracleProgram, sharpP_eq, strict_iff]
   rfl
 
 theorem toda {α : Type} (enc : α ↪ List Bool) : PH enc ⊆ PWithSharpPOracle enc := by
