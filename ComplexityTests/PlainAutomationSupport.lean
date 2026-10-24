@@ -73,4 +73,23 @@ example {α : Type} {enc : α ↪ List Bool} {V : (α × List Bool) × List Bool
       ((ComputableInPolyTime.encoding_length enc).comp (ComputableInPolyTime.fst enc encBits))
   · exact ComputableInPolyTime.snd enc encBits
 
+
+-- These are the actual framing and padding shapes from SavedPrediction and OneWayNormalization.
+example {α : Type} (encoding : α ↪ List Bool) : ComputableInPolyTime
+    (fun pair : α × List Bool => pair.2 ++ encPair encoding encBits (pair.1, pair.2.reverse))
+    (encPair encoding encBits) encBits := by
+  fun_prop (config := { maxTransitionDepth := 0 })
+
+example : ComputableInPolyTime
+    (fun word : List Bool => Cslib.BitString.padWord (word.length - 3) word) encBits encBits := by
+  fun_prop (config := { maxTransitionDepth := 0 })
+
+example {α : Type} {input : α ↪ List Bool} (bound : α → ℕ) (word : α → List Bool)
+    (hbound : ComputableInPolyTime bound input encUnary)
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun a => Cslib.BitString.padWord (bound a) (word a)) input encBits := by
+  fail_if_success (clear hbound; fun_prop (config := { maxTransitionDepth := 0 }))
+  fail_if_success (clear hword; fun_prop (config := { maxTransitionDepth := 0 }))
+  fun_prop (config := { maxTransitionDepth := 0 })
+
 end ComplexityTests.PlainAutomationSupport
