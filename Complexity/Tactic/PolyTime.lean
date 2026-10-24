@@ -243,6 +243,29 @@ private meta def polytimeKnownFacts : TacticM Unit := withMainContext do
   unless added do throwError "no new known certificate"
   replaceMainGoal [goal]
 
+open Lean Meta in
+/-- Inspect proposition aliases with the same reducible transparency used by `fun_prop`.
+`Meta.transform` maintains binder context, including dependent and quantified premises; data and
+proof implementations are not unfolded merely to classify a transition's proposition. -/
+private meta def rawTransitionPremise (type : Expr) : MetaM Bool := do
+  let rawName := fun n : Name =>
+    n.toString.startsWith "Turing.MultiTapeTM.ComputableTidily" ||
+      n.toString.startsWith "Turing.MultiTapeTM.ComputesTidily"
+  if (type.find? fun e => match e with
+      | .const n _ => rawName n
+      | _ => false).isSome then
+    return true
+  let inspect : StateRefT Bool MetaM Unit := do
+    discard <| Meta.transform type (pre := fun e => do
+      if ← get then return .done e
+      let reduced ← if ← isProp e then whnfR e else pure e
+      if let .const name _ := reduced.getAppFn then
+        if rawName name then
+          set true
+          return .done reduced
+      return .continue (some reduced))
+  return (← inspect.run false).2
+
 open Lean Meta Mathlib.Meta.FunProp in
 /-- Retain ordinary transitions while excluding those that require raw construction predicates.
 Both evaluated entries and lazy entries must be removed from this per-search tree. -/
@@ -254,11 +277,7 @@ private meta def plainTransitions (thms : GeneralTheorems) : MetaM GeneralTheore
   let mut blocked : Std.HashSet Name := {}
   for name in names do
     let raw ← forallTelescope (← getConstInfo name).type fun xs _ => xs.anyM fun x => do
-      let type ← inferType x
-      return (type.find? fun e => match e with
-        | .const n _ => n.toString.startsWith "Turing.MultiTapeTM.ComputableTidily" ||
-          n.toString.startsWith "Turing.MultiTapeTM.ComputesTidily"
-        | _ => false).isSome
+      rawTransitionPremise (← inferType x)
     if raw then blocked := blocked.insert name
   return { thms with theorems := { thms.theorems with
     tries := thms.theorems.tries.map fun node =>

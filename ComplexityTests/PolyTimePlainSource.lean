@@ -88,4 +88,49 @@ example {routine : List Bool → List Bool}
     exact (shrinkingStep_length routine state true).trans (Nat.le_add_right _ _)
   polytime
 
+-- A reducible full-arity alias must not disguise a raw search transition.
+/-- This routine has only a global raw certificate and stays opaque to plain search. -/
+@[irreducible] def rawOnlyReverseProbe (word : List Bool) : List Bool := word.reverse
+
+/-- Construction evidence does not automatically become a plain search rule. -/
+@[fun_prop] theorem rawOnlyReverseProbe_tidy :
+    ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits := by
+  unfold rawOnlyReverseProbe
+  fun_prop
+
+example : ComputableInPolyTime rawOnlyReverseProbe encBits encBits := by
+  fail_if_success polytime
+  exact .of_tidy rawOnlyReverseProbe_tidy
+
+/-- All predicate arguments are explicit, as in an ordinary client-defined abbreviation. -/
+abbrev RawAliasFull {α β : Type*} (f : α → β)
+    (input : α ↪ List Bool) (output : β ↪ List Bool) : Prop :=
+  ComputableTidilyInPolyTime f input output
+
+/-- Even an explicitly registered alias transition must not enable raw search in plain mode. -/
+@[fun_prop] theorem rawAliasFull_toPlain {α β : Type*} {f : α → β}
+    {input : α ↪ List Bool} {output : β ↪ List Bool}
+    (h : RawAliasFull f input output) : ComputableInPolyTime f input output :=
+  .of_tidy h
+
+example : ComputableInPolyTime rawOnlyReverseProbe encBits encBits := by
+  fail_if_success polytime
+  exact .of_tidy rawOnlyReverseProbe_tidy
+
+/-- Ordinary plain contracts remain a supported transition source. -/
+@[irreducible] def RoutineContract (f : List Bool → List Bool) : Prop :=
+  ComputableInPolyTime f encBits encBits
+
+attribute [fun_prop] RoutineContract
+
+/-- The plain transition remains available after raw alias transitions are registered. -/
+@[fun_prop] theorem RoutineContract.computable {f : List Bool → List Bool}
+    (hf : RoutineContract f) : ComputableInPolyTime f encBits encBits := by
+  unfold RoutineContract at hf
+  exact hf
+
+example (routine : List Bool → List Bool) (h : RoutineContract routine) :
+    ComputableInPolyTime routine encBits encBits := by
+  polytime
+
 end ComplexityTests.PolyTimePlainSource
