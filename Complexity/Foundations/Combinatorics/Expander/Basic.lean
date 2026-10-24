@@ -55,7 +55,10 @@ characterization. `λ(G) ≤ 1` always, and `G` is a good expander when `λ(G)` 
 * `Cslib.RotationMap.expect_walk`, `Cslib.RotationMap.expect_mul_walk_comm`,
   `Cslib.RotationMap.expect_walk_sq_le`: the walk operator preserves expectations, is
   self-adjoint and does not increase the second moment.
-* `Cslib.RotationMap.spectralExpansion_le_iff`: the characterization of `λ(G)`.
+* `Cslib.RotationMap.spectralExpansion_le_iff`,
+  `Cslib.RotationMap.spectralExpansion_le_iff_abs_expect_mul_walk_le`,
+  `Cslib.RotationMap.spectralExpansion_eq_ciSup`: the second-moment and Rayleigh-quotient
+  characterizations of `λ(G)`.
 * `Cslib.RotationMap.expect_walk_pow_sq_le_spectralExpansion_pow_mul`: walks of length `t` multiply
   the second moment of a function of expectation zero by at most `λ(G) ^ (2 t)`.
 * `Cslib.RotationMap.spectralExpansion_le_one`: `λ(G) ≤ 1`.
@@ -304,9 +307,12 @@ variable [Fintype V] [Fintype D]
 
 /-- The **spectral expansion** `λ(G)`: the operator norm, for the Euclidean norm, of the walk
 operator on the functions orthogonal to the constants [Arora and Barak, Section 21.1][AroraBarak09].
-As the walk operator is self-adjoint, this is the largest absolute value of its eigenvalues on those
-functions, but nothing here depends on that: `λ(G)` is used through its characterization
-`spectralExpansion_le_iff`. -/
+As the walk operator is self-adjoint, this is the supremum of the absolute Rayleigh quotient
+`|𝔼 v, f v * G.walk f v| / 𝔼 v, f v ^ 2` over the nonzero functions `f` of expectation zero
+(`spectralExpansion_le_iff_abs_expect_mul_walk_le`, `spectralExpansion_eq_ciSup`) and the largest
+absolute value of its eigenvalues on the functions of expectation zero
+(`spectralExpansion_eq_ciSup_abs_eigenvalues`), but nothing here depends on spectral theory:
+`λ(G)` is used through `spectralExpansion_le_iff`. -/
 noncomputable def spectralExpansion : ℝ :=
   ‖(LinearMap.toContinuousLinearMap
       (G.walk.withLpMap 2 : EuclideanSpace ℝ V →ₗ[ℝ] EuclideanSpace ℝ V)).comp
@@ -376,7 +382,108 @@ theorem spectralExpansion_le_iff {c : ℝ} (hc : 0 ≤ c) :
   have := G.spectralExpansion_nonneg
   gcongr
 
+/-- If `|𝔼 v, f v * G.walk f v| ≤ c * 𝔼 v, f v ^ 2` for every function `f` of expectation zero,
+where `c ≥ 0`, then `λ(G) ≤ c`. -/
+theorem spectralExpansion_le_of_abs_expect_mul_walk_le {c : ℝ} (hc : 0 ≤ c)
+    (h : ∀ f : V → ℝ, 𝔼 v, f v = 0 → |𝔼 v, f v * G.walk f v| ≤ c * 𝔼 v, f v ^ 2) :
+    G.spectralExpansion ≤ c := by
+  refine spectralExpansion_le hc fun f hf ↦ ?_
+  set g : V → ℝ := G.walk f
+  have hg : 𝔼 v, g v = 0 := G.expect_walk_eq_zero hf
+  have hfg : 𝔼 v, f v * G.walk g v = 𝔼 v, g v ^ 2 := by
+    rw [G.expect_mul_walk_comm]
+    exact expect_congr rfl fun v _ ↦ (sq (g v)).symm
+  have hpol (t : ℝ) :
+      4 * t * 𝔼 v, g v ^ 2 ≤ 2 * c * (t ^ 2 * 𝔼 v, f v ^ 2 + 𝔼 v, g v ^ 2) := by
+    have h₁ := (le_abs_self _).trans (h (t • f + g) (by
+      simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, expect_add_distrib, ← mul_expect, hf,
+        hg, mul_zero, add_zero]))
+    have h₂ := (neg_le_abs _).trans (h (t • f - g) (by
+      simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul, expect_sub_distrib, ← mul_expect, hf,
+        hg, mul_zero, sub_zero]))
+    have hwalk_add (v : V) : G.walk (t • f + g) v = t * g v + G.walk g v := by
+      simp [map_add, map_smul, g]
+    have hwalk_sub (v : V) : G.walk (t • f - g) v = t * g v - G.walk g v := by
+      simp [map_sub, map_smul, g]
+    have hdiff :
+        𝔼 v, (t • f + g) v * G.walk (t • f + g) v -
+            𝔼 v, (t • f - g) v * G.walk (t • f - g) v =
+          4 * t * 𝔼 v, g v ^ 2 := by
+      rw [← expect_sub_distrib]
+      calc
+        _ = 𝔼 v, 2 * t * (f v * G.walk g v + g v ^ 2) :=
+          expect_congr rfl fun v _ ↦ by
+            simp only [Pi.add_apply, Pi.sub_apply, Pi.smul_apply, smul_eq_mul, hwalk_add,
+              hwalk_sub]
+            ring
+        _ = 2 * t * (𝔼 v, f v * G.walk g v + 𝔼 v, g v ^ 2) := by
+          rw [← mul_expect, expect_add_distrib]
+        _ = 4 * t * 𝔼 v, g v ^ 2 := by
+          rw [hfg]
+          ring
+    have hsum :
+        c * 𝔼 v, (t • f + g) v ^ 2 + c * 𝔼 v, (t • f - g) v ^ 2 =
+          2 * c * (t ^ 2 * 𝔼 v, f v ^ 2 + 𝔼 v, g v ^ 2) := by
+      rw [← mul_add, ← expect_add_distrib]
+      calc
+        _ = c * 𝔼 v, 2 * (t ^ 2 * f v ^ 2 + g v ^ 2) := by
+          congr 1
+          refine expect_congr rfl fun v _ ↦ ?_
+          simp only [Pi.add_apply, Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
+          ring
+        _ = 2 * c * (t ^ 2 * 𝔼 v, f v ^ 2 + 𝔼 v, g v ^ 2) := by
+          rw [← mul_expect, expect_add_distrib, ← mul_expect]
+          ring
+    linarith
+  rcases hc.eq_or_lt with rfl | hc
+  · have := hpol 1
+    linarith
+  · have := hpol c
+    refine le_of_mul_le_mul_left ?_ (show 0 < 2 * c by positivity)
+    linarith
+
+/-- For `f` of expectation zero, `|𝔼 v, f v * G.walk f v| ≤ λ(G) * 𝔼 v, f v ^ 2`. -/
+private theorem abs_expect_mul_walk_le_spectralExpansion_mul {f : V → ℝ} (hf : 𝔼 v, f v = 0) :
+    |𝔼 v, f v * G.walk f v| ≤ G.spectralExpansion * 𝔼 v, f v ^ 2 := by
+  have := G.spectralExpansion_nonneg
+  refine abs_le_of_sq_le_sq ?_ (by positivity)
+  calc
+    _ ≤ (𝔼 v, f v ^ 2) * 𝔼 v, G.walk f v ^ 2 := expect_mul_sq_le_sq_mul_sq _ _ _
+    _ ≤ (𝔼 v, f v ^ 2) * (G.spectralExpansion ^ 2 * 𝔼 v, f v ^ 2) := by
+      gcongr
+      exact expect_walk_sq_le_spectralExpansion_sq_mul hf
+    _ = _ := by ring
+
+/-- `λ(G) ≤ c`, for `c ≥ 0`, exactly when `|𝔼 v, f v * G.walk f v| ≤ c * 𝔼 v, f v ^ 2` for every
+function `f` of expectation zero. -/
+theorem spectralExpansion_le_iff_abs_expect_mul_walk_le {c : ℝ} (hc : 0 ≤ c) :
+    G.spectralExpansion ≤ c ↔
+      ∀ f : V → ℝ, 𝔼 v, f v = 0 → |𝔼 v, f v * G.walk f v| ≤ c * 𝔼 v, f v ^ 2 := by
+  refine ⟨fun hG f hf ↦ (abs_expect_mul_walk_le_spectralExpansion_mul hf).trans ?_,
+    spectralExpansion_le_of_abs_expect_mul_walk_le hc⟩
+  gcongr
+
 variable (G)
+
+/-- The spectral expansion `λ(G)` is the supremum of the absolute Rayleigh quotient
+`|𝔼 v, f v * G.walk f v| / 𝔼 v, f v ^ 2` over the nonzero functions `f` of expectation zero. -/
+theorem spectralExpansion_eq_ciSup :
+    G.spectralExpansion =
+      ⨆ f : {f : V → ℝ // 𝔼 v, f v = 0 ∧ f ≠ 0}, |𝔼 v, f.1 v * G.walk f.1 v| / 𝔼 v, f.1 v ^ 2 := by
+  have hle (f : {f : V → ℝ // 𝔼 v, f v = 0 ∧ f ≠ 0}) :
+      |𝔼 v, f.1 v * G.walk f.1 v| / 𝔼 v, f.1 v ^ 2 ≤ G.spectralExpansion :=
+    div_le_of_le_mul₀ (expect_nonneg fun _ _ ↦ sq_nonneg _) G.spectralExpansion_nonneg
+      (abs_expect_mul_walk_le_spectralExpansion_mul f.2.1)
+  refine le_antisymm ?_ (Real.iSup_le hle G.spectralExpansion_nonneg)
+  refine spectralExpansion_le_of_abs_expect_mul_walk_le (Real.iSup_nonneg fun _ ↦ by positivity)
+    fun f hf ↦ ?_
+  rcases eq_or_ne f 0 with rfl | hf0
+  · simp
+  obtain ⟨v, hv⟩ := Function.ne_iff.1 hf0
+  have hpos : 0 < 𝔼 w, f w ^ 2 :=
+    expect_pos' (fun _ _ ↦ sq_nonneg _) ⟨v, mem_univ v, sq_pos_iff.2 hv⟩
+  rw [← div_le_iff₀ hpos]
+  exact le_ciSup ⟨G.spectralExpansion, Set.forall_mem_range.2 hle⟩ ⟨f, hf, hf0⟩
 
 /-- The spectral expansion is at most one. -/
 theorem spectralExpansion_le_one : G.spectralExpansion ≤ 1 :=
