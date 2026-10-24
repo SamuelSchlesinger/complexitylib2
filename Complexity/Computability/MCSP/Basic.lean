@@ -7,6 +7,9 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Circuit.Complexity
+public import Complexity.Computability.Circuit.Counting
+public import Complexity.Computability.Complexity.Classes.Promise.Basic
 public import Complexity.Foundations.Data.BitString.Basic
 public import Cslib.Computability.Circuit.Boolean.Complexity
 public import Cslib.Computability.Circuit.Boolean.Counting
@@ -35,7 +38,8 @@ cslib's `computableFunctions n s`, so there are as many of them as such function
 
 * `Cslib.MCSP.truthTable`: truth tables of Boolean functions.
 * `Cslib.MCSP.Instance`, `Cslib.MCSP`: the instances and the yes-instances of MCSP.
-* `Cslib.GapMCSP.yes`, `Cslib.GapMCSP.no`: the two sides of `GapMCSP[s₁, s₂]`.
+* `Cslib.GapMCSP`: `GapMCSP[s₁, s₂]` as a `PromiseProblem`, with sides `Cslib.GapMCSP.yes` and
+  `Cslib.GapMCSP.no`.
 
 ## Main results
 
@@ -43,7 +47,8 @@ cslib's `computableFunctions n s`, so there are as many of them as such function
   instances of MCSP, as circuits and as computable functions.
 * `Cslib.MCSP.ncard_setOf_mem`: the number of yes-instances of a given arity and threshold.
 * `Cslib.GapMCSP.disjoint_yes_no`: the promise of `GapMCSP[s₁, s₂]` is consistent when
-  `s₁ ≤ s₂`, and `Cslib.GapMCSP.no_eq_compl_yes`: `GapMCSP[s, s]` is MCSP at threshold `s`.
+  `s₁ ≤ s₂`, and `Cslib.GapMCSP.no_eq_compl_yes`, `Cslib.GapMCSP.eq_ofSet`: `GapMCSP[s, s]` is
+  MCSP at threshold `s`.
 
 ## References
 
@@ -120,8 +125,7 @@ most `s`. -/
 with at most `s` gates. -/
 theorem mk_truthTable_mem_iff_mem {f : BooleanFunction n} :
     ⟨n, truthTable n f, s⟩ ∈ MCSP ↔ f ∈ computableFunctions n s := by
-  rw [mk_truthTable_mem_iff, mem_computableFunctions_iff_ecomplexity_le, ← natCast_complexity]
-  exact Nat.cast_le.symm
+  rw [mk_truthTable_mem_iff, mem_computableFunctions_iff_complexity_le]
 
 /-- An instance is a yes-instance exactly when some circuit with at most `threshold` gates
 computes its function. -/
@@ -132,8 +136,8 @@ theorem mem_iff_exists_circuit {x : Instance} :
 
 /-- The yes-instances are the truth tables of the functions computable within the threshold. -/
 theorem mem_iff_mem_computableFunctions {x : Instance} :
-    x ∈ MCSP ↔ x.function ∈ computableFunctions x.arity x.threshold := by
-  rw [mem_iff_exists_circuit, mem_computableFunctions]
+    x ∈ MCSP ↔ x.function ∈ computableFunctions x.arity x.threshold :=
+  mem_computableFunctions_iff_complexity_le.symm
 
 /-- Raising the threshold keeps a yes-instance a yes-instance. -/
 theorem mem_of_le {T : BitString (2 ^ n)} (h : ⟨n, T, s⟩ ∈ MCSP) (hst : s ≤ t) :
@@ -148,7 +152,8 @@ theorem ncard_setOf_mem (n s : ℕ) :
       truthTable n '' (computableFunctions n s : Set (BooleanFunction n)) := by
     ext T
     obtain ⟨f, rfl⟩ := (truthTable n).surjective T
-    simp [complexity_le_iff]
+    simp only [Set.mem_ofPred_eq, mk_truthTable_mem_iff_mem, Set.mem_image, SetLike.mem_coe,
+      EmbeddingLike.apply_eq_iff_eq, exists_eq_right]
   rw [h, Set.ncard_image_of_injective _ (truthTable n).injective, Set.ncard_coe_finset]
 
 end MCSP
@@ -191,6 +196,32 @@ theorem yes_mono {s₁' : ℕ → ℕ} (h : s₁ n ≤ s₁' n) : yes s₁ n ⊆
 /-- Raising the no-threshold removes no-instances. -/
 theorem no_anti {s₂' : ℕ → ℕ} (h : s₂ n ≤ s₂' n) : no s₂' n ⊆ no s₂ n :=
   fun _ hT => lt_of_le_of_lt h hT
+
+end GapMCSP
+
+/-- **`GapMCSP[s₁, s₂]` on functions of `n` inputs** [OliveiraPichSanthanam2019, Definition 2.4]:
+the promise problem whose yes-instances are the truth tables of functions with circuits of at most
+`s₁ n` gates and whose no-instances are those of functions that need more than `s₂ n` gates, when
+`s₁ n ≤ s₂ n`. -/
+def GapMCSP (s₁ s₂ : ℕ → ℕ) (n : ℕ) (h : s₁ n ≤ s₂ n) :
+    Complexity.PromiseProblem (BitString (2 ^ n)) where
+  yes := GapMCSP.yes s₁ n
+  no := GapMCSP.no s₂ n
+  disjoint := GapMCSP.disjoint_yes_no h
+
+namespace GapMCSP
+
+variable {s₁ s₂ : ℕ → ℕ} {n : ℕ}
+
+@[simp] theorem yes_eq (h : s₁ n ≤ s₂ n) : (GapMCSP s₁ s₂ n h).yes = yes s₁ n := rfl
+
+@[simp] theorem no_eq (h : s₁ n ≤ s₂ n) : (GapMCSP s₁ s₂ n h).no = no s₂ n := rfl
+
+/-- At equal thresholds `s`, `GapMCSP[s, s]` is the decision problem `GapMCSP.yes s n`, MCSP on
+`n` inputs at threshold `s`. -/
+@[simp] theorem eq_ofSet (s : ℕ → ℕ) (n : ℕ) :
+    GapMCSP s s n le_rfl = Complexity.PromiseProblem.ofSet (yes s n) :=
+  Complexity.PromiseProblem.ext rfl (no_eq_compl_yes s n)
 
 end GapMCSP
 

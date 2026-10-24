@@ -165,15 +165,11 @@ private theorem eventually_le_arity (k N : ℕ) : ∀ᶠ n in atTop, N ≤ arity
 
 /-! ### Hard truth tables -/
 
-/-- The function on `m` inputs with the truth table `T`, read as MCSP reads truth tables. -/
-def tableFunction (m : ℕ) (T : List Bool) : BooleanFunction m :=
-  fun y => MCSP.tableValue T (List.ofFn y)
-
 /-- `T` is a truth table on `arity k n` inputs whose function needs more than `threshold k n`
 gates. -/
 def IsHard (k n : ℕ) (T : List Bool) : Prop :=
   T.length = 2 ^ arity k n ∧
-    threshold k n < complexity interpretation (single (tableFunction (arity k n) T))
+    threshold k n < complexity interpretation (single (MCSP.tableFunction (arity k n) T))
 
 /-- `T` is the first hard truth table in lexicographic order: the hard table that is least as a
 binary number, most significant bit first. -/
@@ -200,20 +196,13 @@ theorem exists_isFirstHard {k n : ℕ} (h : ∃ T, IsHard k n T) : ∃ T, IsFirs
   obtain ⟨T, hT, hv⟩ := Nat.find_spec hex
   exact ⟨T, hT, fun T' hT' => hv ▸ Nat.find_min' hex ⟨T', hT', rfl⟩⟩
 
-/-- The truth table of a function, as a list, is read back as the function. -/
-private theorem tableFunction_ofFn_truthTable (m : ℕ) (f : BooleanFunction m) :
-    tableFunction m (List.ofFn (MCSP.truthTable m f)) = f := by
-  funext y
-  exact (MCSP.tableValue_ofFn ⟨m, MCSP.truthTable m f, 0⟩ y).trans
-    (by simp [MCSP.Instance.function])
-
 /-- **Shannon's counting argument**: hard truth tables exist at all large lengths. -/
 theorem eventually_exists_isHard (k : ℕ) : ∀ᶠ n in atTop, ∃ T, IsHard k n T := by
   obtain ⟨N, hN⟩ := Shannon.lt_complexity
   filter_upwards [eventually_le_arity k (max N 1), eventually_ge_atTop (k + 2)] with n hm hn
   obtain ⟨f, hf⟩ := hN (arity k n) (le_of_max_le_left hm)
   refine ⟨List.ofFn (MCSP.truthTable _ f), by simp, ?_⟩
-  rw [tableFunction_ofFn_truthTable]
+  rw [MCSP.tableFunction_ofFn_truthTable]
   have hm0 : (0 : ℝ) < arity k n := by exact_mod_cast (le_of_max_le_right hm)
   have hlt : (threshold k n : ℝ) * arity k n < 2 ^ arity k n := by
     exact_mod_cast threshold_mul_arity_lt (by omega)
@@ -268,44 +257,6 @@ theorem language_notMem_SIZE (k c : ℕ) : language k ∉ SIZE fun n => c * (n +
     exact Nat.mul_le_mul_left _ (by omega)
   have hpos : 1 ≤ (n + 1) ^ k := Nat.one_le_pow _ _ (by omega)
   nlinarith
-
-/-! ### Truth tables in MCSP -/
-
-/-- The MCSP instance of a truth table of length `2 ^ m`. -/
-private def tableInstance (m s : ℕ) (T : List Bool) (hT : T.length = 2 ^ m) : MCSP.Instance :=
-  ⟨m, fun i => T[i.val]'(by rw [hT]; exact i.isLt), s⟩
-
-private theorem ofFn_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m) :
-    List.ofFn (tableInstance m s T hT).table = T := by
-  change List.ofFn (fun i : Fin (2 ^ m) => T[i.val]'(by rw [hT]; exact i.isLt)) = T
-  exact List.ext_getElem (by simp [hT]) fun _ _ _ => by simp
-
-private theorem function_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m) :
-    (tableInstance m s T hT).function = tableFunction m T := by
-  funext y
-  rw [← MCSP.tableValue_ofFn, ofFn_tableInstance]
-  rfl
-
-/-- An accepted certificate for a truth table of length `2 ^ m` bounds the complexity of its
-function. -/
-private theorem complexity_le_of_tableVerifier {m s : ℕ} {T c : List Bool} (hT : T.length = 2 ^ m)
-    (h : MCSP.tableVerifier ((T, s), c) = true) :
-    complexity interpretation (single (tableFunction m T)) ≤ s := by
-  have := MCSP.mem_of_verifier_eq_true (x := tableInstance m s T hT) (w := c)
-    (by rw [MCSP.verifier_eq_tableVerifier, ofFn_tableInstance]; exact h)
-  rwa [MCSP.mem_iff, function_tableInstance] at this
-
-/-- A truth table of length `2 ^ m` whose function has at most `s` gates has a certificate of
-length `certLength m (MCSP.budget m s)`, accepted whatever bits follow it. -/
-private theorem exists_tableVerifier_append {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m)
-    (h : complexity interpretation (single (tableFunction m T)) ≤ s) :
-    ∃ u : List Bool, u.length = certLength m (MCSP.budget m s) ∧
-      ∀ extra, MCSP.tableVerifier ((T, s), u ++ extra) = true := by
-  obtain ⟨u, hu, hV⟩ := MCSP.exists_verifier_append (x := tableInstance m s T hT)
-    (by rw [MCSP.mem_iff, function_tableInstance]; exact h)
-  refine ⟨u, hu, fun extra => ?_⟩
-  rw [← hV extra, MCSP.verifier_eq_tableVerifier, ofFn_tableInstance]
-  rfl
 
 /-! ### The `Σ₃` verifier -/
 
@@ -411,10 +362,10 @@ private theorem isAlternatingVerifier_verifier (k : ℕ) :
         (BitString.binaryValue (table k x.length w₂) < BitString.binaryValue T →
           MCSP.tableVerifier ((table k x.length w₂, threshold k x.length), w₃) = true) := by
       by_cases hlt : BitString.binaryValue (table k x.length w₂) < BitString.binaryValue T
-      · have heasy : complexity interpretation (single (tableFunction (arity k x.length)
+      · have heasy : complexity interpretation (single (MCSP.tableFunction (arity k x.length)
             (table k x.length w₂))) ≤ threshold k x.length :=
           not_lt.1 fun h => absurd (hT.2 _ ⟨hT', h⟩) (not_le.2 hlt)
-        obtain ⟨u, hu, hV⟩ := exists_tableVerifier_append hT' heasy
+        obtain ⟨u, hu, hV⟩ := MCSP.exists_tableVerifier_append hT' heasy
         refine ⟨u ++ List.replicate (certBound k x.length - u.length) false, ?_, fun _ => hV _⟩
         have := certLength_le_certBound k x.length
         simp only [List.length_append, List.length_replicate]
@@ -428,7 +379,7 @@ private theorem isAlternatingVerifier_verifier (k : ℕ) :
     · cases hc : MCSP.tableVerifier ((T, threshold k x.length),
         w₂.drop (tableBound k x.length) ++ w₃)
       · rfl
-      · exact absurd (complexity_le_of_tableVerifier hT.1.1 hc) (not_le.2 hT.1.2)
+      · exact absurd (MCSP.complexity_le_of_tableVerifier hT.1.1 hc) (not_le.2 hT.1.2)
     · by_cases hlt : BitString.binaryValue (table k x.length w₂) < BitString.binaryValue T
       · exact Or.inr (hw₃ hlt)
       · exact Or.inl (not_lt.1 hlt)
@@ -458,7 +409,7 @@ private theorem isAlternatingVerifier_verifier (k : ℕ) :
     refine ⟨table k x.length w₁, ⟨⟨hT, ?_⟩, fun T' hT' => ?_⟩, ?_⟩
     · -- no circuit within the threshold computes the table
       by_contra hle
-      obtain ⟨u, hu, hV⟩ := exists_tableVerifier_append hT (not_lt.1 hle)
+      obtain ⟨u, hu, hV⟩ := MCSP.exists_tableVerifier_append hT (not_lt.1 hle)
       have hlen : (List.replicate (tableBound k x.length) false ++ u).length ≤
           tableBound k x.length + certBound k x.length := by
         have := certLength_le_certBound k x.length
@@ -474,7 +425,8 @@ private theorem isAlternatingVerifier_verifier (k : ℕ) :
         exact hM.trans (Nat.le_add_right _ _)
       obtain ⟨w₃, -, -, hw, -⟩ := key _ (hpad _ hlen)
       rw [table_append hT'.1] at hw
-      exact absurd (complexity_le_of_tableVerifier hT'.1 (hw (not_le.1 hlt))) (not_le.2 hT'.2)
+      exact absurd (MCSP.complexity_le_of_tableVerifier hT'.1 (hw (not_le.1 hlt)))
+        (not_le.2 hT'.2)
     · obtain ⟨w₃, -, -, -, hw⟩ := key _ (hpad [] (Nat.zero_le _))
       exact hw
 

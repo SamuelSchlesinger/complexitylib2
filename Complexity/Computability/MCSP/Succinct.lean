@@ -85,26 +85,19 @@ variable {n s : ℕ}
 theorem mem_iff_exists_mem_computableFunctions {x : Instance} :
     x ∈ SuccinctMCSP ↔
       ∃ g ∈ computableFunctions x.arity x.threshold, ∀ p ∈ x.samples, g p.1 = p.2 := by
-  simp only [mem_computableFunctions]
-  constructor
-  · rintro ⟨c, hc, hp⟩
-    exact ⟨fun y => c.eval interpretation y 0,
-      ⟨c, fun y => funext fun i => by rw [Subsingleton.elim i 0]; rfl, hc⟩, hp⟩
-  · rintro ⟨g, ⟨c, hcg, hc⟩, hp⟩
-    exact ⟨c, hc, fun p hpx => (congrFun (hcg p.1) 0).trans (hp p hpx)⟩
+  simp only [mem_computableFunctions, Circuit.computes_single_iff]
+  exact ⟨fun ⟨c, hc, hp⟩ => ⟨fun y => c.eval interpretation y 0, ⟨c, fun _ => rfl, hc⟩, hp⟩,
+    fun ⟨g, ⟨c, hcg, hc⟩, hp⟩ => ⟨c, hc, fun p hpx => (hcg p.1).trans (hp p hpx)⟩⟩
 
 /-- Samples of `f` on `S` are a yes-instance exactly when `f` has complexity at most `s` on `S`. -/
 theorem ofFunction_mem_iff {f : BooleanFunction n} {S : Finset (BitString n)} :
     Instance.ofFunction f S s ∈ SuccinctMCSP ↔ complexityOn interpretation S (single f) ≤ s := by
   rw [complexityOn_le_iff]
   simp only [SuccinctMCSP, Instance.ofFunction, Set.mem_ofPred_eq, Finset.mem_image,
-    forall_exists_index, and_imp, Prod.forall, Prod.mk.injEq]
-  refine exists_congr fun c => ⟨fun ⟨hc, hp⟩ => ⟨fun x hx => funext fun i => ?_, hc⟩,
-    fun ⟨hc, hs⟩ => ⟨hs, ?_⟩⟩
-  · rw [Subsingleton.elim i 0]
-    exact hp x (f x) x hx rfl rfl
-  · rintro x b y hy rfl rfl
-    exact congrFun (hc hy) 0
+    forall_exists_index, and_imp, Prod.forall, Prod.mk.injEq, Circuit.computesOn_single_iff,
+    Finset.mem_coe]
+  exact exists_congr fun c => ⟨fun ⟨hc, hp⟩ => ⟨fun x hx => hp x (f x) x hx rfl rfl, hc⟩,
+    fun ⟨hc, hs⟩ => ⟨hs, by rintro _ _ y hy rfl rfl; exact hc y hy⟩⟩
 
 /-- With every input as a sample, Succinct MCSP is MCSP. -/
 theorem ofFunction_univ_mem_iff {f : BooleanFunction n} :

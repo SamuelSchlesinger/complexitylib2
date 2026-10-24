@@ -37,6 +37,7 @@ so they stay polynomially long in the length of the table.
 ## Main definitions
 
 * `Cslib.MCSP.encInstance`: the encoding of instances.
+* `Cslib.MCSP.tableFunction`: the Boolean function read from a truth-table list.
 * `Cslib.MCSP.verifier`: the verifier.
 * `Cslib.MCSP.tableVerifier`: the verifier on the bits of a truth table and a threshold.
 
@@ -45,6 +46,8 @@ so they stay polynomially long in the length of the table.
 * `Cslib.MCSP.mem_of_verifier_eq_true`, `Cslib.MCSP.exists_verifier_append`: the verifier accepts
   some certificate exactly for the instances in MCSP, certificates of a fixed length suffice, and
   bits after them are ignored.
+* `Cslib.MCSP.complexity_le_of_tableVerifier`, `Cslib.MCSP.exists_tableVerifier_append`: soundness
+  and completeness of `tableVerifier` on truth-table lists of length `2 ^ m`.
 * `Cslib.MCSP.isVerifier`: the verifier is correct.
 * `Cslib.MCSP.computableTidilyInPolyTime_verifier`,
   `Cslib.MCSP.computableTidilyInPolyTime_tableVerifier`: the verifiers are polynomial-time.
@@ -89,6 +92,10 @@ def budget (n s : ℕ) : ℕ := min s (2 ^ n * (2 * n + 3) + 1)
 def tableValue (table y : List Bool) : Bool :=
   table.getD (BitString.boundedBinaryValue table.length y.reverse) false
 
+/-- The function on `m` inputs with the truth table `T`, read as MCSP reads truth tables. -/
+def tableFunction (m : ℕ) (T : List Bool) : BooleanFunction m :=
+  fun y => tableValue T (List.ofFn y)
+
 /-- The verifier for MCSP: the certificate must describe a circuit on `n` inputs with at most
 `budget n s` gates (`readCertificate`) that agrees with the truth table on all `2 ^ n` inputs. -/
 def verifier (p : Instance × List Bool) : Bool :=
@@ -107,6 +114,12 @@ theorem tableValue_ofFn (x : Instance) (y : BitString x.arity) :
     List.length_ofFn, Nat.min_eq_right hlt.le, List.getD_eq_getElem _ _ (by simp),
     List.getElem_ofFn]
   rfl
+
+/-- The truth table of a function, as a list, is read back as the function. -/
+@[simp] theorem tableFunction_ofFn_truthTable (m : ℕ) (f : BooleanFunction m) :
+    tableFunction m (List.ofFn (truthTable m f)) = f := by
+  funext y
+  exact (tableValue_ofFn ⟨m, truthTable m f, 0⟩ y).trans (by simp [Instance.function])
 
 /-- The polynomial bounding the length of certificates. -/
 noncomputable def certPolynomial : Polynomial ℕ := 40 * (Polynomial.X + 1) ^ 4
@@ -140,10 +153,9 @@ theorem mem_of_verifier_eq_true {x : Instance} {w : List Bool} (hw : verifier (x
   have houtput : (c.outputs 0).toNat = r.2 := by
     have := congrArg (fun p => p.2.headD 0) hc
     simpa [Circuit.code] using this
-  refine complexity_le_iff.2 ⟨c, fun y => funext fun j => ?_, ?_⟩
-  · rw [Fin.fin_one_eq_zero j, Circuit.eval_eq_evalOutput, houtput, show c.code.1 = r.1 by
-      rw [hc], hall _ (BitString.mem_enumList.2 (List.length_ofFn)), tableValue_ofFn,
-      single_apply]
+  refine complexity_le_iff.2 ⟨c, Circuit.computes_single_iff.2 fun y => ?_, ?_⟩
+  · rw [Circuit.eval_eq_evalOutput, houtput, show c.code.1 = r.1 by rw [hc],
+      hall _ (BitString.mem_enumList.2 List.length_ofFn), tableValue_ofFn]
   · calc c.size = r.1.length := by rw [← Circuit.length_code_fst, hc]
       _ ≤ S := length_readCertificate_le _ _ _
       _ ≤ x.threshold := Nat.min_le_left _ _
@@ -171,7 +183,7 @@ theorem exists_verifier_append {x : Instance} (hx : x ∈ MCSP) :
   obtain ⟨y, rfl⟩ : ∃ y' : BitString x.arity, List.ofFn y' = y :=
     ⟨fun i => y[i.val]'(by rw [BitString.mem_enumList.1 hy]; exact i.isLt),
       List.ext_getElem (by simp [BitString.mem_enumList.1 hy]) fun _ _ _ => by simp⟩
-  rw [← Circuit.eval_eq_evalOutput, hc y, tableValue_ofFn, single_apply]
+  rw [← Circuit.eval_eq_evalOutput, Circuit.computes_single_iff.1 hc y, tableValue_ofFn]
 
 /-- `MCSP.verifier` verifies MCSP, with certificates of length `certPolynomial`. -/
 theorem isVerifier : IsVerifier encInstance certPolynomial verifier MCSP := by
@@ -195,6 +207,42 @@ def tableVerifier (r : (List Bool × ℕ) × List Bool) : Bool :=
 theorem verifier_eq_tableVerifier (p : Instance × List Bool) :
     verifier p = tableVerifier ((List.ofFn p.1.table, p.1.threshold), p.2) := by
   simp only [tableVerifier, List.length_ofFn, Nat.log_pow Nat.one_lt_two]
+  rfl
+
+/-- The MCSP instance of a truth table of length `2 ^ m`. -/
+private def tableInstance (m s : ℕ) (T : List Bool) (hT : T.length = 2 ^ m) : Instance :=
+  ⟨m, fun i => T[i.val]'(by rw [hT]; exact i.isLt), s⟩
+
+private theorem ofFn_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m) :
+    List.ofFn (tableInstance m s T hT).table = T := by
+  change List.ofFn (fun i : Fin (2 ^ m) => T[i.val]'(by rw [hT]; exact i.isLt)) = T
+  exact List.ext_getElem (by simp [hT]) fun _ _ _ => by simp
+
+private theorem function_tableInstance {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m) :
+    (tableInstance m s T hT).function = tableFunction m T := by
+  funext y
+  rw [← tableValue_ofFn, ofFn_tableInstance hT]
+  rfl
+
+/-- An accepted certificate for a truth table of length `2 ^ m` bounds the complexity of its
+function. -/
+theorem complexity_le_of_tableVerifier {m s : ℕ} {T c : List Bool} (hT : T.length = 2 ^ m)
+    (h : tableVerifier ((T, s), c) = true) :
+    complexity interpretation (single (tableFunction m T)) ≤ s := by
+  have := mem_of_verifier_eq_true (x := tableInstance m s T hT) (w := c)
+    (by rw [verifier_eq_tableVerifier, ofFn_tableInstance hT]; exact h)
+  rwa [mem_iff, function_tableInstance hT] at this
+
+/-- A truth table of length `2 ^ m` whose function has at most `s` gates has a certificate of
+length `certLength m (budget m s)`, accepted whatever bits follow it. -/
+theorem exists_tableVerifier_append {m s : ℕ} {T : List Bool} (hT : T.length = 2 ^ m)
+    (h : complexity interpretation (single (tableFunction m T)) ≤ s) :
+    ∃ u : List Bool, u.length = certLength m (budget m s) ∧
+      ∀ extra, tableVerifier ((T, s), u ++ extra) = true := by
+  obtain ⟨u, hu, hV⟩ := exists_verifier_append (x := tableInstance m s T hT)
+    (by rw [mem_iff, function_tableInstance hT]; exact h)
+  refine ⟨u, hu, fun extra => ?_⟩
+  rw [← hV extra, verifier_eq_tableVerifier, ofFn_tableInstance hT]
   rfl
 
 /-- The verifier on raw data is polynomial-time. -/
