@@ -51,7 +51,7 @@ example : decodeDesc [false, true, true] = ⟨0, 1, []⟩ := by
 
 /-- Every word decodes to a description of polynomial encoded length. -/
 example : ∃ e c : ℕ, ∀ w : List Bool, (eDesc (decodeDesc w)).length ≤ c * (w.length + 1) ^ e := by
-  obtain ⟨_d, e, h⟩ := exists_computableTidilyInDegree_decodeDesc
+  obtain ⟨_d, e, h⟩ := exists_computableInDegree_decodeDesc
   obtain ⟨c, hc⟩ := h.2
   exact ⟨e, c, fun w => hc w⟩
 
@@ -130,11 +130,11 @@ info: 'Cslib.Complexity.computableTidilyInO_diagonal' depends on axioms:
 #print axioms Cslib.Complexity.computableTidilyInO_diagonal
 
 /--
-info: 'Turing.MultiTapeTM.Universal.exists_computableTidilyInDegree_decodeDesc' depends on axioms:
+info: 'Turing.MultiTapeTM.Universal.exists_computableInDegree_decodeDesc' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.exists_computableTidilyInDegree_decodeDesc
+#print axioms Turing.MultiTapeTM.Universal.exists_computableInDegree_decodeDesc
 
 /--
 info: 'Turing.MultiTapeTM.Universal.decodeDesc_unframe_frame_append' depends on axioms:
