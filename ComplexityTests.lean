@@ -311,6 +311,7 @@ import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
 import ComplexityTests.PlainBasicCutover
 import ComplexityTests.PlainBinaryProviderCutover
+import ComplexityTests.PlainBudgetedUniversal
 import ComplexityTests.PlainCalculus
 import ComplexityTests.PlainCodecCutover
 import ComplexityTests.PlainCoreBridge
