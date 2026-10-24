@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Polynomial-time iteration with invariants
@@ -170,3 +172,23 @@ theorem iterate_of_bounded_growth {count : α → ℕ} {init : α → β} {step 
     (fun _ state => hgrowth state)
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+/-! ### Plain captured-input iteration -/
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+/-- A captured iteration keeps its joint input/state machine and the same polynomial additive
+state-growth contract. The growth bound is proof data and need not itself be computable. -/
+theorem iterateWithInput_of_bounded_growth {α β : Type} {encIn : α ↪ List Bool}
+    {encState : β ↪ List Bool} {count : α → ℕ} {init : α → β} {step : α → β → β}
+    (hcount : ComputableInPolyTime count encIn encUnary)
+    (hinit : ComputableInPolyTime init encIn encState)
+    (hstep : ComputableInPolyTime (fun p : α × β => step p.1 p.2)
+      (encPair encIn encState) encState)
+    {growth : α → ℕ} (hbound : PolyBounded (fun x => (encIn x).length) growth ∧
+      ∀ x state, (encState (step x state)).length ≤ (encState state).length + growth x) :
+    ComputableInPolyTime (fun x => (step x)^[count x] (init x)) encIn encState :=
+  .of_tidy (ComputableTidilyInPolyTime.iterateWithInput_of_bounded_growth
+    hcount.tidy hinit.tidy hstep.tidy hbound)
+
+end Turing.MultiTapeTM.ComputableInPolyTime

@@ -8,6 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Foundations.Data.List.Fold
 
 /-!
@@ -199,3 +201,26 @@ theorem foldl_of_bounded_growth {list : γ → List α} {init : γ → β} {step
     (.const growth) (fun _ state value _ => hgrowth state value)
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+
+/-! ### Plain captured-input folds -/
+
+namespace Turing.MultiTapeTM.ComputableInPolyTime
+
+/-- A captured fold retains joint list/callback encoding evidence and its input-dependent growth
+contract. Growth is required only for elements of the runtime list, for every accumulator. -/
+theorem foldlWithInput_of_bounded_growth {α β γ : Type} {encA : α ↪ List Bool}
+    {encB : β ↪ List Bool} {encIn : γ ↪ List Bool} {encL : List α ↪ List Bool}
+    {list : γ → List α} {init : γ → β} {step : γ → β → α → β}
+    (hinit : ComputableInPolyTime init encIn encB)
+    (hcompute : ComputableInPolyTime list encIn encL ∧
+      ComputableInPolyTime (fun p : (γ × β) × α => step p.1.1 p.1.2 p.2)
+        (encPair (encPair encIn encB) encA) encB ∧
+      ListEncoding encA encL ∧ SizedListEncoding encA encL)
+    {growth : γ → ℕ} (hbound : PolyBounded (fun x => (encIn x).length) growth ∧
+      ∀ x state value, value ∈ list x →
+      (encB (step x state value)).length ≤ (encB state).length + growth x) :
+    ComputableInPolyTime (fun x => (list x).foldl (step x) (init x)) encIn encB :=
+  .of_tidy (ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth hinit.tidy
+    ⟨hcompute.1.tidy, hcompute.2.1.tidy, hcompute.2.2⟩ hbound)
+
+end Turing.MultiTapeTM.ComputableInPolyTime
