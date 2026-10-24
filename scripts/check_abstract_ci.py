@@ -36,6 +36,14 @@ ABSTRACTS_WORKFLOW_FILE = "abstracts.yml"
 ABSTRACTS_WORKFLOW_PATH = f".github/workflows/{ABSTRACTS_WORKFLOW_FILE}"
 ABSTRACTS_WORKFLOW_NAME = "Formal abstract PDFs"
 
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_MANIFEST = ROOT / "abstracts/catalogue.json"
+REQUIRED_PRODUCER_INPUTS = (
+    "scripts/build_abstracts.py",
+    "scripts/abstract_to_tex.py",
+    "scripts/proof_lengths.py",
+)
+
 
 class Rejected(RuntimeError):
     """The available evidence does not authorize publication."""
@@ -187,8 +195,24 @@ def wait_for_success(repository: str, sha: str, wait_seconds: float, *, api=gh_g
             sleep(min(30, remaining))
 
 
-def verify_provenance(directory: Path, repository: str, sha: str) -> dict:
+def verify_provenance(
+    directory: Path,
+    repository: str,
+    sha: str,
+    *,
+    run_id: int | None = None,
+    run_attempt: int | str | None = None,
+    manifest: Path = DEFAULT_MANIFEST,
+    repo_root: Path = ROOT,
+) -> dict:
     root = Path(directory).resolve()
+    checkout_root = Path(repo_root).resolve()
+    manifest_path = Path(manifest).resolve()
+    require(manifest_path.is_file(), f"Missing abstract catalogue manifest: {manifest_path}")
+    manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    entries = manifest_data.get("entries") if isinstance(manifest_data, dict) else None
+    require(isinstance(entries, list) and bool(entries), "Malformed abstract catalogue manifest")
+
     prov_path = root / "provenance.json"
     require(prov_path.is_file(), "Missing provenance.json in abstract artifact")
     source = json.loads(prov_path.read_text(encoding="utf-8"))
@@ -198,16 +222,66 @@ def verify_provenance(directory: Path, repository: str, sha: str) -> dict:
     require(source.get("event") == "push" and source.get("ref") == "refs/heads/main",
             "Not a main build")
     require(source.get("source_dirty") is False, "Artifact was built from modified sources")
+
+    if run_id is not None:
+        require(source.get("run_url") == f"https://github.com/{repository}/actions/runs/{run_id}",
+                "Provenance run_url mismatch")
+    else:
+        run_url = source.get("run_url")
+        require(isinstance(run_url, str)
+                and run_url.startswith(f"https://github.com/{repository}/actions/runs/"),
+                "Malformed provenance run_url")
+    raw_attempt = source.get("run_attempt")
+    require(not isinstance(raw_attempt, bool) and str(raw_attempt or "").isdigit()
+            and int(str(raw_attempt)) > 0, "Malformed provenance run_attempt")
+    if run_attempt is not None:
+        require(str(raw_attempt) == str(run_attempt), "Provenance run_attempt mismatch")
+
     catalogue = source.get("catalogue")
     docs = source.get("documents")
     require(isinstance(catalogue, dict) and isinstance(docs, list) and bool(docs),
             "Malformed document inventory in provenance.json")
+    require(catalogue.get("pdf") == "catalogue.pdf",
+            "Catalogue entry in provenance.json must reference catalogue.pdf")
+    require(len(docs) == len(entries),
+            "Document count in provenance.json does not match catalogue.json")
+    for document, entry in zip(docs, entries):
+        expected_id = entry.get("id")
+        require(isinstance(document, dict) and document.get("id") == expected_id
+                and document.get("pdf") == f"{expected_id}.pdf",
+                f"Document inventory mismatch for {expected_id}")
+
+    inputs = source.get("inputs")
+    require(isinstance(inputs, list) and bool(inputs), "Missing or empty inputs in provenance.json")
+    input_map: dict[str, str] = {}
+    for record in inputs:
+        require(isinstance(record, dict) and isinstance(record.get("path"), str)
+                and isinstance(record.get("sha256"), str)
+                and bool(re.fullmatch(r"[0-9a-f]{64}", record["sha256"])),
+                "Malformed input record in provenance.json")
+        rel_path = record["path"]
+        require(rel_path not in input_map, f"Duplicate input record in provenance.json: {rel_path}")
+        target = (checkout_root / rel_path).resolve()
+        require(target.is_relative_to(checkout_root) and target.is_file()
+                and not target.is_symlink(), f"Missing or invalid input file: {rel_path}")
+        actual_sha = hashlib.sha256(target.read_bytes()).hexdigest()
+        require(actual_sha == record["sha256"], f"Input digest mismatch for {rel_path}")
+        input_map[rel_path] = record["sha256"]
+    manifest_rel = str(manifest_path.relative_to(checkout_root))
+    for required_input in (manifest_rel, *REQUIRED_PRODUCER_INPUTS):
+        require(required_input in input_map,
+                f"Missing required input in provenance.json: {required_input}")
+
     documents = [catalogue, *docs]
     expected_pdfs = set()
     for document in documents:
         require(isinstance(document, dict) and isinstance(document.get("pdf"), str)
                 and isinstance(document.get("pdf_sha256"), str),
                 "Malformed document entry in provenance.json")
+        if "source" in document or "source_sha256" in document:
+            require(isinstance(document.get("source"), str)
+                    and input_map.get(document["source"]) == document.get("source_sha256"),
+                    f"Document source digest mismatch for {document.get('id')}")
         name = document["pdf"]
         require(bool(re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*\.pdf", name)),
                 f"Invalid PDF filename in provenance.json: {name}")
@@ -224,6 +298,29 @@ def verify_provenance(directory: Path, repository: str, sha: str) -> dict:
     return source
 
 
+def check_both_workflows(repository: str, sha: str, *, api=gh_get) -> tuple[dict, dict]:
+    pending_error: Pending | None = None
+    lean_run = None
+    try:
+        lean_run = check_workflow_once(
+            repository, sha,
+            WORKFLOW_FILE, WORKFLOW_PATH, WORKFLOW_NAME, "Lean",
+            api=api, require_current_main=False,
+        )
+    except Pending as error:
+        pending_error = error
+    abstracts_run = check_workflow_once(
+        repository, sha,
+        ABSTRACTS_WORKFLOW_FILE, ABSTRACTS_WORKFLOW_PATH, ABSTRACTS_WORKFLOW_NAME,
+        "Abstracts",
+        api=api, require_current_main=False,
+    )
+    if pending_error is not None:
+        raise pending_error
+    assert lean_run is not None
+    return lean_run, abstracts_run
+
+
 def download_verified_abstracts(
     repository: str,
     sha: str,
@@ -236,38 +333,60 @@ def download_verified_abstracts(
     sleep=time.sleep,
 ) -> tuple[dict, dict]:
     deadline = clock() + wait_seconds
+    dest = Path(output_dir)
+    staging = dest.parent / f".{dest.name}-staging"
+    authority_retries = 0
     while True:
+        if staging.exists():
+            shutil.rmtree(staging)
         try:
-            lean_run = check_workflow_once(
-                repository, sha,
-                WORKFLOW_FILE, WORKFLOW_PATH, WORKFLOW_NAME, "Lean",
-                api=api, require_current_main=False,
+            lean_run, abstracts_run = check_both_workflows(repository, sha, api=api)
+            artifact_name = f"formal-abstracts-{sha}-{abstracts_run['run_attempt']}"
+            staging.mkdir(parents=True, exist_ok=True)
+            downloader(repository, abstracts_run["id"], artifact_name, staging)
+            verify_provenance(
+                staging, repository, sha,
+                run_id=abstracts_run["id"],
+                run_attempt=abstracts_run["run_attempt"],
             )
-            abstracts_run = check_workflow_once(
-                repository, sha,
-                ABSTRACTS_WORKFLOW_FILE, ABSTRACTS_WORKFLOW_PATH, ABSTRACTS_WORKFLOW_NAME,
-                "Abstracts",
-                api=api, require_current_main=False,
-            )
+            post_lean, post_abstracts = check_both_workflows(repository, sha, api=api)
+            if ((post_lean["id"], post_lean["run_attempt"]) != (lean_run["id"], lean_run["run_attempt"])
+                    or (post_abstracts["id"], post_abstracts["run_attempt"])
+                    != (abstracts_run["id"], abstracts_run["run_attempt"])):
+                authority_retries += 1
+                require(authority_retries <= 3,
+                        "Workflow authority changed repeatedly during artifact download")
+                continue
             break
         except Pending as error:
+            if staging.exists():
+                shutil.rmtree(staging)
             remaining = deadline - clock()
             if remaining <= 0:
                 raise
             print(f"{error}; waiting for exact-source validation", flush=True)
             sleep(min(30, remaining))
-    artifact_name = f"formal-abstracts-{sha}-{abstracts_run['run_attempt']}"
-    dest = Path(output_dir)
-    staging = dest.parent / f".{dest.name}-staging"
-    if staging.exists():
-        shutil.rmtree(staging)
-    staging.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            if staging.exists():
+                shutil.rmtree(staging)
+            raise
+
     try:
-        downloader(repository, abstracts_run["id"], artifact_name, staging)
-        verify_provenance(staging, repository, sha)
-        if dest.exists():
-            shutil.rmtree(dest)
-        staging.rename(dest)
+        backup = dest.parent / f".{dest.name}-backup"
+        if backup.exists():
+            shutil.rmtree(backup)
+        had_dest = dest.exists()
+        if had_dest:
+            os.replace(dest, backup)
+        try:
+            staging.rename(dest)
+        except Exception:
+            if had_dest and backup.exists() and not dest.exists():
+                os.replace(backup, dest)
+            raise
+        else:
+            if backup.exists():
+                shutil.rmtree(backup)
     finally:
         if staging.exists():
             shutil.rmtree(staging)

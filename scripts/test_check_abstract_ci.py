@@ -227,29 +227,64 @@ class ExactSourceTests(unittest.TestCase):
         self.assertEqual(command[command.index("--hostname") + 1], "github.com")
 
 
-def write_fixture_artifact(directory: Path, *, sha: str = SHA, repository: str = REPOSITORY,
-                           event: str = "push", ref: str = "refs/heads/main",
-                           dirty: bool = False, tamper_pdf: bool = False,
-                           extra_file: str | None = None) -> None:
+def write_fixture_artifact(
+    directory: Path,
+    *,
+    sha: str = SHA,
+    repository: str = REPOSITORY,
+    event: str = "push",
+    ref: str = "refs/heads/main",
+    dirty: bool = False,
+    run_id: int = 202,
+    run_attempt: int | str = 1,
+    run_url: str | None = None,
+    only_cook_levin: bool = False,
+    inputs: list[dict] | None = None,
+    tamper_input: bool = False,
+    tamper_pdf: bool = False,
+    extra_file: str | None = None,
+    marker: bytes = b"",
+) -> None:
+    manifest_data = json.loads((ROOT / "abstracts/catalogue.json").read_text(encoding="utf-8"))
+    entries = manifest_data["entries"]
+    if only_cook_levin:
+        entries = [entry for entry in entries if entry["id"] == "cook-levin"]
     cat = directory / "catalogue.pdf"
-    doc = directory / "cook-levin.pdf"
-    cat.write_bytes(b"%PDF-catalogue")
-    doc.write_bytes(b"%PDF-cook-levin")
+    cat.write_bytes(b"%PDF-catalogue" + marker)
     cat_digest = hashlib.sha256(cat.read_bytes()).hexdigest()
-    doc_digest = hashlib.sha256(doc.read_bytes()).hexdigest()
+    documents = []
+    for entry in entries:
+        doc_id = entry["id"]
+        pdf = directory / f"{doc_id}.pdf"
+        pdf.write_bytes(f"%PDF-{doc_id}".encode("utf-8") + marker)
+        pdf_digest = hashlib.sha256(pdf.read_bytes()).hexdigest()
+        documents.append({"id": doc_id, "pdf": pdf.name, "pdf_sha256": pdf_digest})
     if tamper_pdf:
-        doc.write_bytes(b"%PDF-tampered")
+        (directory / "cook-levin.pdf").write_bytes(b"%PDF-tampered")
     if extra_file:
         (directory / extra_file).write_bytes(b"extra")
+    if inputs is None:
+        rel_inputs = ("abstracts/catalogue.json", *gate.REQUIRED_PRODUCER_INPUTS)
+        inputs = [
+            {
+                "path": rel,
+                "sha256": ("0" * 64 if tamper_input and rel == "abstracts/catalogue.json"
+                           else hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()),
+            }
+            for rel in rel_inputs
+        ]
     provenance = {
         "source_sha": sha,
         "repository": repository,
         "event": event,
         "ref": ref,
         "source_dirty": dirty,
-        "run_url": "https://example.com/build",
+        "run_url": (f"https://github.com/{repository}/actions/runs/{run_id}"
+                    if run_url is None else run_url),
+        "run_attempt": str(run_attempt),
         "catalogue": {"pdf": "catalogue.pdf", "pdf_sha256": cat_digest},
-        "documents": [{"id": "cook-levin", "pdf": "cook-levin.pdf", "pdf_sha256": doc_digest}],
+        "documents": documents,
+        "inputs": inputs,
     }
     (directory / "provenance.json").write_text(json.dumps(provenance))
 
@@ -291,7 +326,7 @@ class DownloadAndProvenanceTests(unittest.TestCase):
             dest = Path(tmp) / "abstracts"
             _, abs_r = gate.download_verified_abstracts(
                 REPOSITORY, SHA, dest, 60, api=api,
-                downloader=lambda _r, _id, _name, d: write_fixture_artifact(d),
+                downloader=lambda _r, _id, _name, d: write_fixture_artifact(d, run_attempt=2),
                 clock=lambda: now[0], sleep=finish,
             )
             self.assertEqual(abs_r["run_attempt"], 2)
@@ -304,6 +339,11 @@ class DownloadAndProvenanceTests(unittest.TestCase):
             "pull request": {"event": "pull_request"},
             "wrong ref": {"ref": "refs/heads/feature"},
             "dirty source": {"dirty": True},
+            "incomplete catalogue": {"only_cook_levin": True},
+            "wrong run_attempt": {"run_attempt": 99},
+            "wrong run_url": {"run_url": "https://example.com/build"},
+            "empty inputs": {"inputs": []},
+            "tampered input digest": {"tamper_input": True},
             "tampered pdf": {"tamper_pdf": True},
             "unexpected file": {"extra_file": "retired.pdf"},
         }
@@ -316,6 +356,76 @@ class DownloadAndProvenanceTests(unittest.TestCase):
                         downloader=lambda _r, _id, _name, d, kw=kwargs: write_fixture_artifact(d, **kw),
                     )
                 self.assertFalse(dest.exists())
+
+    def test_existing_destination_survives_rename_or_verification_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp) / "abstracts"
+            dest.mkdir()
+            write_fixture_artifact(dest, marker=b"-previous")
+            previous_bytes = (dest / "catalogue.pdf").read_bytes()
+
+            with patch.object(Path, "rename", side_effect=OSError("simulated rename failure")), \
+                    self.assertRaises(OSError):
+                gate.download_verified_abstracts(
+                    REPOSITORY, SHA, dest, 0, api=API(),
+                    downloader=lambda _r, _id, _name, d: write_fixture_artifact(d, marker=b"-new"),
+                )
+            self.assertTrue(dest.is_dir())
+            self.assertEqual((dest / "catalogue.pdf").read_bytes(), previous_bytes)
+
+            with self.assertRaises(gate.Rejected):
+                gate.download_verified_abstracts(
+                    REPOSITORY, SHA, dest, 0, api=API(),
+                    downloader=lambda _r, _id, _name, d: write_fixture_artifact(
+                        d, tamper_pdf=True, marker=b"-bad",
+                    ),
+                )
+            self.assertTrue(dest.is_dir())
+            self.assertEqual((dest / "catalogue.pdf").read_bytes(), previous_bytes)
+
+    def test_rerun_during_download_rejects_failure_and_installs_newer_attempt(self):
+        # Probe 1: downloader starts Lean attempt 2 (in_progress) and Abstracts attempt 2 (failure).
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp) / "abstracts"
+            api = API()
+
+            def failing_rerun_downloader(_r, _id, _name, d):
+                write_fixture_artifact(d, run_attempt=1)
+                api.runs = [run(run_attempt=2, status="in_progress", conclusion=None)]
+                api.abstract_runs = [abstracts_run(run_attempt=2, conclusion="failure")]
+
+            with self.assertRaises(gate.Rejected):
+                gate.download_verified_abstracts(
+                    REPOSITORY, SHA, dest, 60, api=api, downloader=failing_rerun_downloader,
+                )
+            self.assertFalse(dest.exists())
+
+        # Probe 2: downloader sees Abstracts rerun complete at attempt 2 during attempt 1 download;
+        # the gate re-downloads attempt 2 and installs attempt 2 rather than attempt 1.
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp) / "abstracts"
+            api = API()
+            downloads = []
+
+            def upgrading_downloader(repository, run_id, artifact_name, d):
+                downloads.append((repository, run_id, artifact_name))
+                attempt = 1 if len(downloads) == 1 else 2
+                write_fixture_artifact(d, run_attempt=attempt, marker=f"-attempt{attempt}".encode())
+                if len(downloads) == 1:
+                    api.abstract_runs = [abstracts_run(run_attempt=2)]
+
+            _, abs_r = gate.download_verified_abstracts(
+                REPOSITORY, SHA, dest, 0, api=api, downloader=upgrading_downloader,
+            )
+            self.assertEqual(abs_r["run_attempt"], 2)
+            self.assertEqual(
+                downloads,
+                [
+                    (REPOSITORY, 202, f"formal-abstracts-{SHA}-1"),
+                    (REPOSITORY, 202, f"formal-abstracts-{SHA}-2"),
+                ],
+            )
+            self.assertIn(b"-attempt2", (dest / "catalogue.pdf").read_bytes())
 
 
 FAKE_GH = r'''#!/usr/bin/env python3
@@ -387,7 +497,9 @@ class WorkflowBoundaryTests(unittest.TestCase):
                 gh.chmod(0o755)
                 src = root / "artifact-src"
                 src.mkdir()
-                write_fixture_artifact(src, tamper_pdf=overrides.get("tamper_pdf", False))
+                write_fixture_artifact(
+                    src, run_attempt=2, tamper_pdf=overrides.get("tamper_pdf", False),
+                )
                 api = API()
                 (root / "config.json").write_text(json.dumps({
                     "sha": SHA,
