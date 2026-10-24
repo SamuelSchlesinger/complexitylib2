@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Reduction
-import Complexity.Computability.Complexity.Classes.Inclusions
+import Complexity.Computability.Complexity.Classes.PP.Closure
 import Complexity.Computability.Complexity.Classes.SharpP.Closure
 import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString

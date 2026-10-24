@@ -627,6 +627,7 @@ public import Complexity.Computability.Complexity.Classes.PH.SipserLautemann
 public import Complexity.Computability.Complexity.Classes.PP
 public import Complexity.Computability.Complexity.Classes.PP.Bit
 public import Complexity.Computability.Complexity.Classes.PP.Characterization
+public import Complexity.Computability.Complexity.Classes.PP.Closure
 public import Complexity.Computability.Complexity.Classes.PP.Oracle
 public import Complexity.Computability.Complexity.Classes.PP.TruthTable
 public import Complexity.Computability.Complexity.Classes.Padding
@@ -659,6 +660,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.Space
 public import Complexity.Computability.Complexity.Classes.SharpP.WeightedReplay
 public import Complexity.Computability.Complexity.Classes.Space
 public import Complexity.Computability.Complexity.Classes.Space.Basic
+public import Complexity.Computability.Complexity.Classes.Space.Closure
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Membership
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Reduction

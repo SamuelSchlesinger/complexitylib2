@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.PP.TruthTable
-import Complexity.Computability.Complexity.Classes.Inclusions
+import Complexity.Computability.Complexity.Classes.PP.Closure
 import Complexity.Computability.Complexity.Classes.PP.Characterization
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Computability.Complexity.Classes.Inclusions
+import Complexity.Computability.Complexity.Classes.Space.Closure
 import Complexity.Computability.Complexity.Classes.Space.TQBF.Membership
 import Complexity.Computability.Complexity.Parameterized
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Plain
