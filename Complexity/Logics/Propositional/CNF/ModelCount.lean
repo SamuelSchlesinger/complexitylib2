@@ -9,6 +9,7 @@ module
 
 public import Complexity.Logics.Propositional.CNF
 public import Mathlib.Data.Fintype.Pi
+public import Mathlib.Data.Nat.Bitwise
 
 /-!
 # Counting satisfying assignments
@@ -18,6 +19,12 @@ form: the assignments of the variables occurring in `φ` (`CNF.vars`) that satis
 not occurring in `φ` are not counted, so the count does not depend on the type of variables, and
 injective relabelling preserves it (`CNF.modelCount_relabel`). As a function of the formula this
 is the counting problem `#SAT` [Valiant][Valiant1979].
+
+The distinct variables of `φ` in order of their first occurrence are listed by `CNF.distinctVars`,
+of length `CNF.numVars` (`CNF.length_distinctVars`). On any list of variables `vs`,
+`bitsAssignment vs i` assigns to the variable at position `j` of `vs` the binary digit `j` of `i`,
+so satisfiability of a formula whose variables lie in `vs` is a search over `i < 2 ^ |vs|`
+(`CNF.satisfiable_iff_exists_bitsAssignment`).
 
 Counts are usually computed through a map `f` from assignments to some finite type: if two
 satisfying assignments have the same image exactly when they agree on the variables of `φ`, then
@@ -29,12 +36,21 @@ with a given one on the variables of the formula (`CNF.modelCount_eq_one_iff`).
 ## Main definitions
 
 * `Cslib.Logic.PL.CNF.numVars`: the number of distinct variables of a formula.
+* `Cslib.Logic.PL.CNF.distinctVars`: the distinct variables of a formula, in order of first
+  occurrence.
+* `Cslib.Logic.PL.bitsAssignment`: the assignment numbered by `i` on a list of variables.
 * `Cslib.Logic.PL.CNF.extendAssignment`: an assignment of the variables of a formula, extended by
   `false` to all variables.
 * `Cslib.Logic.PL.CNF.modelCount`: the number of satisfying assignments.
 
 ## Main results
 
+* `Cslib.Logic.PL.CNF.mem_distinctVars`, `Cslib.Logic.PL.CNF.nodup_distinctVars`,
+  `Cslib.Logic.PL.CNF.length_distinctVars`: `φ.distinctVars` lists the `φ.numVars` variables of `φ`
+  without repetition.
+* `Cslib.Logic.PL.exists_lt_two_pow_bitsAssignment_eq`,
+  `Cslib.Logic.PL.CNF.satisfiable_iff_exists_bitsAssignment`: satisfiability is a search over
+  `2 ^ |vs|` numbered assignments.
 * `Cslib.Logic.PL.CNF.modelCount_eq_card_filter`: counting satisfying assignments through a map.
 * `Cslib.Logic.PL.CNF.modelCount_relabel`: injective relabelling preserves the count.
 * `Cslib.Logic.PL.CNF.modelCount_pos_iff`, `Cslib.Logic.PL.CNF.modelCount_eq_one_iff`.
@@ -42,6 +58,7 @@ with a given one on the variables of the formula (`CNF.modelCount_eq_one_iff`).
 ## References
 
 * [L. Valiant, *The complexity of computing the permanent*][Valiant1979]
+* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Section 2.3][AroraBarak09]
 -/
 
 @[expose] public section
@@ -61,6 +78,67 @@ theorem CNF.numVars_le_length_vars (φ : CNF V) : φ.numVars ≤ φ.vars.length 
 theorem CNF.numVars_le_mul_length {k : ℕ} {φ : CNF V} (h : ∀ c ∈ φ, c.length ≤ k) :
     φ.numVars ≤ k * φ.length :=
   φ.numVars_le_length_vars.trans (CNF.length_vars_le_mul_length h)
+
+/-- The variables of `φ` without repetitions, in the order of their first occurrences. -/
+def CNF.distinctVars (φ : CNF V) : List V :=
+  (φ.vars.zipIdx.filter fun p => decide (φ.vars.idxOf p.1 = p.2)).map Prod.fst
+
+/-- The distinct variables of `φ` are the variables of `φ`. -/
+theorem CNF.mem_distinctVars {φ : CNF V} {v : V} : v ∈ φ.distinctVars ↔ v ∈ φ.vars := by
+  simp only [CNF.distinctVars, List.mem_map, List.mem_filter, List.mem_zipIdx_iff_getElem?,
+    decide_eq_true_eq, Prod.exists, exists_and_right, exists_eq_right]
+  exact ⟨fun ⟨_, hi, _⟩ => List.mem_of_getElem? hi,
+    fun hv => ⟨φ.vars.idxOf v, by simp [List.idxOf_lt_length_iff.2 hv], rfl⟩⟩
+
+/-- `φ.distinctVars` lists each variable once. -/
+theorem CNF.nodup_distinctVars (φ : CNF V) : φ.distinctVars.Nodup := by
+  have hzip : φ.vars.zipIdx.Nodup := by
+    rw [List.Nodup, List.pairwise_iff_getElem]
+    intro i j hi hj hij h
+    have := congrArg Prod.snd h
+    simp only [List.getElem_zipIdx, Nat.zero_add] at this
+    omega
+  refine (hzip.filter _).map_on ?_
+  rintro ⟨u, i⟩ hu ⟨v, j⟩ hv (rfl : u = v)
+  simp only [List.mem_filter, decide_eq_true_eq] at hu hv
+  rw [← hu.2, ← hv.2]
+
+/-- A formula has `numVars` distinct variables. -/
+theorem CNF.length_distinctVars (φ : CNF V) : φ.distinctVars.length = φ.numVars := by
+  rw [CNF.numVars, ← List.toFinset_card_of_nodup φ.nodup_distinctVars]
+  congr 1
+  ext v
+  simp [CNF.mem_distinctVars]
+
+/-- The assignment numbered by `i` on the list of variables `vs`: the variable at position `j` of
+`vs` takes the binary digit `j` of `i`. -/
+def bitsAssignment (vs : List V) (i : ℕ) (v : V) : Bool := i.testBit (vs.idxOf v)
+
+/-- **Every assignment is numbered.** The assignments of the variables of a duplicate-free list
+`vs` are the numbered assignments `bitsAssignment vs i` for `i < 2 ^ |vs|`. -/
+theorem exists_lt_two_pow_bitsAssignment_eq {vs : List V} (σ : V → Bool) :
+    ∃ i < 2 ^ vs.length, ∀ v ∈ vs, bitsAssignment vs i v = σ v := by
+  refine ⟨(BitVec.ofBoolListLE (vs.map σ)).toNat, (BitVec.isLt _).trans_eq (by simp),
+    fun v hv => ?_⟩
+  have hlt : vs.idxOf v < vs.length := List.idxOf_lt_length_iff.mpr hv
+  rw [bitsAssignment, BitVec.testBit_toNat, BitVec.getLsbD_ofBoolListLE,
+    List.getD_eq_getElem?_getD, List.getElem?_map, List.getElem?_eq_getElem hlt,
+    List.getElem_idxOf hlt]
+  rfl
+
+/-- **Satisfiability by exhaustive search.** A formula whose variables are all in the list `vs` is
+satisfiable exactly when it is satisfied by an assignment numbered by some `i < 2 ^ |vs|`. -/
+theorem CNF.satisfiable_iff_exists_bitsAssignment {φ : CNF V} {vs : List V}
+    (hφ : ∀ v ∈ φ.vars, v ∈ vs) :
+    φ.Satisfiable ↔ ∃ i < 2 ^ vs.length, φ.eval (bitsAssignment vs i) = true := by
+  refine ⟨fun ⟨σ, hσ⟩ => ?_, fun ⟨i, _, hi⟩ => ⟨_, hi⟩⟩
+  obtain ⟨i, hi, hiσ⟩ := exists_lt_two_pow_bitsAssignment_eq (vs := vs) σ
+  exact ⟨i, hi, (CNF.eval_congr fun v hv => hiσ v (hφ v hv)).trans hσ⟩
+
+theorem bitsAssignment_eq_getD (vs : List V) (i : ℕ) (v : V) :
+    bitsAssignment vs i v = i.bits.getD (vs.idxOf v) false := by
+  rw [bitsAssignment, Nat.testBit_eq_inth]
+  rfl
 
 /-- The assignment of all variables extending an assignment `τ` of the variables of `φ` by
 `false`. -/

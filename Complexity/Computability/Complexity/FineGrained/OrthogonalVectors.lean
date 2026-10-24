@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.FineGrained.Exponents
+import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
@@ -108,11 +109,11 @@ def halfVectors (φ : CNF ℕ) (vs : List ℕ) : List (List Bool) :=
 
 /-- The first `⌊n / 2⌋` of the `n` distinct variables. -/
 def firstVars (φ : CNF ℕ) : List ℕ :=
-  (ThreeSAT.distinctVars φ).take ((ThreeSAT.distinctVars φ).length / 2)
+  φ.distinctVars.take (φ.distinctVars.length / 2)
 
 /-- The last `⌈n / 2⌉` of the `n` distinct variables. -/
 def secondVars (φ : CNF ℕ) : List ℕ :=
-  (ThreeSAT.distinctVars φ).drop ((ThreeSAT.distinctVars φ).length / 2)
+  φ.distinctVars.drop (φ.distinctVars.length / 2)
 
 end OV
 
@@ -128,12 +129,12 @@ theorem satisfiesOn_eq_true_iff {vs : List ℕ} {i : ℕ} {c : Clause ℕ} :
   simp [satisfiesOn]
 
 theorem length_firstVars (φ : CNF ℕ) : (firstVars φ).length = φ.numVars / 2 := by
-  simp only [firstVars, List.length_take, ThreeSAT.length_distinctVars]
+  simp only [firstVars, List.length_take, CNF.length_distinctVars]
   omega
 
 theorem length_secondVars (φ : CNF ℕ) :
     (secondVars φ).length = φ.numVars - φ.numVars / 2 := by
-  simp [secondVars, ThreeSAT.length_distinctVars]
+  simp [secondVars, CNF.length_distinctVars]
 
 theorem length_halfVectors (φ : CNF ℕ) (vs : List ℕ) :
     (halfVectors φ vs).length = 2 ^ vs.length := by
@@ -169,13 +170,13 @@ end OV
 
 /-- **The split-and-list reduction is correct** [Williams2005]: `toOV φ ∈ OV ↔ φ ∈ SAT`. -/
 theorem toOV_mem_OV_iff (φ : CNF ℕ) : toOV φ ∈ OV ↔ φ ∈ SAT := by
-  set vs := ThreeSAT.distinctVars φ
+  set vs := φ.distinctVars
   set h := vs.length / 2
   have hdisj : (vs.take h).Disjoint (vs.drop h) :=
-    List.disjoint_of_nodup_append (by rw [List.take_append_drop]; exact ThreeSAT.nodup_distinctVars)
+    List.disjoint_of_nodup_append (by rw [List.take_append_drop]; exact φ.nodup_distinctVars)
   have hcover : ∀ v ∈ φ.vars, v ∈ vs.take h ∨ v ∈ vs.drop h := fun v hv => by
     rw [← List.mem_append, List.take_append_drop]
-    exact ThreeSAT.mem_distinctVars.mpr hv
+    exact CNF.mem_distinctVars.mpr hv
   simp only [toOV, OV, OV.halfVectors, Set.mem_ofPred_eq, List.mem_map, List.mem_range,
     exists_exists_and_eq_and]
   rw [mem_SAT]
@@ -452,26 +453,28 @@ theorem exists_computableTidilyInO_stream {half : CNF ℕ → List ℕ}
     omega
   simp [halfVectors, Function.comp_def]
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 open ComputableTidilyInPolyTime in
 theorem computableTidilyInPolyTime_firstVars :
     ComputableTidilyInPolyTime firstVars encCNF (encList encNat) := by
-  have h : ComputableTidilyInPolyTime (fun φ => ((ThreeSAT.distinctVars φ).reverse.drop
-      ((ThreeSAT.distinctVars φ).length - (ThreeSAT.distinctVars φ).length / 2)).reverse)
+  have h : ComputableTidilyInPolyTime (fun φ => (φ.distinctVars.reverse.drop
+      (φ.distinctVars.length - φ.distinctVars.length / 2)).reverse)
       encCNF (encList encNat) :=
     (listReverse encNat).comp ((dropUnary (encA := encNat)).comp
-      (((listReverse encNat).comp ThreeSAT.computableTidilyInPolyTime_distinctVars).prod
-        (show ComputableTidilyInPolyTime (fun φ => (ThreeSAT.distinctVars φ).length -
-          (ThreeSAT.distinctVars φ).length / 2) encCNF encUnary by fun_prop)))
-  have h' : ComputableTidilyInPolyTime (fun φ => (ThreeSAT.distinctVars φ).take
-      ((ThreeSAT.distinctVars φ).length / 2)) encCNF (encList encNat) := by
+      (((listReverse encNat).comp SAT.computableInPolyTime_distinctVars.tidy).prod
+        (show ComputableTidilyInPolyTime (fun φ => φ.distinctVars.length -
+          φ.distinctVars.length / 2) encCNF encUnary by fun_prop)))
+  have h' : ComputableTidilyInPolyTime (fun φ => φ.distinctVars.take
+      (φ.distinctVars.length / 2)) encCNF (encList encNat) := by
     simpa only [← List.reverse_take, List.reverse_reverse] using h
   exact h'
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 open ComputableTidilyInPolyTime in
 theorem computableTidilyInPolyTime_secondVars :
     ComputableTidilyInPolyTime secondVars encCNF (encList encNat) := by
-  exact (dropUnary (encA := encNat)).comp (ThreeSAT.computableTidilyInPolyTime_distinctVars.prod
-    (show ComputableTidilyInPolyTime (fun φ => (ThreeSAT.distinctVars φ).length / 2) encCNF
+  exact (dropUnary (encA := encNat)).comp (SAT.computableInPolyTime_distinctVars.tidy.prod
+    (show ComputableTidilyInPolyTime (fun φ => φ.distinctVars.length / 2) encCNF
       encUnary by fun_prop))
 
 theorem length_firstVars_le (φ : CNF ℕ) : (firstVars φ).length ≤ (encCNF φ).length := by

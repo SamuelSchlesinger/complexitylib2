@@ -9,8 +9,8 @@ module
 
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+public import Complexity.Logics.Propositional.CNF.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
-import Complexity.Logics.Propositional.CNF.PolyTime
 
 /-!
 # SAT belongs to NP
@@ -32,6 +32,9 @@ Together with `Cslib.Complexity.SAT.isVerifier`, this proves membership in `NP`
 ## Main results
 
 * `Cslib.Complexity.SAT.computableTidilyInPolyTime_verifier`: the verifier is polynomial-time.
+* `Cslib.Complexity.SAT.computableInPolyTime_distinctVars`,
+  `Cslib.Complexity.SAT.computableInPolyTime_numVars`: distinct variables and their unary count for
+  natural-number variables.
 * `Cslib.Complexity.SAT.computableTidilyInPolyTime_clause_length`,
   `Cslib.Complexity.SAT.computableTidilyInPolyTime_length`,
   `Cslib.Complexity.SAT.computableTidilyInPolyTime_vars_length`: literal, clause and
@@ -63,6 +66,18 @@ open ComputableTidilyInPolyTime
 theorem computableTidilyInPolyTime_vars :
     ComputableTidilyInPolyTime (CNF.vars (V := ℕ)) encCNF (encList encNat) :=
   (CNF.computableInPolyTime_vars encNat).tidy
+
+/-- Listing the distinct variables in order of first occurrence is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_distinctVars :
+    ComputableInPolyTime (CNF.distinctVars (V := ℕ)) encCNF (encList encNat) :=
+  CNF.computableInPolyTime_distinctVars encNat
+
+/-- The number of distinct variables of a formula, in unary, is polynomial-time. -/
+@[fun_prop]
+theorem computableInPolyTime_numVars :
+    ComputableInPolyTime (CNF.numVars (V := ℕ)) encCNF encUnary :=
+  CNF.computableInPolyTime_numVars encNat
 
 /-- The number of literals of a polynomial-time clause, in unary, is polynomial-time. -/
 @[fun_prop]

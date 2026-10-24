@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.FineGrained.Exponents
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Search
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.PolyTime
+import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Logics.Propositional.ClauseSet.Sparsification
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
@@ -101,7 +102,7 @@ def root (k : ℕ) (φ : CNF ℕ) : CNF ℕ :=
   if φ.all fun c => decide (c.length ≤ k) then normalize φ else []
 
 /-- The number of rounds of the search, `2 ^ (n / M + 2)` on formulas with `n` variables. -/
-def rounds (M : ℕ) (φ : CNF ℕ) : ℕ := 2 ^ ((ThreeSAT.distinctVars φ).length / M + 2)
+def rounds (M : ℕ) (φ : CNF ℕ) : ℕ := 2 ^ (φ.distinctVars.length / M + 2)
 
 /-- **The sparsification search**: run the search for the given number of rounds from the root,
 and report the accumulator. -/
@@ -284,7 +285,7 @@ private theorem iterate_step {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M)
     (BranchingRule.card_le_of_isLeafWord hK hα hred hk0 φ.vars.toFinset mem_vars_of_mem_root W
       hW).trans (hM φ.numVars)
   have hNr : N ≤ rounds M φ := by
-    rw [rounds, ThreeSAT.length_distinctVars, pow_succ]
+    rw [rounds, CNF.length_distinctVars, pow_succ]
     omega
   have hinit : ([root k φ], false) = ([s₀].map Subtype.val, false) := rfl
   obtain ⟨hfin, hmid⟩ := h [] false
@@ -367,6 +368,7 @@ private theorem computableTidilyInPolyTime_root (k : ℕ) :
   unfold root encState encCNF
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 private theorem computableTidilyInPolyTime_rounds (M : ℕ) :
     ComputableTidilyInPolyTime (rounds M) encCNF encNat := by
   have h := unary_div_const M
@@ -575,11 +577,11 @@ theorem decidableInExpTime_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K 
         c₂ * (L + 1) ^ 3 := by simp only [c₂]; ring
     omega
   have henc : (encNat (rounds M φ)).length = N / M + 3 := by
-    rw [rounds, ThreeSAT.length_distinctVars, encNat_two_pow, List.length_append,
+    rw [rounds, CNF.length_distinctVars, encNat_two_pow, List.length_append,
       List.length_replicate, List.length_singleton]
   have hr : rounds M φ + 1 ≤ 5 * 2 ^ (N / M) := by
     have : rounds M φ = 4 * 2 ^ (N / M) := by
-      rw [rounds, ThreeSAT.length_distinctVars, pow_add]
+      rw [rounds, CNF.length_distinctVars, pow_add]
       ring
     have : 1 ≤ 2 ^ (N / M) := Nat.one_le_two_pow
     omega
