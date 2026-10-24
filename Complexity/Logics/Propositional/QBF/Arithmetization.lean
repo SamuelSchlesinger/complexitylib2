@@ -490,7 +490,7 @@ omit [DecidableEq V] in
   | cons x xs ih => rw [lins_cons, toQBF, ih]
 
 /-- After linearizing the variables of `xs`, the degree in each of them is at most `1`. -/
-theorem degBound_lins (x : V) (xs : List V) :
+private theorem degBound_lins (x : V) (xs : List V) :
     (lins xs e).degBound x = if x ∈ xs then 1 else e.degBound x := by
   induction xs with
   | nil => simp
@@ -502,7 +502,7 @@ theorem degBound_lins (x : V) (xs : List V) :
 
 /-- Linearizing the variables of `xs` costs at most `D` per variable when every degree is at most
 `D`. -/
-theorem roundDegree_lins_le (xs : List V) {D : ℕ} (h : ∀ x, e.degBound x ≤ D) (hD : 1 ≤ D) :
+private theorem roundDegree_lins_le (xs : List V) {D : ℕ} (h : ∀ x, e.degBound x ≤ D) (hD : 1 ≤ D) :
     (lins xs e).roundDegree ≤ xs.length * D + e.roundDegree := by
   induction xs with
   | nil => simp
@@ -520,7 +520,8 @@ omit [DecidableEq V] in
     omega
 
 omit [DecidableEq V] in
-theorem mem_vars_lins {xs : List V} {w : V} (h : w ∈ (lins xs e).vars) : w ∈ xs ∨ w ∈ e.vars := by
+private theorem mem_vars_lins {xs : List V} {w : V} (h : w ∈ (lins xs e).vars) :
+    w ∈ xs ∨ w ∈ e.vars := by
   induction xs with
   | nil => exact Or.inr h
   | cons x xs ih =>
@@ -531,8 +532,8 @@ theorem mem_vars_lins {xs : List V} {w : V} (h : w ∈ (lins xs e).vars) : w ∈
 
 /-- Linearizing the variables of `xs` keeps the largest round degree at most `D` when every degree
 is at most `D`. -/
-theorem maxRoundDegree_lins_le (xs : List V) {D : ℕ} (h : ∀ x, e.degBound x ≤ D) (hD : 1 ≤ D) :
-    (lins xs e).maxRoundDegree ≤ max D e.maxRoundDegree := by
+private theorem maxRoundDegree_lins_le (xs : List V) {D : ℕ} (h : ∀ x, e.degBound x ≤ D)
+    (hD : 1 ≤ D) : (lins xs e).maxRoundDegree ≤ max D e.maxRoundDegree := by
   induction xs with
   | nil => exact le_max_right _ _
   | cons y xs ih =>
