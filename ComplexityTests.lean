@@ -349,6 +349,7 @@ import ComplexityTests.ProbabilityNotation
 import ComplexityTests.ProbabilityToolkit
 import ComplexityTests.ProbabilityToolkit2
 import ComplexityTests.ProbabilityToolkit3
+import ComplexityTests.ProgramCertificateDiagnostics
 import ComplexityTests.Programs
 import ComplexityTests.ProofComplexity
 import ComplexityTests.ProofComplexity.Pigeonhole

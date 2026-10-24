@@ -72,6 +72,14 @@ def efficiencyKey (statement : Expr) : MetaM (Name × Name × Bool) := do
   let statement := statement.consumeMData
   let some predicate := statement.getAppFn.constName?
     | throwError "expected an efficiency statement"
+  unless predicate == `Turing.MultiTapeTM.ComputableInPolyTime ||
+      predicate == `Turing.MultiTapeTM.ComputableTidilyInPolyTime ||
+      predicate == `Cslib.Probability.IsPPTOn || predicate == `Cslib.Probability.IsPPT ||
+      predicate == `Cslib.WordRAM.Refines ||
+      predicate == `Cslib.WordRAM.ComputableInPolyTime ||
+      predicate == `Cslib.WordRAM.UniformComputableInPolyTime do
+    throwError "unsupported efficiency predicate `{predicate}` for `program_certificate`; \
+      expected TM polynomial time, PPT, or a documented word-RAM certificate"
   let argument := if predicate == `Turing.MultiTapeTM.ComputableTidilyInPolyTime ||
       predicate == `Turing.MultiTapeTM.ComputableInPolyTime then
     statement.getAppArgs[2]! else statement.getAppArgs.back!
@@ -126,8 +134,11 @@ private def hasGlobalFunProp (decl : Name) : CoreM Bool := do
     (← hasGlobalEntry transitionTheoremsExt (·.thmName) decl)
 
 /-- `@[program_certificate]` registers an efficiency certificate for `polytime` and `ppt`. Its
-conclusion must be a `ComputableTidilyInPolyTime`, `IsPPTOn` or `IsPPT` statement whose program
-body applies a constant, possibly under an output encoding.
+conclusion must be a `ComputableInPolyTime`, `ComputableTidilyInPolyTime`, `IsPPTOn` or `IsPPT`
+statement, or one of the word-RAM predicates `WordRAM.Refines`, `WordRAM.ComputableInPolyTime`,
+`WordRAM.UniformComputableInPolyTime` used by `Tactic.WordRAM`. The indexed argument must apply
+a constant, possibly under an output encoding. Other predicates are rejected rather than indexed
+by an unrelated final argument.
 Certificates are also registered with `fun_prop` for use in larger compositions, unless the same
 declaration already has a global registration.
 
