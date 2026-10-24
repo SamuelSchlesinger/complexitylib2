@@ -10,6 +10,7 @@ module
 public import Complexity.Probability.PMF.Map
 public import Complexity.Probability.Conditioning
 public import Mathlib.Probability.Independence.Basic
+import Complexity.Probability.PMF.Expect
 import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Fintype.Pi
 
@@ -29,6 +30,8 @@ Replacing one coordinate of a uniform tuple by a fresh uniform sample preserves 
 
 * `Cslib.Probability.PMF.toMeasure_pi`, `.toMeasure_bind_pair`, `.iIndepFun_pi`: product-measure
   and independence laws.
+* `Cslib.Probability.PMF.sum_pi_mul_eval`, `Cslib.Probability.PMF.sum_pi_mul_sum`: expectation of
+  coordinate functions and their sums under `pi p`.
 * `Cslib.Probability.PMF.pi_bind_update_pair`: reveal a coordinate and retain the entire tuple.
 * `Cslib.Probability.PMF.pi_map`, `.pi_bind`: coordinatewise mapping and sampling laws.
 * `Cslib.Probability.PMF.conditionalSnd_pi_joint`: coordinatewise conditioning.
@@ -105,6 +108,23 @@ theorem iIndepFun_pi [∀ i, MeasurableSpace (α i)] [∀ i, MeasurableSingleton
   apply PMF.toMeasure_injective
   rw [← PMF.toMeasure_map _ _ (measurable_pi_apply i), toMeasure_pi]
   exact (measurePreserving_eval (fun i => (p i).toMeasure) i).map_eq
+
+/-- The expectation of a function of coordinate `i` under the product distribution `pi p` is its
+expectation under `p i`. -/
+theorem sum_pi_mul_eval [DecidableEq ι] [∀ i, Fintype (α i)] (p : ∀ i, PMF (α i)) (i : ι)
+    (f : α i → ℝ) :
+    ∑ x, (pi p x).toReal * f (x i) = ∑ a, (p i a).toReal * f a := by
+  rw [← sum_map_mul (pi p) (fun x => x i) f, pi_map_eval]
+
+/-- Linearity of expectation for a sum of coordinate functions under the product distribution
+`pi p`. -/
+theorem sum_pi_mul_sum [DecidableEq ι] [∀ i, Fintype (α i)] (p : ∀ i, PMF (α i))
+    (score : ∀ i, α i → ℝ) :
+    ∑ x, (pi p x).toReal * ∑ i, score i (x i) =
+      ∑ i, ∑ a, (p i a).toReal * score i a := by
+  simp_rw [Finset.mul_sum]
+  rw [Finset.sum_comm]
+  exact Finset.sum_congr rfl fun i _ => sum_pi_mul_eval p i (score i)
 
 /-- Independent uniform coordinates give the uniform distribution on tuples. -/
 theorem pi_uniformOfFintype [DecidableEq ι] [∀ i, Fintype (α i)] [∀ i, Nonempty (α i)] :

@@ -86,4 +86,25 @@ example (side : PMF Bool) (source : Bool → PMF Bool) :
       2 * ∑ info, (side info).toReal * collisionProbability (source info) := by
   simpa using (xor_twoUniversal (PMF.pure false)).leftover_hash_conditional_sq side source
 
+/--
+info: 'Cslib.Probability.IsDeltaUniversalHash.isTwoUniversal' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms IsDeltaUniversalHash.isTwoUniversal
+
+/--
+info: 'Cslib.Probability.isTwoUniversal_uniformOfFintype_iff' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms isTwoUniversal_uniformOfFintype_iff
+
+/--
+info: 'Cslib.Probability.IsTwoUniversal.expect_boole_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms IsTwoUniversal.expect_boole_le
+
 end ComplexityTests.UniversalHash

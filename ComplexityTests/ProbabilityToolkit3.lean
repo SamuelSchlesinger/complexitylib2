@@ -170,7 +170,7 @@ private theorem hasBoundedDifferences_distinct {γ : Type*} [DecidableEq γ] (n 
 -- By linearity of expectation under `pi`, `n` fair coins have mean `n / 2` heads.
 example (n : ℕ) :
     ∑ y, ((pi fun _ : Fin n => uniformOfFintype Bool) y).toReal * heads n y = n / 2 := by
-  refine (sum_pi_mul_sum_eq (fun _ : Fin n => uniformOfFintype Bool)
+  refine (sum_pi_mul_sum (fun _ : Fin n => uniformOfFintype Bool)
     (fun _ b => if b then (1 : ℝ) else 0)).trans ?_
   simp [div_eq_mul_inv]
 
@@ -285,11 +285,32 @@ info: 'Cslib.Probability.HasBoundedDifferences.pi_le_mean_sub' depends on axioms
 #print axioms Cslib.Probability.HasBoundedDifferences.pi_le_mean_sub
 
 /--
-info: 'Cslib.Probability.PMF.sum_pi_mul_sum_eq' depends on axioms:
+info: 'Cslib.Probability.PMF.toOuterMeasure_abs_sub_ge_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.sum_pi_mul_sum_eq
+#print axioms Cslib.Probability.PMF.toOuterMeasure_abs_sub_ge_le
+
+/--
+info: 'Cslib.Probability.PMF.toOuterMeasure_abs_sub_ge_toReal_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.toOuterMeasure_abs_sub_ge_toReal_le
+
+/--
+info: 'Cslib.Probability.PMF.sum_pi_mul_eval' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.sum_pi_mul_eval
+
+/--
+info: 'Cslib.Probability.PMF.sum_pi_mul_sum' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.sum_pi_mul_sum
 
 /--
 info: 'Cslib.Probability.HasBoundedDifferences.pi_abs_sub_mean_ge' depends on axioms:

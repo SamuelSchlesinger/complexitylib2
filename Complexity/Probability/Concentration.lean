@@ -24,13 +24,11 @@ import Mathlib.Tactic.Positivity
 The finite-PMF form of Hoeffding's inequality exposes ordinary sums and event probabilities.
 Its proof specializes McDiarmid's bounded-differences inequality
 (`Complexity.Probability.BoundedDifferences`) to sums of bounded coordinate scores via linearity
-of expectation (`sum_pi_mul_sum_eq`). No measurable-space choices appear in the client-facing
+of expectation (`sum_pi_mul_sum`). No measurable-space choices appear in the client-facing
 statements.
 
 ## Main results
 
-* `Cslib.Probability.PMF.sum_pi_mul_eval`, `Cslib.Probability.PMF.sum_pi_mul_sum_eq`: linearity
-  of expectation for coordinate functions and their sums under `pi p`.
 * `Cslib.Probability.PMF.pi_sum_le_mean_sub`: lower-tail concentration of bounded scores.
 * `Cslib.Probability.PMF.pi_sum_ge_mean_add`: the corresponding upper-tail bound.
 * `Cslib.Probability.PMF.pi_sum_abs_sub_mean_ge`: the two-sided bound.
@@ -55,21 +53,6 @@ Adapted from Probability/Concentration.lean on the cslib `crypto` branch at
 namespace Cslib.Probability.PMF
 
 variable {ι : Type*} [Fintype ι] {α : ι → Type*} [∀ i, Fintype (α i)]
-
-/-- The expectation of a function of coordinate `i` under the product distribution `pi p` is its
-expectation under `p i`. -/
-theorem sum_pi_mul_eval [DecidableEq ι] (p : ∀ i, PMF (α i)) (i : ι) (f : α i → ℝ) :
-    ∑ x, (pi p x).toReal * f (x i) = ∑ a, (p i a).toReal * f a := by
-  rw [← sum_map_mul (pi p) (fun x => x i) f, pi_map_eval]
-
-/-- Linearity of expectation for a sum of coordinate functions under the product distribution
-`pi p`. -/
-theorem sum_pi_mul_sum_eq [DecidableEq ι] (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ) :
-    ∑ x, (pi p x).toReal * ∑ i, score i (x i) =
-      ∑ i, ∑ a, (p i a).toReal * score i a := by
-  simp_rw [Finset.mul_sum]
-  rw [Finset.sum_comm]
-  exact Finset.sum_congr rfl fun i _ => sum_pi_mul_eval p i (score i)
 
 omit [Fintype ι] [∀ i, Fintype (α i)] in
 open Classical in
@@ -106,7 +89,7 @@ private theorem sum_pi_mul_sum_clampScore_eq [DecidableEq ι]
     (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ) :
     ∑ y, (pi p y).toReal * ∑ i, clampScore p score i (y i) =
       ∑ i, ∑ a, (p i a).toReal * score i a := by
-  rw [sum_pi_mul_sum_eq]
+  rw [sum_pi_mul_sum]
   refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun a _ => ?_
   dsimp only [clampScore]
   split_ifs with ha
@@ -124,6 +107,17 @@ private theorem toOuterMeasure_congr_on_support {β : Type*} (q : PMF β) {s t :
   · simp only [Set.indicator_apply, h outcome ho]
   · simp [Set.indicator_apply, (q.apply_eq_zero_iff outcome).mpr ho]
 
+private theorem toOuterMeasure_pi_clampScore_eq [DecidableEq ι]
+    (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ) (P : ℝ → ℝ → Prop) :
+    (pi p).toOuterMeasure
+      {outcome | P (∑ i, score i (outcome i)) (∑ i, ∑ a, (p i a).toReal * score i a)} =
+    (pi p).toOuterMeasure
+      {x | P (∑ i, clampScore p score i (x i))
+        (∑ y, (pi p y).toReal * ∑ i, clampScore p score i (y i))} :=
+  toOuterMeasure_congr_on_support (pi p) fun outcome ho => by
+    simp only [Set.mem_ofPred_eq, sum_clampScore_eq_of_mem_support p score ho,
+      sum_pi_mul_sum_clampScore_eq]
+
 omit [∀ i, Fintype (α i)] in
 private theorem sum_const_sq_eq (bound : ℝ) :
     (∑ _i : ι, bound ^ 2) = Fintype.card ι * bound ^ 2 := by
@@ -138,18 +132,11 @@ theorem pi_sum_le_mean_sub (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
       ∑ i, score i (outcome i) ≤ (∑ i, ∑ a, (p i a).toReal * score i a) - ε}).toReal ≤
         Real.exp (-2 * ε ^ 2 / (Fintype.card ι * bound ^ 2)) := by
   classical
-  have h := (hasBoundedDifferences_clampScore p score hbound hscore).pi_le_mean_sub p hε
-  rw [sum_const_sq_eq] at h
-  rw [toOuterMeasure_congr_on_support (pi p)
-    (t := {x | ∑ i, clampScore p score i (x i) ≤
-      (∑ y, (pi p y).toReal * ∑ i, clampScore p score i (y i)) - ε})
-    fun outcome ho => by
-      simp only [Set.mem_ofPred_eq, sum_clampScore_eq_of_mem_support p score ho,
-        sum_pi_mul_sum_clampScore_eq]]
-  exact h
+  rw [toOuterMeasure_pi_clampScore_eq p score (fun s m => s ≤ m - ε), ← sum_const_sq_eq]
+  exact (hasBoundedDifferences_clampScore p score hbound hscore).pi_le_mean_sub p hε
 
-/-- The upper-tail counterpart of `pi_sum_le_mean_sub`, obtained by reflecting each score
-within its bounded interval. -/
+/-- The upper-tail counterpart of `pi_sum_le_mean_sub`, obtained by clamping scores outside the
+support and applying `HasBoundedDifferences.pi_ge_mean_add`. -/
 theorem pi_sum_ge_mean_add (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
     {bound ε : ℝ} (hbound : 0 ≤ bound)
     (hscore : ∀ i a, a ∈ (p i).support → score i a ∈ Set.Icc 0 bound) (hε : 0 ≤ ε) :
@@ -157,15 +144,8 @@ theorem pi_sum_ge_mean_add (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
       (∑ i, ∑ a, (p i a).toReal * score i a) + ε ≤ ∑ i, score i (outcome i)}).toReal ≤
         Real.exp (-2 * ε ^ 2 / (Fintype.card ι * bound ^ 2)) := by
   classical
-  have h := (hasBoundedDifferences_clampScore p score hbound hscore).pi_ge_mean_add p hε
-  rw [sum_const_sq_eq] at h
-  rw [toOuterMeasure_congr_on_support (pi p)
-    (t := {x | (∑ y, (pi p y).toReal * ∑ i, clampScore p score i (y i)) + ε ≤
-      ∑ i, clampScore p score i (x i)})
-    fun outcome ho => by
-      simp only [Set.mem_ofPred_eq, sum_clampScore_eq_of_mem_support p score ho,
-        sum_pi_mul_sum_clampScore_eq]]
-  exact h
+  rw [toOuterMeasure_pi_clampScore_eq p score (fun s m => m + ε ≤ s), ← sum_const_sq_eq]
+  exact (hasBoundedDifferences_clampScore p score hbound hscore).pi_ge_mean_add p hε
 
 /-- The two-sided finite Hoeffding bound, with an explicit factor of two for the two tails. -/
 theorem pi_sum_abs_sub_mean_ge (p : ∀ i, PMF (α i)) (score : ∀ i, α i → ℝ)
@@ -174,16 +154,9 @@ theorem pi_sum_abs_sub_mean_ge (p : ∀ i, PMF (α i)) (score : ∀ i, α i → 
     ((pi p).toOuterMeasure {outcome |
       ε ≤ |(∑ i, score i (outcome i)) - ∑ i, ∑ a, (p i a).toReal * score i a|}).toReal ≤
         2 * Real.exp (-2 * ε ^ 2 / (Fintype.card ι * bound ^ 2)) := by
-  classical
-  have h := (hasBoundedDifferences_clampScore p score hbound hscore).pi_abs_sub_mean_ge p hε
-  rw [sum_const_sq_eq] at h
-  rw [toOuterMeasure_congr_on_support (pi p)
-    (t := {x | ε ≤ |(∑ i, clampScore p score i (x i)) -
-      ∑ y, (pi p y).toReal * ∑ i, clampScore p score i (y i)|})
-    fun outcome ho => by
-      simp only [Set.mem_ofPred_eq, sum_clampScore_eq_of_mem_support p score ho,
-        sum_pi_mul_sum_clampScore_eq]]
-  exact h
+  linarith [toOuterMeasure_abs_sub_ge_toReal_le (pi p)
+    (fun outcome => ∑ i, score i (outcome i)) (∑ i, ∑ a, (p i a).toReal * score i a) ε,
+    pi_sum_ge_mean_add p score hbound hscore hε, pi_sum_le_mean_sub p score hbound hscore hε]
 
 section Average
 
