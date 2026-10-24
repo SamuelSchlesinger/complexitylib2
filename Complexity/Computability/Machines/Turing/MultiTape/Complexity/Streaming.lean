@@ -222,9 +222,9 @@ theorem ComputableTidilyInTimeAndSpace.foldl_bits_stream_spec {σ : Type}
 /-- A fold with a fixed finite state type takes linear time and constant work space. The constant
 may depend on the state type, its encoding and the transition function; this is not a uniform bound
 for a family of growing state types. The encoded final state is bounded as well. -/
-theorem ComputableTidilyInO.foldl_bits_finite {σ : Type} [Finite σ]
+theorem ComputableInO.foldl_bits_finite {σ : Type} [Finite σ]
     (enc : σ ↪ List Bool) (step : σ → Bool → σ) (init : σ) :
-    ComputableTidilyInO (fun l => l.foldl step init) encBits enc List.length (fun _ => 0) := by
+    ComputableInO (fun l => l.foldl step init) encBits enc List.length (fun _ => 0) := by
   classical
   let := Fintype.ofFinite σ
   let b := Finset.univ.sup (fun s => (enc s).length)
@@ -235,7 +235,7 @@ theorem ComputableTidilyInO.foldl_bits_finite {σ : Type} [Finite σ]
   obtain ⟨c, h⟩ := hk.computableTidilyInTimeAndSpace.foldl_bits_stream init
     (R := fun _ => 2 * k + 2) (Q := fun _ => 0) (B := fun _ => b)
     (fun _ _ _ => le_rfl) (fun _ _ _ => le_rfl) (fun _ _ _ => hb _)
-  refine ComputableTidilyInO.of_bounds h (c * (2 * k + 2 * b + 4) + b) ?_ ?_ ?_
+  refine ComputableInO.of_bounds h.computableInTimeAndSpace (c * (2 * k + 2 * b + 4) + b) ?_ ?_ ?_
   · intro l
     have hr : l.length * (2 * k + 2 + b + 1) + b + 1 ≤
         (2 * k + 2 * b + 4) * (l.length + 1) := by nlinarith

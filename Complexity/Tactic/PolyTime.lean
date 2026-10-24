@@ -54,37 +54,37 @@ attribute [aesop safe forward (rule_sets := [PolyTime])] ComputableInPolyTime.ti
 -- A fixed finite input type admits a lookup machine for any fixed encodings. This does not
 -- certify a uniform family whose input type grows with a runtime parameter.
 attribute [aesop safe apply (rule_sets := [PolyTime])]
-  ComputableTidilyInPolyTime.of_finite
+
   ComputableInPolyTime.of_finite
 
 -- Boolean scans hide the element encoding in their result. Resolve the list certificate before
 -- searching for a joint callback certificate, including when the callback captures local values.
 attribute [program_certificate hlist]
-  ComputableTidilyInPolyTime.anyWithInput ComputableTidilyInPolyTime.allWithInput
-  ComputableTidilyInPolyTime.mapToBitsWithInput
-  ComputableTidilyInPolyTime.bitsFoldlWithInput
+
+
+
   ComputableInPolyTime.anyWithInput
   ComputableInPolyTime.allWithInput
   ComputableInPolyTime.mapToBitsWithInput
   ComputableInPolyTime.bitsFoldlWithInput
-attribute [program_certificate] ComputableTidilyInPolyTime.bitsStrictMajorityWithInput
+attribute [program_certificate]
   ComputableInPolyTime.bitsStrictMajorityWithInput
 
 -- Expose inner table and loop obligations to Aesop when composition alone cannot finish them.
-attribute [program_certificate hvalues] ComputableTidilyInPolyTime.pi_update'
+attribute [program_certificate hvalues]
   ComputableInPolyTime.pi_update'
 attribute [program_certificate]
-  ComputableTidilyInPolyTime.bitsReverseWithInput ComputableTidilyInPolyTime.listReverseWithInput
+
   ComputableInPolyTime.bitsReverseWithInput
   ComputableInPolyTime.listReverseWithInput
 
 -- Require the growth contract before exploring encodings on alternative computation branches.
 -- Each contract keeps the evidence that must agree on a bound or an encoding in one search.
 attribute [program_certificate hbound hcompute]
-  ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth
+
   ComputableInPolyTime.foldlWithInput_of_bounded_growth
 attribute [program_certificate hbound]
-  ComputableTidilyInPolyTime.iterateWithInput_of_bounded_growth
+
   ComputableInPolyTime.iterateWithInput_of_bounded_growth
 
 open Lean Meta Elab Tactic in
@@ -101,7 +101,7 @@ private meta def polytimeListInstance : TacticM Unit := withMainContext do
 -- Computed finite tables use the ordinary application rule. Its function-valued head cannot
 -- be registered as a `fun_prop` theorem, so Aesop supplies this closure step.
 attribute [aesop unsafe 75% apply (rule_sets := [PolyTime])]
-  ComputableTidilyInPolyTime.pi_apply'
+
   ComputableInPolyTime.pi_apply'
 
 open Lean Meta in
@@ -156,18 +156,18 @@ open Lean Meta Elab Tactic in
 private meta def polytimeConstruct (guard : TacticM Unit → TacticM Unit) : TacticM Unit :=
   withMainContext do
     let target := (← instantiateMVars (← getMainTarget)).consumeMData
-    unless target.isAppOf ``ComputableTidilyInPolyTime do
+    unless target.isAppOf ``ComputableInPolyTime do
       throwError "expected a polynomial-time goal"
     let rawBits := target.getAppArgs[4]!.isConstOf ``encBits
     let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
     let rule ← lambdaTelescope program fun _ body => do
       if body.isAppOf ``HAppend.hAppend || body.isAppOf ``List.append then
-        return if rawBits then ``ComputableTidilyInPolyTime.bitsAppend
-          else ``ComputableTidilyInPolyTime.listAppend'
+        return if rawBits then ``ComputableInPolyTime.bitsAppend
+          else ``ComputableInPolyTime.listAppend'
       if body.isAppOf ``List.cons then
-        return if rawBits then ``ComputableTidilyInPolyTime.bitsCons
-          else ``ComputableTidilyInPolyTime.cons'
-      if body.isAppOf ``Prod.mk then return ``ComputableTidilyInPolyTime.prod
+        return if rawBits then ``ComputableInPolyTime.bitsCons
+          else ``ComputableInPolyTime.cons'
+      if body.isAppOf ``Prod.mk then return ``ComputableInPolyTime.prod
       throwError "expected a constructor"
     guard <| liftMetaTactic fun goal => goal.applyConst rule
 
@@ -182,34 +182,34 @@ private meta def polytimeFunProp : TacticM Unit :=
 /-- Expose a negated guard to loop rules when compositional proof search needs their help. -/
 @[aesop unsafe 80% apply (rule_sets := [PolyTime])]
 theorem bool_not_rule {α : Type} {input : α ↪ List Bool} {guard : α → Bool}
-    (hguard : ComputableTidilyInPolyTime guard input encBool) :
-    ComputableTidilyInPolyTime (fun a => !(guard a)) input encBool :=
-  ComputableTidilyInPolyTime.bool_not.comp hguard
+    (hguard : ComputableInPolyTime guard input encBool) :
+    ComputableInPolyTime (fun a => !(guard a)) input encBool :=
+  ComputableInPolyTime.bool_not.comp hguard
 
 /-- Fix a raw bit list's encoding and expose the two growth cases before proof search. -/
 theorem foldl_bits_rule {γ β : Type} {encIn : γ ↪ List Bool} {encB : β ↪ List Bool}
     {list : γ → List Bool} {init : γ → β} {step : β → Bool → β}
-    (hlist : ComputableTidilyInPolyTime list encIn encBits)
-    (hinit : ComputableTidilyInPolyTime init encIn encB)
-    (hstep : ComputableTidilyInPolyTime (fun pair : β × Bool => step pair.1 pair.2)
+    (hlist : ComputableInPolyTime list encIn encBits)
+    (hinit : ComputableInPolyTime init encIn encB)
+    (hstep : ComputableInPolyTime (fun pair : β × Bool => step pair.1 pair.2)
       (encPair encB encBool) encB) {growth : ℕ}
     (hgrowth : ∀ state, (encB (step state false)).length ≤ (encB state).length + growth ∧
       (encB (step state true)).length ≤ (encB state).length + growth) :
-    ComputableTidilyInPolyTime (fun x => (list x).foldl step (init x)) encIn encB :=
-  ComputableTidilyInPolyTime.foldl_of_bounded_growth hlist hinit hstep
+    ComputableInPolyTime (fun x => (list x).foldl step (init x)) encIn encB :=
+  ComputableInPolyTime.foldl_of_bounded_growth hlist hinit hstep
     (fun state bit => by cases bit; exacts [(hgrowth state).1, (hgrowth state).2])
 
 /-- Fix a framed list's encoding before proof search infers the element encoding. -/
 theorem foldl_list_rule {γ α β : Type} {encIn : γ ↪ List Bool}
     {encA : α ↪ List Bool} {encB : β ↪ List Bool}
     {list : γ → List α} {init : γ → β} {step : β → α → β}
-    (hlist : ComputableTidilyInPolyTime list encIn (encList encA))
-    (hinit : ComputableTidilyInPolyTime init encIn encB)
-    (hstep : ComputableTidilyInPolyTime (fun pair : β × α => step pair.1 pair.2)
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (hinit : ComputableInPolyTime init encIn encB)
+    (hstep : ComputableInPolyTime (fun pair : β × α => step pair.1 pair.2)
       (encPair encB encA) encB) {growth : ℕ}
     (hgrowth : ∀ state value, (encB (step state value)).length ≤ (encB state).length + growth) :
-    ComputableTidilyInPolyTime (fun x => (list x).foldl step (init x)) encIn encB :=
-  ComputableTidilyInPolyTime.foldl_of_bounded_growth hlist hinit hstep hgrowth
+    ComputableInPolyTime (fun x => (list x).foldl step (init x)) encIn encB :=
+  ComputableInPolyTime.foldl_of_bounded_growth hlist hinit hstep hgrowth
 
 open Lean Meta Elab Tactic in
 /-- Resolve the traversed list's encoding before certifying the step. Try a nonincreasing state
@@ -217,7 +217,7 @@ bound first, committing to it only after its growth obligation has been proved. 
 private meta def polytimeFold (guard : TacticM Unit → TacticM Unit) : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
     let target := (← instantiateMVars (← getMainTarget)).consumeMData
-    unless target.isAppOf ``ComputableTidilyInPolyTime do
+    unless target.isAppOf ``ComputableInPolyTime do
       throwError "expected a polynomial-time goal"
     let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
     let isFold ← lambdaTelescope program fun _ body => pure (body.isAppOf ``List.foldl)
@@ -245,13 +245,13 @@ open Lean Meta Elab Tactic in
 private meta def polytimeIterate (guard : TacticM Unit → TacticM Unit) : TacticM Unit :=
   withMainContext do
     let target := (← instantiateMVars (← getMainTarget)).consumeMData
-    unless target.isAppOf ``ComputableTidilyInPolyTime do
+    unless target.isAppOf ``ComputableInPolyTime do
       throwError "expected a polynomial-time goal"
     let program ← Core.betaReduce (← etaExpand target.getAppArgs[2]!)
     let isIter ← lambdaTelescope program fun _ body => pure (body.isAppOf ``Nat.iterate)
     unless isIter do throwError "expected an iteration"
     guard <| liftMetaTactic fun goal =>
-      goal.applyConst ``ComputableTidilyInPolyTime.iterate_of_bounded_growth
+      goal.applyConst ``ComputableInPolyTime.iterate_of_bounded_growth
 
 attribute [aesop safe apply (rule_sets := [PolyTime])] Nat.le_refl
 
@@ -259,8 +259,6 @@ attribute [aesop norm simp (rule_sets := [PolyTime])] forall_and
 
 -- Aesop can use local identity certificates for changes of representation.
 attribute [aesop unsafe 80% apply (rule_sets := [PolyTime])]
-  ComputableTidilyInPolyTime.fstWithEncoding
-  ComputableTidilyInPolyTime.sndWithEncoding
   ComputableInPolyTime.fstWithEncoding
   ComputableInPolyTime.sndWithEncoding
 

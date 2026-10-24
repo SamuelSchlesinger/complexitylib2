@@ -25,8 +25,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormal
 Polynomial-time certificates for arithmetic on the binary encoding `Turing.MultiTapeTM.encNat`
 (digits least significant first), the binary counterparts of the unary certificates in
 `PolyTime/Nat.lean`. Addition and multiplication are Christian Reitwiessner's degree-bounded
-machines (`Turing.MultiTapeTM.computableTidilyInDegree_add`,
-`Turing.MultiTapeTM.computableTidilyInDegree_mul`). A list is summed by a left fold whose
+machines (`Turing.MultiTapeTM.computableInDegree_add`,
+`Turing.MultiTapeTM.computableInDegree_mul`). A list is summed by a left fold whose
 accumulator grows by at most one digit more than the length of the element added. Powers of two are
 computed from a unary exponent by repeated doubling. Strict comparison scans bit positions: `m < n`
 exactly when some position holds a one in `n` and a zero in `m` and all higher positions agree
@@ -238,13 +238,13 @@ theorem natBits : ComputableInPolyTime Nat.bits encNat encBits := of_eq fun _ =>
 @[fun_prop]
 theorem binary_add : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
     (encPair encNat encNat) encNat :=
-  (Internal.forgetDegree computableTidilyInDegree_add).computableInPolyTime
+  computableInDegree_add.computableInPolyTime
 
 /-- Multiplication of binary naturals. -/
 @[fun_prop]
 theorem binary_mul : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 * p.2)
     (encPair encNat encNat) encNat :=
-  (Internal.forgetDegree computableTidilyInDegree_mul).computableInPolyTime
+  computableInDegree_mul.computableInPolyTime
 
 /-- Add computed binary values, fixing their intermediate encodings for proof search. -/
 @[fun_prop]

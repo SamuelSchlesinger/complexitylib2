@@ -53,36 +53,6 @@ attribute [fun_prop] ComputableInO
 
 namespace Turing.MultiTapeTM.ComputableInO
 
-/-- A function of bit words computed within given bounds is computed by the same machine on encoded
-instances. -/
-theorem comp_enc
-    {α β : Type}
-    {encOut : β ↪ List Bool}
-    {f : List Bool → β}
-    {T S : List Bool → ℕ}
-    (h : ComputableInO f encBits encOut T S)
-    (enc : α ↪ List Bool) :
-    ComputableInO (fun (a : α) => f ((enc : α → List Bool) a)) enc encOut
-      (fun (a : α) => T ((enc : α → List Bool) a)) fun (a : α) =>
-      S ((enc : α → List Bool) a) := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.comp_enc α β encOut f T S h enc
-
-/-- A fold with a fixed finite state type takes linear time and constant work space. The constant
-may depend on the state type, its encoding and the transition function; this is not a uniform
-bound
-for a family of growing state types. The encoded final state is bounded as well. -/
-theorem foldl_bits_finite
-    {σ : Type}
-    [inst_1 : Finite σ]
-    (enc : σ ↪ List Bool)
-    (step : σ → Bool → σ)
-    (init : σ) :
-    ComputableInO (fun (l : List Bool) => List.foldl step init l)
-      encBits enc List.length fun (_x : List Bool) => 0 := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.foldl_bits_finite σ inst_1 enc step init
-
 /-- Extracting the left summand as an option has linear time and space bounds. -/
 theorem getLeft?
     {α β : Type}
@@ -132,49 +102,6 @@ theorem inr
       ((right : β → List Bool) a).length := by
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.inr α β left right
-
-/-- **Iterating `n x` times, with `n x` in binary.** If the rounds are within the time `R x` and
-the space `Q x`, and the iterates have length at most `B x`, the iteration takes the time of the
-counter and of the start, plus `R x`, `B x` and the square of the length of the counter for
-every
-round, and the space of the counter and of the start, plus `Q x`, `B x` and the length of the
-counter. -/
-theorem iterate
-    {γ β : Type}
-    [inst_1 : Inhabited β]
-    {encIn : γ ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {n : γ → ℕ}
-    {init : γ → β}
-    {step : β → β}
-    {Tn Ti Sn Si R Q B : γ → ℕ}
-    {Ts Ss : β → ℕ}
-    (hn : ComputableInO n encIn encNat Tn Sn)
-    (hinit : ComputableInO init encIn encB Ti Si)
-    (hstep : ComputableInO step encB encB Ts Ss)
-    (hround : ∀ (x : γ), ∀ k ≤ n x, Ts (step^[k] (init x)) ≤ R x)
-    (hspace : ∀ (x : γ), ∀ k ≤ n x, Ss (step^[k] (init x)) ≤ Q x)
-    (hstate : ∀ (x : γ), ∀ k ≤ n x, ((encB : β → List Bool) (step^[k] (init x))).length ≤ B x) :
-    ComputableInO (fun (x : γ) => step^[n x] (init x)) encIn encB
-      (fun (x : γ) =>
-        Tn x + Ti x +
-          (n x + 1) *
-            (R x + B x +
-              (((encNat : ℕ → List Bool) (n x)).length + 1) ^ 2))
-      fun (x : γ) =>
-      Sn x + Si x + Q x + B x + ((encNat : ℕ → List Bool) (n x)).length := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.iterate γ β inst_1 encIn encB n init step Tn Ti Sn Si R Q B Ts Ss
-    hn hinit hstep hround hspace hstate
-
-/-- The length of a bit word in unary, within linear time and space, by the streaming machine of
-`ComputableInTimeAndSpace.length_bits`. -/
-theorem lengthUnary :
-    ComputableInO (fun (l : List Bool) => l.length)
-      encBits encUnary
-      (fun (l : List Bool) => l.length) fun (l : List Bool) => l.length := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.lengthUnary
 
 /-- **The lifted step is computable**, within the bounds of the inner step on the emitted
 event, if any, plus the length of its input. -/
@@ -229,15 +156,6 @@ theorem natAdd :
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.natAdd
 
-/-- The zero test in binary. -/
-theorem natIsZero :
-    ComputableInO (fun (n : ℕ) => Decidable.decide (n = 0))
-      encNat encBool
-      (fun (n : ℕ) => ((encNat : ℕ → List Bool) n).length) fun (n : ℕ) =>
-      ((encNat : ℕ → List Bool) n).length := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.natIsZero
-
 /-- **The strict order in binary.** -/
 theorem natLt :
     ComputableInO (fun (p : ℕ × ℕ) => Decidable.decide (p.1 < p.2))
@@ -259,15 +177,6 @@ theorem natLt :
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.natLt
 
-/-- The predecessor in binary, `0 - 1 = 0`. -/
-theorem natPred :
-    ComputableInO (fun (x : ℕ) => x - 1) encNat
-      encNat
-      (fun (n : ℕ) => (((encNat : ℕ → List Bool) n).length + 1) ^ 2)
-      fun (n : ℕ) => ((encNat : ℕ → List Bool) n).length + 1 := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.natPred
-
 /-- **Truncated subtraction in binary**, `b - a` from `(a, b)`. -/
 theorem natSub :
     ComputableInO (fun (p : ℕ × ℕ) => p.2 - p.1)
@@ -288,15 +197,6 @@ theorem natSub :
         1 := by
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.natSub
-
-/-- The successor in binary. -/
-theorem natSucc :
-    ComputableInO (fun (x : ℕ) => x + 1) encNat
-      encNat
-      (fun (n : ℕ) => (((encNat : ℕ → List Bool) n).length + 1) ^ 2)
-      fun (n : ℕ) => ((encNat : ℕ → List Bool) n).length + 1 := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.natSucc
 
 /-- Construct a fixed-length list, charging each computation and retention of the input. -/
 theorem ofFn
@@ -411,14 +311,6 @@ theorem pi_update
           p).length := by
   simp only [computableInO_iff_computableTidilyInO] at *
   exact @ComputableTidilyInO.pi_update Index Value inst_1 inst_2 enc i
-
-/-- **`2 ^ n` in unary**, by doubling `n` times, within time `O((n + 1) * 2 ^ n)` and space
-`O(2 ^ n)`. -/
-theorem unary_two_pow :
-    ComputableInO (fun (n : ℕ) => 2 ^ n) encUnary
-      encUnary (fun (n : ℕ) => (n + 1) * 2 ^ n) fun (n : ℕ) => 2 ^ n := by
-  simp only [computableInO_iff_computableTidilyInO] at *
-  exact @ComputableTidilyInO.unary_two_pow
 
 end Turing.MultiTapeTM.ComputableInO
 
@@ -1503,7 +1395,6 @@ attribute [fun_prop] ComputableInPolyTime.biTape_moveRight
 attribute [fun_prop] ComputableInPolyTime.biTape_write
 attribute [fun_prop] ComputableInPolyTime.biTape_step
 attribute [fun_prop] ComputableInPolyTime.biTape_mk₁
-attribute [fun_prop] ComputableInO.foldl_bits_finite
 attribute [fun_prop] ComputableInO.pi_update
 attribute [fun_prop] ComputableInO.inl
 attribute [fun_prop] ComputableInO.inr

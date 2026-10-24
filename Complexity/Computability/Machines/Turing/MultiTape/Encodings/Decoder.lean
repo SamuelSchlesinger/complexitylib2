@@ -46,7 +46,7 @@ elements.
 
 * `Turing.MultiTapeTM.frames_encList`: the framed words of an encoded list are its encoded
   elements.
-* `Turing.MultiTapeTM.computableTidilyInDegree_frames`: splitting into framed words is linear.
+* `Turing.MultiTapeTM.computableInDegree_frames`: splitting into framed words is linear.
 * `Turing.MultiTapeTM.bits_ofBits`: the binary digits of a word read as a number are the word up
   to its last `true`.
 -/
@@ -156,8 +156,8 @@ theorem framesT_run (w : List Bool) :
           unframe, dropFrame, frame_cons, List.cons_append, encBits, Function.Embedding.refl_apply]
 
 /-- **Splitting a word into framed words is linear.** -/
-theorem computableTidilyInDegree_frames :
-    ComputableTidilyInDegree frames encBits (encList encBits) 1 1 :=
+theorem computableInDegree_frames :
+    ComputableInDegree frames encBits (encList encBits) 1 1 :=
   .of_linear (framesT.computableInLinearTimeAndSpace fun w => (framesT_run w).symm)
 
 /-! ### Binary digits -/
@@ -246,9 +246,6 @@ def bits : Decoder encBits where
   decode := id
   decode_enc _ := rfl
   computable := by
-    apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
-      let ⟨d, e, h⟩ := h
-      ⟨d, e, Internal.forgetDegree h⟩)
     exact ⟨1, 1, .of_eq fun _ => rfl⟩
 
 /-- Unary numbers are decoded by the length of the word. -/
@@ -256,9 +253,6 @@ def unary : Decoder encUnary where
   decode w := w.length
   decode_enc n := by simp
   computable := by
-    apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
-      let ⟨d, e, h⟩ := h
-      ⟨d, e, Internal.forgetDegree h⟩)
     exact ⟨1, 1, .of_linear (Transducer.computableInLinearTimeAndSpace
       (τ := ⟨(), fun _ _ => ((), [true]), fun _ => [], fun _ _ => by simp, fun _ => by simp⟩)
       fun w => by induction w <;> simp_all [List.replicate_succ])⟩
@@ -282,27 +276,20 @@ def bool : Decoder encBool where
   decode w := w.headD false
   decode_enc _ := rfl
   computable := by
-    apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
-      let ⟨d, e, h⟩ := h
-      ⟨d, e, Internal.forgetDegree h⟩)
-    exact ⟨1, 1, ComputableTidilyInDegree.headD (enc₁ := encBool) (enc := encBits) false⟩
+    exact ⟨1, 1, ComputableInDegree.headD (enc₁ := encBool) (enc := encBits) false⟩
 
 /-- Options are decoded as `none` from the empty word, and otherwise from the tail. -/
 def option (D : Decoder enc) : Decoder (encOption enc) where
   decode w := if w.isEmpty then none else some (D.decode w.tail)
   decode_enc o := by cases o <;> simp [encOption, D.decode_enc]
   computable := by
-    apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
-      let ⟨d, e, h⟩ := h
-      ⟨d, e, Internal.forgetDegree h⟩)
     obtain ⟨d, e, hD⟩ := D.computable
-    have hD : ComputableTidilyInDegree _ _ _ _ _ := Internal.normalizeDegree hD
-    have hsome := (ComputableTidilyInDegree.optionSome (enc₁ := enc)
-      (enc := encOption enc)).comp (hD.comp (ComputableTidilyInDegree.tail
+    have hsome := (ComputableInDegree.optionSome (enc₁ := enc)
+      (enc := encOption enc)).comp (hD.comp (ComputableInDegree.tail
         (enc₁ := encBool) (enc := encBits)))
-    exact ⟨_, _, ComputableTidilyInDegree.ite (encC := encBool)
-      (ComputableTidilyInDegree.isEmpty (enc₁ := encBool) (enc := encBits))
-      ((ComputableTidilyInDegree.const none).restrict _) (hsome.restrict _)⟩
+    exact ⟨_, _, ComputableInDegree.ite (encC := encBool)
+      (ComputableInDegree.isEmpty (enc₁ := encBool) (enc := encBits))
+      ((ComputableInDegree.const none).restrict _) (hsome.restrict _)⟩
 
 /-- Pairs are decoded from the framed first component and what follows it. -/
 def pair {β₁ β₂ : Type} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool} (D₁ : Decoder enc₁)
@@ -311,16 +298,11 @@ def pair {β₁ β₂ : Type} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪
   decode_enc p := by
     simp [unframe_frame_append, dropFrame_frame_append, D₁.decode_enc, D₂.decode_enc]
   computable := by
-    apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
-      let ⟨d, e, h⟩ := h
-      ⟨d, e, Internal.forgetDegree h⟩)
     obtain ⟨d₁, e₁, h₁⟩ := D₁.computable
-    have h₁ : ComputableTidilyInDegree _ _ _ _ _ := Internal.normalizeDegree h₁
     obtain ⟨d₂, e₂, h₂⟩ := D₂.computable
-    have h₂ : ComputableTidilyInDegree _ _ _ _ _ := Internal.normalizeDegree h₂
-    have hu : ComputableTidilyInDegree unframe encBits encBits 1 1 :=
+    have hu : ComputableInDegree unframe encBits encBits 1 1 :=
       .of_linear (.of_unframe fun _ => rfl)
-    have hd : ComputableTidilyInDegree dropFrame encBits encBits 1 1 :=
+    have hd : ComputableInDegree dropFrame encBits encBits 1 1 :=
       .of_linear (.of_dropFrame fun _ => rfl)
     exact ⟨_, _, (h₁.comp hu).prod (h₂.comp hd)⟩
 
@@ -332,16 +314,12 @@ def list (D : Decoder enc) : Decoder (encList enc) where
     conv_rhs => rw [← List.map_id l]
     exact List.map_congr_left fun a _ => D.decode_enc a
   computable := by
-    apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
-      let ⟨d, e, h⟩ := h
-      ⟨d, e, Internal.forgetDegree h⟩)
     obtain ⟨d, e, h⟩ := D.computable
-    have h : ComputableTidilyInDegree _ _ _ _ _ := Internal.normalizeDegree h
-    exact ⟨_, _, ComputableTidilyInDegree.mapWith (encP := encBool) (par := fun _ => false)
+    exact ⟨_, _, ComputableInDegree.mapWith (encP := encBool) (par := fun _ => false)
       (f := fun p : Bool × List Bool => D.decode p.2)
-      (h.comp (ComputableTidilyInDegree.snd encBool encBits))
-      ((ComputableTidilyInDegree.const false).mono le_rfl (Nat.zero_le 1))
-      computableTidilyInDegree_frames⟩
+      (h.comp (ComputableInDegree.snd encBool encBits))
+      ((ComputableInDegree.const false).mono le_rfl (Nat.zero_le 1))
+      computableInDegree_frames⟩
 
 /-- Transport a decoder to an encoding `enc'` agreeing with `enc` along `f`, where `g` is a right
 inverse of `f`. -/
@@ -352,11 +330,7 @@ def map (D : Decoder enc) (f : α → β) (g : β → α) (hfg : ∀ b, f (g b) 
     conv_lhs => rw [← hfg b, henc, D.decode_enc]
     exact hfg b
   computable := by
-    apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
-      let ⟨d, e, h⟩ := h
-      ⟨d, e, Internal.forgetDegree h⟩)
     obtain ⟨d, e, h⟩ := D.computable
-    have h : ComputableTidilyInDegree _ _ _ _ _ := Internal.normalizeDegree h
     exact ⟨d, e, h.of_enc_eq fun w => henc _⟩
 
 end Decoder
