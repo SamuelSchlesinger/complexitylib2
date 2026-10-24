@@ -40,8 +40,9 @@ coefficient `L`, so that each layout theorem reads as one line:
 
 ## Main definitions
 
-* `Cslib.Circuits.Frontier.CircuitLowerBound L`: circuits of fan-in at most two deciding dense
-  rectangle-free sets need more than `(L - ε) n` inner gates.
+* `Cslib.Circuits.Frontier.CircuitLowerBound`: for a coefficient `L` and every `ε > 0`, circuits of
+  fan-in at most two deciding dense rectangle-free sets on `n` inputs need more than `(L - ε) n`
+  inner gates.
 
 ## Main results
 
