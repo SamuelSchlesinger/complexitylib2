@@ -335,7 +335,8 @@ theorem indexed_indistinguishable {generator : ℕ → ℕ → List Bool → Lis
   have hreduce : IsPPTOn (encPair (encPair encUnary encUnary) encBits)
       encBool (fun input => reduction input.1.1 input.1.2 input.2) := by
     unfold reduction
-    exact isPPT_test (.of_tidy (hgenerator.comp hprepare)) (.of_tidy (by polytime)) (.of_tidy (by polytime))
+    exact isPPT_test (.of_tidy (hgenerator.comp hprepare)) (.of_tidy (by polytime))
+      (.of_tidy (by polytime))
       (hadversary.preprocess hprepare) (.of_tidy (by polytime))
   have h := (hsecure reduction hreduce).polynomiallyBounded_mul (loss_polynomial (.of_tidy hcount))
   exact h.congr' (Filter.Eventually.of_forall (fun n => (test_advantage_eq _ _ _ _).symm))
