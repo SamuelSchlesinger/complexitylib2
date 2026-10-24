@@ -191,6 +191,23 @@ end Example
             with self.subTest(statement=statement):
                 self.assertEqual(display(statement + " := by\n  simp"), statement)
 
+    def test_multiline_absolute_value_arguments_are_not_equation_clauses(self):
+        """#716 review: after a complete term, a line starting with `|x|` continues the
+        statement. These compile with Mathlib's absolute value."""
+        display = abstract_to_tex.clean_code_for_display
+        for statement, proof in (
+                ("theorem chosen (x : Int) : Eq\n    |x| |x|", " := rfl"),
+                ("theorem chosen (x : Int) : Eq (|x|)\n    |x|", " := rfl"),
+                ("theorem chosen (x : Int) : (fun y : Int => y = y)\n    |x|", " := rfl"),
+                ("theorem chosen (x : Int) : Eq\n    |x| |x|", " := by\n  exact (fun h => h) rfl"),
+                ("theorem chosen (x : Int) : Eq\n    |(fun y : Int => y) x|\n    |x|", " := rfl")):
+            with self.subTest(statement=statement, proof=proof):
+                self.assertEqual(display(statement + proof), statement)
+        # Mathlib's `|a|` allows no space after the opening bar, so `| 0 =>` is a clause; an
+        # unspaced clause-like line is ambiguous and is rejected rather than guessed.
+        with self.assertRaisesRegex(ValueError, "e: Ambiguous `\\|`"):
+            display("theorem e : ∀ n : ℕ, n = n\n  |0 => rfl\n  |_ => rfl")
+
     def test_shared_scanner_self_check(self):
         proof_lengths.self_check()
 

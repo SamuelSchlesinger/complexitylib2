@@ -55,9 +55,11 @@ STATEMENT_TOKEN = re.compile(
 )
 # `let x ← e` in `do` notation binds without a `:=` of its own.
 DO_BIND = re.compile(r"[^=←\n]*←")
-# The last character of a complete term, after which a line starting with `|` begins
-# equation clauses rather than continuing the statement (as in `:\n    |x| ≤ 1`).
+# The last character of a complete term, after which a line starting with `|` may begin
+# equation clauses rather than continue the statement (as in `:\n    |x| ≤ 1`).
 TERM_END = "_'!?)]}⟩⦄|⊤⊥∅"
+# What decides whether such a line is an equation clause (see `_starts_equations`).
+CLAUSE_TOKEN = re.compile(r"(?P<open>[([{⟨⦃])|(?P<close>[)\]}⟩⦄])|(?P<arrow>=>)|(?P<assign>:=)")
 GROUPS = [
     ("Circuits: frontier", "Computability/Circuit/Frontier/"),
     ("Circuits: Boolean", "Computability/Circuit/Boolean/"),
@@ -181,11 +183,34 @@ def command_starts(syntax: str) -> list[int]:
 
 
 def _starts_equations(statement: str, bar: int) -> bool:
-    """Whether a `|` begins equation clauses: it starts its line after a complete term."""
+    """Whether a `|` begins equation clauses `| pattern => …` rather than continuing the
+    statement, as the absolute value in `Eq\n    |x| |x| := rfl` does.
+
+    The `|` must start its line after a complete term, and its first alternative must reach
+    `=>` before any `:=` outside brackets. Mathlib's `|a|` allows no space after the opening
+    bar, so a clause-like line whose `|` is not followed by a space is rejected as ambiguous.
+    """
     line = statement.rfind("\n", 0, bar) + 1
     before = statement[:line].rstrip()
-    return not statement[line:bar].strip() and bool(before) and (
-        before[-1].isalnum() or before[-1] in TERM_END)
+    if statement[line:bar].strip() or not before or not (
+            before[-1].isalnum() or before[-1] in TERM_END):
+        return False
+    depth = 0
+    for token in CLAUSE_TOKEN.finditer(statement, bar + 1):
+        if token.lastgroup == "open":
+            depth += 1
+        elif token.lastgroup == "close":
+            depth = max(0, depth - 1)
+        elif depth:
+            continue
+        elif token.lastgroup == "assign":
+            return False
+        elif statement[bar + 1:bar + 2].isspace():
+            return True
+        else:
+            raise ValueError("Ambiguous `|` starting a statement line: write an absolute value "
+                             "inside parentheses, or an equation clause as `| pattern => …`")
+    return False
 
 
 def signature_end(statement: str) -> tuple[int, int]:
@@ -292,6 +317,8 @@ theorem do_let : some 1 = do
 theorem absolute (x : Int) :
     |x| ≤ |x| := by
   exact le_rfl
+theorem absolute_argument (x : Int) : Eq
+    |x| |x| := rfl
 theorem or_patterns : ∀ n : Nat, n = n
   | 0 | 1 => rfl
   | _ => rfl
@@ -311,8 +338,8 @@ end Sample
     assert [(r["name"], r["body_lines"]) for r in rows] == [
         ("short", 1), ("term", 1), ("quoted", 1), ("separate_attribute", 1), ("equations", 2),
         ("type_let", 1), ("after_annotated", 1), ("after_multi_line", 1), ("do_let", 1),
-        ("absolute", 1), ("or_patterns", 2), ("structure_body", 1), ("statement_have", 1),
-        ("prefixed", 1)
+        ("absolute", 1), ("absolute_argument", 1), ("or_patterns", 2), ("structure_body", 1),
+        ("statement_have", 1), ("prefixed", 1)
     ]
     for row in rows[-2:]:
         assert row["name"] in sample.splitlines()[row["line"] - 1]

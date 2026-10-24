@@ -318,6 +318,26 @@ class BuildAbstractsTests(unittest.TestCase):
         for marker in ("TailMarker", "proofMarker", "simp"):
             self.assertNotIn(marker, rendered)
 
+    def test_multiline_absolute_value_statement_is_checked_in_full(self):
+        """#716 review: `Eq\n    |x| |x|` was cut at `Eq`, and the check accepted it."""
+        source = build.module_source_path(self.entry["module"], self.root)
+        for statement in ("theorem chosen (x : Int) : Eq\n    |x| |x|",
+                          "theorem chosen (x : Int) : Eq (|x|)\n    |x|",
+                          "theorem chosen (x : Int) : (fun y : Int => y = y)\n    |x|"):
+            with self.subTest(statement=statement):
+                source.write_text(SOURCE.replace("theorem chosen : value = 0 := rfl",
+                                                 statement + " := rfl"))
+                self.assertEqual(build.load_catalogue(self.manifest, self.root), [self.entry])
+                self.assertEqual(build.selected_statement(
+                    source.read_text(), self.entry["headline_theorems"][0]), statement)
+                rendered = build.render_entry(self.entry, "owner/repo", "a" * 40, False, self.root)
+                self.assertIn(statement.splitlines()[-1].strip(), rendered)
+        source.write_text(SOURCE.replace("theorem chosen : value = 0 := rfl",
+                                         "theorem chosen : ∀ n : Nat, n = n\n  |0 => rfl\n"
+                                         "  |_ => rfl"))
+        with self.assertRaisesRegex(ValueError, "chosen: Ambiguous"):
+            build.load_catalogue(self.manifest, self.root)
+
     def test_truncated_statement_fails_the_coverage_check(self):
         """Issue #699: a name-only check accepted `theorem chosen : let n` as rendered."""
         source = build.module_source_path(self.entry["module"], self.root)
