@@ -5167,12 +5167,16 @@ info: 'Cslib.ProbOracleComp.run_interpret_simulation' depends on axioms:
 #guard_msgs in
 #print axioms Cslib.ProbOracleComp.run_interpret_simulation
 
+/-- info: 'Cslib.OracleComp.IsCostBounded.bind' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Cslib.OracleComp.IsCostBounded.bind
+
 /--
-info: 'Cslib.ProbOracleComp.HasQueryBounds.bind' depends on axioms:
+info: 'Cslib.ProbOracleComp.isCostBounded_iff_transcript_cost_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.ProbOracleComp.HasQueryBounds.bind
+#print axioms Cslib.ProbOracleComp.isCostBounded_iff_transcript_cost_le
 
 /--
 info: 'Cslib.Probability.IsPPTOn.memoize' depends on axioms:
@@ -5287,18 +5291,18 @@ info: 'Cslib.Probability.IsPPTOn.replicate' depends on axioms:
 #print axioms Cslib.Probability.IsPPTOn.replicate
 
 /--
-info: 'Cslib.ProbOracleComp.run_interpret_presample' depends on axioms:
+info: 'Cslib.ProbOracleComp.IsQueryBounded.run_interpret_presample' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.ProbOracleComp.run_interpret_presample
+#print axioms Cslib.ProbOracleComp.IsQueryBounded.run_interpret_presample
 
 /--
-info: 'Cslib.ProbOracleComp.HasQueryBounds.eval_presample' depends on axioms:
+info: 'Cslib.ProbOracleComp.IsQueryBounded.eval_presample' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.ProbOracleComp.HasQueryBounds.eval_presample
+#print axioms Cslib.ProbOracleComp.IsQueryBounded.eval_presample
 
 /--
 info: 'Cslib.Probability.IsOraclePPTOn.run_interpret_withSampleList' depends on axioms: [propext,

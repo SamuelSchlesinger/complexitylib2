@@ -8,15 +8,22 @@ module
 -- upstream: candidate
 
 public import Complexity.Languages.Probabilistic.Repeat
-public import Complexity.Languages.Probabilistic.Oracle.Transcript
+public import Complexity.Languages.Probabilistic.Oracle.QueryCount
 
 /-!
 # Saved samples in adaptive oracle interactions
 
 An external handler can consume one saved sample per call while the client continues drawing
-independent private randomness. A sufficient list of independent samples gives exactly the
-online joint output and ordinary private state. Unused samples are discarded in this equality;
-they need not be independent of the final state or the client's stopping time.
+independent private randomness. For a program making at most `n` external queries, `n`
+independent samples drawn in advance give exactly the online joint law of the result and the
+handler's state (`ProbOracleComp.IsQueryBounded.run_interpret_presample`). Unused samples are
+discarded in this equality; they need not be independent of the final state or the client's
+stopping time. The handler's fallback value is never used, so a run on a sufficient list of
+samples is a function of those samples.
+
+This is the library's presampling theorem. A program without private coins is the special case
+`OracleComp.IsQueryBounded.run_interpret_presample`, and closed `ProbComp` handlers the special
+case `ProbOracleComp.IsQueryBounded.eval_presample`.
 
 ## Main definitions
 
@@ -24,9 +31,10 @@ they need not be independent of the final state or the client's stopping time.
 
 ## Main results
 
-* `Cslib.ProbOracleComp.run_interpret_presample`: pre-sampling preserves the joint output/state
-  law under a call bound on the online interaction alone.
-* `Cslib.ProbOracleComp.HasQueryBounds.eval_presample`: semantic external budgets suffice.
+* `Cslib.ProbOracleComp.IsQueryBounded.run_interpret_presample`: presampling preserves the joint
+  law of result and state.
+* `Cslib.ProbOracleComp.IsQueryBounded.eval_presample`: the same for closed probabilistic handlers.
+* `Cslib.OracleComp.IsQueryBounded.run_interpret_presample`: the same without private coins.
 
 ## References
 
@@ -58,117 +66,66 @@ open OracleComp Probability
 
 variable {Query α State Value : Type} {spec : Query → Type}
 
-private theorem query_bound_cont (oracle : (q : Query) → StateT State PMF (spec q))
-    (q : Query) (cont : spec q → ProbOracleComp spec α) (s : State) (count : ℕ)
-    (hbound : ∀ result next transcript,
-      (result, next, transcript) ∈ ((interpret
-        (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (withTranscript oracle))
-          (query q >>= cont)).run (s, [])).support → transcript.length ≤ count)
-    (answer : spec q) (next : State) (hanswer : (answer, next) ∈ (oracle q s).support)
-    (result : α) (final : State) (transcript : Transcript spec)
-    (hresult : (result, final, transcript) ∈ ((interpret
-      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (withTranscript oracle))
-        (cont answer)).run (next, [])).support) : transcript.length + 1 ≤ count := by
-  have htrace : (result, final, transcript ++ [⟨q, answer⟩]) ∈ ((interpret
-      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (withTranscript oracle))
-        (cont answer)).run (next, [⟨q, answer⟩])).support := by
-    rw [run_interpret_withTranscript_append]
-    exact (PMF.mem_support_map_iff _ _ _).mpr ⟨(result, final, transcript), hresult, rfl⟩
-  have hwhole : (result, final, transcript ++ [⟨q, answer⟩]) ∈ ((interpret
-      (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (withTranscript oracle))
-        (query q >>= cont)).run (s, [])).support := by
-    simp only [interpret_bind, interpret_query, StateT.run_bind,
-      PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff]
-    refine ⟨(answer, next, [⟨q, answer⟩]), ?_, htrace⟩
-    exact (PMF.mem_support_map_iff _ _ _).mpr ⟨(answer, next), hanswer, rfl⟩
-  have hlength : (transcript ++ ([⟨q, answer⟩] : Transcript spec)).length =
-      transcript.length + 1 := List.length_append
-  exact hlength ▸ hbound result final (transcript ++ [⟨q, answer⟩]) hwhole
-
-/-- Drawing enough independent samples in advance preserves an adaptive interaction's output
-and ordinary private state. Only the original online interaction needs a supported call bound.
-Private client samples do not consume the saved list. -/
-theorem run_interpret_presample (source : ProbComp Value) (fallback : Value)
-    (oracle : Value → (q : Query) → StateT State PMF (spec q))
-    (program : ProbOracleComp spec α) (s : State) (count : ℕ)
-    (hbound : ∀ result next transcript,
-      (result, next, transcript) ∈ ((interpret
-        (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (withTranscript
-          (fun q s => (ProbComp.eval source).bind (fun value => oracle value q s))))
-            program).run (s, [])).support → transcript.length ≤ count) :
-    (ProbComp.eval (replicate count source)).bind (fun values => ((interpret
-      (handler (fun n => StateT.lift (ProbComp.unifOracle n))
+/-- **Presampling.** A program makes at most `n` external queries, and a handler draws one sample
+from `source` per external query. Answering from `n` independent samples drawn in advance instead
+gives the same joint law of the result and the handler's state. Private samples are drawn online
+in both runs. The statement is exact and independent of the efficiency of the program, the
+handler and the source. -/
+theorem IsQueryBounded.run_interpret_presample {program : ProbOracleComp spec α} {n : ℕ}
+    (h : program.IsQueryBounded n) (source : PMF Value) (fallback : Value)
+    (oracle : Value → (q : Query) → StateT State PMF (spec q)) (s : State) :
+    ((PMF.iid source n).map List.ofFn).bind (fun values =>
+      ((interpret (handler (fun k => StateT.lift (ProbComp.unifOracle k))
         (withSampleList fallback oracle)) program).run (s, values)).map
-          (fun (result, next, _) => (result, next))) =
-      (interpret (handler (fun n => StateT.lift (ProbComp.unifOracle n))
-        (fun q s => (ProbComp.eval source).bind (fun value => oracle value q s)))
-          program).run s := by
-  induction program using PFunctor.FreeM.induction generalizing s count with
-  | pure a => simp [PMF.pure_map]
-  | lift_bind op cont ih =>
-    change (ProbComp.eval (replicate count source)).bind (fun values => ((interpret
-      (m := StateT (State × List Value) PMF) _
-      (OracleComp.query op >>= cont)).run (s, values)).map _) =
-        (interpret (m := StateT State PMF) _ (OracleComp.query op >>= cont)).run s
-    change ∀ result next transcript, (result, next, transcript) ∈ ((interpret
-      (m := StateT (State × Transcript spec) PMF) _
-      (OracleComp.query op >>= cont)).run (s, [])).support → transcript.length ≤ count at hbound
-    cases op with
-    | inl n =>
-      have hnext value (hvalue : value ∈ (ProbComp.unifOracle n).support) :
-          ∀ result next transcript, (result, next, transcript) ∈ ((interpret
-            (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (withTranscript
-              (fun q s => (ProbComp.eval source).bind (fun value => oracle value q s))))
-                (cont value)).run (s, [])).support → transcript.length ≤ count := by
-        intro result next transcript hresult
-        apply hbound result next transcript
-        simp only [interpret_bind, OracleComp.interpret_query, handler, StateT.run_bind_lift,
-          PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff]
-        exact ⟨value, hvalue, hresult⟩
-      simp only [interpret_bind, OracleComp.interpret_query, handler, StateT.run_bind_lift,
-        PMF.monad_bind_eq_bind, PMF.map_bind]
+          fun result => (result.1, result.2.1)) =
+      (interpret (handler (fun k => StateT.lift (ProbComp.unifOracle k))
+        (fun q state => source.bind fun value => oracle value q state)) program).run s := by
+  induction h generalizing s with
+  | pure a n =>
+    change ((PMF.iid source n).map List.ofFn).bind (fun values =>
+      (PMF.pure (a, s, values)).map fun result => (result.1, result.2.1)) = PMF.pure (a, s)
+    simp only [PMF.pure_map, PMF.bind_const]
+  | liftBind q cont n _ ih =>
+    cases q with
+    | inl k =>
+      change ((PMF.iid source (n + 0)).map List.ofFn).bind (fun values =>
+        (((StateT.lift (ProbComp.unifOracle k) : StateT (State × List Value) PMF _).run
+          (s, values)).bind fun result => (interpret (handler
+            (fun k => StateT.lift (ProbComp.unifOracle k)) (withSampleList fallback oracle))
+              (cont result.1)).run result.2).map fun result => (result.1, result.2.1)) =
+        ((StateT.lift (ProbComp.unifOracle k) : StateT State PMF _).run s).bind fun result =>
+          (interpret (handler (fun k => StateT.lift (ProbComp.unifOracle k))
+            (fun q state => source.bind fun value => oracle value q state))
+              (cont result.1)).run result.2
+      simp only [Nat.add_zero, StateT.run_lift, PMF.monad_bind_eq_bind,
+        PMF.monad_pure_eq_pure, PMF.bind_bind, PMF.pure_bind, PMF.map_bind]
       rw [PMF.bind_comm]
-      apply PMF.bind_congr_on_support
-      intro value hvalue
-      exact ih value s count (hnext value hvalue)
+      exact congrArg ((ProbComp.unifOracle k).bind ·) (funext fun a => ih a s)
     | inr q =>
-      have hnext := query_bound_cont
-        (fun q s => (ProbComp.eval source).bind (fun value => oracle value q s))
-          q cont s count hbound
-      obtain ⟨⟨answer, next⟩, hanswer⟩ :=
-        ((ProbComp.eval source).bind (fun value => oracle value q s)).support_nonempty
-      obtain ⟨⟨result, final, transcript⟩, hresult⟩ := ((interpret
-        (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (withTranscript
-          (fun q s => (ProbComp.eval source).bind (fun value => oracle value q s))))
-            (cont answer)).run (next, [])).support_nonempty
-      have hpositive : 0 < count := by
-        have := hnext answer next hanswer result final transcript hresult
-        lia
-      cases count with
-      | zero => lia
-      | succ count =>
-        simp only [replicate_succ, ProbComp.eval_bind, ProbComp.eval_map, PMF.bind_bind,
-          PMF.bind_map, Function.comp_def, interpret_bind, OracleComp.interpret_query,
-          handler, StateT.run_bind, PMF.monad_bind_eq_bind, PMF.map_bind]
-        simp only [StateT.run, withSampleList, List.headD_cons, List.tail_cons,
-          PMF.monad_map_eq_map, PMF.bind_map, PMF.bind_bind, Function.comp_def]
-        apply PMF.bind_congr_on_support
-        intro value hvalue
-        rw [PMF.bind_comm]
-        apply PMF.bind_congr_on_support
-        rintro ⟨answer, next⟩ hanswer
-        apply ih answer next count
-        intro result final transcript hresult
-        have h := hnext answer next
-          ((PMF.mem_support_bind_iff _ _ _).mpr ⟨value, hvalue, hanswer⟩)
-          result final transcript hresult
-        lia
+      change ((PMF.iid source (n + 1)).map List.ofFn).bind (fun values =>
+        (((withSampleList fallback oracle q) (s, values)).bind fun result =>
+          (interpret (handler (fun k => StateT.lift (ProbComp.unifOracle k))
+            (withSampleList fallback oracle)) (cont result.1)).run result.2).map
+              fun result => (result.1, result.2.1)) =
+        (source.bind fun value => oracle value q s).bind fun result =>
+          (interpret (handler (fun k => StateT.lift (ProbComp.unifOracle k))
+            (fun q state => source.bind fun value => oracle value q state))
+              (cont result.1)).run result.2
+      simp only [PMF.iid, withSampleList, PMF.monad_bind_eq_bind,
+        PMF.monad_map_eq_map, PMF.map_bind, PMF.bind_bind, PMF.bind_map, PMF.map_comp,
+        Function.comp_def, List.ofFn_succ, Fin.cons_zero, Fin.cons_succ, List.headD_cons,
+        List.tail_cons]
+      refine congrArg (source.bind ·) (funext fun value => ?_)
+      rw [PMF.bind_comm]
+      refine congrArg ((oracle value q s).bind ·) (funext fun result => ?_)
+      rw [← ih result.1 result.2, PMF.bind_map]
+      rfl
 
-/-- A uniform external query budget suffices for every online handler. This is an exact joint
-distribution law, independent of the efficiency of the client or the sample source. -/
-theorem HasQueryBounds.eval_presample {program : ProbOracleComp spec α}
-    {size : Query → ℕ} {count maxSize : ℕ} (h : program.HasQueryBounds size count maxSize)
-    (source : ProbComp Value) (fallback : Value)
+/-- **Presampling with closed probabilistic handlers.** The `ProbComp` form of
+`IsQueryBounded.run_interpret_presample`: `n` saved samples from `source` give the online joint law
+of the result and the handler's state. -/
+theorem IsQueryBounded.eval_presample {program : ProbOracleComp spec α} {count : ℕ}
+    (h : program.IsQueryBounded count) (source : ProbComp Value) (fallback : Value)
     (oracle : Value → (q : Query) → StateT State ProbComp (spec q)) (s : State) :
     ProbComp.eval (do
       let values ← replicate count source
@@ -179,15 +136,30 @@ theorem HasQueryBounds.eval_presample {program : ProbOracleComp spec α}
         (fun q s => do
           let value ← source
           oracle value q s)) program).run s) := by
-  have hrun := run_interpret_presample source fallback
-    (fun value q s => ProbComp.eval (oracle value q s)) program s count
-    (fun result next transcript hresult => (h _ _ s next result transcript hresult).1)
+  have hrun := h.run_interpret_presample (ProbComp.eval source) fallback
+    (fun value q s => ProbComp.eval (oracle value q s)) s
   have hstep (q : Query) (state : State × List Value) :
       ProbComp.eval (withSampleList fallback oracle q state) =
         withSampleList fallback (fun value q s => ProbComp.eval (oracle value q s)) q state := by
     simp [withSampleList, PMF.monad_map_eq_map]
-  simpa only [ProbComp.eval_bind, ProbComp.eval_map, eval_run_interpret, hstep] using hrun
+  simpa only [ProbComp.eval_bind, ProbComp.eval_map, eval_run_interpret, hstep,
+    ProbComp.eval_replicate_iid] using hrun
 
 end ProbOracleComp
+
+/-- **Presampling without private coins.** A program makes at most `n` calls, and a handler draws
+one sample from `source` per call. Answering from `n` independent samples drawn in advance gives
+the same joint law of the result and the handler's state. -/
+theorem OracleComp.IsQueryBounded.run_interpret_presample {Query State Value γ : Type}
+    {spec : Query → Type} {program : OracleComp spec γ} {n : ℕ} (h : program.IsQueryBounded n)
+    (source : PMF Value) (fallback : Value)
+    (oracle : Value → (q : Query) → StateT State PMF (spec q)) (s : State) :
+    ((Probability.PMF.iid source n).map List.ofFn).bind (fun values =>
+      ((interpret (withSampleList fallback oracle) program).run (s, values)).map
+        fun result => (result.1, result.2.1)) =
+      (interpret (m := StateT State PMF)
+        (fun q state => source.bind fun value => oracle value q state) program).run s := by
+  simpa only [interpret_interpret, ProbOracleComp.interpret_query] using
+    h.probOracleComp.run_interpret_presample source fallback oracle s
 
 end Cslib

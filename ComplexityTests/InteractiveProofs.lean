@@ -106,9 +106,9 @@ example : acceptProb (GraphNonIsomorphism.verifier (path, path')) alwaysSecond �
 example : ∃ verifier : Graph × Graph → WordOracleComp Unit Bool,
     IsOraclePPTOn (encPair encGraph encGraph) encBool verifier ∧
       IsInteractiveProof verifier GraphNonIsomorphism (2 / 3) (1 / 3) ∧ ∃ c d : ℕ, ∀ x,
-        ProbOracleComp.HasQueryBounds (verifier x) (fun message => message.2.length)
-          (c * ((encPair encGraph encGraph x).length + 1) ^ d)
-          (c * ((encPair encGraph encGraph x).length + 1) ^ d) :=
+        (verifier x).IsQueryBounded (c * ((encPair encGraph encGraph x).length + 1) ^ d) ∧
+          (verifier x).QueriesSatisfy fun message =>
+            message.2.length ≤ c * ((encPair encGraph encGraph x).length + 1) ^ d :=
   exists_queryBounds_of_mem_IP GraphNonIsomorphism.mem_IP
 
 /-! ### Class inclusions and repetition -/

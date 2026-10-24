@@ -108,10 +108,11 @@ example : ¬ IsOraclePPTOn encUnary encBits (fun n => List.take 1 <$>
   intro h
   obtain ⟨c, d, hbound⟩ := h.query_bounds
   obtain ⟨n, hn⟩ := not_two_pow_le c d
-  have hcall := (hbound n Unit (fun _ s => PMF.pure ([], s)) () () []
-    [⟨((), List.replicate (2 ^ n) true), []⟩] (by
+  have hcall := (hbound n).2.forall_mem_transcript (fun _ (s : Unit) => PMF.pure ([], s))
+    (s := ()) (s' := ()) (result := [])
+    (transcript := [⟨((), List.replicate (2 ^ n) true), []⟩]) (by
       rw [OracleComp.interpret_map, StateT.run_map, ProbOracleComp.interpret_query]
-      simp [OracleComp.withTranscript, StateT.run])).2 _ List.mem_cons_self
+      simp [OracleComp.withTranscript, StateT.run]) _ List.mem_cons_self
   simp only [List.length_replicate, encUnary_apply] at hcall
   lia
 

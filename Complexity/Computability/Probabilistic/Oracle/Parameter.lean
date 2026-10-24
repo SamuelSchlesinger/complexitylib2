@@ -75,9 +75,9 @@ theorem IsOraclePPT.congr (h : IsOraclePPT output program)
 
 /-- The same polynomial bounds external calls and request lengths, independently of replies. -/
 theorem IsOraclePPT.query_bounds (h : IsOraclePPT output program) :
-    ∃ c d : ℕ, ∀ n input, ProbOracleComp.HasQueryBounds (program n input)
-      (fun request => request.2.length) (c * (n + input.length + 2) ^ d)
-        (c * (n + input.length + 2) ^ d) := by
+    ∃ c d : ℕ, ∀ n input, (program n input).IsQueryBounded (c * (n + input.length + 2) ^ d) ∧
+      (program n input).QueriesSatisfy fun request =>
+        request.2.length ≤ c * (n + input.length + 2) ^ d := by
   obtain ⟨c, d, hbound⟩ := h.on.query_bounds
   refine ⟨c * 2 ^ d, d, fun n input => ?_⟩
   have hsize : (encPair encUnary encBits (n, input)).length + 1 ≤
@@ -86,7 +86,8 @@ theorem IsOraclePPT.query_bounds (h : IsOraclePPT output program) :
     lia
   have hpoly := Nat.mul_le_mul_left c (Nat.pow_le_pow_left hsize d)
   rw [Nat.mul_pow, ← Nat.mul_assoc] at hpoly
-  exact (hbound (n, input)).mono hpoly hpoly
+  obtain ⟨hcalls, hsize⟩ := hbound (n, input)
+  exact ⟨hcalls.mono hpoly, hsize.mono fun _ hlength => hlength.trans hpoly⟩
 
 /-- Supply a closed stateful handler to a parameterized oracle program. The result retains the
 final private state, and a local invariant charges reply length and all added encoded storage. -/

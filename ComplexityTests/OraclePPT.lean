@@ -28,41 +28,46 @@ private noncomputable def randomized :
   return (answer, second, repeated)
 
 -- Private samples do not count as external calls; the adaptive client makes two requests.
-private theorem randomized_queryBounds :
-    ProbOracleComp.HasQueryBounds randomized (fun _ => 1) 2 1 := by
-  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 2) (.sample _ _ _)
-  intro first
-  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 1) (.query first _ le_rfl)
-  intro answer
-  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 1) (.sample _ _ _)
-  intro second
-  apply ProbOracleComp.HasQueryBounds.bind (nextCalls := 0) (.query first _ le_rfl)
-  intro repeated
-  exact .pure (answer, second, repeated) _ _
+private theorem randomized_queryBounds : randomized.IsQueryBounded 2 :=
+  ((ProbOracleComp.IsQueryBounded.sample _).bind fun first =>
+    (ProbOracleComp.IsQueryBounded.query first).bind fun answer =>
+      (ProbOracleComp.IsQueryBounded.sample _).bind fun second =>
+        (ProbOracleComp.IsQueryBounded.query first).bind fun repeated =>
+          OracleComp.IsCostBounded.pure (answer, second, repeated) 0).mono (by norm_num)
 
--- Both public predicates remain definitionally equal to their original expanded contracts.
-example (program : OracleComp (fun _ : Bool => Bool) Unit) (size : Bool → ℕ) (calls maxSize : ℕ) :
-    program.HasQueryBounds size calls maxSize ↔
-      ∀ (State : Type) (oracle : Bool → StateT State PMF Bool)
-        (s s' : State) (result : Unit) (transcript : OracleComp.Transcript (fun _ : Bool => Bool)),
-        (result, s', transcript) ∈
-          ((OracleComp.interpret (OracleComp.withTranscript oracle) program).run (s, [])).support →
-            transcript.length ≤ calls ∧ ∀ entry ∈ transcript, size entry.1 ≤ maxSize := Iff.rfl
-
-example (program : ProbOracleComp (fun _ : Bool => Bool) Unit)
-    (size : Bool → ℕ) (calls maxSize : ℕ) :
-    ProbOracleComp.HasQueryBounds program size calls maxSize ↔
+-- The structural budget is exactly the bound on every logged execution.
+example (program : ProbOracleComp (fun _ : Bool => Bool) Unit) (calls : ℕ) :
+    program.IsQueryBounded calls ↔
       ∀ (State : Type) (oracle : Bool → StateT State PMF Bool)
         (s s' : State) (result : Unit) (transcript : OracleComp.Transcript (fun _ : Bool => Bool)),
         (result, s', transcript) ∈ ((OracleComp.interpret
           (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n))
             (OracleComp.withTranscript oracle)) program).run (s, [])).support →
-              transcript.length ≤ calls ∧ ∀ entry ∈ transcript, size entry.1 ≤ maxSize := Iff.rfl
+              (transcript.map fun _ => 1).sum ≤ calls :=
+  ProbOracleComp.isCostBounded_iff_transcript_cost_le
 
--- Forgetting outputs cannot hide external calls; weakening their bounds uses the same contract.
-example : ProbOracleComp.HasQueryBounds ((fun _ => ()) <$> randomized) (fun _ => 1) 3 2 :=
-  ((ProbOracleComp.hasQueryBounds_map_iff _ _ _ _ _).mpr randomized_queryBounds).mono
-    (by decide) (by decide)
+-- With an empty reply type there is no oracle at all, so a bound on logged executions holds
+-- vacuously. The structural budget still counts the call.
+example : ¬(OracleComp.query (spec := fun _ : Unit => Empty) ()).IsQueryBounded 0 := by
+  intro h
+  have := (OracleComp.IsCostBounded.liftBind_iff.mp h).1
+  norm_num at this
+
+example (State : Type) (oracle : Unit → StateT State PMF Empty) (s : State) : False :=
+  (oracle () s).support_nonempty.elim fun x _ => x.1.elim
+
+-- Possible results are read off the program's tree: every reply and every coin can occur.
+example (answer second repeated : Bool) :
+    (answer, second, repeated) ∈ ProbOracleComp.support randomized := by
+  simp [randomized]
+
+-- With an empty reply type a returned value is still possible, although no oracle exists.
+example : (1 : ℕ) ∈ ProbOracleComp.support (pure 1 : ProbOracleComp (fun _ : Unit => Empty) ℕ) := by
+  simp
+
+-- Forgetting outputs cannot hide external calls; weakening the budget keeps it valid.
+example : ((fun _ => ()) <$> randomized).IsQueryBounded 3 :=
+  ((OracleComp.isCostBounded_map_iff _ _ _).mpr randomized_queryBounds).mono (by decide)
 
 private noncomputable def duplicatedRequests :
     ProbOracleComp (fun _ : Bool => Bool) (Bool × Bool) := do
@@ -89,10 +94,11 @@ private theorem run_duplicatedRequests :
   simp [ProbComp.unifFin, OracleComp.interpret_query, StateT.lift,
     OracleComp.withTranscript, flipOracle, StateT.run]
 
-example : ¬ProbOracleComp.HasQueryBounds duplicatedRequests (fun _ => 1) 1 1 := by
+example : ¬duplicatedRequests.IsQueryBounded 1 := by
   intro h
-  have hbound := h Bool flipOracle false false (false, true)
-    [⟨false, true⟩, ⟨false, false⟩] (by rw [run_duplicatedRequests]; simp)
+  have hbound := h.length_transcript_le flipOracle (s := false) (s' := false)
+    (result := (false, true)) (transcript := [⟨false, true⟩, ⟨false, false⟩])
+    (by rw [run_duplicatedRequests]; simp)
   norm_num at hbound
 
 -- Private sampling remains fresh while an external query is answered consistently.
@@ -128,8 +134,8 @@ example (result : Bool × Bool × Bool) (cache : List (Bool × Bool))
       (ProbOracleComp.handler (fun n => StateT.lift (ProbComp.unifOracle n))
         (memoize (fun _ : Bool => PMF.uniformOfFintype Bool))) randomized).run []).support) :
     (encList (encPair encBool encBool) cache).length ≤ 18 := by
-  exact memoize_cache_size_le encBool encBool _ randomized 2 1 1
-    (by simpa only [encBool_apply, List.length_singleton] using randomized_queryBounds)
+  exact memoize_cache_size_le encBool encBool _ randomized 2 1 1 randomized_queryBounds
+    (ProbOracleComp.QueriesSatisfy.of_forall (by simp) _)
     (by simp only [encBool_apply, List.length_singleton, le_refl, implies_true]) [] cache
     (by simp) result h
 
@@ -171,14 +177,15 @@ private theorem requestHead_isOraclePPTOn : IsOraclePPTOn encBits encBits reques
 private theorem requestHead_isOraclePPT : IsOraclePPT encBits (fun _ word => requestHead word) :=
   IsOraclePPTOn.isOraclePPT (IsOraclePPTOn.query_take () (.const []) (.const 1))
 
-example : ∃ c d : ℕ, ∀ n input, ProbOracleComp.HasQueryBounds (requestHead input)
-    (fun request => request.2.length) (c * (n + input.length + 2) ^ d)
-      (c * (n + input.length + 2) ^ d) := requestHead_isOraclePPT.query_bounds
+example : ∃ c d : ℕ, ∀ n input,
+    (requestHead input).IsQueryBounded (c * (n + input.length + 2) ^ d) ∧
+    (requestHead input).QueriesSatisfy fun request =>
+      request.2.length ≤ c * (n + input.length + 2) ^ d := requestHead_isOraclePPT.query_bounds
 
 -- The resource contract derives a uniform budget for this concrete functional oracle client.
-example : ∃ c d : ℕ, ∀ input, ProbOracleComp.HasQueryBounds (requestHead input)
-    (fun request => request.2.length) (c * (input.length + 1) ^ d)
-      (c * (input.length + 1) ^ d) := requestHead_isOraclePPTOn.query_bounds
+example : ∃ c d : ℕ, ∀ input, (requestHead input).IsQueryBounded (c * (input.length + 1) ^ d) ∧
+    (requestHead input).QueriesSatisfy fun request =>
+      request.2.length ≤ c * (input.length + 1) ^ d := requestHead_isOraclePPTOn.query_bounds
 
 private noncomputable def respond (caller : List Bool) (_ : Unit × List Bool)
     (state : List Bool) : ProbComp (List Bool × List Bool) := do

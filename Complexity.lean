@@ -1750,6 +1750,7 @@ public import Complexity.Languages.Probabilistic.Memoize
 public import Complexity.Languages.Probabilistic.Notation
 public import Complexity.Languages.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.Oracle.Interaction
+public import Complexity.Languages.Probabilistic.Oracle.QueryCount
 public import Complexity.Languages.Probabilistic.Oracle.Simulation
 public import Complexity.Languages.Probabilistic.Oracle.Support
 public import Complexity.Languages.Probabilistic.Oracle.Transcript

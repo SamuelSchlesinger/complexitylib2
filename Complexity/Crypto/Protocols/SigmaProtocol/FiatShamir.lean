@@ -10,6 +10,7 @@ module
 public import Complexity.Crypto.Protocols.SigmaProtocol.Identification
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
 public import Complexity.Languages.Probabilistic.Forking
+import Complexity.Languages.Probabilistic.Presample
 import Complexity.Languages.Probabilistic.Simulation
 import Complexity.Languages.Probabilistic.UntilBad
 import Complexity.Languages.Probabilistic.RandomOracle
@@ -44,7 +45,7 @@ The proof follows [BonehShoup2023], Theorems 19.7 and 19.16, with the general fo
    `OracleComp.IdenticalUntilBad.bind_apply_le`, and `OracleComp.toOuterMeasure_bad_le`).
 2. Special HVZK replaces the programming signer by the simulator, which needs no witness.
 3. The simulated transcripts are drawn in advance, one per call
-   (`OracleComp.IsQueryBounded.run_interpret_withSampleList`).
+   (`OracleComp.IsQueryBounded.run_interpret_presample`).
 4. The result is a program over the hash oracle alone, with explicit coins
    (`FiatShamir.forkingProgram`), that names the hash query of the forgery whenever the forger
    wins. The forking lemma (`OracleComp.le_add_sqrt_fork`) and special soundness turn it into
@@ -753,8 +754,7 @@ private theorem map_run_le_accept (P : SigmaProtocol X Y T C Z)
       ((interpret countingUniform (forkingProgram P A s)).run 0).bind
         (fun run => PMF.pure (validIndex (Qro + 1) run.2 run.1.1).isSome) true := by
   have hbound := isQueryBounded_forkingProgram P A hQro s
-  rw [run_interpret_countingUniform_eq (Classical.arbitrary C) _
-    (hbound.hasQueryBounds (size := fun _ => 0) (maxSize := 0) fun _ => le_rfl)]
+  rw [run_interpret_countingUniform_eq (Classical.arbitrary C) _ hbound]
   simp only [← PMF.bind_pure_comp, PMF.bind_bind, PMF.pure_bind, Function.comp_def]
   refine Probability.PMF.bind_apply_mono_on_support _ _ fun h _ => ?_
   obtain ⟨hwin, hnamed⟩ := runWithAnswers_forkingProgram P A s (List.ofFn h) rfl
@@ -857,7 +857,7 @@ private theorem run_bind_finishGame_le {P : SigmaProtocol X Y T C Z} {keyGen : P
   have h1 := run_interpret_map_state (programHandler P key)
     (fun q st => (simulateConversation simulate key.2).bind fun v => simulatedHandler v q st)
     Prod.fst (programHandler_map hzk hkey) (A.forge key.2 c) (([], []), false)
-  have h2 := (hA.isQueryBounded key.2 c).run_interpret_withSampleList
+  have h2 := (hA.isQueryBounded key.2 c).run_interpret_presample
     (simulateConversation simulate key.2) (Classical.arbitrary _) simulatedHandler ([], [])
   have hflag := toOuterMeasure_flag_le P key hcommit (hA key.2 c).1 (hA.isQueryBounded key.2 c)
   rw [show (Qs : ENNReal) * ((Qs + Qro : ℕ) * δ) = (Qs * (Qs + Qro) : ℕ) * δ by
@@ -910,8 +910,7 @@ theorem succProbability_eufCmaGame_le [Nonempty X] [Nonempty T] [Nonempty Z] [De
         fun run => PMF.pure (validIndex (Qro + 1) run.2 run.1.1).isSome) true :=
     Probability.PMF.bind_apply_mono_on_support _ _ fun s _ => map_run_le_accept P A hQro s
   have hC := le_add_sqrt_fork first (forkingProgram P A) (Classical.arbitrary C)
-    (fun s => (isQueryBounded_forkingProgram P A hQro s).hasQueryBounds (size := fun _ => 0)
-      (maxSize := 0) fun _ => le_rfl)
+    (fun s => isQueryBounded_forkingProgram P A hQro s)
   have hD := fork_le_oneWayGame (P := P) hsound simulate A Qs Qro
   simp only [PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure] at hC
   simp only [Game.succProbability, ENNReal.coe_toNNReal_eq_toReal]

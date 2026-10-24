@@ -35,14 +35,11 @@ private def adaptive : OracleComp (fun _ : Bool => Bool) (Bool × Bool × Bool) 
   return (first, second, third)
 
 -- Every oracle, including a stateful one, sees exactly this uniform three-call upper bound.
-private theorem adaptive_queryBounds : adaptive.HasQueryBounds (fun _ => 1) 3 1 := by
-  apply OracleComp.HasQueryBounds.bind (nextCalls := 2) (.query false _ le_rfl)
-  intro first
-  apply OracleComp.HasQueryBounds.bind (nextCalls := 1) (.query first _ le_rfl)
-  intro second
-  apply OracleComp.HasQueryBounds.bind (nextCalls := 0) (.query false _ le_rfl)
-  intro third
-  exact .pure (first, second, third) _ _
+private theorem adaptive_queryBounds : adaptive.IsQueryBounded 3 :=
+  ((OracleComp.IsCostBounded.query false).bind fun first =>
+    (OracleComp.IsCostBounded.query first).bind fun second =>
+      (OracleComp.IsCostBounded.query false).bind fun third =>
+        OracleComp.IsCostBounded.pure (first, second, third) 0).mono (by norm_num)
 
 -- Eagerly sample a table or lazily cache it: the adaptive client's output has the same law.
 example :
@@ -60,7 +57,8 @@ example (cache next : List (Bool × Bool)) (result : Bool × Bool × Bool)
       (memoize (fun _ => PMF.uniformOfFintype Bool)) adaptive).run cache).support) :
     next.length ≤ cache.length + 3 :=
   (Cslib.RandomOracle.memoize_cache_bounds _ adaptive (fun _ => 1) 3 1
-    adaptive_queryBounds cache next result h).1
+    adaptive_queryBounds (OracleComp.QueriesSatisfy.of_forall (fun _ => le_rfl) _) cache next
+    result h).1
 
 -- The first and third replies agree, including after an answer-dependent intermediate query.
 example (table : Bool → Bool) :

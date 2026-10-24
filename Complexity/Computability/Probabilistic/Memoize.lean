@@ -9,7 +9,7 @@ module
 
 public import Complexity.Foundations.Control.Monad.Memoize
 public import Complexity.Computability.Probabilistic.PPT
-public import Complexity.Languages.Probabilistic.Oracle.Transcript
+public import Complexity.Languages.Probabilistic.Oracle.QueryCount
 
 import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -126,8 +126,8 @@ theorem memoize_cache_size_le {α Key Value : Type} [BEq Key]
     (keyEncoding : Key ↪ List Bool) (valueEncoding : Value ↪ List Bool)
     (distribution : Key → PMF Value) (program : ProbOracleComp (fun _ : Key => Value) α)
     (calls maxKey maxValue : ℕ)
-    (hqueries : ProbOracleComp.HasQueryBounds program
-      (fun key => (keyEncoding key).length) calls maxKey)
+    (hcalls : program.IsQueryBounded calls)
+    (hkeys : program.QueriesSatisfy fun key => (keyEncoding key).length ≤ maxKey)
     (hvalues : ∀ key, (keyEncoding key).length ≤ maxKey →
       ∀ value ∈ (distribution key).support, (valueEncoding value).length ≤ maxValue)
     (cache cache' : List (Key × Value))
@@ -140,7 +140,7 @@ theorem memoize_cache_size_le {α Key Value : Type} [BEq Key]
     (encList (encPair keyEncoding valueEncoding) cache').length ≤
       (cache.length + calls) * (4 * maxKey + 2 * maxValue + 3) := by
   obtain ⟨hcount, hentries⟩ := RandomOracle.memoize_cache_bounds_prob distribution program
-    (fun key => (keyEncoding key).length) calls maxKey hqueries cache cache' result h
+    (fun key => (keyEncoding key).length) calls maxKey hcalls hkeys cache cache' result h
   have hentry : ∀ entry ∈ cache', (encPair keyEncoding valueEncoding entry).length ≤
       2 * maxKey + maxValue + 1 := by
     intro entry hentry

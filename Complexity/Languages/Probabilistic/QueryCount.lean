@@ -7,41 +7,42 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Languages.Probabilistic.Oracle.Transcript
-public import Complexity.Languages.Probabilistic.Presample
-public import Complexity.Probability.IID
-import Complexity.Probability.PMF
+public import Complexity.Languages.Probabilistic.Transcript
 
 /-!
-# Counting oracle calls structurally
+# Query budgets
 
-`OracleComp.IsCostBounded cost program n` says that the calls of `program` cost at most `n` in
-total on every path through its tree of calls, whatever the answers, where a call `q` costs
-`cost q`. With unit costs this is `OracleComp.IsQueryBounded program n`: at most `n` calls on every
-path. Other costs count calls of one kind only, such as the signing calls of a forger. Budgets are
-preserved by sequencing (`IsCostBounded.bind`), add over costs (`IsCostBounded.add`) and are proved
-by induction on the program. A call budget gives the semantic, handler-quantified bound
-`ProbOracleComp.HasQueryBounds` for the program's external calls
-(`IsQueryBounded.hasQueryBounds`), and running a program through a handler whose calls make at
-most `cost q` calls gives a call budget (`IsCostBounded.run_interpret`).
+`OracleComp.IsCostBounded cost program n` says that on every path through the tree of calls of
+`program`, whatever the answers, the calls cost at most `n` in total, where a call `q` costs
+`cost q`. This is the library's notion of a query budget; the others are instances of it.
 
-A budget also justifies presampling: a handler that draws one sample per call can read its
-samples from a list of independent draws made in advance, with the same law of the result and the
-final state (`IsQueryBounded.run_interpret_withSampleList`).
+* With unit costs it is `OracleComp.IsQueryBounded program n`: at most `n` calls on every path,
+  that is, a query tree of depth at most `n`.
+* A cost that is `1` on calls of one kind and `0` on the others counts those calls only, such as
+  the signing calls of a forger, or the external queries of a program with private coins
+  (`ProbOracleComp.IsQueryBounded`).
+* A zero budget for the calls outside a predicate `p` says that every call satisfies `p`
+  (`OracleComp.QueriesSatisfy`), for example that every request has bounded length.
+
+Budgets are proved and used by induction on the program. They are preserved by sequencing
+(`IsCostBounded.bind`), add over costs (`IsCostBounded.add`), and compose with handlers whose calls
+are budgeted in turn (`IsCostBounded.run_interpret`). Against every stateful oracle, the calls that
+`OracleComp.withTranscript` records respect the budget (`IsCostBounded.transcript_cost_le`).
+A budget says nothing about running time.
 
 ## Main definitions
 
 * `Cslib.OracleComp.IsCostBounded`: calls costing at most `n` on every path.
 * `Cslib.OracleComp.IsQueryBounded`: at most `n` calls on every path.
+* `Cslib.OracleComp.QueriesSatisfy`: every call on every path satisfies a predicate.
 
 ## Main results
 
 * `Cslib.OracleComp.IsCostBounded.bind`: budgets add under sequencing.
 * `Cslib.OracleComp.IsCostBounded.add`: budgets for two costs give a budget for their sum.
-* `Cslib.OracleComp.IsCostBounded.run_interpret`: the call budget of a program run through a
+* `Cslib.OracleComp.IsCostBounded.run_interpret`: the budget of a program run through a stateful
   handler.
-* `Cslib.OracleComp.IsQueryBounded.hasQueryBounds`: the semantic external call bound.
-* `Cslib.OracleComp.IsQueryBounded.run_interpret_withSampleList`: presampling a handler's draws.
+* `Cslib.OracleComp.IsCostBounded.transcript_cost_le`: logged calls respect the budget.
 -/
 
 @[expose] public section
@@ -107,6 +108,14 @@ theorem bind {program : OracleComp spec α} {next : α → OracleComp spec β} {
     rw [show n + cost q + m = n + m + cost q by omega]
     exact .liftBind q _ (n + m) ih
 
+/-- Calls that cost nothing fit in a zero budget. -/
+theorem of_forall_cost_eq_zero (hcost : ∀ q, cost q = 0) (program : OracleComp spec α) :
+    IsCostBounded cost program 0 := by
+  induction program with
+  | pure a => exact .pure a 0
+  | liftBind q cont ih =>
+    exact liftBind_iff.mpr ⟨(hcost q).le, fun a => by simpa [hcost q] using ih a⟩
+
 /-- A budget for a cost is one for every smaller cost. -/
 theorem of_le {cost' : ι → ℕ} {program : OracleComp spec α} {n : ℕ}
     (h : IsCostBounded cost program n) (hcost : ∀ q, cost' q ≤ cost q) :
@@ -126,73 +135,174 @@ theorem add {cost' : ι → ℕ} {program : OracleComp spec α} {n n' : ℕ}
     rw [show n + cost q + n' = n + (n' - cost' q) + (cost q + cost' q) by omega]
     exact .liftBind q cont _ fun a => ih a (hcont a)
 
-/-- A program run through a stateful handler, each of whose calls `q` makes at most `cost q`
-calls to the target oracle, makes at most `n` target calls when its own calls cost at most
-`n`. -/
-theorem run_interpret {κ : Type u} {target : OracleSpec.{u, v} κ} {σ : Type v}
+/-- A program whose calls are replaced by programs over another interface, each call `q` costing
+at most `cost q` there, costs at most `n` there when its own calls cost at most `n`. -/
+theorem interpret {κ : Type u} {target : OracleSpec.{u, v} κ} {cost' : κ → ℕ}
+    {handler : (q : ι) → OracleComp target (spec q)}
+    (hhandler : ∀ q, IsCostBounded cost' (handler q) (cost q)) {program : OracleComp spec α}
+    {n : ℕ} (h : IsCostBounded cost program n) :
+    IsCostBounded cost' (OracleComp.interpret handler program) n := by
+  induction h with
+  | pure a n => exact .pure a n
+  | liftBind q cont n _ ih =>
+    change IsCostBounded cost' (OracleComp.interpret handler (OracleComp.query q >>= cont)) _
+    rw [interpret_bind, interpret_query, Nat.add_comm]
+    exact (hhandler q).bind ih
+
+/-- A program run through a stateful handler, each of whose calls `q` costs at most `cost q` on
+the target interface, costs at most `n` there when its own calls cost at most `n`. -/
+theorem run_interpret {κ : Type u} {target : OracleSpec.{u, v} κ} {cost' : κ → ℕ} {σ : Type v}
     {handler : (q : ι) → StateT σ (OracleComp target) (spec q)}
-    (hhandler : ∀ q s, IsQueryBounded ((handler q).run s) (cost q)) {program : OracleComp spec α}
-    {n : ℕ} (h : IsCostBounded cost program n) (s : σ) :
-    IsQueryBounded ((interpret handler program).run s) n := by
+    (hhandler : ∀ q s, IsCostBounded cost' ((handler q).run s) (cost q))
+    {program : OracleComp spec α} {n : ℕ} (h : IsCostBounded cost program n) (s : σ) :
+    IsCostBounded cost' ((OracleComp.interpret handler program).run s) n := by
   induction h generalizing s with
   | pure a n => exact .pure (a, s) _
   | liftBind q cont n _ ih =>
-    change IsQueryBounded ((interpret handler (OracleComp.query q >>= cont)).run s) _
+    change IsCostBounded cost'
+      ((OracleComp.interpret handler (OracleComp.query q >>= cont)).run s) _
     simp only [interpret_bind, interpret_query, StateT.run_bind]
     rw [Nat.add_comm]
     exact (hhandler q s).bind fun result => ih result.1 result.2
 
 end IsCostBounded
 
-/-- A structural budget bounds the external calls of the program run with private
-randomness, for every size bound on its queries. -/
-theorem IsQueryBounded.hasQueryBounds {Query : Type} {Response : Query → Type} {γ : Type}
-    {program : OracleComp Response γ} {n : ℕ} (h : IsQueryBounded program n)
-    {size : Query → ℕ} {maxSize : ℕ} (hsize : ∀ q, size q ≤ maxSize) :
-    (interpret (fun q => ProbOracleComp.query (spec := Response) q)
-      program).HasQueryBounds size n maxSize := by
-  induction h with
-  | pure a n => exact (ProbOracleComp.HasQueryBounds.pure a size maxSize).mono (by omega) le_rfl
-  | liftBind q cont n _ ih =>
-    have hbind := (ProbOracleComp.HasQueryBounds.query (Response := Response) q size
-      (hsize q)).bind ih
-    rw [show 1 + n = n + 1 by omega] at hbind
-    exact hbind
+/-- Postprocessing the result makes no call. -/
+@[simp] theorem isCostBounded_map_iff {cost : ι → ℕ} (f : α → β) (program : OracleComp spec α)
+    (n : ℕ) : IsCostBounded cost (f <$> program) n ↔ IsCostBounded cost program n := by
+  constructor
+  · intro h
+    induction program generalizing n with
+    | pure a => exact .pure a n
+    | liftBind q cont ih =>
+      obtain ⟨hle, hcont⟩ := IsCostBounded.liftBind_iff.mp h
+      exact IsCostBounded.liftBind_iff.mpr ⟨hle, fun a => ih a _ (hcont a)⟩
+  · intro h
+    rw [← bind_pure_comp]
+    simpa using h.bind fun a => IsCostBounded.pure (f a) 0
 
-/-- **Presampling a handler's randomness.** A handler that draws one sample per call from
-`source` can instead read the samples from a list of independent draws, made in advance: for a
-program making at most `n` calls, `n` presampled draws give the same law of the result and the
-final state. -/
-theorem IsQueryBounded.run_interpret_withSampleList {ι' σ γ V : Type} {spec' : ι' → Type}
-    {program : OracleComp spec' γ} {n : ℕ} (h : IsQueryBounded program n) (source : PMF V)
-    (fallback : V) (oracle : V → (q : ι') → StateT σ PMF (spec' q)) (s : σ) :
-    ((Probability.PMF.iid source n).map List.ofFn).bind (fun values =>
-      ((interpret (withSampleList fallback oracle) program).run (s, values)).map
-        fun result => (result.1, result.2.1)) =
-      (interpret (m := StateT σ PMF) (fun q state => source.bind fun value => oracle value q state)
-        program).run s := by
-  induction h generalizing s with
+/-! ### Every call satisfies a predicate -/
+
+open Classical in
+/-- Every call of `program`, on every path and whatever the answers, satisfies `p`: the calls
+outside `p` have a zero budget. -/
+def QueriesSatisfy (p : ι → Prop) (program : OracleComp spec α) : Prop :=
+  IsCostBounded (fun q => if p q then 0 else 1) program 0
+
+namespace QueriesSatisfy
+
+variable {p p' : ι → Prop}
+
+/-- A call followed by its continuations satisfies `p` exactly when the call and every
+continuation do. -/
+theorem liftBind_iff {q : ι} {cont : spec q → OracleComp spec α} :
+    QueriesSatisfy p (PFunctor.FreeM.liftBind q cont) ↔
+      p q ∧ ∀ a, QueriesSatisfy p (cont a) := by
+  classical
+  unfold QueriesSatisfy
+  rw [IsCostBounded.liftBind_iff]
+  by_cases hq : p q <;> simp [hq]
+
+/-- Returning a value makes no call. -/
+theorem pure (a : α) : QueriesSatisfy p (Pure.pure a : OracleComp spec α) :=
+  IsCostBounded.pure a 0
+
+/-- A single call satisfies `p` when its query does. -/
+theorem query {q : ι} (hq : p q) : QueriesSatisfy p (OracleComp.query (spec := spec) q) := by
+  classical
+  have h := IsCostBounded.query (spec := spec) (cost := fun q => if p q then 0 else 1) q
+  simpa [QueriesSatisfy, hq] using h
+
+/-- Sequencing preserves the predicate. -/
+theorem bind {program : OracleComp spec α} {next : α → OracleComp spec β}
+    (h : QueriesSatisfy p program) (hnext : ∀ a, QueriesSatisfy p (next a)) :
+    QueriesSatisfy p (program >>= next) := by
+  simpa [QueriesSatisfy] using IsCostBounded.bind h hnext
+
+/-- Every program satisfies a predicate that holds for every call. -/
+theorem of_forall (hp : ∀ q, p q) (program : OracleComp spec α) : QueriesSatisfy p program :=
+  IsCostBounded.of_forall_cost_eq_zero (fun q => by simp [hp q]) program
+
+/-- A weaker predicate is still satisfied. -/
+theorem mono {program : OracleComp spec α} (h : QueriesSatisfy p program)
+    (hp : ∀ q, p q → p' q) : QueriesSatisfy p' program := by
+  classical
+  refine IsCostBounded.of_le h fun q => ?_
+  by_cases hq : p q
+  · simp [hq, hp q hq]
+  · by_cases hq' : p' q <;> simp [hq, hq']
+
+end QueriesSatisfy
+
+/-- Postprocessing the result makes no call. -/
+@[simp] theorem queriesSatisfy_map_iff {p : ι → Prop} (f : α → β) (program : OracleComp spec α) :
+    QueriesSatisfy p (f <$> program) ↔ QueriesSatisfy p program :=
+  isCostBounded_map_iff f program 0
+
+/-! ### Logged calls respect the budget -/
+
+section Transcript
+
+variable {Query : Type u} {Response : Query → Type u} {State γ : Type u}
+
+/-- Against every stateful oracle, the calls recorded on a supported run cost at most the
+budget. -/
+theorem IsCostBounded.transcript_cost_le {cost : Query → ℕ} {program : OracleComp Response γ}
+    {n : ℕ} (h : IsCostBounded cost program n)
+    (oracle : (q : Query) → StateT State PMF (Response q)) {s s' : State} {result : γ}
+    {transcript : Transcript Response}
+    (hmem : (result, s', transcript) ∈
+      ((OracleComp.interpret (withTranscript oracle) program).run (s, [])).support) :
+    (transcript.map fun entry => cost entry.1).sum ≤ n := by
+  induction h generalizing s s' result transcript with
   | pure a n =>
-    change ((Probability.PMF.iid source n).map List.ofFn).bind (fun values =>
-      (PMF.pure (a, s, values)).map fun result => (result.1, result.2.1)) = PMF.pure (a, s)
-    simp only [PMF.pure_map, PMF.bind_const]
+    change (result, s', transcript) ∈ (PMF.pure (a, s, [])).support at hmem
+    rw [PMF.mem_support_pure_iff] at hmem
+    cases hmem
+    simp
   | liftBind q cont n _ ih =>
-    change ((Probability.PMF.iid source (n + 1)).map List.ofFn).bind (fun values =>
-      (((withSampleList fallback oracle q) (s, values)).bind fun result =>
-        (interpret (withSampleList fallback oracle) (cont result.1)).run result.2).map
-          fun result => (result.1, result.2.1)) =
-      (source.bind fun value => oracle value q s).bind fun result =>
-        (interpret (m := StateT σ PMF)
-          (fun q state => source.bind fun value => oracle value q state) (cont result.1)).run
-          result.2
-    simp only [Probability.PMF.iid, withSampleList, Probability.PMF.monad_bind_eq_bind,
-      PMF.monad_map_eq_map, PMF.map_bind, PMF.bind_bind, PMF.bind_map, PMF.map_comp,
-      Function.comp_def, List.ofFn_succ, Fin.cons_zero, Fin.cons_succ, List.headD_cons,
-      List.tail_cons]
-    refine congrArg (source.bind ·) (funext fun value => ?_)
-    rw [PMF.bind_comm]
-    refine congrArg ((oracle value q s).bind ·) (funext fun result => ?_)
-    rw [← ih result.1 result.2, PMF.bind_map]
-    rfl
+    change (result, s', transcript) ∈ ((OracleComp.interpret (withTranscript oracle)
+      (OracleComp.query q >>= cont)).run (s, [])).support at hmem
+    simp only [interpret_bind, interpret_query, StateT.run_bind,
+      Probability.PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff] at hmem
+    obtain ⟨⟨a, middle, seen⟩, hfirst, hrest⟩ := hmem
+    simp only [StateT.run, withTranscript, PMF.mem_support_map_iff] at hfirst
+    obtain ⟨⟨answer, next⟩, -, heq⟩ := hfirst
+    cases heq
+    rw [run_interpret_withTranscript_append, PMF.mem_support_map_iff] at hrest
+    obtain ⟨⟨result', final, fresh⟩, hfresh, heq⟩ := hrest
+    cases heq
+    have := ih answer hfresh
+    simp only [List.map_append, List.sum_append, List.map_cons, List.map_nil, List.sum_cons,
+      List.sum_nil]
+    omega
+
+/-- Against every stateful oracle, a supported run records at most `n` calls. -/
+theorem IsQueryBounded.length_transcript_le {program : OracleComp Response γ} {n : ℕ}
+    (h : program.IsQueryBounded n) (oracle : (q : Query) → StateT State PMF (Response q))
+    {s s' : State} {result : γ} {transcript : Transcript Response}
+    (hmem : (result, s', transcript) ∈
+      ((OracleComp.interpret (withTranscript oracle) program).run (s, [])).support) :
+    transcript.length ≤ n := by
+  simpa using h.transcript_cost_le oracle hmem
+
+/-- Against every stateful oracle, every call recorded on a supported run satisfies `p`. -/
+theorem QueriesSatisfy.forall_mem_transcript {p : Query → Prop}
+    {program : OracleComp Response γ} (h : QueriesSatisfy p program)
+    (oracle : (q : Query) → StateT State PMF (Response q)) {s s' : State} {result : γ}
+    {transcript : Transcript Response}
+    (hmem : (result, s', transcript) ∈
+      ((OracleComp.interpret (withTranscript oracle) program).run (s, [])).support) :
+    ∀ entry ∈ transcript, p entry.1 := by
+  classical
+  have hsum := IsCostBounded.transcript_cost_le h oracle hmem
+  intro entry hentry
+  by_contra hp
+  have hle := List.le_sum_of_mem (List.mem_map_of_mem (f := fun entry : (q : Query) × Response q =>
+    if p entry.1 then 0 else 1) hentry)
+  simp only [hp, ite_false] at hle
+  omega
+
+end Transcript
 
 end Cslib.OracleComp

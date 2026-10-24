@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Languages.Probabilistic.Transcript
+public import Complexity.Languages.Probabilistic.QueryCount
 public import Complexity.Languages.Probabilistic.Memoize
 public import Complexity.Probability.Product
 
@@ -143,7 +143,7 @@ private theorem run_interpret_memoize_transcript (distribution : Query → PMF V
 support bound can then bound stored replies, without assuming that each call grows by a constant. -/
 theorem memoize_cache_bounds (distribution : Query → PMF Value)
     (program : OracleComp (fun _ : Query => Value) α) (size : Query → ℕ) (calls maxSize : ℕ)
-    (hqueries : program.HasQueryBounds size calls maxSize)
+    (hcalls : program.IsQueryBounded calls) (hsize : program.QueriesSatisfy (size · ≤ maxSize))
     (cache cache' : List (Query × Value)) (result : α)
     (h : (result, cache') ∈
       ((OracleComp.interpret (memoize distribution) program).run cache).support) :
@@ -156,12 +156,12 @@ theorem memoize_cache_bounds (distribution : Query → PMF Value)
   cases heq
   obtain ⟨hcount, hentries⟩ := run_interpret_memoize_transcript distribution program cache state.1
     result state.2 hstate
-  obtain ⟨hcalls, hsize⟩ := hqueries _ (memoize distribution) cache state.1 result state.2 hstate
-  refine ⟨hcount.trans (Nat.add_le_add_left hcalls _), ?_⟩
+  refine ⟨hcount.trans (Nat.add_le_add_left
+    (hcalls.length_transcript_le (memoize distribution) hstate) _), ?_⟩
   intro entry hentry
   rcases hentries entry hentry with h | ⟨hseen, hsupport⟩
   · exact Or.inl h
-  · exact Or.inr ⟨hsize _ hseen, hsupport⟩
+  · exact Or.inr ⟨hsize.forall_mem_transcript (memoize distribution) hstate _ hseen, hsupport⟩
 
 /-- Interpret a finite association list as a partial function. The first occurrence of a key
 determines its value, so arbitrary initial lists are supported without a uniqueness invariant. -/

@@ -11,7 +11,7 @@ public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.NP
 public import Complexity.Computability.Probabilistic.Oracle
 public import Complexity.Languages.Probabilistic.BitString
-public import Complexity.Languages.Probabilistic.Oracle.Transcript
+public import Complexity.Languages.Probabilistic.Oracle.QueryCount
 public import Complexity.Languages.Probabilistic.Oracle.Interaction
 import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.PPT.Capture
@@ -206,8 +206,9 @@ the instance length bounds the number of messages and the length of each, agains
 theorem exists_queryBounds_of_mem_IP {A : Set α} (h : A ∈ IP enc) :
     ∃ verifier : α → WordOracleComp Unit Bool, IsOraclePPTOn enc encBool verifier ∧
       IsInteractiveProof verifier A (2 / 3) (1 / 3) ∧ ∃ c d : ℕ, ∀ a,
-        ProbOracleComp.HasQueryBounds (verifier a) (fun message => message.2.length)
-          (c * ((enc a).length + 1) ^ d) (c * ((enc a).length + 1) ^ d) := by
+        (verifier a).IsQueryBounded (c * ((enc a).length + 1) ^ d) ∧
+          (verifier a).QueriesSatisfy fun message =>
+            message.2.length ≤ c * ((enc a).length + 1) ^ d := by
   obtain ⟨verifier, hV, hproof⟩ := h
   exact ⟨verifier, hV, hproof, hV.query_bounds⟩
 
