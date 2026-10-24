@@ -99,9 +99,9 @@ theorem isPPTOn_evaluateNode
   have hcap := (computableTidilyInPolyTime_decryptionArity D hD).comp hn
   have hbounded := hraw.map_with (f := fun a ciphertext =>
     ciphertext.take (secretWidth (n a) + ciphertextWidth (n a)))
-    (ComputableTidilyInPolyTime.bitsTake.comp
+    (.of_tidy (ComputableTidilyInPolyTime.bitsTake.comp
       ((ComputableTidilyInPolyTime.snd input encBits).prod
-        (hcap.comp (ComputableTidilyInPolyTime.fst input encBits))))
+        (hcap.comp (ComputableTidilyInPolyTime.fst input encBits)))))
   apply hbounded.congr
   intro a
   cases node a <;> rfl

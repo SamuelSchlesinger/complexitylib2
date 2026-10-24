@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Probabilistic.PPT.Composition
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputPrefix
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Probabilistic.Oracle.Composition
@@ -85,10 +86,10 @@ theorem IsPPTOn.bind_with {first : α → ProbComp β} {second : α → β → P
 @[fun_prop]
 theorem IsPPTOn.map_with {program : α → ProbComp β} {f : α → β → γ}
     (hprogram : IsPPTOn input left program)
-    (hf : ComputableTidilyInPolyTime (fun pair => f pair.1 pair.2) (encPair input left) right) :
+    (hf : ComputableInPolyTime (fun pair => f pair.1 pair.2) (encPair input left) right) :
     IsPPTOn input right (fun a => f a <$> program a) := by
   simpa only [bind_pure_comp] using
-    hprogram.bind_with (right := right) (second := fun a b => pure (f a b)) hf.isPPTOn
+    hprogram.bind_with (right := right) (second := fun a b => pure (f a b)) hf.tidy.isPPTOn
 
 /-- Select a closed probabilistic branch with an efficient Boolean condition, using the
 empty-channel specialization of oracle branch selection. -/

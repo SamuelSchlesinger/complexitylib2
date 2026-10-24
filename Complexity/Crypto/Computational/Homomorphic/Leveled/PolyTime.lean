@@ -83,6 +83,7 @@ theorem isPPTOn_keyGen
     IsPPTOn input (encPair encBits encBits) (fun a => keyGen E (n a) (budget a)) := by
   apply (Scheme.isPPTOn_generateKeyChain hkeyGen hencrypt hn
     (show ComputableTidilyInPolyTime (fun a => 2 * budget a) input encUnary by fun_prop)).map_with
+  apply Turing.MultiTapeTM.ComputableInPolyTime.of_tidy
   apply computableTidilyInPolyTime_keyPair <;> fun_prop
 
 include hencrypt in
@@ -146,6 +147,7 @@ theorem isPPTOn_evaluateCircuit {inputCount : α → ℕ}
     (.of_tidy hcompiled.fst')).tidy
   apply (Scheme.isPPTOn_evaluateLayers D hencrypt hevaluate hD hn hpks hlinks hinputs
     hpadded).map_with
+  apply Turing.MultiTapeTM.ComputableInPolyTime.of_tidy
   apply ComputableTidilyInPolyTime.mapWithInput
     (hcompiled.snd'.comp (ComputableTidilyInPolyTime.fst _ _))
   exact ComputableTidilyInPolyTime.listGetD_binary [] (by fun_prop) (by fun_prop)

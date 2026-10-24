@@ -56,7 +56,7 @@ theorem isPPTOn_sampleCenteredBinomial :
         (hcast.comp (ComputableTidilyInPolyTime.snd _ _)))
   have hsecond := (hcount.preprocess
     (ComputableTidilyInPolyTime.fst encUnary encUnary)).map_with
-      (f := fun (p : ℕ × ℕ) (negative : ℕ) => (p.2 : ℤ) - negative) hsub
+      (f := fun (p : ℕ × ℕ) (negative : ℕ) => (p.2 : ℤ) - negative) (.of_tidy hsub)
   unfold sampleCenteredBinomial
   apply hcount.bind_with
   simpa only [bind_pure_comp] using hsecond

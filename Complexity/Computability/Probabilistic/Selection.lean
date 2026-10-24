@@ -58,6 +58,7 @@ theorem IsPPTOn.selectBest {α : Type} {input : α ↪ List Bool}
       (fun pair => OracleComp.selectStep (trials pair.1) (test pair.1) pair.2) := by
     unfold OracleComp.selectStep
     apply (htest'.countTrue htrials').map_with
+    apply ComputableInPolyTime.of_tidy
     dsimp only [OracleComp.selectUpdate, stateEncoding]
     polytime
   have hloop := (IsPPTOn.iterateWith_spec (stateEncoding := stateEncoding)
@@ -83,6 +84,11 @@ theorem IsPPTOn.selectFrom {α β : Type} {input : α ↪ List Bool} {output : �
     (htest : IsPPTOn (encPair input output) encBool (fun pair => test pair.1 pair.2)) :
     IsPPTOn input output
       (fun a => OracleComp.selectFrom (values a) (trials a) (test a) fallback) := by
+  have hget : ComputableInPolyTime
+      (fun p : α × ℕ => ((values p.1)[p.2]?).getD fallback)
+      (encPair input encUnary) output := by
+    apply ComputableInPolyTime.of_tidy
+    fun_prop
   unfold OracleComp.selectFrom
   ppt
 
