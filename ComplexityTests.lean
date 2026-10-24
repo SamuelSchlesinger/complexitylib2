@@ -341,6 +341,7 @@ import ComplexityTests.PPTruthTable
 import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
 import ComplexityTests.PlainAutomationSupport
+import ComplexityTests.PlainLawfulBEq
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeBinaryWord
 import ComplexityTests.PolyTimeContracts
