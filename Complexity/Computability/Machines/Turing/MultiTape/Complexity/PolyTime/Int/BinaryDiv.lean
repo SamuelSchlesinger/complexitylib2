@@ -24,9 +24,9 @@ remainder convention followed by truncation at zero.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_emodNat`: signed reduction with both
+* `Turing.MultiTapeTM.ComputableInPolyTime.intBin_emodNat`: signed reduction with both
   operands and the result encoded in binary.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_emodNat'`: composition with computed inputs.
+* `Turing.MultiTapeTM.ComputableInPolyTime.intBin_emodNat'`: composition with computed inputs.
 
 ## References
 
@@ -36,7 +36,7 @@ arithmetic certificates in `PolyTime/Int/Binary` and `PolyTime/Nat/BinaryDiv`.
 
 @[expose] public section
 
-namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
+namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 private theorem emodNat_eq (z : ℤ) (q : ℕ) :
     (z % (q : ℤ)).toNat =
@@ -61,7 +61,7 @@ private theorem emodNat_eq (z : ℤ) (q : ℕ) :
 the integer truncated at zero; no positive-modulus hypothesis is required. -/
 @[fun_prop, program_certificate]
 theorem intBin_emodNat :
-    ComputableTidilyInPolyTime (fun p : ℤ × ℕ => (p.1 % (p.2 : ℤ)).toNat)
+    ComputableInPolyTime (fun p : ℤ × ℕ => (p.1 % (p.2 : ℤ)).toNat)
       (encPair encIntBin encNat) encNat := by
   have hsign := intBin_isNeg.comp (fst encIntBin encNat)
   have hmodulus := snd encIntBin encNat
@@ -76,9 +76,9 @@ theorem intBin_emodNat :
 encodings for proof search. -/
 @[fun_prop, program_certificate]
 theorem intBin_emodNat' {α : Type} {input : α ↪ List Bool} {value : α → ℤ} {modulus : α → ℕ}
-    (hvalue : ComputableTidilyInPolyTime value input encIntBin)
-    (hmodulus : ComputableTidilyInPolyTime modulus input encNat) :
-    ComputableTidilyInPolyTime (fun a => (value a % (modulus a : ℤ)).toNat) input encNat :=
+    (hvalue : ComputableInPolyTime value input encIntBin)
+    (hmodulus : ComputableInPolyTime modulus input encNat) :
+    ComputableInPolyTime (fun a => (value a % (modulus a : ℤ)).toNat) input encNat :=
   intBin_emodNat.comp (hvalue.prod hmodulus)
 
-end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+end Turing.MultiTapeTM.ComputableInPolyTime

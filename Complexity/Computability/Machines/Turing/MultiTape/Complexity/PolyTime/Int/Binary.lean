@@ -19,7 +19,7 @@ Polynomial-time certificates for arithmetic on the binary sign-magnitude integer
 other operation is an ordinary functional program over the sign and the magnitude, by cases on
 the signs, built from the binary natural arithmetic of `PolyTime/Nat/Binary.lean`; no new machine
 is involved. A result is assembled from a sign and a magnitude by
-`Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_signMagnitude`, which clears the sign of a
+`Turing.MultiTapeTM.ComputableInPolyTime.intBin_signMagnitude`, which clears the sign of a
 zero magnitude. Integers of equal sign add their magnitudes; otherwise the smaller magnitude is
 subtracted from the larger one, which keeps its sign. A product multiplies the magnitudes, and is
 negative when exactly one factor is. Lists are summed and powers taken by left folds, with
@@ -30,18 +30,18 @@ the binary length bounds of `Int.size_natAbs_add_le` and `Int.size_natAbs_mul_le
 * `Int.size_natAbs_add_le`, `Int.size_natAbs_sub_le`, `Int.size_natAbs_mul_le`,
   `Int.size_natAbs_pow_le`, `Int.size_natAbs_sum_le`, `Int.size_natAbs_prod_le`: binary lengths of
   magnitudes of sums, differences, products, powers, list sums and list products.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_isNeg`, `.intBin_natAbs`: the sign and the
+* `Turing.MultiTapeTM.ComputableInPolyTime.intBin_isNeg`, `.intBin_natAbs`: the sign and the
   binary magnitude.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_signMagnitude`, `.intBin_natCast`: integers
+* `Turing.MultiTapeTM.ComputableInPolyTime.intBin_signMagnitude`, `.intBin_natCast`: integers
   from a sign and a binary magnitude, and from binary naturals.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_isZero`, `.intBin_isPos`, `.intBin_sign`,
+* `Turing.MultiTapeTM.ComputableInPolyTime.intBin_isZero`, `.intBin_isPos`, `.intBin_sign`,
   `.intBin_toNat`: sign tests, the sign and truncation at zero.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_neg`, `.intBin_add`, `.intBin_sub`,
+* `Turing.MultiTapeTM.ComputableInPolyTime.intBin_neg`, `.intBin_add`, `.intBin_sub`,
   `.intBin_mul`, `.intBin_pow`: ring operations, powers to a unary exponent.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_lt`, `.intBin_le`: comparisons.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_sum`, `.intBin_prod`: the sum and product
+* `Turing.MultiTapeTM.ComputableInPolyTime.intBin_lt`, `.intBin_le`: comparisons.
+* `Turing.MultiTapeTM.ComputableInPolyTime.intBin_sum`, `.intBin_prod`: the sum and product
   of a list.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_add'`, `.intBin_sub'`, `.intBin_mul'`,
+* `Turing.MultiTapeTM.ComputableInPolyTime.intBin_add'`, `.intBin_sub'`, `.intBin_mul'`,
   `.intBin_pow'`, `.intBin_lt'`, `.intBin_le'`: composition rules for `fun_prop`.
 -/
 
@@ -99,27 +99,27 @@ theorem size_natAbs_prod_le (l : List ℤ) :
 
 end Int
 
-namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
+namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 /-- The sign of a binary integer: whether it is negative. -/
 @[fun_prop]
 theorem intBin_isNeg :
-    ComputableTidilyInPolyTime (fun z : ℤ => decide (z < 0)) encIntBin encBool :=
+    ComputableInPolyTime (fun z : ℤ => decide (z < 0)) encIntBin encBool :=
   ((headD (encA := encBool) (encL := encBits) false).comp (encode encIntBin)).of_enc_eq
     fun z => by simp
 
 /-- The magnitude of a binary integer, as a binary natural. -/
 @[fun_prop]
-theorem intBin_natAbs : ComputableTidilyInPolyTime Int.natAbs encIntBin encNat :=
+theorem intBin_natAbs : ComputableInPolyTime Int.natAbs encIntBin encNat :=
   (bitsTail.comp (encode encIntBin)).of_enc_eq fun z => by simp
 
 /-- Assemble a binary integer from a sign and a binary magnitude. A negative sign on a zero
 magnitude is dropped, so the code stays unique. -/
 @[fun_prop]
 theorem intBin_signMagnitude :
-    ComputableTidilyInPolyTime (fun p : Bool × ℕ => if p.1 then -(p.2 : ℤ) else p.2)
+    ComputableInPolyTime (fun p : Bool × ℕ => if p.1 then -(p.2 : ℤ) else p.2)
       (encPair encBool encNat) encIntBin := by
-  have h : ComputableTidilyInPolyTime (fun p : Bool × ℕ => (p.1 && !p.2.bits.isEmpty) :: p.2.bits)
+  have h : ComputableInPolyTime (fun p : Bool × ℕ => (p.1 && !p.2.bits.isEmpty) :: p.2.bits)
       (encPair encBool encNat) encBits := by
     fun_prop
   refine h.of_enc_eq fun ⟨s, n⟩ => ?_
@@ -130,12 +130,12 @@ theorem intBin_signMagnitude :
 
 /-- A binary natural as a binary integer. -/
 @[fun_prop]
-theorem intBin_natCast : ComputableTidilyInPolyTime (fun n : ℕ => (n : ℤ)) encNat encIntBin :=
+theorem intBin_natCast : ComputableInPolyTime (fun n : ℕ => (n : ℤ)) encNat encIntBin :=
   (bitsCons (const false) (encode encNat)).of_enc_eq fun n => by simp
 
 /-- Negation of binary integers flips the sign of a nonzero magnitude. -/
 @[fun_prop]
-theorem intBin_neg : ComputableTidilyInPolyTime (fun z : ℤ => -z) encIntBin encIntBin := by
+theorem intBin_neg : ComputableInPolyTime (fun z : ℤ => -z) encIntBin encIntBin := by
   have h := intBin_signMagnitude.comp ((bool_not.comp intBin_isNeg).prod intBin_natAbs)
   refine h.of_enc_eq fun z => congrArg encIntBin ?_
   by_cases hz : z < 0 <;> simp only [Function.comp_apply, hz, decide_true, decide_false,
@@ -143,7 +143,7 @@ theorem intBin_neg : ComputableTidilyInPolyTime (fun z : ℤ => -z) encIntBin en
 
 /-- Addition of binary integers, by cases on the signs of the summands. -/
 @[fun_prop]
-theorem intBin_add : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => p.1 + p.2)
+theorem intBin_add : ComputableInPolyTime (fun p : ℤ × ℤ => p.1 + p.2)
     (encPair encIntBin encIntBin) encIntBin := by
   have hsa := intBin_isNeg.comp (fst encIntBin encIntBin)
   have hsb := intBin_isNeg.comp (snd encIntBin encIntBin)
@@ -164,7 +164,7 @@ theorem intBin_add : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => p.1 + p.2
 /-- Multiplication of binary integers: the magnitudes multiply, and the product is negative when
 exactly one factor is. -/
 @[fun_prop]
-theorem intBin_mul : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => p.1 * p.2)
+theorem intBin_mul : ComputableInPolyTime (fun p : ℤ × ℤ => p.1 * p.2)
     (encPair encIntBin encIntBin) encIntBin := by
   have hsa := intBin_isNeg.comp (fst encIntBin encIntBin)
   have hsb := intBin_isNeg.comp (snd encIntBin encIntBin)
@@ -187,7 +187,7 @@ theorem intBin_mul : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => p.1 * p.2
 
 /-- Subtraction of binary integers, as addition of the negation. -/
 @[fun_prop]
-theorem intBin_sub : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => p.1 - p.2)
+theorem intBin_sub : ComputableInPolyTime (fun p : ℤ × ℤ => p.1 - p.2)
     (encPair encIntBin encIntBin) encIntBin := by
   simpa only [Function.comp_def, ← sub_eq_add_neg] using
     intBin_add.comp ((fst encIntBin encIntBin).prod (intBin_neg.comp (snd encIntBin encIntBin)))
@@ -195,7 +195,7 @@ theorem intBin_sub : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => p.1 - p.2
 /-- Test whether a binary integer is zero: its magnitude has no digits. -/
 @[fun_prop]
 theorem intBin_isZero :
-    ComputableTidilyInPolyTime (fun z : ℤ => decide (z = 0)) encIntBin encBool := by
+    ComputableInPolyTime (fun z : ℤ => decide (z = 0)) encIntBin encBool := by
   refine (bitsIsEmpty.comp (natBits.comp intBin_natAbs)).of_enc_eq fun z => congrArg encBool ?_
   rw [Function.comp_apply, Function.comp_apply, Bool.eq_iff_iff, decide_eq_true_eq,
     List.isEmpty_iff, ← List.length_eq_zero_iff, Nat.size_eq_bits_len, Nat.size_eq_zero,
@@ -204,7 +204,7 @@ theorem intBin_isZero :
 /-- Test whether a binary integer is positive. -/
 @[fun_prop]
 theorem intBin_isPos :
-    ComputableTidilyInPolyTime (fun z : ℤ => decide (0 < z)) encIntBin encBool := by
+    ComputableInPolyTime (fun z : ℤ => decide (0 < z)) encIntBin encBool := by
   refine (bool_and.comp ((bool_not.comp intBin_isNeg).prod (bool_not.comp intBin_isZero)))
     |>.of_enc_eq fun z => congrArg encBool ?_
   by_cases hz : 0 < z
@@ -219,7 +219,7 @@ theorem intBin_isPos :
 
 /-- The sign of a binary integer, as a binary integer. -/
 @[fun_prop]
-theorem intBin_sign : ComputableTidilyInPolyTime Int.sign encIntBin encIntBin := by
+theorem intBin_sign : ComputableInPolyTime Int.sign encIntBin encIntBin := by
   refine (intBin_isNeg.ite' (const (-1)) (intBin_isZero.ite' (const 0) (const 1))).of_enc_eq
     fun z => congrArg encIntBin ?_
   rcases lt_trichotomy z 0 with hz | rfl | hz
@@ -229,7 +229,7 @@ theorem intBin_sign : ComputableTidilyInPolyTime Int.sign encIntBin encIntBin :=
 
 /-- Truncate a binary integer at zero, as a binary natural. -/
 @[fun_prop]
-theorem intBin_toNat : ComputableTidilyInPolyTime Int.toNat encIntBin encNat := by
+theorem intBin_toNat : ComputableInPolyTime Int.toNat encIntBin encNat := by
   refine (intBin_isNeg.ite' (const 0) intBin_natAbs).of_enc_eq fun z => congrArg encNat ?_
   by_cases hz : z < 0
   · simp only [hz, decide_true, ↓reduceIte]
@@ -239,13 +239,13 @@ theorem intBin_toNat : ComputableTidilyInPolyTime Int.toNat encIntBin encNat := 
 
 /-- Strict comparison of binary integers, through the sign of their difference. -/
 @[fun_prop]
-theorem intBin_lt : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => decide (p.1 < p.2))
+theorem intBin_lt : ComputableInPolyTime (fun p : ℤ × ℤ => decide (p.1 < p.2))
     (encPair encIntBin encIntBin) encBool :=
   (intBin_isNeg.comp intBin_sub).of_enc_eq fun p => congrArg encBool (by simp [sub_neg])
 
 /-- Comparison of binary integers. -/
 @[fun_prop]
-theorem intBin_le : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => decide (p.1 ≤ p.2))
+theorem intBin_le : ComputableInPolyTime (fun p : ℤ × ℤ => decide (p.1 ≤ p.2))
     (encPair encIntBin encIntBin) encBool :=
   (bool_not.comp (intBin_lt.comp ((snd encIntBin encIntBin).prod (fst encIntBin encIntBin))))
     |>.of_enc_eq fun p => congrArg encBool (by
@@ -253,16 +253,16 @@ theorem intBin_le : ComputableTidilyInPolyTime (fun p : ℤ × ℤ => decide (p.
 
 /-- A power of a binary integer to a unary exponent, by repeated multiplication. -/
 @[fun_prop]
-theorem intBin_pow : ComputableTidilyInPolyTime (fun p : ℤ × ℕ => p.1 ^ p.2)
+theorem intBin_pow : ComputableInPolyTime (fun p : ℤ × ℕ => p.1 ^ p.2)
     (encPair encIntBin encUnary) encIntBin := by
   have hfold (z : ℤ) (k : ℕ) : (List.replicate k true).foldl (fun w _ => w * z) 1 = z ^ k := by
     induction k with
     | zero => simp
     | succ k ih =>
       rw [List.replicate_succ', List.foldl_append, ih, List.foldl_cons, List.foldl_nil, pow_succ]
-  have hlist : ComputableTidilyInPolyTime (fun p : ℤ × ℕ => List.replicate p.2 true)
+  have hlist : ComputableInPolyTime (fun p : ℤ × ℕ => List.replicate p.2 true)
       (encPair encIntBin encUnary) encBits :=
-    (of_eq (encIn := encUnary) (encMid := encBits) fun _ => rfl).comp (snd encIntBin encUnary)
+    (of_eq (encIn := encUnary) (encOut := encBits) fun _ => rfl).comp (snd encIntBin encUnary)
   have hq := fst (encPair encIntBin encIntBin) encBool
   have h := foldlWith_of_bounded_growth (encA := encBool) (encL := encBits) (encB := encIntBin)
     (par := fun p : ℤ × ℕ => p.1) (step := fun z w _ => w * z) (init := fun _ => 1)
@@ -277,7 +277,7 @@ theorem intBin_pow : ComputableTidilyInPolyTime (fun p : ℤ × ℕ => p.1 ^ p.2
 
 /-- The sum of a list of binary integers, by a left fold of binary additions. -/
 @[fun_prop]
-theorem intBin_sum : ComputableTidilyInPolyTime List.sum (encList encIntBin) encIntBin := by
+theorem intBin_sum : ComputableInPolyTime List.sum (encList encIntBin) encIntBin := by
   have hq := fst (encPair (encList encIntBin) encIntBin) encIntBin
   have h := foldlWith_of_bounded_growth (encA := encIntBin) (encL := encList encIntBin)
     (encB := encIntBin) (par := fun l : List ℤ => l) (list := fun l => l)
@@ -292,7 +292,7 @@ theorem intBin_sum : ComputableTidilyInPolyTime List.sum (encList encIntBin) enc
 
 /-- The product of a list of binary integers, by a left fold of binary multiplications. -/
 @[fun_prop]
-theorem intBin_prod : ComputableTidilyInPolyTime List.prod (encList encIntBin) encIntBin := by
+theorem intBin_prod : ComputableInPolyTime List.prod (encList encIntBin) encIntBin := by
   have hq := fst (encPair (encList encIntBin) encIntBin) encIntBin
   have h := foldlWith_of_bounded_growth (encA := encIntBin) (encL := encList encIntBin)
     (encB := encIntBin) (par := fun l : List ℤ => l) (list := fun l => l)
@@ -308,66 +308,66 @@ theorem intBin_prod : ComputableTidilyInPolyTime List.prod (encList encIntBin) e
 /-- Add computed binary integers, fixing their intermediate encodings for proof search. -/
 @[fun_prop]
 theorem intBin_add' {α : Type} {input : α ↪ List Bool} {left right : α → ℤ}
-    (hleft : ComputableTidilyInPolyTime left input encIntBin)
-    (hright : ComputableTidilyInPolyTime right input encIntBin) :
-    ComputableTidilyInPolyTime (fun a => left a + right a) input encIntBin :=
+    (hleft : ComputableInPolyTime left input encIntBin)
+    (hright : ComputableInPolyTime right input encIntBin) :
+    ComputableInPolyTime (fun a => left a + right a) input encIntBin :=
   intBin_add.comp (hleft.prod hright)
 
 /-- Subtract computed binary integers, fixing their intermediate encodings. -/
 @[fun_prop]
 theorem intBin_sub' {α : Type} {input : α ↪ List Bool} {left right : α → ℤ}
-    (hleft : ComputableTidilyInPolyTime left input encIntBin)
-    (hright : ComputableTidilyInPolyTime right input encIntBin) :
-    ComputableTidilyInPolyTime (fun a => left a - right a) input encIntBin :=
+    (hleft : ComputableInPolyTime left input encIntBin)
+    (hright : ComputableInPolyTime right input encIntBin) :
+    ComputableInPolyTime (fun a => left a - right a) input encIntBin :=
   intBin_sub.comp (hleft.prod hright)
 
 /-- Multiply computed binary integers, fixing their intermediate encodings. -/
 @[fun_prop]
 theorem intBin_mul' {α : Type} {input : α ↪ List Bool} {left right : α → ℤ}
-    (hleft : ComputableTidilyInPolyTime left input encIntBin)
-    (hright : ComputableTidilyInPolyTime right input encIntBin) :
-    ComputableTidilyInPolyTime (fun a => left a * right a) input encIntBin :=
+    (hleft : ComputableInPolyTime left input encIntBin)
+    (hright : ComputableInPolyTime right input encIntBin) :
+    ComputableInPolyTime (fun a => left a * right a) input encIntBin :=
   intBin_mul.comp (hleft.prod hright)
 
 /-- Raise a computed binary integer to a computed unary exponent, fixing the intermediate
 encodings. -/
 @[fun_prop]
 theorem intBin_pow' {α : Type} {input : α ↪ List Bool} {base : α → ℤ} {exponent : α → ℕ}
-    (hbase : ComputableTidilyInPolyTime base input encIntBin)
-    (hexponent : ComputableTidilyInPolyTime exponent input encUnary) :
-    ComputableTidilyInPolyTime (fun a => base a ^ exponent a) input encIntBin :=
+    (hbase : ComputableInPolyTime base input encIntBin)
+    (hexponent : ComputableInPolyTime exponent input encUnary) :
+    ComputableInPolyTime (fun a => base a ^ exponent a) input encIntBin :=
   intBin_pow.comp (hbase.prod hexponent)
 
 /-- Strictly compare computed binary integers, fixing their intermediate encodings. -/
 @[fun_prop]
 theorem intBin_lt' {α : Type} {input : α ↪ List Bool} {left right : α → ℤ}
-    (hleft : ComputableTidilyInPolyTime left input encIntBin)
-    (hright : ComputableTidilyInPolyTime right input encIntBin) :
-    ComputableTidilyInPolyTime (fun a => decide (left a < right a)) input encBool :=
+    (hleft : ComputableInPolyTime left input encIntBin)
+    (hright : ComputableInPolyTime right input encIntBin) :
+    ComputableInPolyTime (fun a => decide (left a < right a)) input encBool :=
   intBin_lt.comp (hleft.prod hright)
 
 /-- Compare computed binary integers, fixing their intermediate encodings. -/
 @[fun_prop]
 theorem intBin_le' {α : Type} {input : α ↪ List Bool} {left right : α → ℤ}
-    (hleft : ComputableTidilyInPolyTime left input encIntBin)
-    (hright : ComputableTidilyInPolyTime right input encIntBin) :
-    ComputableTidilyInPolyTime (fun a => decide (left a ≤ right a)) input encBool :=
+    (hleft : ComputableInPolyTime left input encIntBin)
+    (hright : ComputableInPolyTime right input encIntBin) :
+    ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool :=
   intBin_le.comp (hleft.prod hright)
 
 /-- Multiply a uniformly computed family of binary integers over a computed unary range. -/
 @[fun_prop]
 theorem intBin_prod_range {α : Type} {enc : α ↪ List Bool}
     {f : α × ℕ → ℤ} {r : α → ℕ}
-    (hf : ComputableTidilyInPolyTime f (encPair enc encUnary) encIntBin)
-    (hr : ComputableTidilyInPolyTime r enc encUnary) :
-    ComputableTidilyInPolyTime (fun a => ∏ i ∈ Finset.range (r a), f (a, i)) enc encIntBin := by
-  have hl : ComputableTidilyInPolyTime
+    (hf : ComputableInPolyTime f (encPair enc encUnary) encIntBin)
+    (hr : ComputableInPolyTime r enc encUnary) :
+    ComputableInPolyTime (fun a => ∏ i ∈ Finset.range (r a), f (a, i)) enc encIntBin := by
+  have hl : ComputableInPolyTime
       (fun a => (List.range (r a)).map fun i => f (a, i)) enc (encList encIntBin) :=
-    ComputableTidilyInPolyTime.mapWithInput (ComputableTidilyInPolyTime.range.comp hr) hf
-  convert ComputableTidilyInPolyTime.intBin_prod.comp hl using 1
+    ComputableInPolyTime.mapWithInput (ComputableInPolyTime.range.comp hr) hf
+  convert ComputableInPolyTime.intBin_prod.comp hl using 1
   funext a
   have he : (List.range (r a)).toFinset = Finset.range (r a) := by ext; simp
   simpa only [he, Function.comp_apply] using
     List.prod_toFinset (fun i => f (a, i)) (l := List.range (r a)) List.nodup_range
 
-end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+end Turing.MultiTapeTM.ComputableInPolyTime
