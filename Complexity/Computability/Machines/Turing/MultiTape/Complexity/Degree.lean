@@ -270,4 +270,18 @@ public theorem isEmpty {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] :
 
 end ComputableTidilyInDegree
 
+namespace ComputableInDegree
+
+/-- Fixed time and work-space degrees give plain polynomial-time computability. This includes
+zero cost degree and does not charge the encoded value to the work-space bound. -/
+public theorem computableInPolyTime {α β : Type*} {f : α → β}
+    {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {d e : ℕ}
+    (h : ComputableInDegree f encIn encOut d e) : ComputableInPolyTime f encIn encOut := by
+  obtain ⟨⟨_, _, ht, hs, h⟩, _⟩ := h
+  obtain ⟨T, hT, ht⟩ := ht.polyBounded
+  obtain ⟨S, hS, hs⟩ := hs.polyBounded
+  exact ⟨T, S, hT, hS, h.mono ht hs⟩
+
+end ComputableInDegree
+
 end Turing.MultiTapeTM

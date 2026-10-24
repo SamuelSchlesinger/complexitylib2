@@ -37,10 +37,11 @@ The plain notion, `Turing.MultiTapeTM.ComputableInPolyTime`, is the one for defi
 statements; the tidy notion is a proof device. Proofs switch between them with
 `Turing.MultiTapeTM.ComputableInPolyTime.tidy` and
 `Turing.MultiTapeTM.ComputableInPolyTime.of_tidy`.
-The basic plain closure rules below are proved through the internal tidy calculus. Plain
-structural and primitive counterparts are derived mechanically in `PolyTime.Plain.Calculus`,
-which is imported by `Complexity.Tactic.PolyTime`. With that entry point, `fun_prop` uses plain
-hypotheses directly, including captured list callbacks.
+The canonical closure and Boolean rules live in their original `PolyTime` and `PolyTime.Basic`
+providers as ordinary plain declarations. This module re-exports the core provider and retains
+the transitional construction bridges while the remaining topics are being converted. Other
+ordinary topic rules are currently collected by `PolyTime.Plain.Calculus`, imported by
+`Complexity.Tactic.PolyTime`.
 The transition from tidy to plain also accepts existing internal certificates as proof inputs.
 
 ## Plain statements and internal machine proofs
@@ -204,87 +205,3 @@ theorem ComputableInTimeAndSpace.computableInPolyTime {t : ℕ → ℕ} {s : α 
   ⟨t, fun n => c * t n + c, ht, by fun_prop, h⟩
 
 end Turing.MultiTapeTM
-
-/-! ### Closure of `ComputableInPolyTime`
-
-The rules that need a machine construction, proved through the tidy calculus. `fun_prop`
-decomposes a plain goal with them and proves the remaining atoms from plain hypotheses or, through
-`Turing.MultiTapeTM.ComputableTidilyInPolyTime.computableInPolyTime`, from tidy certificates. As in
-the tidy rule set, `trans`, `fst'` and `snd'` let it infer intermediate encodings from the inner
-function. -/
-
-namespace Turing.MultiTapeTM.ComputableInPolyTime
-
-universe u
-
-variable {α β γ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
-  {encOut : γ ↪ List Bool}
-
-/-- The encoded value of a function computable in polynomial time has polynomial length. -/
-theorem polyBounded_length {f : α → β} (h : ComputableInPolyTime f encIn encMid) :
-    PolyBounded (fun a => (encIn a).length) fun a => (encMid (f a)).length :=
-  h.tidy.polyBounded_length
-
-theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β₁ ↪ List Bool}
-    {enc₂ : β₂ ↪ List Bool} {enc : β₁ × β₂ ↪ List Bool} [PairEncoding enc₁ enc₂ enc]
-    {f : α → β₁} {g : α → β₂} (hf : ComputableInPolyTime f encIn enc₁)
-    (hg : ComputableInPolyTime g encIn enc₂) :
-    ComputableInPolyTime (fun x => (f x, g x)) encIn enc :=
-  .of_tidy (hf.tidy.pair hg.tidy)
-
-@[fun_prop]
-theorem comp' {f : β → γ} {g : α → β} (hf : ComputableInPolyTime f encMid encOut)
-    (hg : ComputableInPolyTime g encIn encMid) :
-    ComputableInPolyTime (fun a => f (g a)) encIn encOut :=
-  hf.comp hg
-
-@[fun_prop]
-theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β₁ ↪ List Bool}
-    {enc₂ : β₂ ↪ List Bool} {f : α → β₁} {g : α → β₂} (hf : ComputableInPolyTime f encIn enc₁)
-    (hg : ComputableInPolyTime g encIn enc₂) :
-    ComputableInPolyTime (fun x => (f x, g x)) encIn (encPair enc₁ enc₂) :=
-  hf.pair hg
-
-/-- Compose in execution order. This lets `fun_prop` infer the intermediate encoding from the
-inner function when it cannot be inferred from the outer function. -/
-@[fun_prop]
-theorem trans {f : α → β} {g : β → γ} (hf : ComputableInPolyTime f encIn encMid)
-    (hg : ComputableInPolyTime g encMid encOut) :
-    ComputableInPolyTime (fun x => g (f x)) encIn encOut :=
-  hg.comp hf
-
-@[fun_prop]
-theorem fst {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
-    ComputableInPolyTime (fun p : β₁ × β₂ => p.1) (encPair enc₁ enc₂) enc₁ :=
-  .of_tidy (ComputableTidilyInPolyTime.fst enc₁ enc₂)
-
-@[fun_prop]
-theorem snd {β₁ β₂ : Type u} (enc₁ : β₁ ↪ List Bool) (enc₂ : β₂ ↪ List Bool) :
-    ComputableInPolyTime (fun p : β₁ × β₂ => p.2) (encPair enc₁ enc₂) enc₂ :=
-  .of_tidy (ComputableTidilyInPolyTime.snd enc₁ enc₂)
-
--- Keep this explicit application rule unregistered: it can fix a component's output encoding
--- before discovering the source pair encoding. Primitive and encoding-aware projection rules
--- provide the automatic routes; later migrations must preserve this registration choice.
-/-- Project the first component of a pair-valued function computable in polynomial time. -/
-theorem fst' {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
-    {f : α → β₁ × β₂} (hf : ComputableInPolyTime f encIn (encPair enc₁ enc₂)) :
-    ComputableInPolyTime (fun x => (f x).1) encIn enc₁ :=
-  (fst enc₁ enc₂).comp hf
-
-/-- Project the second component of a pair-valued function computable in polynomial time. -/
-@[fun_prop]
-theorem snd' {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
-    {f : α → β₁ × β₂} (hf : ComputableInPolyTime f encIn (encPair enc₁ enc₂)) :
-    ComputableInPolyTime (fun x => (f x).2) encIn enc₂ :=
-  (snd enc₁ enc₂).comp hf
-
-/-- A case distinction between functions computable in polynomial time on all inputs. -/
-@[fun_prop]
-theorem ite' {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β}
-    (hc : ComputableInPolyTime c encIn encC) (hf : ComputableInPolyTime f encIn encMid)
-    (hg : ComputableInPolyTime g encIn encMid) :
-    ComputableInPolyTime (fun x => if c x then f x else g x) encIn encMid :=
-  .of_tidy (hc.tidy.ite' hf.tidy hg.tidy)
-
-end Turing.MultiTapeTM.ComputableInPolyTime

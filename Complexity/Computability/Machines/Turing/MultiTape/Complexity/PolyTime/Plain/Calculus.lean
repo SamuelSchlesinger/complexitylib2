@@ -50,13 +50,6 @@ open _root_.Turing.MultiTapeTM
 
 namespace Turing.MultiTapeTM
 
-/-- The successor is computable in polynomial time, in the binary encoding `encNat`. -/
-theorem computableInPolyTime_succ :
-    ComputableInPolyTime (fun (x : ℕ) => x + 1) encNat
-      encNat := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @computableTidilyInPolyTime_succ
-
 end Turing.MultiTapeTM
 
 namespace Turing.MultiTapeTM.ComputableInPolyTime
@@ -206,43 +199,6 @@ theorem anyWithInput
       encBool := by
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.anyWithInput α γ encA encIn test list hlist htest
-
-/-- Append two computed lists with the stated encodings and resource bounds. -/
-theorem append.{u_1, u_2, u_3, u_4}
-    {α : Type u_1}
-    {β : Type u_2}
-    {γ : Type u_3}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {encOut : γ ↪ List Bool}
-    {δ : Type u_4}
-    {enc₂ : δ ↪ List Bool}
-    {f₁ : α → β}
-    {f₂ : α → δ}
-    {g : α → γ}
-    (h₁ : ComputableInPolyTime f₁ encIn encMid)
-    (h₂ : ComputableInPolyTime f₂ encIn enc₂)
-    (hg : ∀ (x : α),
-  (encOut : γ → List Bool) (g x) =
-    (encMid : β → List Bool) (f₁ x) ++ (enc₂ : δ → List Bool) (f₂ x)) :
-    ComputableInPolyTime g encIn encOut := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.append α β γ encIn encMid encOut δ enc₂ f₁ f₂ g h₁ h₂ hg
-
-/-- Lawful Boolean equality compares computed values through their common encoding. -/
-theorem beq
-    {α β : Type}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    [inst_1 : BEq β]
-    [inst_2 : LawfulBEq β]
-    {left right : α → β}
-    (hleft : ComputableInPolyTime left encA encB)
-    (hright : ComputableInPolyTime right encA encB) :
-    ComputableInPolyTime (fun (x : α) => left x == right x) encA
-      encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.beq α β encA encB inst_1 inst_2 left right hleft hright
 
 /-- Addition of binary naturals. -/
 theorem binary_add :
@@ -984,78 +940,12 @@ theorem bitsZipWithInput
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.bitsZipWithInput α input op left right hleft hright
 
-/-- Boolean conjunction is computable in polynomial time. -/
-theorem bool_and :
-    ComputableInPolyTime (fun (p : Bool × Bool) => p.1 && p.2)
-      (encPair encBool encBool)
-      encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.bool_and
-
-/-- Conjoin computed guards, fixing both intermediate Boolean encodings. -/
-theorem bool_and'
-    {α : Type}
-    {encA : α ↪ List Bool}
-    {left right : α → Bool}
-    (hleft : ComputableInPolyTime left encA encBool)
-    (hright : ComputableInPolyTime right encA encBool) :
-    ComputableInPolyTime (fun (a : α) => left a && right a) encA
-      encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.bool_and' α encA left right hleft hright
-
-/-- Comparing two Boolean values is a finite-domain computation. -/
-theorem bool_beq :
-    ComputableInPolyTime (fun (p : Bool × Bool) => p.1 == p.2)
-      (encPair encBool encBool)
-      encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.bool_beq
-
-/-- Boolean negation is computable in polynomial time. -/
-theorem bool_not :
-    ComputableInPolyTime Bool.not encBool
-      encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.bool_not
-
-/-- Boolean disjunction is computable in polynomial time. -/
-theorem bool_or :
-    ComputableInPolyTime (fun (p : Bool × Bool) => p.1 || p.2)
-      (encPair encBool encBool)
-      encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.bool_or
-
 /-- Interpret one Boolean as a unary zero or one. -/
 theorem bool_toUnary :
     ComputableInPolyTime Bool.toNat encBool
       encUnary := by
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.bool_toUnary
-
-/-- Exclusive-or is a finite Boolean computation. -/
-theorem bool_xor :
-    ComputableInPolyTime (fun (p : Bool × Bool) => p.1 ^^ p.2)
-      (encPair encBool encBool)
-      encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.bool_xor
-
-/-- A Boolean conditional fixes the guard encoding before automation synthesizes its proof. -/
-theorem cond
-    {α β : Type}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {condition : α → Bool}
-    {yes no : α → β}
-    (hcondition : ComputableInPolyTime condition encA encBool)
-    (hyes : ComputableInPolyTime yes encA encB)
-    (hno : ComputableInPolyTime no encA encB) :
-    ComputableInPolyTime
-      (fun (a : α) => if condition a = Bool.true then yes a else no a) encA encB := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.cond α β encA encB condition yes no hcondition hyes hno
 
 /-- Prepending an element to a framed list is polynomial-time. -/
 theorem cons
@@ -1138,47 +1028,6 @@ theorem countWithInput
   exact @ComputableTidilyInPolyTime.countWithInput α γ encA encIn inst_1 inst_2 list value hlist
     hvalue
 
-/-- Conjunction of efficiently decidable propositions uses the standard Boolean encoding. -/
-theorem decide_and
-    {α : Type}
-    {encA : α ↪ List Bool}
-    {left right : α → Prop}
-    [inst_1 : (a : α) → Decidable (left a)]
-    [inst_2 : (a : α) → Decidable (right a)]
-    (hleft : ComputableInPolyTime (fun (a : α) => Decidable.decide (left a)) encA
-  encBool)
-    (hright : ComputableInPolyTime (fun (a : α) => Decidable.decide (right a)) encA
-  encBool) :
-    ComputableInPolyTime
-      (fun (a : α) => Decidable.decide (left a ∧ right a)) encA encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.decide_and α encA left right inst_1 inst_2 hleft hright
-
-/-- Equality is polynomial-time for any encoding. -/
-theorem decide_eq
-    {α : Type}
-    [inst_1 : DecidableEq α]
-    (enc : α ↪ List Bool) :
-    ComputableInPolyTime
-      (fun (p : α × α) => Decidable.decide (p.1 = p.2)) (encPair enc enc)
-      encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.decide_eq α inst_1 enc
-
-/-- Compare computed values for equality, inferring their common encoding from the arguments. -/
-theorem decide_eq'
-    {α β : Type}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    [inst_1 : DecidableEq β]
-    {left right : α → β}
-    (hleft : ComputableInPolyTime left encA encB)
-    (hright : ComputableInPolyTime right encA encB) :
-    ComputableInPolyTime
-      (fun (x : α) => Decidable.decide (left x = right x)) encA encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.decide_eq' α β encA encB inst_1 left right hleft hright
-
 /-- Membership of a computed value in a computed list is decided by scanning the list for an equal
 element. -/
 theorem decide_mem
@@ -1195,20 +1044,6 @@ theorem decide_mem
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.decide_mem γ α encIn encA list value inst_1 hlist hvalue
 
-/-- Compare two computed values using their common encoding. -/
-theorem decide_ne
-    {α β : Type}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    [inst_1 : DecidableEq β]
-    {left right : α → β}
-    (hleft : ComputableInPolyTime left encA encB)
-    (hright : ComputableInPolyTime right encA encB) :
-    ComputableInPolyTime
-      (fun (x : α) => Decidable.decide (left x ≠ right x)) encA encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.decide_ne α β encA encB inst_1 left right hleft hright
-
 /-- Negation of an efficiently decidable proposition uses the standard Boolean encoding. -/
 theorem decide_not
     {γ : Type}
@@ -1221,22 +1056,6 @@ theorem decide_not
       encBool := by
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.decide_not γ encIn p inst_1 h
-
-/-- Disjunction of efficiently decidable propositions uses the standard Boolean encoding. -/
-theorem decide_or
-    {α : Type}
-    {encA : α ↪ List Bool}
-    {left right : α → Prop}
-    [inst_1 : (a : α) → Decidable (left a)]
-    [inst_2 : (a : α) → Decidable (right a)]
-    (hleft : ComputableInPolyTime (fun (a : α) => Decidable.decide (left a)) encA
-  encBool)
-    (hright : ComputableInPolyTime (fun (a : α) => Decidable.decide (right a)) encA
-  encBool) :
-    ComputableInPolyTime
-      (fun (a : α) => Decidable.decide (left a ∨ right a)) encA encBool := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.decide_or α encA left right inst_1 inst_2 hleft hright
 
 /-- Construct a fixed dependent family, retaining the original input for each entry. -/
 theorem dpi
@@ -1285,13 +1104,6 @@ theorem dpi_update
   exact @ComputableTidilyInPolyTime.dpi_update α Index Value inst_1 input enc inst_2 values i
     value hvalues hvalue
 
-/-- Drop the first frame from any raw word, including malformed encodings. -/
-theorem dropFrame :
-    ComputableInPolyTime dropFrame
-      encBits encBits := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.dropFrame
-
 /-- Drop a unary number of elements from a sized list encoding, including raw bit strings. -/
 theorem dropUnary
     {α : Type}
@@ -1303,28 +1115,6 @@ theorem dropUnary
       (encPair encL encUnary) encL := by
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.dropUnary α encA encL inst_1 inst_2
-
-/-- Expose an already encoded value as a raw word. No inverse for the encoding is required. -/
-theorem encode
-    {α : Type}
-    (enc : α ↪ List Bool) :
-    ComputableInPolyTime (⇑enc : α → List Bool) enc
-      encBits := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.encode α enc
-
-/-- Compute a value and expose its representation, inferring that representation from the
-supplied certificate before composing. -/
-theorem encoded
-    {α β : Type}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {f : α → β}
-    (hf : ComputableInPolyTime f encA encB) :
-    ComputableInPolyTime (fun (a : α) => (encB : β → List Bool) (f a))
-      encA encBits := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.encoded α β encA encB f hf
 
 /-- The encoded input length, computed in unary by reading the input word. -/
 theorem encoding_length
@@ -1537,51 +1327,6 @@ theorem flatten
       (encList enc) := by
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.flatten α enc
-
-/-- Left folds are computable in polynomial time if the list, the initial value and `step`
-are, and the length of the list, the intermediate states and the arguments of `step` are bounded
-by
-a polynomial in the length of the encoded input. -/
-theorem foldl.{u}
-    {γ α β : Type u}
-    {encIn : γ ↪ List Bool}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {encL : List α ↪ List Bool}
-    {encBA : β × α ↪ List Bool}
-    {encS : List α × β ↪ List Bool}
-    {encO : Option (List α × β) ↪ List Bool}
-    [inst_1 : ListEncoding encA encL]
-    [inst_2 : PairEncoding encB encA encBA]
-    [inst_3 : PairEncoding encL encB encS]
-    [inst_4 : OptionEncoding encS encO]
-    {list : γ → List α}
-    {init : γ → β}
-    {step : β → α → β}
-    (hlist : ComputableInPolyTime list encIn encL)
-    (hinit : ComputableInPolyTime init encIn encB)
-    (hstep : ComputableInPolyTime (fun (p : β × α) => step p.1 p.2) encBA encB)
-    {lMax aMax : γ → ℕ}
-    (hlMax' : PolyBounded (fun (x : γ) => ((encIn : γ → List Bool) x).length) lMax)
-    (haMax' : PolyBounded (fun (x : γ) => ((encIn : γ → List Bool) x).length) aMax)
-    (hlen : PolyBounded (fun (x : γ) => ((encIn : γ → List Bool) x).length)
-  fun (x : γ) => (list x).length)
-    (haMax : ∀ (x : γ) (i : ℕ) (hi : i < (list x).length),
-  ((encBA : β × α → List Bool)
-        (List.foldl step (init x) (List.take i (list x)), (list x)[i])).length ≤
-    aMax x)
-    (hlMax : ∀ (x : γ),
-  ∀ i ≤ (list x).length,
-    ((encS : List α × β → List Bool)
-          (List.drop i (list x),
-            List.foldl step (init x) (List.take i (list x)))).length ≤
-      lMax x) :
-    ComputableInPolyTime
-      (fun (x : γ) => List.foldl step (init x) (list x)) encIn encB := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.foldl γ α β encIn encA encB encL encBA encS encO inst_1
-    inst_2 inst_3 inst_4 list init step hlist hinit hstep lMax aMax hlMax' haMax' hlen haMax
-    hlMax
 
 /-- A left fold is polynomial-time when its step is polynomial-time and its intermediate
 accumulators have polynomially bounded encoded length. -/
@@ -1810,22 +1555,6 @@ theorem foldl_spec
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.foldl_spec γ α β encIn encA encB encL inst_1 inst_2 list
     init step hlist hinit hstep invariant hbase hpreserve size hsize hbound
-
-/-- Project a first component and convert its encoding. Certifying the pair-valued function first
-determines the source encoding before automation searches for the conversion certificate. -/
-theorem fstWithEncoding
-    {α β : Type}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {γ : Type}
-    {encC : γ ↪ List Bool}
-    {output : α ↪ List Bool}
-    {f : γ → α × β}
-    (hf : ComputableInPolyTime f encC (encPair encA encB))
-    (h : ComputableInPolyTime (fun (a : α) => a) encA output) :
-    ComputableInPolyTime (fun (p : γ) => (f p).1) encC output := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.fstWithEncoding α β encA encB γ encC output f hf h
 
 /-- Look up a computed unary index, returning `none` outside a computed list. The list certificate
 determines its encoding before proof search checks the corresponding operation and size rules. -/
@@ -2253,43 +1982,6 @@ theorem int_toNat :
       encUnary := by
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.int_toNat
-
-/-- Choose between two computed values using a computed Boolean condition. -/
-theorem ite.{u_1, u_2}
-    {α : Type u_1}
-    {β : Type u_2}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {encC : Bool ↪ List Bool}
-    {c : α → Bool}
-    {f g : α → β}
-    (hc : ComputableInPolyTime c encIn encC)
-    (hf : ComputableInPolyTime (f ∘ Subtype.val)
-  ((Function.Embedding.subtype fun (x : α) => c x = Bool.true).trans encIn) encMid)
-    (hg : ComputableInPolyTime (g ∘ Subtype.val)
-  ((Function.Embedding.subtype fun (x : α) => c x = Bool.false).trans encIn) encMid) :
-    ComputableInPolyTime
-      (fun (x : α) => if c x = Bool.true then f x else g x) encIn encMid := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.ite α β encIn encMid encC c f g hc hf hg
-
-/-- A proposition-valued conditional computes its decision in the standard Boolean encoding. -/
-theorem ite_decide
-    {α β : Type}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {condition : α → Prop}
-    [inst_1 : (a : α) → Decidable (condition a)]
-    {yes no : α → β}
-    (hcondition : ComputableInPolyTime (fun (a : α) => Decidable.decide (condition a))
-  encA encBool)
-    (hyes : ComputableInPolyTime yes encA encB)
-    (hno : ComputableInPolyTime no encA encB) :
-    ComputableInPolyTime
-      (fun (a : α) => if condition a then yes a else no a) encA encB := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.ite_decide α β encA encB condition inst_1 yes no hcondition
-    hyes hno
 
 /-- A unary loop count and polynomially bounded intermediate states give a polynomial-time loop. -/
 theorem iterate
@@ -2794,21 +2486,6 @@ theorem ofFn
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.ofFn α Value input enc count values hvalues
 
-/-- Reuse a computation when the new function emits the same encoded output word. -/
-theorem of_enc_eq
-    {α β : Type}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {δ : Type}
-    {encD : δ ↪ List Bool}
-    {f : α → β}
-    {g : α → δ}
-    (hf : ComputableInPolyTime f encA encB)
-    (h : ∀ (a : α), (encD : δ → List Bool) (g a) = (encB : β → List Bool) (f a)) :
-    ComputableInPolyTime g encA encD := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.of_enc_eq α β encA encB δ encD f g hf h
-
 /-- Branch on a computed option, charging its full value and any captured original input. -/
 theorem optionElimWithInput
     {α β : Type}
@@ -2967,17 +2644,6 @@ theorem pi_update'
   exact @ComputableTidilyInPolyTime.pi_update' α Index Value input enc inst_1 inst_2
     indexEncoding values index value hvalues hindex hvalue
 
-/-- An efficiently computed unary value is polynomially bounded in the original encoded input.
-This supplies input-dependent resource bounds without exposing their polynomial coefficients. -/
-theorem polyBounded
-    {α : Type}
-    {encA : α ↪ List Bool}
-    {f : α → ℕ}
-    (hf : ComputableInPolyTime f encA encUnary) :
-    PolyBounded (fun (x : α) => ((encA : α → List Bool) x).length) f := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.polyBounded α encA f hf
-
 /-- A unary-output polynomial-time function is polynomially bounded in its unary input. -/
 theorem polynomiallyBounded
     {f : ℕ → ℕ}
@@ -3008,36 +2674,6 @@ theorem replicate
       (encList encA) := by
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.replicate α γ encA encIn count value hcount hvalue
-
-/-- Restrict a computation to a subtype using the induced input encoding. -/
-theorem restrict.{u_1, u_2}
-    {α : Type u_1}
-    {β : Type u_2}
-    {encIn : α ↪ List Bool}
-    {encMid : β ↪ List Bool}
-    {f : α → β}
-    (h : ComputableInPolyTime f encIn encMid)
-    (p : α → Prop) :
-    ComputableInPolyTime (f ∘ Subtype.val)
-      ((Function.Embedding.subtype p).trans encIn) encMid := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.restrict α β encIn encMid f h p
-
-/-- Project a second component and convert its encoding. The pair certificate fixes the source
-encoding; the conversion certificate supplies the efficient change of representation. -/
-theorem sndWithEncoding
-    {α β : Type}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {γ : Type}
-    {encC : γ ↪ List Bool}
-    {output : β ↪ List Bool}
-    {f : γ → α × β}
-    (hf : ComputableInPolyTime f encC (encPair encA encB))
-    (h : ComputableInPolyTime (fun (a : β) => a) encB output) :
-    ComputableInPolyTime (fun (p : γ) => (f p).2) encC output := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.sndWithEncoding α β encA encB γ encC output f hf h
 
 /-- Tag an encoded value as belonging to the left summand. -/
 theorem sumInl
@@ -3295,13 +2931,6 @@ theorem unary_to_binary :
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.unary_to_binary
 
-/-- Read the first frame from any raw word, including malformed encodings. -/
-theorem unframe :
-    ComputableInPolyTime unframe
-      encBits encBits := by
-  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
-  exact @ComputableTidilyInPolyTime.unframe
-
 /-- Zip framed lists, charging both inputs and every pair in the output. -/
 theorem zip
     {α β : Type}
@@ -3329,25 +2958,6 @@ end Turing.MultiTapeTM.ComputableInPolyTime
 
 
 
-attribute [fun_prop] computableInPolyTime_succ
-attribute [fun_prop] ComputableInPolyTime.fstWithEncoding
-attribute [fun_prop] ComputableInPolyTime.sndWithEncoding
-attribute [fun_prop] ComputableInPolyTime.unframe
-attribute [fun_prop] ComputableInPolyTime.dropFrame
-attribute [fun_prop] ComputableInPolyTime.bool_not
-attribute [fun_prop] ComputableInPolyTime.bool_and
-attribute [fun_prop] ComputableInPolyTime.bool_and'
-attribute [fun_prop] ComputableInPolyTime.bool_or
-attribute [fun_prop] ComputableInPolyTime.bool_xor
-attribute [fun_prop] ComputableInPolyTime.decide_and
-attribute [fun_prop] ComputableInPolyTime.decide_or
-attribute [fun_prop] ComputableInPolyTime.cond
-attribute [fun_prop] ComputableInPolyTime.ite_decide
-attribute [fun_prop] ComputableInPolyTime.bool_beq
-attribute [fun_prop] ComputableInPolyTime.decide_eq
-attribute [fun_prop] ComputableInPolyTime.decide_eq'
-attribute [fun_prop] ComputableInPolyTime.beq
-attribute [fun_prop] ComputableInPolyTime.decide_ne
 attribute [fun_prop] ComputableInPolyTime.optionSome
 attribute [fun_prop] ComputableInPolyTime.optionIsSome
 attribute [fun_prop] ComputableInPolyTime.optionGetD
@@ -3543,5 +3153,3 @@ attribute [fun_prop] ComputableInPolyTime.pi_apply
 attribute [fun_prop] ComputableInPolyTime.dpi
 attribute [fun_prop] ComputableInPolyTime.dpi_apply
 attribute [fun_prop] ComputableInPolyTime.unary_to_binary
-attribute [fun_prop] ComputableInPolyTime.encode
-attribute [fun_prop] ComputableInPolyTime.encoded
