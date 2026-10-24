@@ -177,6 +177,18 @@ theorem computableTidilyInPolyTime_reduce :
     funext x
     rw [reduce, binaryValue_take_hashBits]
     rfl
+  have hvars : ComputableTidilyInPolyTime (fun x : CNF ℕ × List Bool => x.1.vars)
+      (encPair (encList (encList (encPair encNat encBool))) encBits) (encList encNat) :=
+    (CNF.computableInPolyTime_vars encNat).tidy.comp (by fun_prop)
+  have hinl : ComputableTidilyInPolyTime
+      (fun x : CNF ℕ × List Bool => CNF.relabel (Sum.inl : ℕ → ℕ ⊕ ℕ × ℕ) x.1)
+      (encPair (encList (encList (encPair encNat encBool))) encBits)
+      (encList (encList (encPair (encSum encNat (encPair encUnary encUnary)) encBool))) :=
+    (CNF.computableInPolyTime_relabel (.of_tidy (by fun_prop))).tidy.comp (by fun_prop)
+  have hsplit : ComputableTidilyInPolyTime (CNF.relabel splitVarToNat)
+      (encList (encList (encPair (encSum encNat (encPair encUnary encUnary)) encBool)))
+      (encList (encList (encPair encNat encBool))) :=
+    (CNF.computableInPolyTime_relabel (.of_tidy computableTidilyInPolyTime_splitVarToNat)).tidy
   rw [h]
   unfold reduceWith encCNF
   fun_prop

@@ -264,7 +264,8 @@ def padMajority (φ : CNF ℕ) (Q : ℕ) : CNF ℕ :=
 private theorem computableTidilyInPolyTime_shiftOdd :
     ComputableTidilyInPolyTime shiftOdd encCNF encCNF := by
   unfold shiftOdd encCNF
-  fun_prop
+  exact (CNF.computableInPolyTime_relabel (f := fun v : ℕ => v + v + 1)
+    (.of_tidy (by fun_prop))).tidy
 
 @[fun_prop]
 private theorem computableTidilyInPolyTime_dummyClauses :
@@ -297,7 +298,7 @@ theorem computableTidilyInPolyTime_padMajority :
     refine ComputableTidilyInPolyTime.cons' (.const (0, false)) ?_
     exact (ComputableTidilyInPolyTime.map (encA := encNat)
       (encB := encPair encNat encBool) (by fun_prop)).comp
-      ((CNF.computableTidilyInPolyTime_vars encNat).comp hshift)
+      ((CNF.computableInPolyTime_vars encNat).tidy.comp hshift)
 
 private theorem injective_shiftOdd_fn : Function.Injective (fun v : ℕ => v + v + 1) := by
   intro a b h

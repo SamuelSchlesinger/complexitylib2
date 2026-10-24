@@ -246,6 +246,13 @@ theorem computableTidilyInPolyTime_prenexReduce {kV : ℕ} {StateV : Type} [Fint
   have hp : ComputableTidilyInPolyTime (fun a => p.eval (enc a).length) enc encUnary :=
     (unary_eval p).comp (encoding_length enc)
   have hd : ComputableTidilyInPolyTime (fun _ : α => dummyVar) enc encNat := const _
+  have hvars : ComputableTidilyInPolyTime (CNF.vars (V := CookLevin.Var kV StateV))
+      (encList (encList (encPair CookLevin.encVar encBool))) (encList CookLevin.encVar) :=
+    (CNF.computableInPolyTime_vars _).tidy
+  have hrelabel : ComputableTidilyInPolyTime (CNF.relabel (tabVar (k := kV) (State := StateV)))
+      (encList (encList (encPair CookLevin.encVar encBool)))
+      (encList (encList (encPair encNat encBool))) :=
+    (CNF.computableInPolyTime_relabel (.of_tidy computableTidilyInPolyTime_tabVar)).tidy
   unfold prenexReduce gameTableau prenexPairs prenexMatrix gamePairs baseVars certLinkCNF
     encPrenexCNF encCNF
   fun_prop

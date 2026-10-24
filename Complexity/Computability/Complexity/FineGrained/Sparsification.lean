@@ -345,8 +345,8 @@ open ComputableTidilyInPolyTime
 private theorem computableTidilyInPolyTime_isSparse_head (K α : ℕ) :
     ComputableTidilyInPolyTime (fun s : State => isSparse (threshold K α) K (s.1.headD []))
       encState encBool := by
-  have h := computableTidilyInPolyTime_isSparse encNat
-    (ClauseSet.Sparsification.computableTidilyInPolyTime_threshold_le K α) K
+  have h := (computableInPolyTime_isSparse encNat
+    (ClauseSet.Sparsification.computableInPolyTime_threshold_le K α) K).tidy
   have hH : ComputableTidilyInPolyTime (fun s : State => s.1.headD []) encState encCNF := by
     unfold encState
     fun_prop
@@ -355,15 +355,15 @@ private theorem computableTidilyInPolyTime_isSparse_head (K α : ℕ) :
 private theorem computableTidilyInPolyTime_inner (K α : ℕ) :
     ComputableTidilyInPolyTime (fun s : State => (next (threshold K α) K (s.1.headD []) false ::
       next (threshold K α) K (s.1.headD []) true :: s.1.tail, s.2)) encState encState := by
-  have h := computableTidilyInPolyTime_next encNat
-    (ClauseSet.Sparsification.computableTidilyInPolyTime_threshold_le K α) K
+  have h := (computableInPolyTime_next encNat
+    (ClauseSet.Sparsification.computableInPolyTime_threshold_le K α) K).tidy
   unfold encState encCNF
   fun_prop
 
 private theorem computableTidilyInPolyTime_root (k : ℕ) :
     ComputableTidilyInPolyTime (fun φ : CNF ℕ => (([root k φ], false) : State)) encCNF
       encState := by
-  have h := computableTidilyInPolyTime_normalize encNat
+  have h := (computableInPolyTime_normalize encNat).tidy
   unfold root encState encCNF
   fun_prop
 

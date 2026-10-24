@@ -11,9 +11,11 @@ public import Complexity.Logics.Propositional.ClauseSet.Sparsification.List
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Sparsification -- the step is polynomial-time
@@ -24,15 +26,15 @@ sparseness (`Cslib.Logic.PL.CNF.Sparsification.isSparse`) and normalization
 formulas, for any encoding of the variables. The width `k` is fixed, so a clause has a constant
 number of candidate hearts; the thresholds enter only through comparisons `θ j ≤ n`, which must
 themselves be polynomial-time in unary. They are for the explicit thresholds
-(`Cslib.Logic.PL.ClauseSet.Sparsification.computableTidilyInPolyTime_threshold_le`).
+(`Cslib.Logic.PL.ClauseSet.Sparsification.computableInPolyTime_threshold_le`).
 
 ## Main results
 
-* `Cslib.Logic.PL.CNF.Sparsification.computableTidilyInPolyTime_next`: the step.
-* `Cslib.Logic.PL.CNF.Sparsification.computableTidilyInPolyTime_isSparse`: the test for
+* `Cslib.Logic.PL.CNF.Sparsification.computableInPolyTime_next`: the step.
+* `Cslib.Logic.PL.CNF.Sparsification.computableInPolyTime_isSparse`: the test for
   sparseness.
-* `Cslib.Logic.PL.CNF.Sparsification.computableTidilyInPolyTime_normalize`: normalization.
-* `Cslib.Logic.PL.ClauseSet.Sparsification.computableTidilyInPolyTime_threshold_le`: comparisons
+* `Cslib.Logic.PL.CNF.Sparsification.computableInPolyTime_normalize`: normalization.
+* `Cslib.Logic.PL.ClauseSet.Sparsification.computableInPolyTime_threshold_le`: comparisons
   with the explicit thresholds.
 
 ## References
@@ -48,8 +50,8 @@ open Turing.MultiTapeTM ComputableTidilyInPolyTime
 namespace Cslib.Logic.PL.ClauseSet.Sparsification
 
 /-- Comparing the explicit thresholds with a number is polynomial-time in unary. -/
-theorem computableTidilyInPolyTime_threshold_le (k α : ℕ) :
-    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (threshold k α p.1 ≤ p.2))
+theorem computableInPolyTime_threshold_le (k α : ℕ) :
+    ComputableInPolyTime (fun p : ℕ × ℕ => decide (threshold k α p.1 ≤ p.2))
       (encPair encUnary encUnary) encBool := by
   have h : (fun p : ℕ × ℕ => decide (threshold k α p.1 ≤ p.2)) = fun p =>
       if p.1 = 0 then decide (1 ≤ p.2) else decide (α * base k α ^ (2 * p.1 - 1) ≤ p.2) := by
@@ -130,20 +132,24 @@ private theorem computableTidilyInPolyTime_choice {θ : ℕ → ℕ}
     (encL := encList (encPair encUnary encC))).comp hb) (const (0, []))
 
 /-- The list-level test for sparseness is polynomial-time. -/
-theorem computableTidilyInPolyTime_isSparse {θ : ℕ → ℕ}
-    (hθ : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (θ p.1 ≤ p.2))
+theorem computableInPolyTime_isSparse {θ : ℕ → ℕ}
+    (hθ : ComputableInPolyTime (fun p : ℕ × ℕ => decide (θ p.1 ≤ p.2))
       (encPair encUnary encUnary) encBool) (k : ℕ) :
-    ComputableTidilyInPolyTime (isSparse (V := V) θ k) encF encBool := by
+    ComputableInPolyTime (isSparse (V := V) θ k) encF encBool := by
+  have hθ := hθ.tidy
+  refine .of_tidy ?_
   unfold isSparse
   exact bool_not.comp (anyWithInput (computableTidilyInPolyTime_candidates encV k)
     (computableTidilyInPolyTime_heavy encV hθ))
 
 /-- **The list-level step is polynomial-time.** -/
-theorem computableTidilyInPolyTime_next {θ : ℕ → ℕ}
-    (hθ : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => decide (θ p.1 ≤ p.2))
+theorem computableInPolyTime_next {θ : ℕ → ℕ}
+    (hθ : ComputableInPolyTime (fun p : ℕ × ℕ => decide (θ p.1 ≤ p.2))
       (encPair encUnary encUnary) encBool) (k : ℕ) :
-    ComputableTidilyInPolyTime (fun p : CNF V × Bool => next θ k p.1 p.2)
+    ComputableInPolyTime (fun p : CNF V × Bool => next θ k p.1 p.2)
       (encPair encF encBool) encF := by
+  have hθ := hθ.tidy
+  refine .of_tidy ?_
   have := computableTidilyInPolyTime_choice encV hθ k
   have := computableTidilyInPolyTime_reduce encV
   have := computableTidilyInPolyTime_flower encV
@@ -151,8 +157,9 @@ theorem computableTidilyInPolyTime_next {θ : ℕ → ℕ}
   fun_prop
 
 /-- Normalization is polynomial-time. -/
-theorem computableTidilyInPolyTime_normalize :
-    ComputableTidilyInPolyTime (normalize (V := V)) encF encF := by
+theorem computableInPolyTime_normalize :
+    ComputableInPolyTime (normalize (V := V)) encF encF := by
+  refine .of_tidy ?_
   have := computableTidilyInPolyTime_reduce encV
   have hdedup : ComputableTidilyInPolyTime (dedup (V := V)) encC encC := by
     unfold dedup

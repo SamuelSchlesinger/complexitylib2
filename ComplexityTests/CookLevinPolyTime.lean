@@ -59,6 +59,7 @@ example : ComputableTidilyInPolyTime
     (fun T => (initClauses finish T).relabel Var.index) encUnary encCNF := by
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime
     (fun n => (oneHotClauses (k := 0) (State := Unit) [] n n n).relabel Var.index)
     encUnary encCNF := by

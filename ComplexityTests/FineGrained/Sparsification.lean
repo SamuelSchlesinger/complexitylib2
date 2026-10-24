@@ -127,11 +127,11 @@ info: 'Cslib.Logic.PL.CNF.Sparsification.choice_spec' depends on axioms:
 #print axioms Cslib.Logic.PL.CNF.Sparsification.choice_spec
 
 /--
-info: 'Cslib.Logic.PL.CNF.Sparsification.computableTidilyInPolyTime_next' depends on axioms:
+info: 'Cslib.Logic.PL.CNF.Sparsification.computableInPolyTime_next' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.Sparsification.computableTidilyInPolyTime_next
+#print axioms Cslib.Logic.PL.CNF.Sparsification.computableInPolyTime_next
 
 /--
 info: 'Cslib.Complexity.Sparsify.search_eq_true_iff' depends on axioms:

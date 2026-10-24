@@ -4154,58 +4154,58 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.filter' depends on axioms: 
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.filter
 
 /--
-info: 'Cslib.Logic.PL.Literal.computableTidilyInPolyTime_negate' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.Literal.computableInPolyTime_negate' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Literal.computableTidilyInPolyTime_negate
+#print axioms Cslib.Logic.PL.Literal.computableInPolyTime_negate
 
 /--
-info: 'Cslib.Logic.PL.Clause.computableTidilyInPolyTime_impLits' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.Clause.computableInPolyTime_impLits' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Clause.computableTidilyInPolyTime_impLits
+#print axioms Cslib.Logic.PL.Clause.computableInPolyTime_impLits
 
 /--
-info: 'Cslib.Logic.PL.Clause.computableTidilyInPolyTime_imp' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.Clause.computableInPolyTime_imp' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Clause.computableTidilyInPolyTime_imp
+#print axioms Cslib.Logic.PL.Clause.computableInPolyTime_imp
 
 /--
-info: 'Cslib.Logic.PL.Clause.computableTidilyInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.Clause.computableInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.Clause.computableTidilyInPolyTime_relabel
+#print axioms Cslib.Logic.PL.Clause.computableInPolyTime_relabel
 
 /--
-info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.computableInPolyTime_relabel' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_relabel
+#print axioms Cslib.Logic.PL.CNF.computableInPolyTime_relabel
 
 /--
-info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_vars' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.computableInPolyTime_vars' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_vars
+#print axioms Cslib.Logic.PL.CNF.computableInPolyTime_vars
 
 /--
-info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atLeastOne' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.computableInPolyTime_atLeastOne' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atLeastOne
+#print axioms Cslib.Logic.PL.CNF.computableInPolyTime_atLeastOne
 
 /--
-info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atMostOne' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.computableInPolyTime_atMostOne' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_atMostOne
+#print axioms Cslib.Logic.PL.CNF.computableInPolyTime_atMostOne
 
 /--
-info: 'Cslib.Logic.PL.CNF.computableTidilyInPolyTime_exactlyOne' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Logic.PL.CNF.computableInPolyTime_exactlyOne' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Logic.PL.CNF.computableTidilyInPolyTime_exactlyOne
+#print axioms Cslib.Logic.PL.CNF.computableInPolyTime_exactlyOne
 
 /--
 info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_enc_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
