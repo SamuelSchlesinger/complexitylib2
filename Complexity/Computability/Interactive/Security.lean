@@ -53,6 +53,18 @@ variation distance on any type, finite or not. -/
 def CloseTo {α : Type} (μ ν : PMF α) (ε : ℝ≥0∞) : Prop :=
   ∀ event : Set α, μ.toOuterMeasure event ≤ ν.toOuterMeasure event + ε
 
+/-- Statistical closeness is preserved by postprocessing. -/
+theorem CloseTo.map {α β : Type} {μ ν : PMF α} {ε : ℝ≥0∞} (h : CloseTo μ ν ε) (f : α → β) :
+    CloseTo (μ.map f) (ν.map f) ε := fun event => by
+  simpa only [PMF.toOuterMeasure_map_apply] using h (f ⁻¹' event)
+
+/-- Statistical closeness errors add along a chain. -/
+theorem CloseTo.trans {α : Type} {μ ν ρ : PMF α} {ε δ : ℝ≥0∞} (h₁ : CloseTo μ ν ε)
+    (h₂ : CloseTo ν ρ δ) : CloseTo μ ρ (ε + δ) := fun event =>
+  (h₁ event).trans <| by
+    rw [add_comm ε δ, ← add_assoc]
+    exact add_le_add (h₂ event) le_rfl
+
 /-! ### Completeness, soundness and knowledge soundness -/
 
 /-- Completeness with error `ε`. -/
