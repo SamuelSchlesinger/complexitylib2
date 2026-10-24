@@ -491,4 +491,20 @@ theorem bitsPadWord {α : Type}
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsPadWord α input bound word
       hbound.tidy hword.tidy)
 
+/-- Repeat a fixed bit a unary number of times, including zero repetitions. -/
+@[fun_prop]
+theorem bitsReplicate (bit : Bool) :
+    ComputableInPolyTime (fun n => List.replicate n bit) encUnary encBits :=
+  .of_tidy (ComputableTidilyInPolyTime.bitsReplicate bit)
+
+/-- Apply a fixed Boolean operation pointwise to two computed raw words. The result stops at
+whichever word ends first; the two certificates retain their raw bit-string encoding. -/
+@[fun_prop]
+theorem bitsZipWithInput (op : Bool → Bool → Bool) {α : Type} {input : α ↪ List Bool}
+    {left right : α → List Bool}
+    (hleft : ComputableInPolyTime left input encBits)
+    (hright : ComputableInPolyTime right input encBits) :
+    ComputableInPolyTime (fun a => (left a).zipWith op (right a)) input encBits :=
+  .of_tidy (ComputableTidilyInPolyTime.bitsZipWithInput op hleft.tidy hright.tidy)
+
 end Turing.MultiTapeTM.ComputableInPolyTime
