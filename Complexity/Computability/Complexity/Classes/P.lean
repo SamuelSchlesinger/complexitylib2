@@ -48,6 +48,8 @@ polynomial time, and so to this notion, under the standard binary encodings of t
 * `Cslib.Complexity.mem_P_iff_exists_decidableInTimeAndSpace`: `P` in terms of upstream
   `Turing.MultiTapeTM.DecidableInTimeAndSpace` with polynomially bounded time and space.
 * `Cslib.Complexity.mem_P_of_decidableInTimeAndSpace`: a polynomial time bound alone suffices.
+* `Cslib.Complexity.empty_mem_P`, `Cslib.Complexity.univ_mem_P`: the empty and universal problems
+  are in `P`.
 * `Cslib.Complexity.compl_mem_P`, `Cslib.Complexity.P_eq_preimage_compl_P`: `P` is closed under
   complement.
 
@@ -98,6 +100,14 @@ theorem mem_P_of_decidableInTimeAndSpace {enc : α ↪ List Bool} {A : Set α} {
     (h : DecidableInTimeAndSpace A enc (fun a => t (enc a).length) s) : A ∈ P enc :=
   let ⟨f, hf, hA⟩ := decidableInTimeAndSpace_iff.mp h
   ⟨f, hf.computableInPolyTime ht, hA⟩
+
+/-- The empty problem is in `P`. -/
+theorem empty_mem_P {enc : α ↪ List Bool} : (∅ : Set α) ∈ P enc :=
+  ⟨fun _ => false, .const false, fun _ => by simp⟩
+
+/-- The universal problem is in `P`. -/
+theorem univ_mem_P {enc : α ↪ List Bool} : (Set.univ : Set α) ∈ P enc :=
+  ⟨fun _ => true, .const true, fun _ => by simp⟩
 
 /-- **`P` is closed under complement**: negate the answer of the decider. -/
 theorem compl_mem_P {enc : α ↪ List Bool} {A : Set α} (hA : A ∈ P enc) : Aᶜ ∈ P enc :=

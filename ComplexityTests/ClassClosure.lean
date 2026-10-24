@@ -7,12 +7,14 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Complexity.Classes.BPP.Collapse
 import Complexity.Computability.Complexity.Classes.Inclusions
 import Complexity.Computability.Complexity.Classes.Ladner
+import Complexity.Computability.Complexity.Classes.P.Closure
 import Complexity.Computability.Complexity.Classes.P.Complement
 import Complexity.Computability.Complexity.Classes.PCP.ZeroRandomness
 import Complexity.Computability.Complexity.Classes.PP.Characterization
 import Complexity.Computability.Complexity.Classes.RP.Closure
 import Complexity.Computability.Complexity.Classes.SharpP.Closure
 import Complexity.Computability.Complexity.Classes.SharpP.Combinators
+import Complexity.Computability.Complexity.Classes.Space.Closure
 import Complexity.Computability.Complexity.CookLevin.Completeness
 import Complexity.Computability.Complexity.Problems.ExactThreeSAT
 
@@ -124,6 +126,21 @@ example : {w : List Bool | w.headD false = true} ∩ {w | w.headD false = true}�
 
 example : {w : List Bool | w.headD false = true} ∈ ZPP encBits ∩ (NP encBits ∩ coNP encBits) :=
   ⟨P_subset_ZPP headD_mem_P, ZPP_subset_NP_inter_coNP (P_subset_ZPP headD_mem_P)⟩
+
+example : {w : List Bool | w.headD false = true} \ {w | w.headD false = true}ᶜ ∈ P encBits :=
+  diff_mem_P headD_mem_P (compl_mem_P headD_mem_P)
+
+example : {w : List Bool | w.headD false = true} ∩ {w | w.headD false = true}ᶜ ∈ BPP encBits :=
+  inter_mem_BPP (P_subset_BPP headD_mem_P) (P_subset_BPP (compl_mem_P headD_mem_P))
+
+example : {w : List Bool | w.headD false = true} ∪ {w | w.headD false = true}ᶜ ∈ BPP encBits :=
+  union_mem_BPP (P_subset_BPP headD_mem_P) (P_subset_BPP (compl_mem_P headD_mem_P))
+
+example : {w : List Bool | w.headD false = true} ∩ {w | w.headD false = true}ᶜ ∈ PSPACE encBits :=
+  inter_mem_PSPACE (P_subset_PSPACE headD_mem_P) (P_subset_PSPACE (compl_mem_P headD_mem_P))
+
+example : {w : List Bool | w.headD false = true} ∪ {w | w.headD false = true}ᶜ ∈ PSPACE encBits :=
+  union_mem_PSPACE (P_subset_PSPACE headD_mem_P) (P_subset_PSPACE (compl_mem_P headD_mem_P))
 
 /-! ### `SAT` and `P` -/
 
@@ -327,5 +344,33 @@ info: 'Cslib.Complexity.BPP_eq_P_of_NP_subset_P' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.BPP_eq_P_of_NP_subset_P
+
+/--
+info: 'Cslib.Complexity.inter_mem_BPP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.inter_mem_BPP
+
+/--
+info: 'Cslib.Complexity.union_mem_BPP' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.union_mem_BPP
+
+/--
+info: 'Cslib.Complexity.inter_mem_PSPACE' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.inter_mem_PSPACE
+
+/--
+info: 'Cslib.Complexity.union_mem_PSPACE' depends on axioms:
+  [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.union_mem_PSPACE
 
 end ComplexityTests.ClassClosure

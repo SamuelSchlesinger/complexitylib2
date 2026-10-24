@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.UP
+public import Complexity.Foundations.Order.BooleanSubalgebra
 public import Mathlib.Data.Nat.Prime.Defs
 import Mathlib.FieldTheory.Finite.Basic
 
@@ -128,11 +129,35 @@ theorem compl_mem_ModP (hk : k.Prime) (hA : A ∈ ModP k enc) : Aᶜ ∈ ModP k 
   · simp [h]
   · simp [of_not_not h]
 
+open scoped symmDiff
+
+/-- For prime `k`, `ModP k` as a Boolean subalgebra of `Set α`. -/
+def ModP.booleanSubalgebra (hk : k.Prime) (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (ModP k enc) (P_subset_ModP hk.two_le empty_mem_P) (fun _ => compl_mem_ModP hk)
+    (fun _ _ => inter_mem_ModP hk)
+
+@[simp]
+theorem ModP.coe_booleanSubalgebra (hk : k.Prime) :
+    (ModP.booleanSubalgebra hk enc : Set (Set α)) = ModP k enc := rfl
+
+@[simp]
+theorem ModP.mem_booleanSubalgebra (hk : k.Prime) :
+    A ∈ ModP.booleanSubalgebra hk enc ↔ A ∈ ModP k enc := Iff.rfl
+
 /-- Prime-modulus union closure follows by De Morgan's law. -/
 theorem union_mem_ModP (hk : k.Prime) (hA : A ∈ ModP k enc) (hB : B ∈ ModP k enc) :
-    A ∪ B ∈ ModP k enc := by
-  simpa [Set.compl_inter] using
-    compl_mem_ModP hk (inter_mem_ModP hk (compl_mem_ModP hk hA) (compl_mem_ModP hk hB))
+    A ∪ B ∈ ModP k enc :=
+  (ModP.booleanSubalgebra hk enc).sup_mem hA hB
+
+/-- Prime-modulus set-difference closure. -/
+theorem diff_mem_ModP (hk : k.Prime) (hA : A ∈ ModP k enc) (hB : B ∈ ModP k enc) :
+    A \ B ∈ ModP k enc :=
+  (ModP.booleanSubalgebra hk enc).sdiff_mem hA hB
+
+/-- Prime-modulus symmetric-difference closure. -/
+theorem symmDiff_mem_ModP (hk : k.Prime) (hA : A ∈ ModP k enc) (hB : B ∈ ModP k enc) :
+    A ∆ B ∈ ModP k enc :=
+  (ModP.booleanSubalgebra hk enc).symmDiff_mem hA hB
 
 /-- The complementary modular class: a #P count is divisible by the fixed modulus. -/
 def coModP (k : ℕ) (enc : α ↪ List Bool) : Set (Set α) := {A | Aᶜ ∈ ModP k enc}

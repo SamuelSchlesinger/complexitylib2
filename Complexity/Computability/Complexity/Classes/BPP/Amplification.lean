@@ -9,7 +9,12 @@ module
 
 public import Complexity.Computability.Complexity.Classes.BPP
 public import Complexity.Computability.Complexity.Classes.RepeatedTrials
+public import Complexity.Foundations.Order.BooleanSubalgebra
 import Complexity.Computability.Complexity.Classes.SharpP
+import Complexity.Computability.Complexity.Classes.SharpP.Combinators
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Foundations.Data.List.OfFn
 
@@ -34,6 +39,7 @@ is `Cslib.Complexity.mem_RP_iff_forall_decidesWithOneSidedErrorExponent`.
 ## Main definitions
 
 * `Cslib.Complexity.DecidesWithErrorExponent`: error at most `2 ^ (-q(n))`.
+* `Cslib.Complexity.BPP.booleanSubalgebra`: `BPP` as a Boolean subalgebra of `Set α`.
 
 ## Main results
 
@@ -42,6 +48,8 @@ is `Cslib.Complexity.mem_RP_iff_forall_decidesWithOneSidedErrorExponent`.
 * `Cslib.Complexity.DecidesWithErrorExponent.decidesWithBoundedError`: error at most
   `2 ^ (-q(n)) ≤ 1 / 4` is bounded error.
 * `Cslib.Complexity.mem_BPP_iff_forall_decidesWithErrorExponent`: error reduction for `BPP`.
+* `Cslib.Complexity.inter_mem_BPP`, `Cslib.Complexity.union_mem_BPP`,
+  `Cslib.Complexity.diff_mem_BPP`, `Cslib.Complexity.symmDiff_mem_BPP`: Boolean closure of `BPP`.
 
 ## References
 
@@ -133,5 +141,80 @@ theorem mem_BPP_iff_forall_decidesWithErrorExponent {A : Set α} :
     computableTidilyInPolyTime_repeatMajority hV _ _, h.repeatMajority q⟩, fun h => ?_⟩
   obtain ⟨p, V, hV, h⟩ := h 2
   exact ⟨p, V, hV, h.decidesWithBoundedError fun _ => by simp⟩
+
+/-! ### Boolean closure of `BPP` -/
+
+open scoped symmDiff
+
+/-- **`BPP` is closed under intersection**: reduce the error of both deciders to
+`2 ^ (-3) = 1 / 8`, and accept when both accept on disjoint parts of the random string. -/
+theorem inter_mem_BPP {A B : Set α} (hA : A ∈ BPP enc) (hB : B ∈ BPP enc) : A ∩ B ∈ BPP enc := by
+  obtain ⟨p₁, V₁, hV₁, h₁⟩ := mem_BPP_iff_forall_decidesWithErrorExponent.1 hA 3
+  obtain ⟨p₂, V₂, hV₂, h₂⟩ := mem_BPP_iff_forall_decidesWithErrorExponent.1 hB 3
+  refine mem_BPP_iff_tidy.2 ⟨p₁ + p₂, andVerifier (fun a => p₁.eval (enc a).length) V₁ V₂,
+    by fun_prop, fun a => ?_⟩
+  have hs₁ := acceptCount_add_card_filter_eq_false (V := V₁) (a := a)
+    (n := p₁.eval (enc a).length)
+  have hs₂ := acceptCount_add_card_filter_eq_false (V := V₂) (a := a)
+    (n := p₂.eval (enc a).length)
+  have hs := acceptCount_add_card_filter_eq_false
+    (V := andVerifier (fun a => p₁.eval (enc a).length) V₁ V₂) (a := a)
+    (n := (p₁ + p₂).eval (enc a).length)
+  have hc : acceptCount (andVerifier (fun a => p₁.eval (enc a).length) V₁ V₂) a
+      ((p₁ + p₂).eval (enc a).length) =
+      acceptCount V₁ a (p₁.eval (enc a).length) * acceptCount V₂ a (p₂.eval (enc a).length) := by
+    rw [Polynomial.eval_add, acceptCount_andVerifier]
+  constructor
+  · intro ha
+    have e₁ := (h₁ a).1 ha.1
+    have e₂ := (h₂ a).1 ha.2
+    simp only [Polynomial.eval_ofNat] at e₁ e₂
+    have f₁ : 7 * 2 ^ p₁.eval (enc a).length ≤ 8 * acceptCount V₁ a (p₁.eval (enc a).length) := by
+      omega
+    have f₂ : 7 * 2 ^ p₂.eval (enc a).length ≤ 8 * acceptCount V₂ a (p₂.eval (enc a).length) := by
+      omega
+    rw [← acceptCount, hc, Polynomial.eval_add, pow_add]
+    nlinarith [Nat.mul_le_mul f₁ f₂]
+  · intro ha
+    have hacc : 8 * acceptCount (andVerifier (fun a => p₁.eval (enc a).length) V₁ V₂) a
+        ((p₁ + p₂).eval (enc a).length) ≤ 2 ^ (p₁ + p₂).eval (enc a).length := by
+      rw [hc, Polynomial.eval_add, pow_add]
+      by_cases ha₁ : a ∈ A
+      · have ha₂ : a ∉ B := fun hb => ha ⟨ha₁, hb⟩
+        have e₂ := (h₂ a).2 ha₂
+        simp only [Polynomial.eval_ofNat] at e₂
+        rw [← acceptCount] at e₂
+        have hb₁ := acceptCount_le_two_pow (V := V₁) (a := a) (n := p₁.eval (enc a).length)
+        nlinarith [Nat.mul_le_mul hb₁ e₂]
+      · have e₁ := (h₁ a).2 ha₁
+        simp only [Polynomial.eval_ofNat] at e₁
+        rw [← acceptCount] at e₁
+        have hb₂ := acceptCount_le_two_pow (V := V₂) (a := a) (n := p₂.eval (enc a).length)
+        nlinarith [Nat.mul_le_mul e₁ hb₂]
+    omega
+
+/-- `BPP` as a Boolean subalgebra of `Set α`. -/
+def BPP.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (BPP enc) (P_subset_BPP empty_mem_P) (fun _ => compl_mem_BPP)
+    (fun _ _ => inter_mem_BPP)
+
+@[simp]
+theorem BPP.coe_booleanSubalgebra : (BPP.booleanSubalgebra enc : Set (Set α)) = BPP enc := rfl
+
+@[simp]
+theorem BPP.mem_booleanSubalgebra {A : Set α} :
+    A ∈ BPP.booleanSubalgebra enc ↔ A ∈ BPP enc := Iff.rfl
+
+/-- `BPP` is closed under union. -/
+theorem union_mem_BPP {A B : Set α} (hA : A ∈ BPP enc) (hB : B ∈ BPP enc) : A ∪ B ∈ BPP enc :=
+  (BPP.booleanSubalgebra enc).sup_mem hA hB
+
+/-- `BPP` is closed under set difference. -/
+theorem diff_mem_BPP {A B : Set α} (hA : A ∈ BPP enc) (hB : B ∈ BPP enc) : A \ B ∈ BPP enc :=
+  (BPP.booleanSubalgebra enc).sdiff_mem hA hB
+
+/-- `BPP` is closed under symmetric difference. -/
+theorem symmDiff_mem_BPP {A B : Set α} (hA : A ∈ BPP enc) (hB : B ∈ BPP enc) : A ∆ B ∈ BPP enc :=
+  (BPP.booleanSubalgebra enc).symmDiff_mem hA hB
 
 end Cslib.Complexity

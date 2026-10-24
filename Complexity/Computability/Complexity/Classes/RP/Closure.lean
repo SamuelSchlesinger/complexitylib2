@@ -9,7 +9,9 @@ module
 
 public import Complexity.Computability.Complexity.Classes.P
 public import Complexity.Computability.Complexity.Classes.ZPP
+public import Complexity.Foundations.Order.BooleanSubalgebra
 import Complexity.Computability.Complexity.Classes.SharpP.Combinators
+import Complexity.Computability.Complexity.Reduction.ManyOne
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -40,7 +42,9 @@ A decider ignoring an empty random string shows `P ⊆ RP`; with closure of `P` 
 * `Cslib.Complexity.union_mem_RP`, `Cslib.Complexity.inter_mem_RP`: `RP` is closed under union
   and intersection.
 * `Cslib.Complexity.union_mem_coRP`, `Cslib.Complexity.inter_mem_coRP`,
-  `Cslib.Complexity.union_mem_ZPP`, `Cslib.Complexity.inter_mem_ZPP`.
+  `Cslib.Complexity.union_mem_ZPP`, `Cslib.Complexity.inter_mem_ZPP`,
+  `Cslib.Complexity.diff_mem_ZPP`, `Cslib.Complexity.symmDiff_mem_ZPP`,
+  `Cslib.Complexity.ZPP.booleanSubalgebra`.
 * `Cslib.Complexity.ZPP_subset_NP_inter_coNP`.
 
 ## References
@@ -148,24 +152,43 @@ theorem inter_mem_RP {A B : Set α} (hA : A ∈ RP enc) (hB : B ∈ RP enc) : A 
 
 /-- `coRP` is closed under union. -/
 theorem union_mem_coRP {A B : Set α} (hA : A ∈ coRP enc) (hB : B ∈ coRP enc) :
-    A ∪ B ∈ coRP enc := by
-  rw [mem_coRP, Set.compl_union]
-  exact inter_mem_RP hA hB
+    A ∪ B ∈ coRP enc :=
+  compl_union_mem inter_mem_RP hA hB
 
 /-- `coRP` is closed under intersection. -/
 theorem inter_mem_coRP {A B : Set α} (hA : A ∈ coRP enc) (hB : B ∈ coRP enc) :
-    A ∩ B ∈ coRP enc := by
-  rw [mem_coRP, Set.compl_inter]
-  exact union_mem_RP hA hB
+    A ∩ B ∈ coRP enc :=
+  compl_inter_mem union_mem_RP hA hB
 
-/-- `ZPP` is closed under union. -/
-theorem union_mem_ZPP {A B : Set α} (hA : A ∈ ZPP enc) (hB : B ∈ ZPP enc) : A ∪ B ∈ ZPP enc := by
-  rw [ZPP_eq_RP_inter_coRP] at *
-  exact ⟨union_mem_RP hA.1 hB.1, union_mem_coRP hA.2 hB.2⟩
+open scoped symmDiff
 
 /-- `ZPP` is closed under intersection. -/
 theorem inter_mem_ZPP {A B : Set α} (hA : A ∈ ZPP enc) (hB : B ∈ ZPP enc) : A ∩ B ∈ ZPP enc := by
   rw [ZPP_eq_RP_inter_coRP] at *
   exact ⟨inter_mem_RP hA.1 hB.1, inter_mem_coRP hA.2 hB.2⟩
+
+/-- `ZPP` as a Boolean subalgebra of `Set α`. -/
+def ZPP.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (ZPP enc) (P_subset_ZPP empty_mem_P) (fun _ => compl_mem_ZPP)
+    (fun _ _ => inter_mem_ZPP)
+
+@[simp]
+theorem ZPP.coe_booleanSubalgebra : (ZPP.booleanSubalgebra enc : Set (Set α)) = ZPP enc := rfl
+
+@[simp]
+theorem ZPP.mem_booleanSubalgebra {A : Set α} :
+    A ∈ ZPP.booleanSubalgebra enc ↔ A ∈ ZPP enc := Iff.rfl
+
+/-- `ZPP` is closed under union. -/
+theorem union_mem_ZPP {A B : Set α} (hA : A ∈ ZPP enc) (hB : B ∈ ZPP enc) : A ∪ B ∈ ZPP enc :=
+  (ZPP.booleanSubalgebra enc).sup_mem hA hB
+
+/-- `ZPP` is closed under set difference. -/
+theorem diff_mem_ZPP {A B : Set α} (hA : A ∈ ZPP enc) (hB : B ∈ ZPP enc) : A \ B ∈ ZPP enc :=
+  (ZPP.booleanSubalgebra enc).sdiff_mem hA hB
+
+/-- `ZPP` is closed under symmetric difference. -/
+theorem symmDiff_mem_ZPP {A B : Set α} (hA : A ∈ ZPP enc) (hB : B ∈ ZPP enc) : A ∆ B ∈ ZPP enc :=
+  (ZPP.booleanSubalgebra enc).symmDiff_mem hA hB
 
 end Cslib.Complexity

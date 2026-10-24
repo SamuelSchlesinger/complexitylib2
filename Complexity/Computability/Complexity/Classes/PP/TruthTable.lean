@@ -8,9 +8,10 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Classes.PP
+public import Complexity.Computability.Complexity.Classes.PP.Closure
 public import Complexity.Computability.Complexity.Classes.SharpP
 public import Complexity.Computability.Complexity.Reduction.TruthTable
-import Complexity.Computability.Complexity.Classes.PP.Closure
+public import Complexity.Foundations.Order.BooleanSubalgebra
 import Complexity.Computability.Complexity.Classes.PP.Characterization
 import Complexity.Computability.Complexity.Classes.SharpP.Products
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
@@ -396,21 +397,30 @@ theorem inter_mem_PP {A B : Set α} (hA : A ∈ PP enc) (hB : B ∈ PP enc) :
   ext a
   simp [C, truthTableAnswers]
 
+/-- `PP` as a Boolean subalgebra of `Set α`. -/
+def PP.booleanSubalgebra (enc : α ↪ List Bool) : BooleanSubalgebra (Set α) :=
+  .ofComplInf (PP enc) (BPP_subset_PP (P_subset_BPP empty_mem_P)) (fun _ => compl_mem_PP)
+    (fun _ _ => inter_mem_PP)
+
+@[simp]
+theorem PP.coe_booleanSubalgebra : (PP.booleanSubalgebra enc : Set (Set α)) = PP enc := rfl
+
+@[simp]
+theorem PP.mem_booleanSubalgebra {A : Set α} : A ∈ PP.booleanSubalgebra enc ↔ A ∈ PP enc := Iff.rfl
+
 /-- `PP` is closed under union [Beigel, Reingold and Spielman][BeigelReingoldSpielman1995]. -/
 theorem union_mem_PP {A B : Set α} (hA : A ∈ PP enc) (hB : B ∈ PP enc) :
-    A ∪ B ∈ PP enc := by
-  have h := compl_mem_PP (inter_mem_PP (compl_mem_PP hA) (compl_mem_PP hB))
-  rwa [Set.compl_inter, compl_compl, compl_compl] at h
+    A ∪ B ∈ PP enc :=
+  (PP.booleanSubalgebra enc).sup_mem hA hB
 
 /-- `PP` is closed under set difference. -/
 theorem diff_mem_PP {A B : Set α} (hA : A ∈ PP enc) (hB : B ∈ PP enc) :
-    A \ B ∈ PP enc := by
-  rw [Set.sdiff_eq]
-  exact inter_mem_PP hA (compl_mem_PP hB)
+    A \ B ∈ PP enc :=
+  (PP.booleanSubalgebra enc).sdiff_mem hA hB
 
 /-- `PP` is closed under symmetric difference. -/
 theorem symmDiff_mem_PP {A B : Set α} (hA : A ∈ PP enc) (hB : B ∈ PP enc) :
     symmDiff A B ∈ PP enc :=
-  union_mem_PP (diff_mem_PP hA hB) (diff_mem_PP hB hA)
+  (PP.booleanSubalgebra enc).symmDiff_mem hA hB
 
 end Cslib.Complexity
