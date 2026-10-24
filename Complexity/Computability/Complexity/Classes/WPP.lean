@@ -13,6 +13,7 @@ public import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 import Complexity.Computability.Complexity.Classes.SPP.FewP
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Mathlib.Algebra.BigOperators.Ring.List
 
 /-!
 # Wide and length-dependent counting gaps
@@ -339,34 +340,6 @@ theorem mem_LWPP_of_finset_targets {ι : Type*} (s : Finset ι) {g : α → ℤ}
 
 /-! ### Unary-indexed target normalization and `LWPP` reduction closure -/
 
-private theorem prod_map_ne_zero {γ : Type*} {f : γ → ℤ} {l : List γ}
-    (h : ∀ x ∈ l, f x ≠ 0) : (l.map f).prod ≠ 0 := by
-  induction l with
-  | nil => simp
-  | cons x l ih =>
-    simp only [List.map_cons, List.prod_cons]
-    exact mul_ne_zero (h x (by simp)) (ih fun y hy => h y (by simp [hy]))
-
-private theorem mul_prod_filter_range_ne (f : ℕ → ℤ) {K m : ℕ} (hm : m < K) :
-    f m * (((List.range K).filter (fun i => decide (i ≠ m))).map f).prod =
-      ((List.range K).map f).prod := by
-  induction K with
-  | zero => lia
-  | succ K ih =>
-    rw [List.range_succ, List.filter_append, List.map_append, List.prod_append,
-      List.map_append, List.prod_append]
-    rcases Nat.lt_succ_iff_lt_or_eq.mp hm with hlt | rfl
-    · have hne : decide (K ≠ m) = true := decide_eq_true (by lia)
-      simp only [List.filter_cons, hne, ↓reduceIte, List.filter_nil, List.map_cons, List.map_nil,
-        List.prod_cons, List.prod_nil, mul_one]
-      rw [← mul_assoc, ih hlt]
-    · have hfilt : (List.range m).filter (fun i => decide (i ≠ m)) = List.range m :=
-        List.filter_eq_self.mpr fun i hi => decide_eq_true (Nat.ne_of_lt (List.mem_range.mp hi))
-      simp only [hfilt, List.filter_cons, ne_eq, not_true_eq_false, decide_false,
-        Bool.false_eq_true, ↓reduceIte, List.filter_nil, List.map_nil, List.prod_nil, mul_one,
-        List.map_cons, List.prod_cons]
-      ring
-
 /-- **Unary-indexed target normalization for `LWPP`:** if a `GapP` function takes `0` outside `A`
 and `f (k a)` on `A`, where `f : ℕ → ℤ` is a nonzero unary-input polynomial-time target and
 `k : α → ℕ` is computable in polynomial time in unary, then multiplying the gap by the
@@ -392,7 +365,7 @@ theorem mem_LWPP_of_polyTime_index {g : α → ℤ} {f : ℕ → ℤ} {k : α �
     ComputableTidilyInPolyTime.intBin_prod.comp
       ((ComputableTidilyInPolyTime.map hf).comp
         (ComputableTidilyInPolyTime.range.comp hbound))
-  have hFn (n : ℕ) : F n ≠ 0 := prod_map_ne_zero fun _ _ => hn _
+  have hFn (n : ℕ) : F n ≠ 0 := List.prod_ne_zero (by simp [hn])
   let h (a : α) : ℤ :=
     (((List.range (bound (enc a).length)).filter (fun i => decide (i ≠ k a))).map f).prod
   have hlist : ComputableTidilyInPolyTime
@@ -409,8 +382,12 @@ theorem mem_LWPP_of_polyTime_index {g : α → ℤ} {f : ℕ → ℤ} {k : α �
     ComputableTidilyInPolyTime.intBin_prod.comp
       ((ComputableTidilyInPolyTime.map hf).comp
         (ComputableTidilyInPolyTime.filterWithInput hlist htest))
-  have hmul (a : α) : f (k a) * h a = F (enc a).length :=
-    mul_prod_filter_range_ne f (hlt a)
+  have hmul (a : α) : f (k a) * h a = F (enc a).length := by
+    dsimp only [h, F]
+    rw [show (fun i : ℕ => decide (i ≠ k a)) = (· != k a) from
+        funext fun i => Bool.eq_iff_iff.mpr (by simp),
+      ← List.nodup_range.erase_eq_filter]
+    exact List.prod_map_erase f (List.mem_range.mpr (hlt a))
   refine ⟨g * h, GapP.mul_mem hg (GapP.of_polyTime hh), F, .of_tidy hF, hFn, fun a => ?_,
     fun a => ?_⟩
   · rcases hr a with hz | hfk

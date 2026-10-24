@@ -17,6 +17,7 @@ import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Mathlib.Algebra.BigOperators.Ring.List
 
 /-!
 # Oracle lowness of SPP, LWPP, and WPP
@@ -460,34 +461,6 @@ theorem PPWithOracle_eq_PP_of_mem_SPP (hA : A ∈ SPP encBits) (enc : α ↪ Lis
 
 /-! ### `LWPP` scaling simulation and oracle lowness (FFK94, Section 5) -/
 
-private theorem prod_map_ne_zero {γ : Type*} {f : γ → ℤ} {l : List γ}
-    (h : ∀ x ∈ l, f x ≠ 0) : (l.map f).prod ≠ 0 := by
-  induction l with
-  | nil => simp only [List.map_nil, List.prod_nil, ne_eq, one_ne_zero, not_false_eq_true]
-  | cons x l ih =>
-    simp only [List.map_cons, List.prod_cons]
-    exact mul_ne_zero (h x List.mem_cons_self) (ih fun y hy => h y (List.mem_cons_of_mem x hy))
-
-private theorem mul_prod_filter_range_ne (f : ℕ → ℤ) {K m : ℕ} (hm : m < K) :
-    f m * (((List.range K).filter (fun i => decide (i ≠ m))).map f).prod =
-      ((List.range K).map f).prod := by
-  induction K with
-  | zero => lia
-  | succ K ih =>
-    rw [List.range_succ, List.filter_append, List.map_append, List.prod_append,
-      List.map_append, List.prod_append]
-    rcases Nat.lt_succ_iff_lt_or_eq.mp hm with hlt | rfl
-    · have hne : decide (K ≠ m) = true := decide_eq_true (by lia)
-      simp only [List.filter_cons, hne, ↓reduceIte, List.filter_nil, List.map_cons, List.map_nil,
-        List.prod_cons, List.prod_nil, mul_one]
-      rw [← mul_assoc, ih hlt]
-    · have hfilt : (List.range m).filter (fun i => decide (i ≠ m)) = List.range m :=
-        List.filter_eq_self.mpr fun i hi => decide_eq_true (Nat.ne_of_lt (List.mem_range.mp hi))
-      simp only [hfilt, List.filter_cons, ne_eq, not_true_eq_false, decide_false,
-        Bool.false_eq_true, ↓reduceIte, List.filter_nil, List.map_nil, List.prod_nil, mul_one,
-        List.map_cons, List.prod_cons]
-      ring
-
 private theorem exists_mul_mem_GapP_of_sharpPWithOracle_of_mem_LWPP (hA : A ∈ LWPP encBits)
     {c : α → ℕ} (hc : c ∈ SharpPWithOracle A enc) :
     ∃ S : ℕ → ℤ, ComputableTidilyInPolyTime S encUnary encIntBin ∧
@@ -514,7 +487,7 @@ private theorem exists_mul_mem_GapP_of_sharpPWithOracle_of_mem_LWPP (hA : A ∈ 
     ComputableTidilyInPolyTime.intBin_prod.comp
       ((ComputableTidilyInPolyTime.map hf).comp
         (ComputableTidilyInPolyTime.range.comp hbound))
-  have hDn (n : ℕ) : D n ≠ 0 := prod_map_ne_zero fun _ _ => hfn _
+  have hDn (n : ℕ) : D n ≠ 0 := List.prod_ne_zero (by simp [hfn])
   let S : ℕ → ℤ := fun n => D n ^ τ n
   have hS : ComputableTidilyInPolyTime S encUnary encIntBin := hD.intBin_pow' hτ
   have hSn (n : ℕ) : S n ≠ 0 := pow_ne_zero (τ n) (hDn n)
@@ -557,8 +530,12 @@ private theorem exists_mul_mem_GapP_of_sharpPWithOracle_of_mem_LWPP (hA : A ∈ 
   have hH_exact (q : List Bool) (hq : q.length ≤ T a) :
       H (a, q) = open Classical in if q ∈ A then D (enc a).length else 0 := by
     have hlt : q.length < bound (enc a).length := Nat.lt_succ_of_le hq
-    have hmul : f q.length * K (a, q) = D (enc a).length :=
-      mul_prod_filter_range_ne f hlt
+    have hmul : f q.length * K (a, q) = D (enc a).length := by
+      dsimp only [K, D]
+      rw [show (fun i : ℕ => decide (i ≠ q.length)) = (· != q.length) from
+          funext fun i => Bool.eq_iff_iff.mpr (by simp),
+        ← List.nodup_range.erase_eq_filter]
+      exact List.prod_map_erase f (List.mem_range.mpr hlt)
     dsimp only [H]
     rw [hg_eq q]
     split_ifs
