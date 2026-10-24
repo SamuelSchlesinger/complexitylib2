@@ -108,11 +108,11 @@ theorem OneWay.inversion_negligible {f : List Bool → List Bool} (h : OneWay f)
 
 /-- Establish one-wayness by bounding every efficient inverter's success probability. -/
 theorem OneWay.of_inversion_negligible {f : List Bool → List Bool}
-    (hf : ComputableTidilyInPolyTime f encBits encBits)
+    (hf : ComputableInPolyTime f encBits encBits)
     (h : ∀ adversary : Inverter, IsPPT encBits adversary →
       Negligible (fun n => Game.succProbability (ProbComp.eval (inversionGame f adversary n)))) :
     OneWay f := by
-  refine ⟨.of_tidy hf, fun adversary hPPT => ?_⟩
+  refine ⟨hf, fun adversary hPPT => ?_⟩
   simpa only [Game.advantage_pure_false] using h adversary hPPT
 
 /-- A length-preserving permutation that is one-way against every uniform PPT inverter. -/
