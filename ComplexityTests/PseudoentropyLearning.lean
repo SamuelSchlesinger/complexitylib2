@@ -78,17 +78,15 @@ example : IsPPTOn (encList encBool) encBits (fun word => do
     let gap := word.length + 2
     learn (pure word) (fun code => pure (code == word)) confidence gap) := by ppt
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- An evaluator supplied by the caller composes with signed descriptions and captured inputs.
 example (evaluate : List Bool → List Bool → Bool)
-    (hevaluate : ComputableTidilyInPolyTime (fun pair => evaluate pair.1 pair.2)
+    (hevaluate : ComputableInPolyTime (fun pair => evaluate pair.1 pair.2)
       (encPair encBits encBits) encBool) :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun word => signedPredict evaluate (true :: word) (word ++ [false]))
       (encList encBool) encBool := by
   fun_prop
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Training calls the sampled learner inside its adaptive loop; no explicit machine is needed.
 example : IsPPTOn encBits (encPair State.encoding encUnary) (fun word =>
     train (signedPredict (fun code observation => listStrictMajority (code ++ observation)))
@@ -143,9 +141,8 @@ example {Observation Label Seed : Type} (source : ProbComp (Observation × Label
       ((extractLabelsIdeal (Output := Unit) (Prod.fst <$> source) count seed).bind test) = 0 := by
   rw [eval_extractLabels_of_subsingleton, Game.advantage_self]
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- Repetition and slack computation compose through alternative input encodings.
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun word => (ExtractionSchedule.count word.length (word.length + 1) 2,
       ExtractionSchedule.slack word.length (word.length + 1) 2))
     (encList encBool) (encPair encUnary encUnary) := by fun_prop
