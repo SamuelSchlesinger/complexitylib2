@@ -66,7 +66,7 @@ structure NativeCertificate {α β : Type} (f : α → β)
   /-- Input-dependent work space and encoded output bound, up to constants. -/
   space : α → ℕ
   /-- One finite machine implements the function on every encoded input. -/
-  computes : ComputableTidilyInO f encIn encOut time space
+  computes : ComputableInO f encIn encOut time space
 
 namespace NativeCertificate
 
@@ -75,7 +75,9 @@ variable {α β γ : Type} {f : α → β} {g : β → γ}
 
 /-- Forgetting resource bounds retains native computability. -/
 theorem isComputable (c : NativeCertificate f encIn encMid) :
-    IsComputable f encIn encMid := c.computes.isComputable
+    IsComputable f encIn encMid := by
+  obtain ⟨_, h, _⟩ := c.computes
+  exact h.isComputable
 
 /-- Polynomiality is a separate property of both bounds in the encoded input length. -/
 def IsPolynomial (c : NativeCertificate f encIn encMid) : Prop :=
@@ -84,58 +86,59 @@ def IsPolynomial (c : NativeCertificate f encIn encMid) : Prop :=
 
 /-- Derive the existing native polynomial-time predicate, for use by its compositional calculus. -/
 theorem polyTime (c : NativeCertificate f encIn encMid) (h : c.IsPolynomial) :
-    ComputableTidilyInPolyTime f encIn encMid :=
-  ((Internal.forgetO c.computes).computableInPolyTime h.1 h.2).tidy
+    ComputableInPolyTime f encIn encMid :=
+  c.computes.computableInPolyTime h.1 h.2
 
 /-- Compose implementations, charging the second bound at the first result. -/
 def comp (d : NativeCertificate g encMid encOut) (c : NativeCertificate f encIn encMid) :
     NativeCertificate (g ∘ f) encIn encOut where
   time a := c.time a + d.time (f a)
   space a := c.space a + d.space (f a)
-  computes := Internal.normalizeO ((Internal.forgetO d.computes).comp
-    (Internal.forgetO c.computes))
+  computes := d.computes.comp c.computes
 
 /-- Composing polynomial certificates preserves polynomiality in the original input encoding. -/
 theorem comp_isPolynomial (d : NativeCertificate g encMid encOut)
     (c : NativeCertificate f encIn encMid) (hd : d.IsPolynomial) (hc : c.IsPolynomial) :
     (d.comp c).IsPolynomial :=
-  ⟨hc.1.add (hd.1.comp (ComputableInPolyTime.of_tidy (c.polyTime hc)).polyBounded_length),
-    hc.2.add (hd.2.comp (ComputableInPolyTime.of_tidy (c.polyTime hc)).polyBounded_length)⟩
+  ⟨hc.1.add (hd.1.comp (c.polyTime hc).polyBounded_length),
+    hc.2.add (hd.2.comp (c.polyTime hc).polyBounded_length)⟩
 
 /-- Package exact native bounds, including the running time in the space allowance to charge
 encoded output length. No polynomial hypothesis is needed. -/
 def ofTimeAndSpace {t s : α → ℕ}
-    (h : ComputableTidilyInTimeAndSpace f encIn encMid t s) :
+    (h : ComputableInTimeAndSpace f encIn encMid t s) :
     NativeCertificate f encIn encMid where
   time := t
   space a := s a + t a
-  computes := Internal.normalizeO (.of_bounds h.computableInTimeAndSpace 1 (fun _ => by simp)
+  computes := .of_bounds h 1 (fun _ => by simp)
     (fun _ => by simp; omega) (fun a => by
       have := h.length_le a
       simp only [one_mul]
-      omega))
+      omega)
 
 /-- Arbitrary-bound certificates impose exactly native computability, not an efficiency
 assumption. Polynomial resource bounds remain a separate property. -/
 theorem nonempty_iff_isComputable :
     Nonempty (NativeCertificate f encIn encMid) ↔ IsComputable f encIn encMid := by
   refine ⟨fun ⟨c⟩ => c.isComputable, fun h => ?_⟩
-  obtain ⟨t, s, h⟩ := h.exists_computableTidilyInTimeAndSpace
+  obtain ⟨t, s, h⟩ := h
   exact ⟨ofTimeAndSpace h⟩
 
 /-- Every native polynomial-time proof supplies a certificate with polynomial bounds. The space
 bound includes the running time so that it also bounds the emitted output. -/
-theorem exists_polynomial (h : ComputableTidilyInPolyTime f encIn encMid) :
+theorem exists_polynomial (h : ComputableInPolyTime f encIn encMid) :
     ∃ c : NativeCertificate f encIn encMid, c.IsPolynomial := by
   obtain ⟨t, s, ht, hs, hf⟩ := h
-  exact ⟨ofTimeAndSpace hf, ht, hs.add ht⟩
+  exact ⟨ofTimeAndSpace hf,
+    PolyBounded.of_polynomiallyBounded _ ht,
+    (PolyBounded.of_polynomiallyBounded _ hs).add (PolyBounded.of_polynomiallyBounded _ ht)⟩
 
 /-- Select resource bounds from an existing polynomial-time implementation proof. -/
-noncomputable def ofPolyTime (h : ComputableTidilyInPolyTime f encIn encMid) :
+noncomputable def ofPolyTime (h : ComputableInPolyTime f encIn encMid) :
     NativeCertificate f encIn encMid := (exists_polynomial h).choose
 
 /-- Bounds selected by `ofPolyTime` are polynomial in the encoded input length. -/
-theorem ofPolyTime_isPolynomial (h : ComputableTidilyInPolyTime f encIn encMid) :
+theorem ofPolyTime_isPolynomial (h : ComputableInPolyTime f encIn encMid) :
     (ofPolyTime h).IsPolynomial := (exists_polynomial h).choose_spec
 
 end NativeCertificate
