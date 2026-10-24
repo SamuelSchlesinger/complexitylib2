@@ -9,8 +9,8 @@ Common options: [--registry FILE] [--allowlist FILE] [--build-dir DIR]; report a
 Plain computability is the API and tidy computability is how the machine layer proves it: outside
 the raw machine constructions of the allowlist (`scripts/tidy_allowlist.txt`, from #608), no
 public statement should mention a tidy notion. Every public declaration outside the allowlist
-whose statement (its type, or the exposed body of a definition) mentions a tidy predicate falls
-in one case of the S2 design
+whose statement (its type, or the exposed body of a definition outside proofs) mentions a tidy
+predicate falls in one case of the S2 design
 (https://github.com/cslib-community/complexitylib/issues/456#issuecomment-6376748411):
 
 1. a theorem with a committed plain twin: proofs that become plain use the twin, and the
