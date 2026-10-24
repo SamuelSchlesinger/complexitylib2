@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Cslib.Computability.Machines.Turing.MultiTape.Deterministic
 public import Cslib.Foundations.Data.Nat.PolynomialBound
+public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Degree
 
 /-!
 # Computability within resource bounds up to constant factors
@@ -27,7 +28,8 @@ are independent bounds: a space bound is never derived from a time bound.
 The bounds `T` and `S` are any functions of the input, not only of the length of its encoding, so
 that they can be stated in several measures of the input.
 
-Each notion also bounds the length of the encoded value `encOut (f a)` by its space bound, so the
+The three space-charged notions above also bound the length of the encoded value `encOut (f a)`
+by its space bound, so the
 value is charged to the space bound although the machine writes it on its output tape. For
 `ComputableInO` and `ComputableInSpace` this departs from the usual convention, in which a space
 bound counts only the work tapes and the output of a transducer may be much longer than the bound
@@ -39,7 +41,12 @@ within space `O(log n)` in the sense of `ComputableInSpace`, since its value is 
 input. Transducer space, as in log-space reductions, is `Turing.MultiTapeTM.ComputableInLogSpace`,
 or upstream `ComputableInTimeAndSpace` with an explicit space bound.
 
-The condition is the one of the tidy counterparts, whose combinators keep a value on a work tape,
+`ComputableInDegree` separately bounds time and workspace in degree `d` and encoded output in
+degree `e`; both degrees may be zero, with one realizing machine for all inputs. It does not
+charge output length to workspace.
+
+The space-charge condition is the one of the tidy counterparts, whose combinators keep a value
+on a work tape,
 and it makes each notion agree with its tidy counterpart with the same bounds. It costs nothing
 for decision problems, whose values are single bits. For polynomial space it is the usual
 requirement that the value have polynomial length.
@@ -58,6 +65,7 @@ devices. Each plain notion agrees with its tidy counterpart with the same bounds
 * `Turing.MultiTapeTM.ComputableInO`: computability within time and space bounds up to constants.
 * `Turing.MultiTapeTM.ComputableInSpace`: computability within a space bound up to constants.
 * `Turing.MultiTapeTM.ComputableInPolySpace`: computability within polynomial space.
+* `Turing.MultiTapeTM.ComputableInDegree`: independent time/workspace and output degrees.
 
 ## References
 
@@ -105,5 +113,15 @@ def ComputableInPolySpace (f : α → β) (encIn : α ↪ List Bool) (encOut : �
   ∃ (t : α → ℕ) (s : ℕ → ℕ), Cslib.PolynomiallyBounded s ∧
     ComputableInTimeAndSpace f encIn encOut t (fun a => s (encIn a).length) ∧
     ∀ a, (encOut (f a)).length ≤ s (encIn a).length
+
+/-- Polynomial time and work space of degree `d`, and encoded output growth of degree `e`.
+The realization is one machine for all inputs. Both degrees may be zero. -/
+def ComputableInDegree (f : α → β) (encIn : α ↪ List Bool) (encOut : β ↪ List Bool)
+    (d e : ℕ) : Prop :=
+  (∃ t s, DegreeBounded (fun a => (encIn a).length) t d ∧
+    DegreeBounded (fun a => (encIn a).length) s d ∧
+    ComputableInTimeAndSpace f encIn encOut t s) ∧
+  DegreeBounded (fun a => (encIn a).length) (fun a => (encOut (f a)).length) e
+
 
 end Turing.MultiTapeTM
