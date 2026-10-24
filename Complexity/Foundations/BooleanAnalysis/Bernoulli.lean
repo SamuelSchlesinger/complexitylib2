@@ -14,6 +14,7 @@ public import Mathlib.Basic.Real.Basic
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Order.UpperLower.Basic
 public import Mathlib.Algebra.Order.Group.Indicator
+import Complexity.Foundations.Data.Finset.Expect
 import Complexity.Foundations.Order.UpperLower
 import Mathlib.Data.Bool.Basic
 import Mathlib.Algebra.BigOperators.Fin
@@ -30,7 +31,7 @@ independently with probability `p` gives it the weight `bernoulliWeight p select
 `bernoulliAverage p f` is the expectation of `f` over the random mask, a finite sum. The coordinates
 of the random mask are independent (`bernoulliAverage_prod`), the union of independent masks of
 rates `p` and `q` has rate `p + q - p q` (`bernoulliAverage_union`), and increasing the rate
-decreases the expectation of an antitone function (`bernoulliAverage_bias_antitone`).
+decreases the expectation of an antitone function (`Antitone.bernoulliAverage_antitoneOn`).
 
 The union of `h` independent masks of rate `p` lies in a lower set `A` only if each of them does.
 So when `h p ≤ q`, the probability of `A` at rate `q` is at most its probability at rate `p` to the
@@ -50,6 +51,8 @@ power `h` (`bernoulliAverage_lowerSet_pow_le`). This transference principle appe
 * `Cslib.BitString.bernoulliAverage_reindex`, `Cslib.BitString.bernoulliAverage_sumElim`,
   `Cslib.BitString.bernoulliAverage_restrict`: reindexing, splitting over a disjoint union, and
   restricting the coordinates of a random mask.
+* `Cslib.BitString.bernoulliAverage_zero`, `Cslib.BitString.bernoulliWeight_one_half`,
+  `Cslib.BitString.bernoulliAverage_one_half`: sampling at rates `0` and `1 / 2`.
 * `Cslib.BitString.bernoulliAverage_coordinate`,
   `Cslib.BitString.bernoulliAverage_nonempty`, `Cslib.BitString.bernoulliAverage_hits`,
   `Cslib.BitString.bernoulliAverage_weight`: the probability that a coordinate is selected,
@@ -58,7 +61,7 @@ power `h` (`bernoulliAverage_lowerSet_pow_le`). This transference principle appe
 * `Cslib.BitString.bernoulliAverage_bernoulliAverage_eq_sum`: the law of a coordinatewise
   image of two independent masks.
 * `Cslib.BitString.bernoulliAverage_union`: unions of independent masks.
-* `Cslib.BitString.bernoulliAverage_bias_antitone`: antitone functions have smaller
+* `Antitone.bernoulliAverage_antitoneOn`: antitone functions have smaller
   expectations at larger rates.
 * `Cslib.BitString.bernoulliAverage_lowerSet_union`,
   `Cslib.BitString.bernoulliAverage_lowerSet_pow_le`: transference for lower sets.
@@ -89,12 +92,6 @@ def bernoulliAverage {ι : Type*} [Fintype ι] [DecidableEq ι] (p : ℝ)
 
 /-! ### Reindexing and splitting the coordinates -/
 
-private theorem sum_cons {n : ℕ} (f : (Fin (n + 1) → Bool) → ℝ) :
-    (∑ x, f x) = (∑ x, f (Fin.cons false x)) + ∑ x, f (Fin.cons true x) := by
-  rw [← (Fin.consEquiv (fun _ : Fin (n + 1) => Bool)).sum_comp f]
-  rw [Fintype.sum_prod_type, Fintype.sum_bool]
-  exact add_comm _ _
-
 /-- The weight of a mask on `Fin (n + 1)` is the weight of its first coordinate times the weight
 of the others. -/
 theorem bernoulliWeight_cons {n : ℕ} (p : ℝ) (b : Bool) (selected : Fin n → Bool) :
@@ -110,7 +107,7 @@ theorem bernoulliAverage_cons {n : ℕ} (p : ℝ) (f : (Fin (n + 1) → Bool) �
       (1 - p) * bernoulliAverage p (fun x => f (Fin.cons false x)) +
         p * bernoulliAverage p (fun x => f (Fin.cons true x)) := by
   unfold bernoulliAverage
-  rw [sum_cons]
+  rw [Fin.sum_univ_cons_bool]
   simp_rw [bernoulliWeight_cons]
   simp only [Bool.false_eq_true, ite_false, ite_true, mul_assoc, ← mul_sum]
 
@@ -262,6 +259,21 @@ theorem bernoulliAverage_zero (f : (ι → Bool) → ℝ) :
     exact hs (funext fun i => by simpa using fun hi => h ⟨i, hi⟩)
   rw [bernoulliWeight, prod_eq_zero (mem_univ i) (by simp [hi]), zero_mul]
 
+omit [DecidableEq ι] in
+/-- At rate `1 / 2`, every mask has weight `(1 / 2) ^ |ι|`. -/
+theorem bernoulliWeight_one_half (selected : ι → Bool) :
+    bernoulliWeight (1 / 2) selected = (1 / 2) ^ Fintype.card ι := by
+  simp only [bernoulliWeight, show (1 : ℝ) - 1 / 2 = 1 / 2 by ring, ite_self, prod_const,
+    card_univ]
+
+/-- At rate `1 / 2`, the Bernoulli expectation is the uniform expectation on the cube. -/
+theorem bernoulliAverage_one_half (f : (ι → Bool) → ℝ) :
+    bernoulliAverage (1 / 2) f = 𝔼 selected, f selected := by
+  simp only [bernoulliAverage, bernoulliWeight_one_half, ← mul_sum,
+    Fintype.expect_eq_sum_div_card, Fintype.card_fun, Fintype.card_bool, Nat.cast_pow,
+    Nat.cast_ofNat]
+  rw [one_div, inv_pow, div_eq_inv_mul]
+
 /-- A coordinate is selected with probability `p`. -/
 theorem bernoulliAverage_coordinate (p : ℝ) (i : ι) :
     bernoulliAverage p (fun s : ι → Bool => if s i then (1 : ℝ) else 0) = p := by
@@ -392,7 +404,7 @@ theorem bernoulliAverage_union (p q : ℝ) (f : (ι → Bool) → ℝ) :
     mul_zero, add_zero, zero_add] <;> ring
 
 /-- Increasing the sampling rate decreases the expectation of an antitone function. -/
-theorem bernoulliAverage_bias_antitone {f : (ι → Bool) → ℝ} (hf : Antitone f)
+theorem _root_.Antitone.bernoulliAverage_antitoneOn {f : (ι → Bool) → ℝ} (hf : Antitone f)
     {p q : ℝ} (hp : 0 ≤ p) (hpq : p ≤ q) (hq : q ≤ 1) :
     bernoulliAverage q f ≤ bernoulliAverage p f := by
   rcases (hpq.trans hq).eq_or_lt with rfl | hp1
@@ -471,7 +483,7 @@ theorem bernoulliAverage_lowerSet_pow_le {A : Set (ι → Bool)} (hA : IsLowerSe
       rw [hs, pow_succ']
       exact (bernoulliAverage_lowerSet_union hA hp hp' (hu j).1 (hu j).2).trans
         (mul_le_mul_of_nonneg_left ih (bernoulliAverage_indicator_mem_Icc A hp hp').1)
-  exact (bernoulliAverage_bias_antitone hA.antitone_indicator_one
+  exact (hA.antitone_indicator_one.bernoulliAverage_antitoneOn
     (hu h).1 ((hb h).trans hh) hq).trans (hi h)
 
 end

@@ -37,8 +37,8 @@ def and₂ (x : Fin 2 → Bool) : Bool :=
 example : fourierCoeff (chi ℝ ({0, 1} : Finset (Fin 2))) {0, 1} = 1 ∧
     fourierCoeff (chi ℝ ({0, 1} : Finset (Fin 2))) {1} = 0 := by
   refine ⟨?_, ?_⟩
-  · rw [fourierCoeff, expect_chi_mul_chi, ite_eq_left rfl]
-  · rw [fourierCoeff, expect_chi_mul_chi, ite_eq_right (by decide)]
+  · rw [fourierCoeff_chi, ite_eq_left rfl]
+  · rw [fourierCoeff_chi, ite_eq_right (by decide)]
 
 -- The coefficient of the conjunction, read as signs, on both coordinates, from the definition.
 example : fourierCoeff (fun x => signVal (and₂ x)) {0, 1} = -1 / 2 := by
@@ -199,14 +199,14 @@ private theorem uniformMass_halfCube_le (x : Fin 2 → Bool) :
 example (x : Fin 2 → Bool) :
     coordinateDensity (univ.filter fun z : Fin 2 → Bool => z 0 = true) (Pi.single 0 true) x =
       1 / 2 :=
-  coordinateDensity_half_of_flip (fun z => z 0) 0 (by simp) _ x (by simp) true
+  coordinateDensity_filter_eq_one_half_of_update_not (fun z => z 0) 0 (by simp) _ x (by simp) true
 
 -- The light-patterns lemma applies to the uniform distribution on half of the cube, at `k = 1`.
 example : 63 / 64 ≤ bernoulliAverage (1 / 512) (fun s : Fin 2 → Bool =>
     if ((univ.filter fun z => coordinateMass (uniformMass halfCube) s z ≤
         (2 : ℝ) ^ (-(Fintype.card {i // s i = true} : ℝ) - 2 * 1 - 2)).card : ℝ) ≤
       (2 : ℝ) ^ ((Fintype.card {i // s i = true} : ℝ) - 1) then 1 else 0) :=
-  bernoulliAverage_few_light_patterns (uniformMass_nonneg halfCube)
+  le_bernoulliAverage_card_coordinateMass_le (uniformMass_nonneg halfCube)
     (sum_uniformMass halfCube_nonempty) le_rfl
     uniformMass_halfCube_le (by norm_num)
     (by norm_num)

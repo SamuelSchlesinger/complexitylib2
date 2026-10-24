@@ -102,7 +102,7 @@ theorem IsDensityLimit.exists_mem_apply_eq {Y : Finset (ι → Bool)} {p k : ℝ
   linarith
 
 /-- A density limit with deficit `k` is one with every larger deficit. -/
-theorem IsDensityLimit.mono_deficit {Y : Finset (ι → Bool)} {p k k' : ℝ} {x : ι → Bool}
+theorem IsDensityLimit.mono_right {Y : Finset (ι → Bool)} {p k k' : ℝ} {x : ι → Bool}
     (hlim : IsDensityLimit Y p k x) (hp : 0 ≤ p) (hp' : p ≤ 1) (hkk' : k ≤ k') :
     IsDensityLimit Y p k' x := by
   refine hlim.trans (bernoulliAverage_mono hp hp' fun P => ?_)
@@ -157,7 +157,7 @@ private theorem coordinateFiber_light_patterns (X : Finset (ι → Bool)) (hX : 
     by_cases hd : uniformDeficit (coordinateFiber X s x) ≤ 64 * k
     · simp only [hd, true_and, ite_true, mul_one]
       have hne := coordinateFiber_nonempty s hx
-      have ht := bernoulliAverage_few_light_patterns_density
+      have ht := le_bernoulliAverage_expect_coordinateMarginal_le
         (fun z => mul_nonneg (by positivity : (0 : ℝ) ≤ 2 ^ Fintype.card {i // s i = true})
           (uniformMass_nonneg (coordinateFiber X s x) z))
         (expect_uniformDensity hne) (show (1 : ℝ) ≤ 64 * k by linarith)
@@ -170,7 +170,7 @@ private theorem coordinateFiber_light_patterns (X : Finset (ι → Bool)) (hX : 
       exact le_rfl
   have hl := expect_le_expect (s := X) hpoint
   rw [← mul_expect] at hl
-  have hg := coordinateFiber_good_probability X hX s (show 0 < k by linarith) hdef
+  have hg := le_expect_uniformDeficit_coordinateFiber_le X hX s (show 0 < k by linarith) hdef
   nlinarith
 
 private theorem fiber_completion_density (X : Finset (ι → Bool)) (s x : ι → Bool)

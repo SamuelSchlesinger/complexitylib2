@@ -9,7 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Foundations.BooleanAnalysis.Bernoulli
-public import Complexity.Foundations.BooleanAnalysis.HarmonicMean
+public import Complexity.Foundations.BooleanAnalysis.HarmonicTransform
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Algebra.Order.Floor.Ring
 import Mathlib.Tactic.FieldSimp
@@ -22,15 +22,15 @@ Let `mass` be a distribution on the points of the cube `ι → Bool` with min-en
 `k`, that is, `mass x ≤ 2 ^ (k - |ι|)`. Select each coordinate independently with rate
 `r ≤ 1 / (512 k)`. With probability at least `63 / 64`, at most `2 ^ (|R| - k)` patterns on the
 selected coordinates `R` are *light*, of marginal probability at most `2 ^ (-|R| - 2 k - 2)`
-[Korten, Lemma 10][Korten2026] (`bernoulliAverage_few_light_patterns`).
+[Korten, Lemma 10][Korten2026] (`le_bernoulliAverage_card_coordinateMass_le`).
 
 The proof transfers a lower set of masks from rate `1 / 4` to a small rate `r`: its probability at
 rate `r` is at least its probability at rate `1 / 4` to the power `5 r`
 (`bernoulliAverage_lowerSet_transfer`). The masks on which the harmonic mean transform of the
 density of `mass` is large form such a lower set, of probability at least `2 ^ (-k / 2 - 1)` at
-rate `1 / 4` (`harmonicTransform_good_probability`), so they have probability at least `63 / 64` at
-rate `r` (`harmonicTransform_sparse_good_probability`). On these masks the harmonic mean bounds the
-number of light patterns.
+rate `1 / 4` (`le_bernoulliAverage_le_harmonicTransform`), so they have probability at least
+`63 / 64` at rate `r` (`le_bernoulliAverage_le_harmonicTransform_of_rpow`). On these masks the
+harmonic mean bounds the number of light patterns.
 
 ## Main definitions
 
@@ -41,10 +41,10 @@ number of light patterns.
 
 * `Cslib.BitString.bernoulliAverage_lowerSet_transfer`: transference for lower sets at a
   small rate.
-* `Cslib.BitString.harmonicTransform_sparse_good_probability`: the harmonic mean transform at
+* `Cslib.BitString.le_bernoulliAverage_le_harmonicTransform_of_rpow`: the harmonic mean transform at
   a sparse random set.
-* `Cslib.BitString.bernoulliAverage_few_light_patterns`: Korten's light-patterns lemma.
-* `Cslib.BitString.bernoulliAverage_few_light_patterns_density`: the same, for densities.
+* `Cslib.BitString.le_bernoulliAverage_card_coordinateMass_le`: Korten's light-patterns lemma.
+* `Cslib.BitString.le_bernoulliAverage_expect_coordinateMarginal_le`: the same, for densities.
 
 ## References
 
@@ -110,7 +110,7 @@ theorem bernoulliAverage_lowerSet_transfer {A : Set (ι → Bool)}
 [Korten, Lemma 10][Korten2026]: for a density `f` relative to the uniform distribution bounded by
 `2 ^ k`, `k ≥ 1`, the transform at a random set of rate `r ≤ 1 / (512 k)` is at least
 `1 / (4 · 2 ^ k)` with probability at least `63 / 64`. -/
-theorem harmonicTransform_sparse_good_probability
+theorem le_bernoulliAverage_le_harmonicTransform_of_rpow
     {f : (ι → Bool) → ℝ} (hf : ∀ x, 0 ≤ f x) (hmean : (𝔼 x, f x) = 1)
     {k r : ℝ} (hk : 1 ≤ k) (hbound : ∀ x, f x ≤ (2 : ℝ) ^ k)
     (hr : 0 ≤ r) (hr' : r ≤ 1 / (512 * k)) :
@@ -142,7 +142,7 @@ theorem harmonicTransform_sparse_good_probability
       rfl
     · rw [Set.indicator_of_notMem (show s ∉ A from h), ite_eq_right h]
   have hgood : a ≤ bernoulliAverage (1 / 4) (A.indicator 1) :=
-    hind ▸ harmonicTransform_good_probability hf hmean hB hbound
+    hind ▸ le_bernoulliAverage_le_harmonicTransform hf hmean hB hbound
   have htransfer := (Real.rpow_le_rpow ha.le hgood (by positivity : 0 ≤ 5 * r)).trans
     (bernoulliAverage_lowerSet_transfer hA hA' hr hr20)
   have hlog : Real.log a = -(k / 2 + 1) * Real.log 2 := by
@@ -166,7 +166,7 @@ theorem harmonicTransform_sparse_good_probability
 
 /-- Korten's light-patterns lemma for densities: with probability at least `63 / 64`, the fraction
 of patterns of marginal density at most `2 ^ (-2 k - 2)` is at most `2 ^ (-k)`. -/
-theorem bernoulliAverage_few_light_patterns_density
+theorem le_bernoulliAverage_expect_coordinateMarginal_le
     {f : (ι → Bool) → ℝ}
     (hf : ∀ x, 0 ≤ f x) (hmean : (𝔼 x, f x) = 1) {k r : ℝ} (hk : 1 ≤ k)
     (hbound : ∀ x, f x ≤ (2 : ℝ) ^ k) (hr : 0 ≤ r) (hr' : r ≤ 1 / (512 * k)) :
@@ -181,7 +181,7 @@ theorem bernoulliAverage_few_light_patterns_density
     ring
   have hkr : r * (512 * k) ≤ 1 := (le_div_iff₀ (by positivity)).mp hr'
   have hr1 : r ≤ 1 := by nlinarith [mul_nonneg hr (sub_nonneg.mpr hk)]
-  refine (harmonicTransform_sparse_good_probability hf hmean hk hbound hr hr').trans
+  refine (le_bernoulliAverage_le_harmonicTransform_of_rpow hf hmean hk hbound hr hr').trans
     (bernoulliAverage_mono hr hr1 fun s => ?_)
   by_cases hs : 1 / (4 * (2 : ℝ) ^ k) ≤ harmonicTransform f s
   · have hlight := coordinateMarginal_light_fraction_le hf s (by positivity) hs
@@ -250,7 +250,7 @@ private theorem coordinateMarginal_normalize (mass : (ι → Bool) → ℝ) (s :
 /-- **Korten's light-patterns lemma** [Korten, Lemma 10][Korten2026], with its constants and
 pattern count. Nonnegative masses summing to one represent a distribution;
 the pointwise bound is min-entropy deficit at most the real parameter `k`. -/
-theorem bernoulliAverage_few_light_patterns
+theorem le_bernoulliAverage_card_coordinateMass_le
     {mass : (ι → Bool) → ℝ}
     (hm : ∀ x, 0 ≤ mass x) (hmean : (∑ x, mass x) = 1) {k r : ℝ} (hk : 1 ≤ k)
     (hbound : ∀ x, mass x ≤ (2 : ℝ) ^ (k - Fintype.card ι))
@@ -274,7 +274,7 @@ theorem bernoulliAverage_few_light_patterns
     exact (mul_le_mul_of_nonneg_left (hbound x) (by positivity)).trans_eq hproduct
   have hkr : r * (512 * k) ≤ 1 := (le_div_iff₀ (by positivity)).mp hr'
   have hr1 : r ≤ 1 := by nlinarith [mul_nonneg hr (sub_nonneg.mpr hk)]
-  refine (bernoulliAverage_few_light_patterns_density hf hsum hk hfb hr hr').trans
+  refine (le_bernoulliAverage_expect_coordinateMarginal_le hf hsum hk hfb hr hr').trans
     (bernoulliAverage_mono hr hr1 fun s => ?_)
   let m := Fintype.card {i // s i = true}
   have hp : (0 : ℝ) < (2 : ℝ) ^ m := by positivity

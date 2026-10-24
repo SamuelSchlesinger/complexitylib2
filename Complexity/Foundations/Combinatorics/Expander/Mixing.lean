@@ -149,12 +149,12 @@ variable [DecidableEq V]
 /-- The expectation of an indicator function is the density of the set. -/
 private theorem expect_boole_mem (S : Finset V) :
     𝔼 v, (if v ∈ S then (1 : ℝ) else 0) = #S / Fintype.card V := by
-  rw [Fintype.expect_boole, nnratCast_dens, filter_mem_eq_inter, univ_inter]
+  rw [Fintype.expect_boole_mem, nnratCast_dens]
 
 /-- An indicator function is its own square. -/
 private theorem expect_boole_mem_sq (S : Finset V) :
     𝔼 v, (if v ∈ S then (1 : ℝ) else 0) ^ 2 = #S / Fintype.card V := by
-  simp only [ite_pow, one_pow, zero_pow two_ne_zero, expect_boole_mem]
+  rw [Fintype.expect_boole_mem_sq, nnratCast_dens]
 
 /-- The correlation of the indicator function of `S` with the walk operator applied to that of `T`
 is the proportion of the darts from `S` to `T`. -/

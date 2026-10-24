@@ -68,7 +68,7 @@ example {k : ℕ} {f : (ι → Bool) → ℝ} (hf : f ∈ lowDegree ℝ ι k) :
 -- The degree hypothesis is satisfiable: a character of `S` has degree `|S|`.
 theorem fourierCoeff_chi_eq_zero_of_card_lt (S : Finset ι) {T : Finset ι} (hT : #S < #T) :
     fourierCoeff (chi ℝ S) T = 0 := by
-  rw [fourierCoeff, expect_chi_mul_chi]
+  rw [fourierCoeff_chi]
   split_ifs with h
   · subst h
     exact absurd hT (lt_irrefl _)

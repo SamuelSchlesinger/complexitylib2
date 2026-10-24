@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.BooleanAnalysis.Noise
 public import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNorm
+import Complexity.Foundations.Data.Finset.Expect
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Mathlib.Analysis.Calculus.Deriv.Pow
 import Mathlib.Analysis.Convex.SpecificFunctions.Basic
@@ -197,14 +198,6 @@ theorem sq_add_sq_mul_sq_rpow_le {p ρ a b : ℝ} (hp : 1 ≤ p) (hp' : p ≤ 2)
 
 /-! ### A single bit -/
 
-/-- The uniform average over the cube of a single bit. -/
-private theorem expect_unit (h : (Unit → Bool) → ℝ) :
-    𝔼 x, h x = (h (fun _ => false) + h (fun _ => true)) / 2 := by
-  rw [Fintype.expect_equiv (Equiv.funUnique Unit Bool) h (fun b => h fun _ => b)
-    fun x => congrArg h (funext fun _ => rfl)]
-  rw [Fintype.expect_eq_sum_div_card, Fintype.sum_bool, Fintype.card_bool, Nat.cast_ofNat,
-    add_comm]
-
 /-- The noise operator on a single bit keeps it with probability `(1 + ρ) / 2` and flips it with
 probability `(1 - ρ) / 2`. -/
 private theorem noiseOp_unit (ρ : ℝ) (g : (Unit → Bool) → ℝ) (b : Bool) :
@@ -236,8 +229,8 @@ theorem lpNorm_two_noiseOp_le_of_unit {p ρ : ℝ} (hp : 1 ≤ p) (hp' : p ≤ 2
     rw [noiseOp_unit, noiseOp_unit, Bool.not_false, Bool.not_true]
     ring
   have hX0 : 0 ≤ ((A + B) / 2) ^ 2 + ρ ^ 2 * ((A - B) / 2) ^ 2 := by positivity
-  rw [lpNorm_two, expect_unit, hX, lpNorm, expect_unit, Real.sqrt_eq_rpow,
-    show (1 / 2 : ℝ) = p / 2 * p⁻¹ by field_simp, Real.rpow_mul hX0]
+  rw [lpNorm_two, Fintype.expect_unique_bool, hX, lpNorm, Fintype.expect_unique_bool,
+    Real.sqrt_eq_rpow, show (1 / 2 : ℝ) = p / 2 * p⁻¹ by field_simp, Real.rpow_mul hX0]
   exact Real.rpow_le_rpow (Real.rpow_nonneg hX0 _) key (inv_nonneg.2 (by linarith))
 
 end Cslib.BitString

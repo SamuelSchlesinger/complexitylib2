@@ -51,11 +51,13 @@ random tuple leaves its average unchanged (`Fintype.expect_expect_update`).
 * `Finset.prod_filter_mem_eq_prod_filter_notMem`: the sets containing an element are the sets
   avoiding it, with the element inserted.
 * `Real.expect_mul_le_sqrt_mul_sqrt`: the Cauchy–Schwarz inequality for averages.
-* `Fintype.expect_prod_type`, `Fin.expect_univ_cons`: the average over a product or non-empty tuple
-  type is the iterated average.
+* `Fintype.expect_prod_type`, `Fin.expect_univ_cons`, `Fin.sum_univ_cons_bool`,
+  `Fin.expect_univ_cons_bool`: the average or sum over a product or non-empty tuple type is the
+  iterated average or sum.
 * `Fintype.expect_comp_fst`, `Fintype.expect_comp_snd`, `Fintype.expect_comp_fst_snd_fst`: a
   function of some of the coordinates has the same average on the product.
-* `Fintype.expect_unique`, `Fintype.expect_bool`: averages on `Unique` types and `Bool`.
+* `Fintype.expect_unique`, `Fintype.expect_bool`, `Fintype.expect_unique_bool`: averages on
+  `Unique` types and `Bool`.
 * `Fintype.expect_add_left`, `Fintype.expect_expect_update`,
   `Fintype.expect_comp_arrowCongr`, `Fintype.expect_sumElim`,
   `Fintype.expect_restrict_coordinates`: translation, coordinate-resampling, coordinate-renaming,
@@ -63,7 +65,8 @@ random tuple leaves its average unchanged (`Fintype.expect_expect_update`).
 * `Fintype.expect_sub_expect_fiber`, `Fintype.expect_add_sq_of_expect_fiber_eq_zero`,
   `Fintype.exists_eq_add_expect_fiber_eq_zero`: orthogonal fiber decomposition of second moments on
   product types.
-* `Fintype.expect_boole`: the average of an indicator is a density.
+* `Fintype.expect_boole`, `Fintype.expect_boole_sq`, `Fintype.expect_boole_mem`,
+  `Fintype.expect_boole_mem_sq`: the average of an indicator (or its square) is a density.
 * `Fintype.mul_dens_filter_le_expect`: Markov's inequality for a uniform average.
 * `Fintype.sq_expect_le_dens_mul_expect_sq`: the second moment method for a uniform average.
 * `Fintype.expect_add_sq_le`, `Fintype.expect_sq_le_of_expect_mul_le`: second-moment bounds from
@@ -191,6 +194,14 @@ theorem expect_bool [Semifield 𝕜] [CharZero 𝕜] (f : Bool → 𝕜) :
   rw [Fintype.expect_eq_sum_div_card, Fintype.sum_bool, Fintype.card_bool, Nat.cast_ofNat,
     add_comm]
 
+/-- The uniform average over functions from a `Unique` type to `Bool` is the midpoint of the two
+constant functions. -/
+theorem expect_unique_bool [Unique ι] [Semifield 𝕜] [CharZero 𝕜] (f : (ι → Bool) → 𝕜) :
+    𝔼 x, f x = (f (fun _ => false) + f (fun _ => true)) / 2 := by
+  rw [Fintype.expect_equiv (Equiv.funUnique ι Bool) f (fun b => f fun _ => b)
+    fun x => congrArg f (funext fun i => congrArg x (Subsingleton.elim i default)),
+    Fintype.expect_bool]
+
 /-- Subtracting from a function its averages over the fibers `{a} × β` leaves averages zero over
 the fibers. -/
 theorem expect_sub_expect_fiber {α β M : Type*} [Fintype β] [AddCommGroup M] [Module ℚ≥0 M]
@@ -246,6 +257,22 @@ theorem expect_boole [Semifield 𝕜] [CharZero 𝕜] (p : ι → Prop) [Decidab
     𝔼 i, (if p i then 1 else 0 : 𝕜) = (dens {i | p i} : 𝕜) := by
   rw [Fintype.expect_eq_sum_div_card, sum_boole, nnratCast_dens]
 
+/-- An indicator function is its own square, so the average of its square is the density of the
+set where the predicate holds. -/
+theorem expect_boole_sq [Semifield 𝕜] [CharZero 𝕜] (p : ι → Prop) [DecidablePred p] :
+    𝔼 i, (if p i then (1 : 𝕜) else 0) ^ 2 = (dens {i : ι | p i} : 𝕜) := by
+  simp only [ite_pow, one_pow, zero_pow two_ne_zero, expect_boole]
+
+/-- The uniform average of the indicator of membership in `S` is the density of `S`. -/
+theorem expect_boole_mem [DecidableEq ι] [Semifield 𝕜] [CharZero 𝕜] (S : Finset ι) :
+    𝔼 i, (if i ∈ S then (1 : 𝕜) else 0) = (dens S : 𝕜) := by
+  simp only [expect_boole, filter_mem_eq_inter, univ_inter]
+
+/-- The uniform average of the squared indicator of membership in `S` is the density of `S`. -/
+theorem expect_boole_mem_sq [DecidableEq ι] [Semifield 𝕜] [CharZero 𝕜] (S : Finset ι) :
+    𝔼 i, (if i ∈ S then (1 : 𝕜) else 0) ^ 2 = (dens S : 𝕜) := by
+  simp only [expect_boole_sq, filter_mem_eq_inter, univ_inter]
+
 /-- **Markov's inequality** for a uniform average: a nonnegative function is at least `a` on a set
 of density at most its average divided by `a`. -/
 theorem mul_dens_filter_le_expect [Semifield 𝕜] [LinearOrder 𝕜] [IsStrictOrderedRing 𝕜]
@@ -267,9 +294,7 @@ theorem sq_expect_le_dens_mul_expect_sq [Semifield 𝕜] [LinearOrder 𝕜] [IsS
   have h := expect_mul_sq_le_sq_mul_sq univ (fun i ↦ if f i ≠ 0 then (1 : 𝕜) else 0) f
   have h₁ : 𝔼 i, (if f i ≠ 0 then (1 : 𝕜) else 0) * f i = 𝔼 i, f i :=
     expect_congr rfl fun i _ ↦ by split_ifs <;> simp_all
-  have h₂ : 𝔼 i, (if f i ≠ 0 then (1 : 𝕜) else 0) ^ 2 = 𝔼 i, if f i ≠ 0 then 1 else 0 :=
-    expect_congr rfl fun i _ ↦ by split_ifs <;> norm_num
-  rwa [h₁, h₂, expect_boole] at h
+  rwa [h₁, expect_boole_sq] at h
 
 section LinearOrderedField
 
@@ -316,5 +341,21 @@ theorem expect_univ_cons {n : ℕ} {α : Fin (n + 1) → Type*} [∀ i, Fintype 
     𝔼 x, f x = 𝔼 a, 𝔼 y, f (Fin.cons a y) := by
   rw [← Fintype.expect_equiv (Fin.consEquiv α) (fun p ↦ f (Fin.cons p.1 p.2)) f (fun _ ↦ rfl),
     Fintype.expect_prod_type]
+
+/-- Splitting off the first bit of a tuple on `Fin (n + 1)`: the sum over `Fin (n + 1) → Bool`
+is the sum with first bit `false` plus the sum with first bit `true`. -/
+theorem sum_univ_cons_bool {n : ℕ} {M : Type*} [AddCommMonoid M]
+    (f : (Fin (n + 1) → Bool) → M) :
+    ∑ x, f x = (∑ y, f (Fin.cons false y)) + ∑ y, f (Fin.cons true y) := by
+  rw [← (Fin.consEquiv (fun _ : Fin (n + 1) => Bool)).sum_comp f, Fintype.sum_prod_type,
+    Fintype.sum_bool]
+  exact add_comm _ _
+
+/-- Splitting off the first bit of a tuple on `Fin (n + 1)`: the uniform average over
+`Fin (n + 1) → Bool` is the midpoint of the averages with first bit `false` and `true`. -/
+theorem expect_univ_cons_bool {n : ℕ} {𝕜 : Type*} [Semifield 𝕜] [CharZero 𝕜]
+    (f : (Fin (n + 1) → Bool) → 𝕜) :
+    𝔼 x, f x = ((𝔼 y, f (Fin.cons false y)) + 𝔼 y, f (Fin.cons true y)) / 2 := by
+  rw [Fin.expect_univ_cons, Fintype.expect_bool]
 
 end Fin

@@ -47,7 +47,7 @@ private theorem parity_class_nonempty_deficit {n : ℕ} (hn : 0 < n) (b : Bool) 
     (univ.filter fun x : Fin n → Bool => parity n x = b).Nonempty ∧
       uniformDeficit (univ.filter fun x : Fin n → Bool => parity n x = b) ≤ 1 := by
   let X := univ.filter (fun x : Fin n → Bool => parity n x = b)
-  have hbal := expect_half_of_flip (parity n) ⟨0, hn⟩
+  have hbal := expect_ite_eq_one_half_of_update_not (parity n) ⟨0, hn⟩
     (fun x => parity_update_not x _) b
   have hratio : (X.card : ℝ) / (2 : ℝ) ^ n = 1 / 2 := by
     simpa only [Fintype.expect_eq_sum_div_card, sum_boole, Fintype.card_fun,
@@ -73,7 +73,7 @@ private theorem parity_isDensityLimit {n : ℕ} {p : ℝ} (hp : 0 ≤ p) (hp' : 
         (univ.filter fun z : Fin n → Bool => parity n z = b) P x then 1 else 0 := by
     by_cases h : ∃ i, P i = true
     · obtain ⟨i, hi⟩ := h
-      have hd := coordinateDensity_half_of_flip (parity n) i
+      have hd := coordinateDensity_filter_eq_one_half_of_update_not (parity n) i
         (fun x => parity_update_not x i) P x hi b
       simp only [hd]
       norm_num [show ∃ j, P j = true from ⟨i, hi⟩]
