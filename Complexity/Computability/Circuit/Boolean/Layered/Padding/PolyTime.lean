@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Layered.Padding
 public import Complexity.Computability.Circuit.Boolean.Layered.PolyTime
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
@@ -22,9 +23,9 @@ schedules longer than the target.
 
 ## Main results
 
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_identityLayer`: generate a row
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_identityLayer`: generate a row
   of binary-indexed copies from a unary width.
-* `Cslib.Circuits.Boolean.Layered.computableTidilyInPolyTime_padTo`: compute the final width
+* `Cslib.Circuits.Boolean.Layered.computableInPolyTime_padTo`: compute the final width
   and append the actual copy layers in uniform polynomial time.
 -/
 
@@ -32,30 +33,30 @@ schedules longer than the target.
 
 namespace Cslib.Circuits.Boolean.Layered
 
-open Turing.MultiTapeTM ComputableTidilyInPolyTime
+open Turing.MultiTapeTM ComputableInPolyTime
 
 variable {α : Type} {input : α ↪ List Bool}
 
 /-- Enumerate the row in unary and encode each copy node's wire index in binary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_identityLayer {width : α → ℕ}
-    (hwidth : ComputableTidilyInPolyTime width input encUnary) :
-    ComputableTidilyInPolyTime (fun a => identityLayer (width a)) input (encList encNode) := by
+theorem computableInPolyTime_identityLayer {width : α → ℕ}
+    (hwidth : ComputableInPolyTime width input encUnary) :
+    ComputableInPolyTime (fun a => identityLayer (width a)) input (encList encNode) := by
   simpa only [identityLayer, Function.comp_def] using
-    (computableTidilyInPolyTime_nodeCopy.comp unary_to_binary).map.comp (range.comp hwidth)
+    (computableInPolyTime_nodeCopy.comp unary_to_binary).map.comp (range.comp hwidth)
 
 /-- Padding is polynomial in the complete encoded input, including its unary target. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_padTo {inputCount target : α → ℕ}
+theorem computableInPolyTime_padTo {inputCount target : α → ℕ}
     {layers : α → List (List Node)}
-    (hn : ComputableTidilyInPolyTime inputCount input encUnary)
-    (htarget : ComputableTidilyInPolyTime target input encUnary)
-    (hlayers : ComputableTidilyInPolyTime layers input (encList (encList encNode))) :
-    ComputableTidilyInPolyTime (fun a => padTo (inputCount a) (target a) (layers a))
+    (hn : ComputableInPolyTime inputCount input encUnary)
+    (htarget : ComputableInPolyTime target input encUnary)
+    (hlayers : ComputableInPolyTime layers input (encList (encList encNode))) :
+    ComputableInPolyTime (fun a => padTo (inputCount a) (target a) (layers a))
       input (encList (encList encNode)) := by
   have hlength := (length_list (encList encNode)).comp hlayers
-  have hcopies := computableTidilyInPolyTime_identityLayer
-    (computableTidilyInPolyTime_outputWidth hn hlayers)
+  have hcopies := computableInPolyTime_identityLayer
+    (computableInPolyTime_outputWidth hn hlayers)
   exact hlayers.listAppend' (replicate (by fun_prop) hcopies)
 
 end Cslib.Circuits.Boolean.Layered
