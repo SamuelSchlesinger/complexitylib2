@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Circuit.Boolean.EvaluationTime
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Circuit.Pi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -21,7 +22,7 @@ those of `d`. It shifts the gate references of `d` past the gates of `c`, while 
 input references. On codes of circuits, the result is the code of `Circuit.append`.
 `appendCodes` combines any list of blocks by repeated append; each block is relocated by the
 number of preceding gates. `bundleCode` uses a fixed block size and agrees with `appendCodes`
-when its blocks have that size. All three constructors are tidily computable in polynomial time
+when its blocks have that size. All three constructors are computable in polynomial time
 with binary layout parameters.
 
 `compCode n d c` instead feeds `c`'s output wires to `d`'s inputs. Its polynomial-time constructor
@@ -40,15 +41,15 @@ performs binary-indexed lookup and gate relocation, and agrees exactly with `Cir
 * `Cslib.Circuits.Program.code_append`: code of program continuation.
 * `Cslib.Circuits.Boolean.appendCode_code`: agreement with typed circuit append.
 * `Cslib.Circuits.Boolean.length_appendCode`: additive gate count.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_appendCode`: constructor efficiency.
+* `Cslib.Circuits.Boolean.computableInPolyTime_appendCode`: constructor efficiency.
 * `Cslib.Circuits.Boolean.appendCodes_code`: agreement with arbitrary typed output families.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_appendCodes`: varying-size constructor
+* `Cslib.Circuits.Boolean.computableInPolyTime_appendCodes`: varying-size constructor
   efficiency, including arbitrary binary wire indices.
 * `Cslib.Circuits.Boolean.bundleCode_eq_foldl_appendCode`: bundling agrees with repeated append.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_bundleCode`: bundling efficiency.
+* `Cslib.Circuits.Boolean.computableInPolyTime_bundleCode`: bundling efficiency.
 * `Cslib.Circuits.Boolean.exists_circuit_bundleCode`: raw bundles realize typed output families.
 * `Cslib.Circuits.Boolean.compCode_code`: agreement with typed sequential composition.
-* `Cslib.Circuits.Boolean.computableTidilyInPolyTime_compCode`: sequential constructor efficiency.
+* `Cslib.Circuits.Boolean.computableInPolyTime_compCode`: sequential constructor efficiency.
 
 ## References
 
@@ -167,15 +168,15 @@ theorem evalOutput_appendCode_code {n m p : ℕ} (c : Circuit signature n m)
       exact ((c.append d).eval_eq_evalOutput x j).symm
     _ = _ := by rw [Circuit.eval_append, List.ofFn_fin_append]
 
-open Turing.MultiTapeTM ComputableTidilyInPolyTime
+open Turing.MultiTapeTM ComputableInPolyTime
 
 /-- Shifting wire numbers is polynomial-time with all quantities encoded in binary. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_shiftCodeWire {α : Type} {enc : α ↪ List Bool}
-    {n offset i : α → ℕ} (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hoffset : ComputableTidilyInPolyTime offset enc encNat)
-    (hi : ComputableTidilyInPolyTime i enc encNat) :
-    ComputableTidilyInPolyTime (fun a => shiftCodeWire (n a) (offset a) (i a)) enc encNat := by
+theorem computableInPolyTime_shiftCodeWire {α : Type} {enc : α ↪ List Bool}
+    {n offset i : α → ℕ} (hn : ComputableInPolyTime n enc encNat)
+    (hoffset : ComputableInPolyTime offset enc encNat)
+    (hi : ComputableInPolyTime i enc encNat) :
+    ComputableInPolyTime (fun a => shiftCodeWire (n a) (offset a) (i a)) enc encNat := by
   unfold shiftCodeWire
   fun_prop
 
@@ -187,40 +188,40 @@ def shiftCode (n offset : ℕ) (code : List (Op × List ℕ) × List ℕ) :
 
 /-- Relocating a circuit-code block is polynomial-time with binary offsets. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_shiftCode {α : Type} {enc : α ↪ List Bool}
+theorem computableInPolyTime_shiftCode {α : Type} {enc : α ↪ List Bool}
     {n offset : α → ℕ} {code : α → List (Op × List ℕ) × List ℕ}
-    (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hoffset : ComputableTidilyInPolyTime offset enc encNat)
-    (hcode : ComputableTidilyInPolyTime code enc encCode) :
-    ComputableTidilyInPolyTime (fun a => shiftCode (n a) (offset a) (code a)) enc encCode := by
-  have hgate : ComputableTidilyInPolyTime
+    (hn : ComputableInPolyTime n enc encNat)
+    (hoffset : ComputableInPolyTime offset enc encNat)
+    (hcode : ComputableInPolyTime code enc encCode) :
+    ComputableInPolyTime (fun a => shiftCode (n a) (offset a) (code a)) enc encCode := by
+  have hgate : ComputableInPolyTime
       (fun q : α × (Op × List ℕ) =>
         (q.2.1, q.2.2.map (shiftCodeWire (n q.1) (offset q.1))))
       (encPair enc encGate) encGate := by
     refine ((snd enc encGate).fst').prod ?_
     apply mapWithInput (snd enc encGate).snd'
-    exact computableTidilyInPolyTime_shiftCodeWire
+    exact computableInPolyTime_shiftCodeWire
       (hn.comp ((fst _ _).comp (fst _ _)))
       (hoffset.comp ((fst _ _).comp (fst _ _))) (snd _ _)
   have hgates := mapWithInput (encB := encGate)
     (f := fun a g => (g.1, g.2.map (shiftCodeWire (n a) (offset a)))) hcode.fst' hgate
   have houtputs := mapWithInput (encB := encNat)
     (f := fun a i => shiftCodeWire (n a) (offset a) i) hcode.snd'
-    (computableTidilyInPolyTime_shiftCodeWire (hn.comp (fst _ _))
+    (computableInPolyTime_shiftCodeWire (hn.comp (fst _ _))
       (hoffset.comp (fst _ _)) (snd _ _))
   exact hgates.prod houtputs
 
 /-- Combining circuit codes is polynomial-time, including binary input and wire counts. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_appendCode {α : Type} {enc : α ↪ List Bool}
+theorem computableInPolyTime_appendCode {α : Type} {enc : α ↪ List Bool}
     {n : α → ℕ} {c d : α → List (Op × List ℕ) × List ℕ}
-    (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hc : ComputableTidilyInPolyTime c enc encCode)
-    (hd : ComputableTidilyInPolyTime d enc encCode) :
-    ComputableTidilyInPolyTime (fun a => appendCode (n a) (c a) (d a)) enc encCode := by
-  have hlen : ComputableTidilyInPolyTime (fun a => (c a).1.length) enc encNat :=
+    (hn : ComputableInPolyTime n enc encNat)
+    (hc : ComputableInPolyTime c enc encCode)
+    (hd : ComputableInPolyTime d enc encCode) :
+    ComputableInPolyTime (fun a => appendCode (n a) (c a) (d a)) enc encCode := by
+  have hlen : ComputableInPolyTime (fun a => (c a).1.length) enc encNat :=
     unary_to_binary.comp ((length_list encGate).comp hc.fst')
-  have hshift := computableTidilyInPolyTime_shiftCode hn hlen hd
+  have hshift := computableInPolyTime_shiftCode hn hlen hd
   exact (listAppend' hc.fst' hshift.fst').prod (listAppend' hc.snd' hshift.snd')
 
 /-- Combine a list of raw codes on shared inputs, preserving block and output order.
@@ -289,11 +290,11 @@ private theorem appendCodesDirect_eq_appendCodes (n : ℕ)
 /-- Combining arbitrary raw blocks is polynomial-time in their complete encodings.
 Input and wire numbers are binary; no uniform block-size or well-formedness premise is needed. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_appendCodes {α : Type} {enc : α ↪ List Bool}
+theorem computableInPolyTime_appendCodes {α : Type} {enc : α ↪ List Bool}
     {n : α → ℕ} {codes : α → List (List (Op × List ℕ) × List ℕ)}
-    (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hcodes : ComputableTidilyInPolyTime codes enc (encList encCode)) :
-    ComputableTidilyInPolyTime (fun a => appendCodes (n a) (codes a)) enc encCode := by
+    (hn : ComputableInPolyTime n enc encNat)
+    (hcodes : ComputableInPolyTime codes enc (encList encCode)) :
+    ComputableInPolyTime (fun a => appendCodes (n a) (codes a)) enc encCode := by
   let encBlock := encPair encCode encUnary
   have hblocks := (zipIdx encCode).comp hcodes
   have hpar := fst enc encBlock
@@ -303,7 +304,7 @@ theorem computableTidilyInPolyTime_appendCodes {α : Type} {enc : α ↪ List Bo
     (f := fun (_ : α × ((List (Op × List ℕ) × List ℕ) × ℕ)) c => c.1)
     hprefix ((snd _ encCode).fst')
   have hoffset := unary_to_binary.comp ((length_list encGate).comp hprefixGates)
-  have hshift := computableTidilyInPolyTime_shiftCode (hn.comp hpar) hoffset hentry.fst'
+  have hshift := computableInPolyTime_shiftCode (hn.comp hpar) hoffset hentry.fst'
   have hgates := flatMapWithInput (encB := encGate)
     (f := fun a (q : (List (Op × List ℕ) × List ℕ) × ℕ) =>
       (shiftCode (n a) (((codes a).take q.2).flatMap Prod.fst).length q.1).1)
@@ -313,7 +314,7 @@ theorem computableTidilyInPolyTime_appendCodes {α : Type} {enc : α ↪ List Bo
       (shiftCode (n a) (((codes a).take q.2).flatMap Prod.fst).length q.1).2)
     hblocks hshift.snd'
   have h := hgates.prod houtputs
-  change ComputableTidilyInPolyTime (fun a => appendCodesDirect (n a) (codes a)) enc encCode at h
+  change ComputableInPolyTime (fun a => appendCodesDirect (n a) (codes a)) enc encCode at h
   simpa only [appendCodesDirect_eq_appendCodes] using h
 
 /-- Combining single-output circuit codes agrees exactly with `Circuit.pi`, with no restriction
@@ -336,19 +337,19 @@ def bundleCode (n blockSize : ℕ) (codes : List (List (Op × List ℕ) × List 
 
 /-- Bundling raw blocks is polynomial-time in their encodings and binary layout parameters. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_bundleCode {α : Type} {enc : α ↪ List Bool}
+theorem computableInPolyTime_bundleCode {α : Type} {enc : α ↪ List Bool}
     {n blockSize : α → ℕ} {codes : α → List (List (Op × List ℕ) × List ℕ)}
-    (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hblock : ComputableTidilyInPolyTime blockSize enc encNat)
-    (hcodes : ComputableTidilyInPolyTime codes enc (encList encCode)) :
-    ComputableTidilyInPolyTime (fun a => bundleCode (n a) (blockSize a) (codes a)) enc encCode := by
+    (hn : ComputableInPolyTime n enc encNat)
+    (hblock : ComputableInPolyTime blockSize enc encNat)
+    (hcodes : ComputableInPolyTime codes enc (encList encCode)) :
+    ComputableInPolyTime (fun a => bundleCode (n a) (blockSize a) (codes a)) enc encCode := by
   let encBlock := encPair encCode encUnary
   have hblocks := (zipIdx encCode).comp hcodes
   have hpar := fst enc encBlock
   have hentry := snd enc encBlock
   have hindex := unary_to_binary.comp hentry.snd'
   have hoffset := binary_mul.comp (hindex.prod (hblock.comp hpar))
-  have hshift := computableTidilyInPolyTime_shiftCode (hn.comp hpar) hoffset hentry.fst'
+  have hshift := computableInPolyTime_shiftCode (hn.comp hpar) hoffset hentry.fst'
   have hgates := flatMapWithInput (encB := encGate)
     (f := fun a (q : (List (Op × List ℕ) × List ℕ) × ℕ) =>
       (shiftCode (n a) (q.2 * blockSize a) q.1).1)
@@ -477,34 +478,34 @@ theorem compCode_code {n m p : ℕ} (d : Circuit signature m p)
   simp [compCode]
 
 /-- Resolve a composed wire in polynomial time, including binary output lookup and offsets. -/
-@[fun_prop] theorem computableTidilyInPolyTime_compCodeWire {α : Type}
+@[fun_prop] theorem computableInPolyTime_compCodeWire {α : Type}
     {enc : α ↪ List Bool} {n i : α → ℕ}
     {c : α → List (Op × List ℕ) × List ℕ}
-    (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hc : ComputableTidilyInPolyTime c enc encCode)
-    (hi : ComputableTidilyInPolyTime i enc encNat) :
-    ComputableTidilyInPolyTime (fun a => compCodeWire (n a) (c a) (i a)) enc encNat := by
-  have houtputs : ComputableTidilyInPolyTime (fun a => (c a).2.length) enc encNat :=
+    (hn : ComputableInPolyTime n enc encNat)
+    (hc : ComputableInPolyTime c enc encCode)
+    (hi : ComputableInPolyTime i enc encNat) :
+    ComputableInPolyTime (fun a => compCodeWire (n a) (c a) (i a)) enc encNat := by
+  have houtputs : ComputableInPolyTime (fun a => (c a).2.length) enc encNat :=
     unary_to_binary.comp ((length_list encNat).comp hc.snd')
-  have hgates : ComputableTidilyInPolyTime (fun a => (c a).1.length) enc encNat :=
+  have hgates : ComputableInPolyTime (fun a => (c a).1.length) enc encNat :=
     unary_to_binary.comp ((length_list encGate).comp hc.fst')
-  have hlookup : ComputableTidilyInPolyTime (fun a => (c a).2.getD (i a) 0) enc encNat :=
+  have hlookup : ComputableInPolyTime (fun a => (c a).2.getD (i a) 0) enc encNat :=
     listGetD_binary 0 hc.snd' hi
   unfold compCodeWire
   fun_prop
 
 /-- Construct sequential circuit codes in polynomial time. All wire indices and input counts
 are binary; list lengths, input lookup, gate relocation and the whole output code are charged. -/
-@[fun_prop] theorem computableTidilyInPolyTime_compCode {α : Type} {enc : α ↪ List Bool}
+@[fun_prop] theorem computableInPolyTime_compCode {α : Type} {enc : α ↪ List Bool}
     {n : α → ℕ} {d c : α → List (Op × List ℕ) × List ℕ}
-    (hn : ComputableTidilyInPolyTime n enc encNat)
-    (hd : ComputableTidilyInPolyTime d enc encCode)
-    (hc : ComputableTidilyInPolyTime c enc encCode) :
-    ComputableTidilyInPolyTime (fun a => compCode (n a) (d a) (c a)) enc encCode := by
-  have hwire : ComputableTidilyInPolyTime
+    (hn : ComputableInPolyTime n enc encNat)
+    (hd : ComputableInPolyTime d enc encCode)
+    (hc : ComputableInPolyTime c enc encCode) :
+    ComputableInPolyTime (fun a => compCode (n a) (d a) (c a)) enc encCode := by
+  have hwire : ComputableInPolyTime
       (fun p : α × ℕ => compCodeWire (n p.1) (c p.1) p.2)
       (encPair enc encNat) encNat := by fun_prop
-  have hgate : ComputableTidilyInPolyTime
+  have hgate : ComputableInPolyTime
       (fun p : α × (Op × List ℕ) => (p.2.1, p.2.2.map (compCodeWire (n p.1) (c p.1))))
       (encPair enc encGate) encGate := by
     exact ((snd enc encGate).fst').prod
