@@ -76,7 +76,7 @@ theorem IsPPTOn.memoize {α Key Value : Type} [BEq Key] [LawfulBEq Key] {input :
       (encPair valueEncoding (encList (encPair keyEncoding valueEncoding))) := by
     unfold finish
     fun_prop
-  refine (hcompute.map_with (f := finish) hpost).congr ?_
+  refine (hcompute.map_with (f := finish) (.of_tidy hpost)).congr ?_
   intro a
   rw [Cslib.memoize, lookup_eq_map_find]
   cases h : (cache a).find? (fun entry => query a == entry.1) <;>

@@ -343,6 +343,7 @@ import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
 import ComplexityTests.PlainAutomationSupport
 import ComplexityTests.PlainLawfulBEq
+import ComplexityTests.PlainCapturedMap
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeBinaryWord
 import ComplexityTests.PolyTimeContracts
