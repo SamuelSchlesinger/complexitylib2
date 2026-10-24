@@ -46,9 +46,9 @@ namespace Cslib.Tactic.PolyTime
 
 open Turing.MultiTapeTM
 
--- Plain polynomial time is tidy polynomial time, so plain goals and hypotheses enter the tidy
--- search without loss.
-attribute [aesop safe apply (rule_sets := [PolyTime])] ComputableInPolyTime.of_tidy
+-- Prefer plain certificates before the transitional raw-construction fallback. A safe bridge
+-- would consume a plain goal before its named-certificate alternatives can be considered.
+attribute [aesop unsafe 5% apply (rule_sets := [PolyTime])] ComputableInPolyTime.of_tidy
 attribute [aesop safe forward (rule_sets := [PolyTime])] ComputableInPolyTime.tidy
 
 -- A fixed finite input type admits a lookup machine for any fixed encodings. This does not
@@ -104,12 +104,20 @@ attribute [aesop unsafe 75% apply (rule_sets := [PolyTime])]
   ComputableTidilyInPolyTime.pi_apply'
   ComputableInPolyTime.pi_apply'
 
+open Lean Meta in
+/-- Select the certificate family before searching, keeping plain goals in the plain calculus. -/
+private meta def polytimePredicate (target : Expr) : MetaM Name := do
+  let target := (← instantiateMVars target).consumeMData
+  if target.isAppOf ``ComputableInPolyTime then return ``ComputableInPolyTime
+  if target.isAppOf ``ComputableTidilyInPolyTime then return ``ComputableTidilyInPolyTime
+  throwError "expected a polynomial-time goal"
+
 /-- Expose local routine certificates and their argument obligations as search alternatives. -/
 -- Equal priority lets argument goals run before expensive alternatives at the parent goal.
 @[aesop unsafe 100% tactic (rule_sets := [PolyTime])]
-private meta def polytimeKnownCall : Aesop.RuleTac :=
-  Cslib.Tactic.applyKnownCall ``ComputableTidilyInPolyTime 2
-    ``ComputableTidilyInPolyTime.comp `g `hf
+private meta def polytimeKnownCall : Aesop.RuleTac := fun input => do
+  let predicate ← input.goal.withContext do polytimePredicate (← input.goal.getType)
+  Cslib.Tactic.applyKnownCall predicate 2 (predicate ++ `comp) `g `hf input
 
 open Lean Meta Elab Tactic in
 /-- Test whether any local routine certificate applies to the current goal. -/
@@ -125,8 +133,7 @@ restores the caller's state and leaves argument preparation open, so this tests 
 without choosing an intermediate encoding. -/
 private meta def withoutLocalCall (tactic : TacticM Unit) : TacticM Unit := withMainContext do
   let goal ← getMainGoal
-  unless (← goal.getType).consumeMData.isAppOf ``ComputableTidilyInPolyTime do
-    throwError "expected a polynomial-time goal"
+  discard <| polytimePredicate (← goal.getType)
   if ← hasLocalCall goal then throwError "a local certificate is an alternative to decomposition"
   tactic
 
@@ -134,15 +141,15 @@ open Lean Meta Elab Tactic in
 /-- Retain decomposition as an alternative when a local certificate competes with it. -/
 private meta def withLocalCall (tactic : TacticM Unit) : TacticM Unit := withMainContext do
   let goal ← getMainGoal
-  unless (← goal.getType).consumeMData.isAppOf ``ComputableTidilyInPolyTime do
-    throwError "expected a polynomial-time goal"
+  discard <| polytimePredicate (← goal.getType)
   unless ← hasLocalCall goal do throwError "no competing local certificate"
   tactic
 
 /-- Expose named deterministic certificates as search alternatives. -/
 @[aesop unsafe 99% tactic (rule_sets := [PolyTime])]
-private meta def polytimeCertificate : Aesop.RuleTac :=
-  Cslib.Tactic.applyCertificates ``ComputableTidilyInPolyTime
+private meta def polytimeCertificate : Aesop.RuleTac := fun input => do
+  let predicate ← input.goal.withContext do polytimePredicate (← input.goal.getType)
+  Cslib.Tactic.applyCertificates predicate input
 
 open Lean Meta Elab Tactic in
 /-- Decompose constructors before generic composition can guess intermediate encodings. -/
@@ -168,8 +175,7 @@ open Lean Meta Elab Tactic in
 /-- Let compositional certificates finish a goal before trying loop specifications. -/
 private meta def polytimeFunProp : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
-    unless (← getMainTarget).consumeMData.isAppOf ``ComputableTidilyInPolyTime do
-      throwError "expected a polynomial-time goal"
+    discard <| polytimePredicate (← getMainTarget)
     -- A failed compositional attempt must leave time for the specification rules.
     evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 256 })))
 
