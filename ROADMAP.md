@@ -1112,7 +1112,7 @@ Jukna coverage below is an additional target beyond the V1 port:
 * **Further PCP consequences.** Constant-factor NP-hardness of approximating Independent Set,
   Clique and Vertex Cover is [proved](Complexity/Computability/PCP/Approximation/IndependentSet.lean)
   via Karp's occurrence graph. Build the FGLSS clique-hardness reduction and amplification on the existing
-  [gap-preserving reductions](Complexity/Computability/PCP/Approximation.lean) and certified PCP
+  [gap-preserving reductions](Complexity/Computability/Complexity/Classes/Promise/Reduction.lean) and certified PCP
   construction; retain the exact gap and reduction runtime.
 * **Randomized communication and information.** The `Ω(n)` bounded-error randomized disjointness
   lower bound is [proved](Complexity/Computability/Communication/Disjointness.lean); Raz–Wigderson's
