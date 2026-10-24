@@ -13,7 +13,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
+import Mathlib.Data.Nat.Bitwise
 import Complexity.Tactic.PolyTime.Init
 
 /-!
@@ -50,8 +52,9 @@ word RAM; this is the regime of the invariance thesis of Slot and van Emde Boas.
 * `Cslib.WordRAM.Program.ComputesInTime.computableInPolyTime`: RAM ⇒ TM for a fixed program.
 * `Cslib.WordRAM.UniformComputableInPolyTime.turingComputableInPolyTime`: the same for the library's
   uniform polynomial-time predicate.
-* `Cslib.WordRAM.Basis.polyTimeOps_additive`, `Cslib.WordRAM.Basis.polyTimeOps_arithmetic`:
-  primitive obligations for the additive and arithmetic bases.
+* `Cslib.WordRAM.Basis.polyTimeOps_standard`, `Cslib.WordRAM.Basis.polyTimeOps_additive`,
+  `Cslib.WordRAM.Basis.polyTimeOps_arithmetic`: primitive obligations for the standard basis
+  (including bitwise operations and checked shifts) and its sub-bases.
 
 ## References
 
@@ -109,6 +112,154 @@ private theorem checkedStandardBin_polyTime (f : BinOp)
   rw [heq]
   exact h
 
+/-! ### Bitwise operations and checked shifts -/
+
+private theorem testBit_ofBits (l : List Bool) (i : ℕ) : (ofBits l).testBit i = l.getD i false := by
+  induction l generalizing i with
+  | nil => simp [ofBits]
+  | cons b l ih =>
+    change (Nat.bit b (ofBits l)).testBit i = _
+    cases i with
+    | zero => simp
+    | succ i => simp [Nat.testBit_bit_succ, ih]
+
+/-- A bitwise operation is the number whose binary digits are the combined digits. -/
+private theorem bitwise_eq_ofBits {op : ℕ → ℕ → ℕ} {g : Bool → Bool → Bool}
+    (hg : g false false = false)
+    (hop : ∀ x y i, (op x y).testBit i = g (x.testBit i) (y.testBit i)) (x y : ℕ) :
+    op x y =
+      ofBits ((List.range (x.size + y.size)).map fun i => g (x.testBit i) (y.testBit i)) := by
+  apply Nat.eq_of_testBit_eq
+  intro i
+  rw [hop, testBit_ofBits]
+  by_cases hi : i < x.size + y.size
+  · simp [List.getD_eq_getElem?_getD, hi]
+  · have hx : x.testBit i = false := Nat.testBit_eq_false_of_lt
+      (lt_of_lt_of_le (Nat.lt_size_self x) (Nat.pow_le_pow_right (by norm_num) (by omega)))
+    have hy : y.testBit i = false := Nat.testBit_eq_false_of_lt
+      (lt_of_lt_of_le (Nat.lt_size_self y) (Nat.pow_le_pow_right (by norm_num) (by omega)))
+    simp [hx, hy, hg, List.getD_eq_getElem?_getD, hi]
+
+private theorem binary_size : ComputableTidilyInPolyTime Nat.size encNat encUnary := by
+  have h := encoding_length encNat
+  simp only [encNat_apply, Nat.size_eq_bits_len] at h
+  convert h using 1
+
+private theorem binary_bitwise {op : ℕ → ℕ → ℕ} {g : Bool → Bool → Bool}
+    (hg : g false false = false)
+    (hop : ∀ x y i, (op x y).testBit i = g (x.testBit i) (y.testBit i)) :
+    ComputableTidilyInPolyTime (fun p : ℕ × ℕ => op p.1 p.2) (encPair encNat encNat) encNat := by
+  have hn : ComputableTidilyInPolyTime (fun p : ℕ × ℕ => p.1.size + p.2.size)
+      (encPair encNat encNat) encUnary :=
+    unary_add.comp ((binary_size.comp (fst encNat encNat)).prod
+      (binary_size.comp (snd encNat encNat)))
+  have hg' : ComputableTidilyInPolyTime (fun q : Bool × Bool => g q.1 q.2)
+      (encPair encBool encBool) encBool := of_finite _
+  have hfun : ComputableTidilyInPolyTime
+      (fun q : (ℕ × ℕ) × ℕ => g (q.1.1.testBit q.2) (q.1.2.testBit q.2))
+      (encPair (encPair encNat encNat) encUnary) encBool :=
+    hg'.comp ((binary_testBit ((fst encNat encNat).comp (fst _ encUnary)) (snd _ encUnary)).prod
+      (binary_testBit ((snd encNat encNat).comp (fst _ encUnary)) (snd _ encUnary)))
+  have hl := mapWithInput (f := fun (p : ℕ × ℕ) (i : ℕ) => g (p.1.testBit i) (p.2.testBit i))
+    (range.comp hn) hfun
+  have h := bitsToNat.comp (listToBits.comp hl)
+  convert h using 1
+  funext p
+  exact bitwise_eq_ofBits hg hop p.1 p.2
+
+private theorem countP_range_lt (y w : ℕ) :
+    (List.range w).countP (fun i => decide (i < y)) = min y w := by
+  induction w with
+  | zero => simp
+  | succ w ih =>
+    rw [List.range_succ, List.countP_append, ih]
+    by_cases h : w < y
+    · simp [h]; omega
+    · simp [h]; omega
+
+/-- `min y w` in unary, from a binary `y` and a unary `w`. -/
+private theorem binary_min_unary {α : Type} {input : α ↪ List Bool} {y w : α → ℕ}
+    (hy : ComputableTidilyInPolyTime y input encNat)
+    (hw : ComputableTidilyInPolyTime w input encUnary) :
+    ComputableTidilyInPolyTime (fun a => min (y a) (w a)) input encUnary := by
+  have h := countPWithInput (test := fun a i => decide (i < y a)) (range.comp hw)
+    (binary_lt.comp ((unary_to_binary.comp (snd input encUnary)).prod
+      (hy.comp (fst input encUnary))))
+  simpa only [Function.comp_apply, countP_range_lt] using h
+
+private theorem checkedShiftLeft_eq (w x y : ℕ) :
+    (if x <<< y < 2 ^ w then some (x <<< y) else none) =
+      if x = 0 then some 0 else if y < w then
+        (if x * 2 ^ min y w < 2 ^ w then some (x * 2 ^ min y w) else none) else none := by
+  rw [Nat.shiftLeft_eq]
+  by_cases hx : x = 0
+  · simp [hx]
+  · by_cases hy : y < w
+    · simp [hx, hy, Nat.min_eq_left hy.le]
+    · have : 2 ^ w ≤ x * 2 ^ y := le_trans (Nat.pow_le_pow_right (by norm_num) (by omega))
+        (Nat.le_mul_of_pos_left _ (Nat.pos_of_ne_zero hx))
+      simp [hx, hy, not_lt.mpr this]
+
+private theorem checkedShiftLeft_polyTime :
+    ComputableTidilyInPolyTime
+      (fun p : ℕ × (ℕ × ℕ) => if p.2.1 <<< p.2.2 < 2 ^ p.1 then some (p.2.1 <<< p.2.2) else none)
+      (encPair encUnary (encPair encNat encNat)) (encOption encNat) := by
+  simp only [checkedShiftLeft_eq]
+  have hw := fst encUnary (encPair encNat encNat)
+  have hx := (fst encNat encNat).comp (snd encUnary (encPair encNat encNat))
+  have hy := (snd encNat encNat).comp (snd encUnary (encPair encNat encNat))
+  have hv := binary_mul.comp (hx.prod (binary_two_pow.comp (binary_min_unary hy hw)))
+  exact ((decide_eq encNat).comp (hx.prod (const 0))).ite_decide (const (some 0))
+    ((binary_lt.comp (hy.prod (unary_to_binary.comp hw))).ite_decide
+      ((binary_lt.comp (hv.prod (binary_two_pow.comp hw))).ite_decide
+        ((optionSome encNat).comp hv) (const none)) (const none))
+
+private theorem checkedShiftRight_eq (w x y : ℕ) :
+    (if x >>> y < 2 ^ w then some (x >>> y) else none) =
+      (if (if y < x.size then x / 2 ^ min y x.size else 0) < 2 ^ w then
+        some (if y < x.size then x / 2 ^ min y x.size else 0) else none) := by
+  rw [Nat.shiftRight_eq_div_pow]
+  by_cases hy : y < x.size
+  · simp [hy, Nat.min_eq_left hy.le]
+  · have : x / 2 ^ y = 0 := Nat.div_eq_of_lt
+      (lt_of_lt_of_le (Nat.lt_size_self x) (Nat.pow_le_pow_right (by norm_num) (by omega)))
+    simp [hy, this]
+
+private theorem checkedShiftRight_polyTime :
+    ComputableTidilyInPolyTime
+      (fun p : ℕ × (ℕ × ℕ) => if p.2.1 >>> p.2.2 < 2 ^ p.1 then some (p.2.1 >>> p.2.2) else none)
+      (encPair encUnary (encPair encNat encNat)) (encOption encNat) := by
+  simp only [checkedShiftRight_eq]
+  have hw := fst encUnary (encPair encNat encNat)
+  have hx := (fst encNat encNat).comp (snd encUnary (encPair encNat encNat))
+  have hy := (snd encNat encNat).comp (snd encUnary (encPair encNat encNat))
+  have hs := binary_size.comp hx
+  have hv : ComputableTidilyInPolyTime
+      (fun p : ℕ × (ℕ × ℕ) => if p.2.2 < p.2.1.size then p.2.1 / 2 ^ min p.2.2 p.2.1.size else 0)
+      (encPair encUnary (encPair encNat encNat)) encNat :=
+    (binary_lt.comp (hy.prod (unary_to_binary.comp hs))).ite_decide
+      (binary_div.comp (hx.prod (binary_two_pow.comp (binary_min_unary hy hs)))) (const 0)
+  exact (binary_lt.comp (hv.prod (binary_two_pow.comp hw))).ite_decide
+    ((optionSome encNat).comp hv) (const none)
+
+/-- A checked standard binary operation from a certificate on a pair of operands. -/
+private theorem checkedStandard_of_pair (f : BinOp)
+    (h : ComputableTidilyInPolyTime
+      (fun q : ℕ × (ℕ × ℕ) =>
+        if f.eval q.2.1 q.2.2 < 2 ^ q.1 then some (f.eval q.2.1 q.2.2) else none)
+      (encPair encUnary (encPair encNat encNat)) (encOption encNat)) :
+    ComputableTidilyInPolyTime (Basis.standard.genericModel.checkedOp (.bin f))
+      (encPair encUnary (encPi encNat)) (encOption encNat) := by
+  have hx := (pi_apply encNat (0 : Fin 2)).comp (snd encUnary (encPi encNat))
+  have hy := (pi_apply encNat (1 : Fin 2)).comp (snd encUnary (encPi encNat))
+  have heq : Basis.standard.genericModel.checkedOp (.bin f) = fun p : ℕ × (Fin 2 → ℕ) =>
+      if f.eval (p.2 0) (p.2 1) < 2 ^ p.1 then some (f.eval (p.2 0) (p.2 1)) else none := by
+    funext p
+    simp only [GenericRAM.Model.checkedOp, Basis.genericModel, StandardOp.eval, bind,
+      Option.bind_some, decide_eq_true_eq, fits_iff]
+  rw [heq]
+  exact h.comp ((fst encUnary (encPi encNat)).prod (hx.prod hy))
+
 /-- Reading the word size: a unary width converted to binary always fits. -/
 private theorem checkedWidth_polyTime :
     ComputableTidilyInPolyTime (Basis.standard.genericModel.checkedOp .width)
@@ -155,15 +306,26 @@ theorem Basis.polyTimeOps_arithmetic : Basis.arithmetic.PolyTimeOps :=
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hf ⊢
     tauto)
 
-/-- **Spike gap.** The standard basis also needs bitwise `and`, `or`, `xor` on binary naturals
-(absent from the machine library; each a bitwise zip of the two binary words, roughly 100 lines)
-and checked shifts. A checked shift must compare the shift amount with the unary width before
-materializing `2 ^ y`, since `y` may be exponential in the input length (roughly 150 lines). -/
+/-- The standard basis meets the primitive obligation. Bitwise operations zip the binary
+digits; a checked shift compares the shift amount with the width (or the operand's size) before
+forming a power of two, since the amount may be exponential in the input length. -/
 theorem Basis.polyTimeOps_standard : Basis.standard.PolyTimeOps := by
   intro f
-  by_cases hf : f ∈ [.bin .add, .bin .sub, .bin .mul, .bin .div, .bin .mod, .width]
-  · exact Basis.standard_checkedOp_polyTime f hf
-  · sorry
+  refine .of_tidy ?_
+  cases f with
+  | width => exact checkedWidth_polyTime
+  | bin f =>
+    cases f
+    · exact checkedStandardBin_polyTime .add binary_add
+    · exact checkedStandardBin_polyTime .sub binary_sub
+    · exact checkedStandardBin_polyTime .mul binary_mul
+    · exact checkedStandardBin_polyTime .div binary_div
+    · exact checkedStandardBin_polyTime .mod binary_mod
+    · exact checkedStandardBin_polyTime .and (binary_bitwise (g := and) rfl Nat.testBit_and)
+    · exact checkedStandardBin_polyTime .or (binary_bitwise (g := or) rfl Nat.testBit_or)
+    · exact checkedStandardBin_polyTime .xor (binary_bitwise (g := bne) rfl Nat.testBit_xor)
+    · exact checkedStandard_of_pair .shiftLeft checkedShiftLeft_polyTime
+    · exact checkedStandard_of_pair .shiftRight checkedShiftRight_polyTime
 
 /-! ### Internal: the native primitive bundle -/
 
