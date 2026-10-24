@@ -112,7 +112,10 @@ theorem exists_secure_amplified_choice {pair : SamplablePair} {gap : ℕ → ℝ
             (fun word => ProbComp.eval (test n (choose n) word)))) := by
   obtain ⟨choose, hchoose, hsecure⟩ :=
     exists_secure_padded_choice hpair saved bounds hgap
-  obtain ⟨hobservation, hdensity, hcommon, _, _⟩ := bounds
+  obtain ⟨hobservationPlain, hdensityPlain, hcommonPlain, _, _⟩ := bounds
+  have hobservation := hobservationPlain.tidy
+  have hdensity := hdensityPlain.tidy
+  have hcommon := hcommonPlain.tidy
   have hlength := saved.length_isPolyTime.tidy
   have hcount : ComputableTidilyInPolyTime (fun n =>
       size (saved.length n) (densityBound n) * common n + 1 - common n) encUnary encUnary := by
