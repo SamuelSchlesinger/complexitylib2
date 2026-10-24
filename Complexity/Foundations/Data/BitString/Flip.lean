@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Copyright (c) 2026 OpenAI, Samuel Schlesinger. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Samuel Schlesinger
+Authors: OpenAI, Samuel Schlesinger
 -/
 
 module
@@ -33,6 +33,8 @@ each isolated true input, and parity has only isolated inputs.
 ## Main results
 
 * `Cslib.BitString.flipOn_apply`: coordinatewise evaluation of `flipOn`.
+* `Cslib.BitString.flipOn_congr_decidableEq`: `flipOn` is independent of the `DecidableEq`
+  instance.
 * `Cslib.BitString.flipOn_singleton`, `Cslib.BitString.flipOn_singleton_self`,
   `Cslib.BitString.flipOn_singleton_of_ne`: flipping one bit.
 * `Cslib.BitString.flipOn_flipOn`, `Cslib.BitString.flipOn_involutive`: flipping is an involution.
@@ -46,6 +48,10 @@ each isolated true input, and parity has only isolated inputs.
 ## References
 
 * [N. Nisan, *CREW PRAMs and decision trees*][Nisan1991]
+* Adapted in part from OpenAI's formalization [OpenAI2026Sensitivity] at revision
+  adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
+  lean/OAI/Combinatorics/Sensitivity/Basic.lean), via the complexitylib port
+  [Schlesinger2026Sensitivity] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
 -/
 
 @[expose] public section
@@ -64,6 +70,13 @@ def flipOn (T : Finset ι) (x : ι → Bool) : ι → Bool :=
 theorem flipOn_apply (T : Finset ι) (x : ι → Bool) (i : ι) :
     flipOn T x i = if i ∈ T then !x i else x i :=
   rfl
+
+omit [DecidableEq ι] in
+/-- `flipOn` is independent of the `DecidableEq` instance. -/
+theorem flipOn_congr_decidableEq {inst₁ inst₂ : DecidableEq ι} (T : Finset ι) (x : ι → Bool) :
+    @flipOn ι inst₁ T x = @flipOn ι inst₂ T x := by
+  congr
+  exact Subsingleton.elim inst₁ inst₂
 
 /-- `flipOn T x` is `x` with its bits at the positions in `T` replaced by their negations. -/
 theorem flipOn_eq_piecewise (T : Finset ι) (x : ι → Bool) :

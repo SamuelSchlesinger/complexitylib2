@@ -108,9 +108,9 @@ open scoped Classical in
 /-- After flipping `rowLift i B` in the all-false input, every child of row `i` is the all-false
 child input with `B` flipped. -/
 private theorem recursiveChild_rowLift_same {k r : ℕ} {I : Type}
-    {inst : DecidableEq ((Fin k × Fin r) × I)}
+    [DecidableEq ((Fin k × Fin r) × I)]
     (i : Fin k) (B : Finset I) (c : Fin r) :
-    recursiveChild (@BitString.flipOn _ inst (rowLift (r := r) i B) (fun _ => false)) i c =
+    recursiveChild (BitString.flipOn (rowLift (r := r) i B) (fun _ => false)) i c =
       BitString.flipOn B (fun _ => false) := by
   funext a
   simp [recursiveChild, BitString.flipOn_apply]
@@ -118,9 +118,9 @@ private theorem recursiveChild_rowLift_same {k r : ℕ} {I : Type}
 /-- After flipping `rowLift i B` in the all-false input, every child outside row `i` is still
 all-false. -/
 private theorem recursiveChild_rowLift_other {k r : ℕ} {I : Type}
-    {inst : DecidableEq ((Fin k × Fin r) × I)}
+    [DecidableEq ((Fin k × Fin r) × I)]
     (i j : Fin k) (B : Finset I) (c : Fin r) (hji : j ≠ i) :
-    recursiveChild (@BitString.flipOn _ inst (rowLift (r := r) i B) (fun _ => false)) j c =
+    recursiveChild (BitString.flipOn (rowLift (r := r) i B) (fun _ => false)) j c =
       fun _ => false := by
   funext a
   simp [recursiveChild, BitString.flipOn_apply, hji]
@@ -128,13 +128,13 @@ private theorem recursiveChild_rowLift_other {k r : ℕ} {I : Type}
 open scoped Classical in
 /-- If every member of `F` rejects the all-false input and accepts the all-false input with `B`
 flipped, then every next-level predicate accepts the all-false input with `rowLift i B` flipped. -/
-theorem recursiveFamily_rowLift {k r h : ℕ} {I : Type} {inst : DecidableEq ((Fin k × Fin r) × I)}
+theorem recursiveFamily_rowLift {k r h : ℕ} {I : Type} [DecidableEq ((Fin k × Fin r) × I)]
     (T : Tournament k)
     (label : Fin k → Fin k → Fin r) (F : Fin (h + 1) → (I → Bool) → Bool)
     (hzero : ∀ q, F q (fun _ => false) = false) (B : Finset I)
     (hB : ∀ q, F q (BitString.flipOn B (fun _ => false)) = true) (i : Fin k) (q : Fin h) :
     recursiveFamily T label F q
-      (@BitString.flipOn _ inst (rowLift i B) (fun _ => false)) = true := by
+      (BitString.flipOn (rowLift i B) (fun _ => false)) = true := by
   apply (recursiveFamily_eq_true_iff _ _ _ _ _).mpr
   refine ⟨i, (rowClause_eq_true_iff _ _ _ _ _ _).mpr ⟨?_, ?_⟩⟩
   · intro c

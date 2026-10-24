@@ -203,7 +203,7 @@ theorem towerFamily_blocks {k r : ℕ} {I K : Type} (T : Tournament k)
         base ((h + 1) + n) q (BitString.flipOn (blocks b) (fun _ => false)) = true := by
       rw [he]
       exact hblocks
-    exact recursiveFamily_rowLift T label _
+    exact BitString.flipOn_congr_decidableEq _ _ ▸ recursiveFamily_rowLift T label _
       (towerFamily_zero T label base hr n (h + 1) hz)
       (towerBlocks blocks n b.2) (ih (h + 1) hz hb b.2) b.1 q
 

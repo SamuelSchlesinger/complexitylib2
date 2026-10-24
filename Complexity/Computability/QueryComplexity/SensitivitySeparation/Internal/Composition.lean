@@ -100,11 +100,11 @@ open scoped Classical in
 /-- If `g` rejects the all-false input and flipping the block `D` changes its value there, then
 flipping the product block `C ×ˢ D` in the all-false input of `compose f g` gives the value of `f`
 on the all-false input with `C` flipped. -/
-private theorem compose_flip_product_zero {inst : DecidableEq (I × J)}
+private theorem compose_flip_product_zero [DecidableEq (I × J)]
     (f : (I → Bool) → Bool) (g : (J → Bool) → Bool)
     (C : Finset I) (D : Finset J) (hg : g (fun _ => false) = false)
     (hD : g (BitString.flipOn D (fun _ => false)) ≠ g (fun _ => false)) :
-    compose f g (@BitString.flipOn (I × J) inst (C ×ˢ D) (fun _ => false)) =
+    compose f g (BitString.flipOn (C ×ˢ D) (fun _ => false)) =
       f (BitString.flipOn C (fun _ => false)) := by
   have hD' : g (BitString.flipOn D (fun _ => false)) = true := by
     cases he : g (BitString.flipOn D (fun _ => false)) <;> simp_all
@@ -195,7 +195,8 @@ theorem blockSensitivityAt_compose_zero_le (f : (I → Bool) → Bool)
         exact Finset.disjoint_left.mp (hdS _ p.1.property _ q.1.property hs') ha₁ hq₁)
     (by
       intro p
-      rw [compose_flip_product_zero f g _ _ hg (hbT p.2.val p.2.property).2,
+      rw [BitString.flipOn_congr_decidableEq,
+        compose_flip_product_zero f g _ _ hg (hbT p.2.val p.2.property).2,
         compose_zero f g hg]
       exact (hbS p.1.val p.1.property).2)
   simpa only [Fintype.card_prod, Fintype.card_coe, hS, hT] using h

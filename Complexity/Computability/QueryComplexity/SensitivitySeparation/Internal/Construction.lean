@@ -92,16 +92,12 @@ private theorem construction_base_zero (d M : ℕ) :
 
 /-- Every predicate of the base family at index count `1 + d` accepts the all-false input with any
 row block `baseBlock b` flipped. -/
-private theorem construction_base_blocks (d M : ℕ) :
+private theorem construction_base_blocks (d M : ℕ) {inst : DecidableEq (Fin M × Fin (d + 2))} :
     ∀ b q, constructionBase d M (1 + d) q
-      (@BitString.flipOn _ (Classical.typeDecidableEq _) (baseBlock b)
-        (fun _ => false)) = true := by
+      (@BitString.flipOn _ inst (baseBlock b) (fun _ => false)) = true := by
   rw [Nat.add_comm 1 d]
   intro b q
-  have h : @BitString.flipOn _ (Classical.typeDecidableEq _) (baseBlock (L := d + 2) b)
-      (fun _ => false) = BitString.flipOn (baseBlock b) (fun _ => false) := by
-    congr; exact Subsingleton.elim _ _
-  rw [h]
+  rw [BitString.flipOn_congr_decidableEq]
   simpa only [constructionBase, baseExtension_same] using
       initialFamily_baseBlock d M q b
 

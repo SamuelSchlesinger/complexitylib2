@@ -43,15 +43,10 @@ open Finset
 
 variable {n : ℕ}
 
-/-- On `Fin n`, `BitString.flipOn` is CSLib's `BitString.flipBlock`. -/
-@[simp] theorem _root_.Cslib.BitString.flipOn_eq_flipBlock (T : Finset (Fin n)) (x : BitString n) :
-    BitString.flipOn T x = BitString.flipBlock T x :=
-  rfl
-
-/-- On `Fin n`, `BitString.flipOn` with the classical `DecidableEq` instance used by the internal
-measures is CSLib's `BitString.flipBlock`. -/
-private theorem flipOn_classical_eq_flipBlock {inst : DecidableEq (Fin n)} (T : Finset (Fin n))
-    (x : BitString n) :
+/-- On `Fin n`, `BitString.flipOn` (with any `DecidableEq (Fin n)` instance) is CSLib's
+`BitString.flipBlock`. -/
+@[simp] theorem _root_.Cslib.BitString.flipOn_eq_flipBlock {inst : DecidableEq (Fin n)}
+    (T : Finset (Fin n)) (x : BitString n) :
     @BitString.flipOn (Fin n) inst T x = BitString.flipBlock T x := by
   funext i
   simp [BitString.flipOn, BitString.flipBlock]
@@ -63,7 +58,7 @@ private theorem sensitivityAt_eq_bitString_sensitivityAt (f : BooleanFunction n)
   congr 1
   ext i
   simp only [mem_filter, mem_univ, true_and, BitString.IsSensitiveCoord,
-    flipOn_classical_eq_flipBlock, BitString.flipBlock_singleton]
+    BitString.flipOn_eq_flipBlock, BitString.flipBlock_singleton]
 
 /-- On `Fin n`, the internal sensitivity is `BitString.sensitivity`. -/
 theorem sensitivity_eq_bitString_sensitivity (f : BooleanFunction n) :
@@ -82,7 +77,7 @@ theorem blockSensitivityAt_eq_queryComplexity_blockSensitivityAt (f : BooleanFun
   refine le_antisymm (Finset.sup_le fun F _ => ?_) (Finset.sup_le fun F hF => ?_)
   · split_ifs with h
     · refine card_le_blockSensitivityAt ⟨fun B hB => ?_, fun A hA B hB hAB => h.1 A hA B hB hAB⟩
-      simpa only [IsSensitiveBlock, flipOn_classical_eq_flipBlock] using (h.2 B hB).2
+      simpa only [IsSensitiveBlock, BitString.flipOn_eq_flipBlock] using (h.2 B hB).2
     · exact Nat.zero_le _
   · obtain ⟨hsens, hdisj⟩ := mem_sensitiveFamilies.mp hF
     refine Finset.le_sup_of_le (mem_univ F) ?_
@@ -94,7 +89,7 @@ theorem blockSensitivityAt_eq_queryComplexity_blockSensitivityAt (f : BooleanFun
       · rw [Finset.nonempty_iff_ne_empty]
         rintro rfl
         exact hsens _ hB (by rw [BitString.flipBlock_empty])
-      · rw [flipOn_classical_eq_flipBlock]
+      · rw [BitString.flipOn_eq_flipBlock]
         exact hsens B hB
 
 /-- On `Fin n`, the internal block sensitivity is `QueryComplexity.blockSensitivity`. -/
