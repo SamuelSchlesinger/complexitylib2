@@ -94,6 +94,7 @@ import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.Bootstrapping
 import ComplexityTests.Crypto.CarterWegman
 import ComplexityTests.Crypto.Commitment
+import ComplexityTests.Crypto.DiffieHellman
 import ComplexityTests.Crypto.Encryption
 import ComplexityTests.Crypto.EvenMansour
 import ComplexityTests.Crypto.FiatShamir
