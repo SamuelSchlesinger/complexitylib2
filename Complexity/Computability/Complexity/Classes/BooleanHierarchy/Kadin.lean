@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.PH
 public import Complexity.Computability.Complexity.Classes.PH.Collapse
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
 import Complexity.Computability.Complexity.Classes.NP.Witness
+import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -50,13 +51,21 @@ these `k` hard-prefix branches places `A` in `Σ₃ᴾ`.
 
 ## Main results
 
+* `Cslib.Complexity.exists_mem_BH_encBits_and_polyTimeReducible`: every language in `BH enc r`
+  polynomial-time many-one reduces to a language in `BH encBits r`.
+* `Cslib.Complexity.coBH_subset_BH_of_coBH_encBits_subset_BH_encBits` and
+  `Cslib.Complexity.BH_succ_eq_of_BH_encBits_succ_eq`: Boolean-hierarchy collapse on the canonical
+  bit-string encoding `encBits` transfers to every instance encoding `enc`.
 * `Cslib.Complexity.PiP_three_subset_SigmaP_three_of_coBH_subset_BH`:
   `coBH (encPair enc encBits) k ⊆ BH (encPair enc encBits) k → PiP 3 enc ⊆ SigmaP 3 enc`.
 * `Cslib.Complexity.SigmaP_three_eq_PiP_three_of_coBH_subset_BH`:
   `coBH (encPair enc encBits) k ⊆ BH (encPair enc encBits) k → SigmaP 3 enc = PiP 3 enc`.
-* `Cslib.Complexity.PH_eq_SigmaP_three_of_coBH_subset_BH`: Kadin's theorem for `coBH k ⊆ BH k`.
-* `Cslib.Complexity.PH_eq_SigmaP_three_of_BH_succ_eq`: Kadin's theorem for `BH (k + 1) = BH k`.
-* `Cslib.Complexity.PH_eq_SigmaP_three_of_DP_eq_coDP`: Kadin's theorem for `DP = coDP`.
+* `Cslib.Complexity.PH_eq_SigmaP_three_of_coBH_subset_BH`: Kadin's theorem for
+  `coBH encBits k ⊆ BH encBits k`.
+* `Cslib.Complexity.PH_eq_SigmaP_three_of_BH_succ_eq`: Kadin's theorem for
+  `BH encBits (k + 1) = BH encBits k`.
+* `Cslib.Complexity.PH_eq_SigmaP_three_of_DP_eq_coDP`: Kadin's theorem for
+  `DP encBits = coDP encBits`.
 * `Cslib.Complexity.DPComplete.PH_eq_SigmaP_three_of_mem_coDP` and
   `Cslib.Complexity.PH_eq_SigmaP_three_of_SATUNSAT_mem_coDP`: collapse from a single `DP`-complete
   language in `coDP`.
@@ -738,6 +747,58 @@ private theorem exists_kadin_sigmaP_three (hm : m = p₁ + p₂)
 
 end KadinInduction
 
+/-! ### Reduction to the canonical bit-string Boolean hierarchy -/
+
+/-- Every language in `BH enc r` polynomial-time many-one reduces to a language in the canonical
+bit-string Boolean hierarchy `BH encBits r`. -/
+theorem exists_mem_BH_encBits_and_polyTimeReducible {r : ℕ} {A : Set α} (hA : A ∈ BH enc r) :
+    ∃ B ∈ BH encBits r, PolyTimeReducible enc encBits A B := by
+  induction r generalizing A with
+  | zero =>
+    have hA0 : A = ∅ := hA
+    subst hA0
+    exact ⟨∅, rfl, ⟨fun _ => [], .const [], fun _ => Iff.rfl⟩⟩
+  | succ r ih =>
+    obtain ⟨E, hE, D₁, hD₁, rfl⟩ := hA
+    obtain ⟨f₀, hf₀, hiff₀⟩ := CookLevin.SAT_npHard enc E hE
+    obtain ⟨B₁, hB₁, f₁, hf₁, hiff₁⟩ := ih hD₁
+    let B₀ : Set (List Bool) := {w | cnfDecoder.decode w ∈ SAT}
+    have hB₀ : B₀ ∈ NP encBits :=
+      PolyTimeReducible.mem_NP
+        ⟨cnfDecoder.decode, .of_tidy cnfDecoder.computableTidilyInPolyTime, fun _ => Iff.rfl⟩
+        SAT.mem_NP
+    have hunframe : PolyTimeReducible encBits encBits {w | unframe w ∈ B₀} B₀ :=
+      ⟨unframe, .of_tidy ComputableTidilyInPolyTime.unframe, fun _ => Iff.rfl⟩
+    have hdrop : PolyTimeReducible encBits encBits {w | dropFrame w ∈ B₁} B₁ :=
+      ⟨dropFrame, .of_tidy ComputableTidilyInPolyTime.dropFrame, fun _ => Iff.rfl⟩
+    refine ⟨{w | unframe w ∈ B₀} \ {w | dropFrame w ∈ B₁},
+      ⟨_, hunframe.mem_NP hB₀, _, hdrop.mem_BH hB₁, rfl⟩,
+      fun a => encPair encBits encBits (encCNF (f₀ a), f₁ a),
+      .of_tidy ((hf₀.tidy.encoded.prod hf₁.tidy).encoded),
+      fun a => ?_⟩
+    simp [B₀, unframe_frame_append, dropFrame_frame_append, cnfDecoder.decode_enc, hiff₀ a,
+      hiff₁ a]
+
+/-- Collapse of the canonical bit-string Boolean hierarchy `coBH encBits k ⊆ BH encBits k`
+transfers to every instance encoding `enc`. -/
+theorem coBH_subset_BH_of_coBH_encBits_subset_BH_encBits {k : ℕ}
+    (h : coBH encBits k ⊆ BH encBits k) :
+    coBH enc k ⊆ BH enc k := by
+  intro A hA
+  obtain ⟨B, hB, hred⟩ := exists_mem_BH_encBits_and_polyTimeReducible hA
+  have hBc : Bᶜ ∈ BH encBits k := h (compl_mem_coBH_iff.mpr hB)
+  have hred' : PolyTimeReducible enc encBits A Bᶜ := by
+    simpa only [compl_compl] using hred.compl
+  exact hred'.mem_BH hBc
+
+/-- Consecutive-level collapse of the canonical bit-string Boolean hierarchy
+`BH encBits (k + 1) = BH encBits k` transfers to every instance encoding `enc`. -/
+theorem BH_succ_eq_of_BH_encBits_succ_eq {k : ℕ}
+    (h : BH encBits (k + 1) = BH encBits k) :
+    BH enc (k + 1) = BH enc k :=
+  BH_succ_eq_iff_coBH_subset.mpr
+    (coBH_subset_BH_of_coBH_encBits_subset_BH_encBits (BH_succ_eq_iff_coBH_subset.mp h))
+
 /-! ### Kadin's collapse theorems -/
 
 /-- **Kadin's theorem at level `3`** [Kadin][Kadin1988]: if `coBH k ⊆ BH k` holds for the pair
@@ -793,28 +854,31 @@ theorem SigmaP_three_eq_PiP_three_of_coBH_subset_BH {k : ℕ}
   refine Set.Subset.antisymm (fun A hA => ?_) hsub
   simpa using compl_mem_PiP_of_mem_SigmaP (hsub (compl_mem_PiP_of_mem_SigmaP hA))
 
-/-- **Kadin's theorem** [Kadin][Kadin1988]: if `coBH k ⊆ BH k` for all encodings, the polynomial
+/-- **Kadin's theorem** [Kadin][Kadin1988]: if `coBH encBits k ⊆ BH encBits k`, the polynomial
 hierarchy collapses to `Σ₃ᴾ`. -/
 theorem PH_eq_SigmaP_three_of_coBH_subset_BH {k : ℕ}
-    (h : ∀ {β : Type} (enc' : β ↪ List Bool), coBH enc' k ⊆ BH enc' k) :
+    (h : coBH encBits k ⊆ BH encBits k) :
     PH enc = SigmaP 3 enc :=
-  PH_eq_SigmaP_of_PiP_subset_SigmaP (by decide) fun enc' =>
-    PiP_three_subset_SigmaP_three_of_coBH_subset_BH (h (encPair enc' encBits))
+  PH_eq_SigmaP_of_PiP_subset_SigmaP (by decide) fun _ =>
+    PiP_three_subset_SigmaP_three_of_coBH_subset_BH
+      (coBH_subset_BH_of_coBH_encBits_subset_BH_encBits h)
 
-/-- **Kadin's theorem** [Kadin][Kadin1988]: if `coBH k ⊆ BH k` for all encodings, the polynomial
+/-- **Kadin's theorem** [Kadin][Kadin1988]: if `coBH encBits k ⊆ BH encBits k`, the polynomial
 hierarchy collapses to `Σ₃ᴾ ∩ Π₃ᴾ`. -/
 theorem PH_eq_SigmaP_three_inter_PiP_three_of_coBH_subset_BH {k : ℕ}
-    (h : ∀ {β : Type} (enc' : β ↪ List Bool), coBH enc' k ⊆ BH enc' k) :
+    (h : coBH encBits k ⊆ BH encBits k) :
     PH enc = SigmaP 3 enc ∩ PiP 3 enc := by
   rw [PH_eq_SigmaP_three_of_coBH_subset_BH h,
-    ← SigmaP_three_eq_PiP_three_of_coBH_subset_BH (h (encPair enc encBits)), Set.inter_self]
+    ← SigmaP_three_eq_PiP_three_of_coBH_subset_BH
+      (coBH_subset_BH_of_coBH_encBits_subset_BH_encBits h),
+    Set.inter_self]
 
 /-- **Kadin's theorem from `BH (k + 1) = BH k`** [Kadin][Kadin1988]: if two consecutive levels of
-the Boolean hierarchy coincide, then `PH = Σ₃ᴾ`. -/
+the Boolean hierarchy coincide on `encBits`, then `PH = Σ₃ᴾ`. -/
 theorem PH_eq_SigmaP_three_of_BH_succ_eq {k : ℕ}
-    (h : ∀ {β : Type} (enc' : β ↪ List Bool), BH enc' (k + 1) = BH enc' k) :
+    (h : BH encBits (k + 1) = BH encBits k) :
     PH enc = SigmaP 3 enc :=
-  PH_eq_SigmaP_three_of_coBH_subset_BH fun enc' => BH_succ_eq_iff_coBH_subset.mp (h enc')
+  PH_eq_SigmaP_three_of_coBH_subset_BH (BH_succ_eq_iff_coBH_subset.mp h)
 
 /-- **Kadin's theorem for `DP`** [Kadin][Kadin1988]: if `coDP (encPair enc encBits) ⊆
 DP (encPair enc encBits)`, then `PiP 3 enc ⊆ SigmaP 3 enc`. -/
@@ -832,21 +896,20 @@ theorem SigmaP_three_eq_PiP_three_of_coDP_subset_DP
   rw [← coBH_two, ← BH_two] at h
   exact SigmaP_three_eq_PiP_three_of_coBH_subset_BH h
 
-/-- **Kadin's theorem for `coDP ⊆ DP`** [Kadin][Kadin1988]: if `coDP ⊆ DP` for all encodings,
+/-- **Kadin's theorem for `coDP ⊆ DP`** [Kadin][Kadin1988]: if `coDP encBits ⊆ DP encBits`,
 then `PH = Σ₃ᴾ`. -/
 theorem PH_eq_SigmaP_three_of_coDP_subset_DP
-    (h : ∀ {β : Type} (enc' : β ↪ List Bool), coDP enc' ⊆ DP enc') :
-    PH enc = SigmaP 3 enc :=
-  PH_eq_SigmaP_three_of_coBH_subset_BH (k := 2) fun enc' => by
-    rw [coBH_two, BH_two]
-    exact h enc'
+    (h : coDP encBits ⊆ DP encBits) :
+    PH enc = SigmaP 3 enc := by
+  rw [← coBH_two, ← BH_two] at h
+  exact PH_eq_SigmaP_three_of_coBH_subset_BH h
 
-/-- **Kadin's theorem for `DP = coDP`** [Kadin][Kadin1988]: if `DP = coDP` for all encodings,
+/-- **Kadin's theorem for `DP = coDP`** [Kadin][Kadin1988]: if `DP encBits = coDP encBits`,
 then `PH = Σ₃ᴾ`. -/
 theorem PH_eq_SigmaP_three_of_DP_eq_coDP
-    (h : ∀ {β : Type} (enc' : β ↪ List Bool), DP enc' = coDP enc') :
+    (h : DP encBits = coDP encBits) :
     PH enc = SigmaP 3 enc :=
-  PH_eq_SigmaP_three_of_coDP_subset_DP fun enc' => (h enc').symm.subset
+  PH_eq_SigmaP_three_of_coDP_subset_DP h.symm.subset
 
 /-! ### Collapse from a single `DP`-complete problem in `coDP` -/
 
@@ -871,7 +934,7 @@ belongs to `coDP`, then `PH = Σ₃ᴾ`. -/
 theorem DPComplete.PH_eq_SigmaP_three_of_mem_coDP {encB : β ↪ List Bool} {B : Set β}
     (hB : DPComplete encB B) (h : B ∈ coDP encB) :
     PH enc = SigmaP 3 enc :=
-  PH_eq_SigmaP_three_of_coDP_subset_DP fun enc' => hB.coDP_subset_DP_of_mem_coDP h enc'
+  PH_eq_SigmaP_three_of_coDP_subset_DP (hB.coDP_subset_DP_of_mem_coDP h encBits)
 
 /-- **Kadin's theorem for `SATUNSAT`** [Kadin][Kadin1988]: if `SATUNSAT ∈ coDP`, the polynomial
 hierarchy collapses to `Σ₃ᴾ`. -/

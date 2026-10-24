@@ -57,18 +57,31 @@ example : ([], [true, true]) ∈ allWordsIn encBits (1 : ℕ[X]) sampleE 2 := by
   simpa using (mem_allWordsIn_succ_append (E := sampleE) (d := 0) (z := []) h1).mpr
     ⟨rfl, by simp [allWordsIn]⟩
 
+/-- Every `BH` language over an arbitrary encoding polynomial-time many-one reduces to
+`BH encBits`. -/
+example (r : ℕ) :
+    ∃ B ∈ BH encBits r,
+      PolyTimeReducible (encPair encBits encBits) encBits
+        (kadinChain encBits (1 : ℕ[X]) sampleE r) B :=
+  exists_mem_BH_encBits_and_polyTimeReducible (kadinChain_mem_BH sampleE_mem_NP r)
+
 /-- Kadin's level-3 collapse at a fixed instance encoding. -/
 example {k : ℕ} (h : coBH (encPair encBits encBits) k ⊆ BH (encPair encBits encBits) k) :
     SigmaP 3 encBits = PiP 3 encBits :=
   SigmaP_three_eq_PiP_three_of_coBH_subset_BH h
 
-/-- Kadin's full PH collapse at an arbitrary level `k` of the Boolean hierarchy. -/
-example {k : ℕ} (h : ∀ {β : Type} (enc' : β ↪ List Bool), coBH enc' k ⊆ BH enc' k) :
+/-- Kadin's full PH collapse from `coBH encBits k ⊆ BH encBits k`. -/
+example {k : ℕ} (h : coBH encBits k ⊆ BH encBits k) :
     PH encBits = SigmaP 3 encBits :=
   PH_eq_SigmaP_three_of_coBH_subset_BH h
 
-/-- Kadin's collapse from `DP = coDP`. -/
-example (h : ∀ {β : Type} (enc' : β ↪ List Bool), DP enc' = coDP enc') :
+/-- Kadin's full PH collapse from `BH encBits (k + 1) = BH encBits k`. -/
+example {k : ℕ} (h : BH encBits (k + 1) = BH encBits k) :
+    PH encBits = SigmaP 3 encBits :=
+  PH_eq_SigmaP_three_of_BH_succ_eq h
+
+/-- Kadin's collapse from `DP encBits = coDP encBits`. -/
+example (h : DP encBits = coDP encBits) :
     PH encBits = SigmaP 3 encBits :=
   PH_eq_SigmaP_three_of_DP_eq_coDP h
 
