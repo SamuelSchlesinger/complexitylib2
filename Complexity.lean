@@ -1489,6 +1489,7 @@ public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Design
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Reconstruction
 public import Complexity.Crypto.Primitives.PRG.NisanWigderson.Sampling
 public import Complexity.Crypto.Protocols.Cipher.EvenMansour
+public import Complexity.Crypto.Protocols.MAC.CarterWegman
 public import Complexity.Crypto.Protocols.SigmaProtocol.Abort
 public import Complexity.Crypto.Protocols.SigmaProtocol.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Composition
