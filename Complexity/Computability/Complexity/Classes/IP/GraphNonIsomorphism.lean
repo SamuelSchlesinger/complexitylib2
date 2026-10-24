@@ -570,7 +570,7 @@ private theorem isPPTOn_relabelMessage {γ : Type} {input : γ ↪ List Bool} {G
         (fst (encPair input encBits) encBits))) (snd (encPair input encBits) encBits))
   exact IsPPTOn.map_with (f := fun x bits => relabel (G x) (keysOf (G x).distinctVertices.length
     (keyWidth (G x).distinctVertices.length) bits)) hcount.sampleList
-    (computableTidilyInPolyTime_relabel (hG.comp (fst input encBits)) hkeys)
+    (.of_tidy (computableTidilyInPolyTime_relabel (hG.comp (fst input encBits)) hkeys))
 
 /-- The verifier is strict oracle PPT. -/
 theorem isOraclePPTOn_verifier :
