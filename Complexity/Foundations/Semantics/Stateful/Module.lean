@@ -28,6 +28,10 @@ results. Native execution itself permits an independent universe for client resu
 
 * `Module.realize`: implement a module with any realization of its lower interface.
 * `link_exec`, `link_exec_decompose`: exact correspondence of chunked and flattened executions.
+
+## References
+
+* [Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, Chapter 17][CLRS2009].
 -/
 
 @[expose] public section
@@ -66,7 +70,7 @@ def realize (R : Realization E exec) :
   rep s c := ∃ e, M.rep s e ∧ R.rep e c
   total o hr hv := by
     obtain ⟨e, hM, hR⟩ := hr
-    obtain ⟨c', traces, he, _⟩ := R.run (M.methods o) hR (M.valid o hM hv)
+    obtain ⟨c', traces, he, _⟩ := R.exists_executes (M.methods o) hR (M.valid o hM hv)
     exact ⟨_, c', traces, he⟩
   correct hr hv he := by
     obtain ⟨e, hM, hR⟩ := hr

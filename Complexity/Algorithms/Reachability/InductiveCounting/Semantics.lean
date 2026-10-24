@@ -27,6 +27,8 @@ of its selected count with the round count then forces exhaustiveness.
 
 ## References
 
+* [N. Immerman, *Nondeterministic Space Is Closed under Complementation*][Immerman1988]
+* [R. Szelepcsényi, *The Method of Forcing for Nondeterministic Automata*][Szelepcsenyi1987]
 * [M. Sipser, *Introduction to the Theory of Computation*, Section 8.6][Sipser2013]
 -/
 
@@ -41,10 +43,10 @@ variable {N width source k u v : ℕ} {edge : ℕ → ℕ → Bool} {bad : ℕ �
 def Graph (N : ℕ) (edge : ℕ → ℕ → Bool) (u v : ℕ) : Prop :=
   u < N ∧ v < N ∧ edge u v = true
 
+open scoped Classical in
 /-- The ghost set whose cardinality the controller carries. -/
 noncomputable def roundSet (N : ℕ) (edge : ℕ → ℕ → Bool) (source k : ℕ) : Finset ℕ :=
-  @Finset.filter ℕ (fun u => Relation.RelatesWithinSteps (Graph N edge) source u k)
-    (Classical.decPred _) (Finset.range N)
+  (Finset.range N).filter (· ∈ Relation.reachableWithin (Graph N edge) source k)
 
 theorem reachable_lt (hsource : source < N)
     (h : Relation.ReflTransGen (Graph N edge) source u) : u < N := by
@@ -65,8 +67,8 @@ theorem mem_roundSet (hsource : source < N) :
 
 theorem roundSet_zero (hsource : source < N) : roundSet N edge source 0 = {source} := by
   ext u
-  rw [mem_roundSet hsource]
-  simp [Relation.RelatesWithinSteps, eq_comm]
+  rw [mem_roundSet hsource, ← Relation.mem_reachableWithin, Relation.reachableWithin_zero]
+  simp
 
 theorem roundSet_card_le : (roundSet N edge source k).card ≤ N := by
   classical
@@ -75,7 +77,7 @@ theorem roundSet_card_le : (roundSet N edge source k).card ≤ N := by
 theorem mem_roundSet_succ (hsource : source < N) (hv : v < N) :
     v ∈ roundSet N edge source (k + 1) ↔
       ∃ u ∈ roundSet N edge source k, u = v ∨ edge u v = true := by
-  rw [mem_roundSet hsource, Relation.RelatesWithinSteps.succ_iff]
+  rw [mem_roundSet hsource, ← Relation.mem_reachableWithin, Relation.mem_reachableWithin_succ]
   constructor
   · rintro ⟨u, hu, huv⟩
     refine ⟨u, (mem_roundSet hsource).mpr hu, ?_⟩
@@ -99,8 +101,9 @@ theorem mem_roundSet_final (hsource : source < N) (hk : k + 1 = N) :
       _ ≤ (Finset.range N : Set ℕ).encard := Set.encard_mono hs
       _ = N := by rw [Set.encard_coe_eq_coe_finsetCard, Finset.card_range]
       _ = k + 1 := by exact_mod_cast hk.symm
-  rw [mem_roundSet hsource]
-  exact (Relation.reflTransGen_iff_relatesWithinSteps_of_encard_le he).symm
+  rw [mem_roundSet hsource, ← Relation.mem_reachableWithin,
+    Relation.reachableWithin_eq_of_encard_le he]
+  rfl
 
 /-- Count of members of the next round below the current target. -/
 noncomputable def prefixCount (N : ℕ) (edge : ℕ → ℕ → Bool) (source k v : ℕ) : ℕ :=

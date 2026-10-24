@@ -59,15 +59,15 @@ theorem primitive_calls : Bound realization (fun _ => 1)
 /-- Insertions retain both incremental and decremental operations. -/
 example : (Retroactive.spec counter 0).ValidHistory []
     [.insert 0 true, .insert 1 false] := by
-  simp [Spec.ValidHistory, TimelineEdit.apply, TimelineEdit.Valid, counter]
+  simp [TimelineEdit.apply, TimelineEdit.Valid, counter]
 
 /-- Deleting the increment makes the retained decrement inadmissible. -/
 example : ¬ (Retroactive.spec counter 0).valid [true, false] (.erase 0) := by
-  simp [Spec.ValidHistory, TimelineEdit.apply, TimelineEdit.Valid, counter]
+  simp [TimelineEdit.apply, TimelineEdit.Valid, counter]
 
 /-- Deleting the decrement remains admissible. -/
 example : (Retroactive.spec counter 0).valid [true, false] (.erase 1) := by
-  simp [Spec.ValidHistory, TimelineEdit.apply, TimelineEdit.Valid, counter]
+  simp [TimelineEdit.apply, TimelineEdit.Valid, counter]
 
 /-- The composed realization inherits correctness without reproving counter semantics. -/
 def rebuilt := (Retroactive.implementation counter 0).realize realization
@@ -85,11 +85,11 @@ example : (lower.runClient ([], 0)
 theorem edits_execute :
     ∃ c' traces, Executes execution (link (Retroactive.methods counter 0) edits)
       ([], 0) () c' traces ∧ rebuilt.rep [true] c' := by
-  obtain ⟨c', chunks, he, hr⟩ := rebuilt.run edits
+  obtain ⟨c', chunks, he, hr⟩ := rebuilt.exists_executes edits
     ⟨([], 0), ⟨rfl, rfl⟩, rfl⟩ (by
       change (Retroactive.spec counter 0).ValidHistory []
         [.insert 0 true, .insert 1 false, .erase 1]
-      simp [Spec.ValidHistory, TimelineEdit.apply, TimelineEdit.Valid, counter])
+      simp [TimelineEdit.apply, TimelineEdit.Valid, counter])
   exact ⟨c', chunks.flatten, link_exec _ _ he, hr⟩
 
 /-- The same resource certificate bounds every supplied execution, not just a chosen run. -/
@@ -105,10 +105,13 @@ theorem edits_bound {c' : lower.State} {traces : List lower.Op}
     ⟨([], 0), ⟨rfl, rfl⟩, rfl⟩ (by
       change (Retroactive.spec counter 0).ValidHistory []
         [.insert 0 true, .insert 1 false, .erase 1]
-      simp [Spec.ValidHistory, TimelineEdit.apply, TimelineEdit.Valid, counter]) hc
+      simp [TimelineEdit.apply, TimelineEdit.Valid, counter]) hc
   change total (total (fun _ : lower.Op => 1)) chunks ≤ 10 at hb
   rw [ht]
-  simpa only [← total_flatten, total_one] using hb
+  rw [← total_flatten] at hb
+  have hlen : ∀ xs : List lower.Op, total (fun _ => 1) xs = xs.length := by
+    intro xs; induction xs <;> simp_all [Nat.add_comm]
+  simpa only [hlen] using hb
 
 /--
 info: 'Cslib.Algorithms.Lean.Retroactive.implementation' depends on axioms:

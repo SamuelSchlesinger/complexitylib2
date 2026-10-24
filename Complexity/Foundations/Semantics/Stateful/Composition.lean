@@ -25,6 +25,10 @@ This construction shares the same semantics across all backend and resource inte
 
 * `Module.simulates_client`: semantic refinement lifts through an adaptive client.
 * `link_comp`: composing methods agrees with consecutive linking.
+
+## References
+
+* [Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, Chapter 17][CLRS2009].
 -/
 
 @[expose] public section
@@ -52,7 +56,7 @@ theorem simulates_client (M : Module D E) (p : D.Client α) {s : D.State} {e : E
     have heq : E.runClient e (link M.methods (.liftBind o k)) =
         E.runClient e ((M.methods o).bind fun a => link M.methods (k a)) := rfl
     rw [heq, Spec.runClient_bind]
-    simp only [ha, Spec.runClient, Spec.validHistory_append, Spec.run_runClient]
+    simp only [ha, Spec.validHistory_append, Spec.run_runClient]
     exact ⟨⟨hm, ht.1⟩, ht.2⟩
 
 /-- Identity methods expose precisely one call and preserve the state representation. -/

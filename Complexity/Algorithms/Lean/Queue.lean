@@ -120,7 +120,7 @@ theorem transfer_run (front back : List α) :
   induction back generalizing front with
   | nil => rfl
   | cons a back ih =>
-    simpa [transfer, Spec.runClient, stackPair, product, stack, transferTrace,
+    simpa [transfer, stackPair, stack, transferTrace,
       List.reverse_cons, List.append_assoc] using congrArg
         (fun r : Unit × (stackPair α).State × List (stackPair α).Op =>
           (r.1, r.2.1, .inr .pop :: .inl (.push a) :: r.2.2)) (ih (a :: front))
@@ -129,7 +129,8 @@ theorem transfer_run (front back : List α) :
 def implementation : Module (queue α) (stackPair α) where
   methods := methods
   rep q s := q = s.1 ++ s.2.reverse
-  valid _ _ _ := valid_history_of_total (stackPair α) (by intro s o; cases o <;> trivial) _ _
+  valid _ _ _ :=
+    (stackPair α).validHistory_of_forall_valid (by intro s o; cases o <;> trivial) _ _
   correct {q s} o hr _ := by
     subst q
     obtain ⟨front, back⟩ := s
@@ -143,10 +144,10 @@ def implementation : Module (queue α) (stackPair α) where
       cases front with
       | cons a front => exact ⟨rfl, rfl⟩
       | nil =>
-        simp only [methods, bind, Spec.runClient, stackPair, product, stack,
-          List.tail_nil, List.head?_nil]
+        simp only [methods, bind, Spec.runClient_liftBind, stackPair,
+          stack, List.tail_nil, List.head?_nil]
         rw [Spec.runClient_bind, transfer_run]
-        simp [Spec.runClient]
+        simp
 
 /-- Each transferred element incurs one pop and one push. -/
 theorem transferTrace_length (back : List α) : (transferTrace back).length = 2 * back.length := by
@@ -171,10 +172,10 @@ theorem potential_step (s : (stackPair α).State) (o : QueueOp α) :
       change 1 + 2 * back.length ≤ 3 + 2 * back.length
       omega
     | nil =>
-      simp only [methods, bind, Spec.runClient, stackPair, product, stack,
-          List.tail_nil, List.head?_nil]
+      simp only [methods, bind, Spec.runClient_liftBind, stackPair,
+        stack, List.tail_nil, List.head?_nil]
       rw [Spec.runClient_bind, transfer_run]
-      simp only [Spec.runClient]
+      simp only [Spec.runClient_liftBind, Spec.runClient_pure]
       change (transferTrace back ++ [Sum.inl StackOp.pop]).length + 2 ≤ 3 + 2 * back.length
       rw [List.length_append, transferTrace_length]
       simp only [List.length_singleton]
@@ -185,7 +186,7 @@ private theorem weighted_potential_step (K : Nat) {q : (queue α).State} {s : (s
     (stackPair α).totalCost (fun _ _ => K) s ((stackPair α).runClient s (methods o)).2.2 +
         K * (2 * ((stackPair α).runClient s (methods o)).2.1.2.length) ≤
       3 * K + K * (2 * s.2.length) := by
-  rw [spec_total_const]
+  rw [Spec.totalCost_const]
   simpa only [Nat.mul_add, Nat.add_mul, Nat.mul_comm K] using
     Nat.mul_le_mul_left K (potential_step s o)
 
@@ -201,13 +202,14 @@ theorem realized_client {C Trace β : Type} {exec : Execution (stackPair α) C T
       implementation.rep ((queue α).runClient q p).2.1 s' ∧ R.rep s' c' ∧
       total weight traces + K * (2 * s'.2.length) ≤
         ((queue α).runClient q p).2.2.length * (3 * K) + K * (2 * s.2.length) := by
-  have hv := valid_history_of_total (queue α) (fun _ _ => trivial) q ((queue α).runClient q p).2.2
-  obtain ⟨c', chunks, he, _⟩ := (implementation.realize R).run p ⟨s, hrep, hbackend⟩ hv
+  have hv := (queue α).validHistory_of_forall_valid (fun _ _ => trivial)
+    q ((queue α).runClient q p).2.2
+  obtain ⟨c', chunks, he, _⟩ := (implementation.realize R).exists_executes p ⟨s, hrep, hbackend⟩ hv
   obtain ⟨s', hrep', hr', ht⟩ := implementation.amortized_client R B
     (fun _ s => K * (2 * s.2.length)) (fun _ _ => 3 * K)
     (weighted_potential_step K) hrep hbackend hv he
   refine ⟨c', chunks.flatten, s', link_exec methods exec he, hrep', hr', ?_⟩
-  simpa only [total_flatten, spec_total_const] using ht
+  simpa only [total_flatten, Spec.totalCost_const] using ht
 
 /-- Correctness and the same resource bound hold for every supplied flattened execution. -/
 theorem realized_client_bound {C Trace β : Type} {exec : Execution (stackPair α) C Trace}
@@ -221,12 +223,13 @@ theorem realized_client_bound {C Trace β : Type} {exec : Execution (stackPair �
       total weight traces + K * (2 * s'.2.length) ≤
         ((queue α).runClient q p).2.2.length * (3 * K) + K * (2 * s.2.length) := by
   obtain ⟨chunks, hc, ht⟩ := link_exec_decompose methods exec he
-  have hv := valid_history_of_total (queue α) (fun _ _ => trivial) q ((queue α).runClient q p).2.2
+  have hv := (queue α).validHistory_of_forall_valid (fun _ _ => trivial)
+    q ((queue α).runClient q p).2.2
   have ha := ((implementation.realize R).correct_client ⟨s, hrep, hbackend⟩ hv hc).1
   obtain ⟨s', hrep', hr', hb⟩ := implementation.amortized_client R B
     (fun _ s => K * (2 * s.2.length)) (fun _ _ => 3 * K)
     (weighted_potential_step K) hrep hbackend hv hc
   refine ⟨ha, s', hrep', hr', ?_⟩
-  simpa only [ht, total_flatten, spec_total_const] using hb
+  simpa only [ht, total_flatten, Spec.totalCost_const] using hb
 
 end Cslib.Algorithms.Lean.Queue

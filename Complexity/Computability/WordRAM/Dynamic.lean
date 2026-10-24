@@ -263,7 +263,7 @@ theorem run_client_const {K : ℕ}
       C.rep (D.runClient s p).2.1 y ∧
       Stateful.total DynamicProgram.OperationTrace.instructions traces ≤
         (D.runClient s p).2.2.length * K :=
-  B.run_const p hr hv
+  B.exists_executes_const p hr hv
 
 /-- Lift a per-operation pointwise memory frame from `Exec` to `ExecOp`. -/
 theorem frame_of_execute {j : ℕ}

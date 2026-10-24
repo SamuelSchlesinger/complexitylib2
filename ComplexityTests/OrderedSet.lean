@@ -39,7 +39,7 @@ theorem insertAll_run (s : Finset α) (xs : List α) :
     change ((), s, []) = ((), s ∪ ∅, [])
     rw [Finset.union_empty]
   | cons x xs ih =>
-    simp only [insertAll, Spec.runClient, spec, ih, List.toFinset_cons, List.map_cons]
+    simp only [insertAll, Spec.runClient_liftBind, spec, ih, List.toFinset_cons, List.map_cons]
     simp [Finset.insert_union, Finset.union_insert]
 
 /-- Read the two smallest distinct keys. The successor argument comes from the minimum answer. -/
@@ -54,7 +54,7 @@ theorem firstTwo_run (s : Finset α) :
       match least s with
       | none => ((none, none), s, [.minimum])
       | some x => ((some x, least (s.filter (x < ·))), s, [.minimum, .successor x]) := by
-  simp only [firstTwo, Spec.runClient, spec]
+  simp only [firstTwo, Spec.runClient_liftBind, spec]
   cases least s <;> rfl
 
 end Cslib.OrderedSet

@@ -152,8 +152,8 @@ theorem runClient_client (w n : ℕ) :
     ((spec w 1).runClient [] (client w n)).1 = max n 1 ∧
       ((spec w 1).runClient [] (client w n)).2.1 = [] := by
   by_cases hn : n = 0
-  · simp [client, Stateful.Spec.runClient, -PFunctor.FreeM.pure_eq_pure, hn]
-  · simp [client, Stateful.Spec.runClient, -PFunctor.FreeM.pure_eq_pure, hn,
+  · simp [client, -PFunctor.FreeM.pure_eq_pure, hn]
+  · simp [client, -PFunctor.FreeM.pure_eq_pure, hn,
       max_eq_left (show 1 ≤ n by omega)]
 
 /-- Both adaptive histories respect the one-cell capacity and word bounds. -/
@@ -162,8 +162,7 @@ theorem client_valid {w n : ℕ} (h3 : Fits w 3) (hn : InputFits w [n]) :
   have h1 : Fits w 1 := h3.of_le (by decide)
   have hfit : Fits w n := hn.2 n (by simp)
   by_cases hn0 : n = 0 <;>
-    simp [client, Stateful.Spec.runClient, Stateful.Spec.ValidHistory,
-      -PFunctor.FreeM.pure_eq_pure, hn0, hfit, h1]
+    simp [client, -PFunctor.FreeM.pure_eq_pure, hn0, hfit, h1]
 
 /-- The full fixed controller refines the adaptive client, including setup and argument work. -/
 @[program_certificate]

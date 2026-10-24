@@ -145,7 +145,7 @@ theorem ensurePositive_native (s spare : Nat) :
       (s, spare) a c' traces ∧
       (∃ s', realization.rep s' c' ∧
         ∃ n, (a = n ∧ 0 < a) ∧ implementation.rep n s') ∧ total id traces ≤ 7 := by
-  exact Spec.CostHoare.run (s := (s, spare)) native_bound ensurePositive_linked
+  exact Spec.CostHoare.exists_executes (s := (s, spare)) native_bound ensurePositive_linked
     ⟨s, trivial, s, rfl, rfl⟩ rfl
 
 -- The zero branch performs a read, another read and a write; the nonzero branch only reads.

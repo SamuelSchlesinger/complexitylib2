@@ -24,9 +24,13 @@ For nondeterministic backends existence is not demonic termination.
 
 ## Main results
 
-* `Realization.run`: admissible clients have correct executions.
+* `Realization.exists_executes`: admissible clients have correct executions.
 * `Realization.correct_client`: every supplied client execution has the specified result.
 * `executes_bind_iff`: sequential execution splits exactly at the intermediate state.
+
+## References
+
+* [Cormen, Leiserson, Rivest and Stein, *Introduction to Algorithms*, Chapter 17][CLRS2009].
 -/
 
 @[expose] public section
@@ -63,7 +67,7 @@ variable {exec : Execution D C τ} (R : Realization D exec)
 
 /-- From related states, a client whose history is admissible has a native execution that returns
 the specified result and ends in a state related to the specified final state. -/
-theorem run (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
+theorem exists_executes (p : D.Client α) {s : D.State} {c : C} (hr : R.rep s c)
     (hv : D.ValidHistory s (D.runClient s p).2.2) :
     ∃ c' traces, Executes exec p c (D.runClient s p).1 c' traces ∧
       R.rep (D.runClient s p).2.1 c' := by
