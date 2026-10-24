@@ -8,6 +8,7 @@ module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 -- vendored: move pure degree bounds to ResourceBounds.Degree and add direct plain certificates.
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeOptionPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeComposition
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeClosure
