@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.DecisionTree.CanonicalTree
+public import Complexity.Foundations.Data.BitString.PartialAssignment.Counting
 
 /-!
 # The switching lemma

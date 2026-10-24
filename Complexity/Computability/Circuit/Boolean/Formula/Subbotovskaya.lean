@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Formula.Restriction
 public import Complexity.Foundations.Data.BitString.Parity
+public import Complexity.Foundations.Data.BitString.PartialAssignment.Counting
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
@@ -533,12 +534,8 @@ theorem exists_extensions_formulaSize_sq_mul_pow_three_le (f : BooleanFunction n
     have hk₁ : k ≤ #ρ₁.free := by omega
     obtain ⟨ρ, hρ, hih⟩ := ih ρ₁ hk₁ hfree₁
     obtain ⟨hext₁, hfree⟩ := PartialAssignment.mem_extensions.1 hρ
-    have hext₀ : ρ.Extends ρ₀ := hext₁.trans fun j c hj => by
-      have hne : j ≠ i := fun h => by
-        subst h
-        rw [PartialAssignment.mem_free.1 hi] at hj
-        cases hj
-      simpa [ρ₁, hne] using hj
+    have hext₀ : ρ.Extends ρ₀ :=
+      hext₁.trans ((PartialAssignment.Extends.refl ρ₀).update_some hi b)
     refine ⟨ρ, PartialAssignment.mem_extensions.2 ⟨hext₀, hfree⟩, ?_⟩
     have hpos_card : 0 < #ρ₁.free := by omega
     have hpos : 0 < (#ρ₁.free) ^ 3 := by positivity

@@ -1636,6 +1636,7 @@ public import Complexity.Foundations.Data.BitString.Packing
 public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.Parity.Weight
 public import Complexity.Foundations.Data.BitString.PartialAssignment
+public import Complexity.Foundations.Data.BitString.PartialAssignment.Counting
 public import Complexity.Foundations.Data.BitString.Point
 public import Complexity.Foundations.Data.BitString.Projection
 public import Complexity.Foundations.Data.BitString.Propagation
