@@ -14,7 +14,6 @@ public import Complexity.Computability.Complexity.Classes.Toda
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 import Complexity.Computability.Complexity.Classes.Inclusions
 import Complexity.Computability.Complexity.Classes.Oracle.Closure
-import Complexity.Computability.Complexity.Classes.Oracle.Simulation
 import Complexity.Computability.Complexity.Classes.PP.Characterization
 import Complexity.Computability.Complexity.Classes.SharpP.Closure
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime
@@ -24,6 +23,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Simulation
 import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.Oracle.Substitution
 import Complexity.Languages.Probabilistic.Simulation

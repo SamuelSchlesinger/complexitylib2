@@ -10,9 +10,10 @@ module
 public import Complexity.Computability.Complexity.Classes.Oracle.Closure
 public import Complexity.Computability.Complexity.Classes.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
-import Complexity.Computability.Complexity.Classes.Oracle.Simulation
+import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 import Complexity.Computability.Complexity.Classes.Space.Closure
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Simulation
 
 /-!
 # Polynomial time relative to an oracle in polynomial space

@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.AWPP
 public import Complexity.Computability.Complexity.Classes.PP.Oracle
 import Complexity.Computability.Complexity.Classes.AWPP.OracleWeights
+import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 import Complexity.Computability.Complexity.Classes.PP.Characterization
 import Complexity.Computability.Complexity.Classes.SharpP.Aggregation
 import Complexity.Computability.Complexity.Classes.SharpP.WeightedReplay

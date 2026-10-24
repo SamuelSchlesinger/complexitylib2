@@ -9,8 +9,8 @@ module
 
 public import Complexity.Computability.Complexity.Classes.Oracle.Closure
 public import Complexity.Computability.Complexity.Classes.Oracle.PolyTime
-public import Complexity.Computability.Complexity.Classes.Oracle.Replay
 public import Complexity.Computability.Complexity.Classes.UP
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Oracle
 import Complexity.Computability.Complexity.Classes.P.Complement
 import Complexity.Computability.Complexity.Classes.SharpP.Aggregation
 import Complexity.Computability.Complexity.Classes.SharpP.PolyTime

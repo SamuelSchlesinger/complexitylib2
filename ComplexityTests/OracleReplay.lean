@@ -7,7 +7,7 @@ Authors: Erik Demaine
 module
 -- upstream: local-only (test driver)
 
-public import Complexity.Computability.Complexity.Classes.Oracle.Replay
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Oracle
 
 /-! Adaptive requests, ignored local bits, clock truncation, and polynomial-time replay. -/
 

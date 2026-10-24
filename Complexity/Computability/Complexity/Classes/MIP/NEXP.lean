@@ -12,10 +12,10 @@ public import Complexity.Computability.Complexity.Classes.IP.Simulation
 public import Complexity.Computability.Complexity.Classes.MIP.OptimalProver
 public import Complexity.Computability.Complexity.Classes.NP.GuessVerify
 public import Complexity.Computability.Complexity.Classes.NP.Witness
-public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.Padding
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Deterministic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Finite
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
