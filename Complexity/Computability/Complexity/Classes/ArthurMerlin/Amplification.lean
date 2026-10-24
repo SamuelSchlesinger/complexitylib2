@@ -194,12 +194,12 @@ theorem mem_MA_iff_exists_forall_errorExponent :
       (V : α × List Bool → Bool), ComputableInPolyTime V (encPair enc encBits) encBool ∧
         IsMerlinArthurVerifierWithErrorExponent enc e q p V A := by
   have this : A ∈ MA enc ↔ ∃ q : Polynomial ℕ, ∀ e : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsMerlinArthurVerifierWithErrorExponent enc e q p V A := by
-    rw [mem_MA_iff_tidy]
+    rw [mem_MA]
     refine ⟨fun ⟨q, p, V, hV, h⟩ => ⟨q, fun e => ⟨12 * e * p, _,
-      (computableInPolyTime_merlinArthurRepeat (.of_tidy hV) _ _ _).tidy, h.repeatMajority e⟩⟩,
+      (computableInPolyTime_merlinArthurRepeat hV _ _ _).tidy, h.repeatMajority e⟩⟩,
       fun ⟨q, h⟩ => ?_⟩
     obtain ⟨p, V, hV, h⟩ := h 2
-    exact ⟨q, p, V, hV, h.isMerlinArthurVerifier fun _ => by simp⟩
+    exact ⟨q, p, V, (.of_tidy hV), h.isMerlinArthurVerifier fun _ => by simp⟩
   simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
 /-! ### Error reduction for `AM` -/
@@ -353,11 +353,11 @@ theorem mem_AM_iff_forall_errorExponent :
       ComputableInPolyTime V (encPair enc encBits) encBool ∧
         IsArthurMerlinVerifierWithErrorExponent enc e p q V A := by
   have this : A ∈ AM enc ↔ ∀ e : Polynomial ℕ, ∃ (p q : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ IsArthurMerlinVerifierWithErrorExponent enc e p q V A := by
-    rw [mem_AM_iff_tidy]
+    rw [mem_AM]
     refine ⟨fun ⟨p, q, V, hV, h⟩ e => ⟨12 * e * p, 12 * e * q, _,
-      (computableInPolyTime_arthurMerlinRepeat (.of_tidy hV) _ _ _).tidy, h.repeatMajority e⟩, fun h => ?_⟩
+      (computableInPolyTime_arthurMerlinRepeat hV _ _ _).tidy, h.repeatMajority e⟩, fun h => ?_⟩
     obtain ⟨p, q, V, hV, h⟩ := h 2
-    exact ⟨p, q, V, hV, h.isArthurMerlinVerifier fun _ => by simp⟩
+    exact ⟨p, q, V, (.of_tidy hV), h.isArthurMerlinVerifier fun _ => by simp⟩
   simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
 /-! ### `MA ⊆ AM` -/

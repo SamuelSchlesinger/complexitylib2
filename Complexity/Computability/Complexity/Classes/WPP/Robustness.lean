@@ -235,7 +235,7 @@ theorem mem_WPP_iff_exists_polyTime_targets {α : Type} {enc : α ↪ List Bool}
       (∀ a, (0 : ℤ) ∉ f a) ∧ (∀ a, a ∈ A → g a ∈ f a) ∧
       ∀ a, a ∉ A → g a = 0 := by
   constructor
-  · rw [mem_WPP_iff_tidy]
+  · rw [mem_WPP]
     rintro ⟨g, hg, f, hf, hn, hr, hA⟩
     refine ⟨g, hg, fun a => [f a], by fun_prop, ?_, ?_, ?_⟩
     · intro a
@@ -256,7 +256,7 @@ theorem mem_LWPP_iff_exists_polyTime_targets {α : Type} {enc : α ↪ List Bool
       (∀ n, (0 : ℤ) ∉ f n) ∧ (∀ a, a ∈ A → g a ∈ f (enc a).length) ∧
       ∀ a, a ∉ A → g a = 0 := by
   constructor
-  · rw [mem_LWPP_iff_tidy]
+  · rw [mem_LWPP]
     rintro ⟨g, hg, f, hf, hn, hr, hA⟩
     refine ⟨g, hg, fun n => [f n], by fun_prop, ?_, ?_, ?_⟩
     · intro n

@@ -44,7 +44,6 @@ Two runs reject a member with probability at most `1 / 4`, so `RP ⊆ BPP`.
 
 ## Main results
 
-* `Cslib.Complexity.mem_RP_iff_tidy`: membership through a tidy verifier.
 * `Cslib.Complexity.RP_subset_NP`, `Cslib.Complexity.coRP_subset_coNP`.
 * `Cslib.Complexity.DecidesWithOneSidedError.repeatAny`: repetition reduces the error to
   `2 ^ (-q(n))`.
@@ -91,12 +90,6 @@ theorem mem_RP {A : Set α} : A ∈ RP enc ↔ ∃ (p : Polynomial ℕ) (V : α 
     ComputableInPolyTime V (encPair enc encBits) encBool ∧
       DecidesWithOneSidedError enc p V A :=
   Iff.rfl
-
-/-- `Cslib.Complexity.mem_RP` with a tidy verifier, for proofs that compose machines. -/
-theorem mem_RP_iff_tidy {A : Set α} : A ∈ RP enc ↔ ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
-    ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧
-      DecidesWithOneSidedError enc p V A := by
-  simp only [mem_RP, computableInPolyTime_iff_computableTidilyInPolyTime]
 
 theorem mem_coRP {A : Set α} : A ∈ coRP enc ↔ Aᶜ ∈ RP enc := Iff.rfl
 

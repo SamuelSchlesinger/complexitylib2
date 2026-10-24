@@ -99,7 +99,7 @@ theorem prod_range_mem {f : α × ℕ → ℕ} {r : α → ℕ}
     (hr : ComputableInPolyTime r enc encUnary) :
     (fun a => ∏ i ∈ range (r a), f (a, i)) ∈ SharpP enc := by
   have hr := hr.tidy
-  obtain ⟨p, V, hV, hf⟩ := mem_SharpP_iff_tidy.mp hf
+  obtain ⟨p, V, hV, hf⟩ := mem_SharpP.mp hf
   let width : α × ℕ → ℕ := fun x => p.eval ((encPair enc encUnary) x).length
   let k : α → ℕ := fun a => p.eval (2 * (enc a).length + 1 + r a)
   let W := andVerifier width V allFalseVerifier

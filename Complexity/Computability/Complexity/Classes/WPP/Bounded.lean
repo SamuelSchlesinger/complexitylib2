@@ -57,7 +57,7 @@ theorem forall_lt_mem_WPP (hA : A ∈ WPP (encPair enc encUnary))
     (hr : ComputableInPolyTime r enc encUnary) :
     {a | ∀ i < r a, (a, i) ∈ A} ∈ WPP enc := by
   have hr := hr.tidy
-  rw [mem_WPP_iff_tidy] at hA ⊢
+  rw [mem_WPP] at hA ⊢
   obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := hA
   let G a := ∏ i ∈ range (r a), g (a, i)
   let F a := ∏ i ∈ range (r a), f (a, i)
@@ -67,7 +67,7 @@ theorem forall_lt_mem_WPP (hA : A ∈ WPP (encPair enc encUnary))
   have hno (a) (ha : ¬ ∀ i < r a, (a, i) ∈ A) : G a = 0 :=
     prod_eq_zero_of_not_forall hR hA ha
   refine ⟨G, GapP.prod_range_mem hg (.of_tidy hr), F,
-    ComputableTidilyInPolyTime.intBin_prod_range hf hr, hF, ?_, ?_⟩
+    .of_tidy (ComputableTidilyInPolyTime.intBin_prod_range hf.tidy hr), hF, ?_, ?_⟩
   · intro a
     by_cases ha : ∀ i < r a, (a, i) ∈ A
     · exact Or.inr (hy a ha)
@@ -95,10 +95,11 @@ theorem forall_lt_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
     (hr : ComputableInPolyTime r enc encUnary) :
     {a | ∀ i < r a, (a, i) ∈ A} ∈ LWPP enc := by
   have hr := hr.tidy
-  obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := mem_LWPP_iff_tidy.mp hA
+  obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := mem_LWPP.mp hA
   obtain ⟨p, hb⟩ := hr.polyBounded.exists_polynomial
   let T (x : ℕ × ℕ) := ∏ i ∈ range x.2, f (2 * x.1 + 1 + i)
   have hT : ComputableTidilyInPolyTime T (encPair encUnary encUnary) encIntBin := by
+    have hf := hf.tidy
     apply ComputableTidilyInPolyTime.intBin_prod_range
       (f := fun x : (ℕ × ℕ) × ℕ => f (2 * x.1.1 + 1 + x.2)) <;> fun_prop
   have hp : ComputableTidilyInPolyTime (fun n => p.eval n + 1) encUnary encUnary := by fun_prop

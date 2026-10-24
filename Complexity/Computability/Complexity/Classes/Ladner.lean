@@ -189,7 +189,8 @@ private theorem eventually_clock_le (i : ℕ) :
 /-- **If `SATH` is in `P`, then `H` is bounded**: some index of a machine deciding `SATH` has a
 clock exceeding its polynomial time bound, and from some point on `H` is at most that index. -/
 theorem exists_H_le_of_mem_P (h : SATH ∈ P encBits) : ∃ C, ∀ n, H n ≤ C := by
-  obtain ⟨f, ⟨t, s, ht, -, k, State, hfinite, tm, htm⟩, hf⟩ := mem_P_iff_tidy.mp h
+  obtain ⟨f, hfpoly, hf⟩ := mem_P.mp h
+  obtain ⟨t, s, ht, -, k, State, hfinite, tm, htm⟩ := hfpoly.tidy
   have := Fintype.ofFinite State
   let eS : State ↪ ℕ := (Fintype.equivFin State).toEmbedding.trans Fin.valEmbedding
   have hrun (x : List Bool) : (tm.runFrom (tm.initCfg x) (t x)).Halted ∧
@@ -369,7 +370,8 @@ then `SAT` is in `P`: the self-reduction leaves a formula of bounded length, dec
 table. -/
 theorem SAT_mem_P_of_reducible_of_tendsto (hR : PolyTimeReducible encCNF encBits SAT SATH)
     (hH : Filter.Tendsto H Filter.atTop Filter.atTop) : SAT ∈ P encCNF := by
-  obtain ⟨R, hRpoly, hR⟩ := polyTimeReducible_iff_tidy.mp hR
+  obtain ⟨R, hRpoly, hR⟩ := hR
+  have hRpoly := hRpoly.tidy
   obtain ⟨c, d, hRlen⟩ := hRpoly.polyBounded_length.exists_le
   simp only [encBits_apply] at hRlen
   obtain ⟨M, hM⟩ := Filter.eventually_atTop.mp (Filter.tendsto_atTop.mp hH (d + 1))

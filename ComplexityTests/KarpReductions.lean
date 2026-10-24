@@ -261,11 +261,11 @@ info: 'Cslib.Complexity.IndependentSet_npComplete' depends on axioms:
 #print axioms Cslib.Complexity.IndependentSet_npComplete
 
 /--
-info: 'Cslib.Complexity.Graph.computableTidilyInPolyTime_compl' depends on axioms:
+info: 'Cslib.Complexity.Graph.computableInPolyTime_compl' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Graph.computableTidilyInPolyTime_compl
+#print axioms Cslib.Complexity.Graph.computableInPolyTime_compl
 
 /--
 info: 'Cslib.Complexity.Clique.isVerifier' depends on axioms: [propext, Classical.choice, Quot.sound]

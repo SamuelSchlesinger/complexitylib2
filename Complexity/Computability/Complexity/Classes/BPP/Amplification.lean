@@ -137,11 +137,11 @@ theorem mem_BPP_iff_forall_decidesWithErrorExponent {A : Set α} :
       ComputableInPolyTime V (encPair enc encBits) encBool ∧
         DecidesWithErrorExponent enc q p V A := by
   have this : A ∈ BPP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool), ComputableTidilyInPolyTime V (encPair enc encBits) encBool ∧ DecidesWithErrorExponent enc q p V A := by
-    rw [mem_BPP_iff_tidy]
+    rw [mem_BPP]
     refine ⟨fun ⟨p, V, hV, h⟩ q => ⟨12 * q * p, _,
-      (computableInPolyTime_repeatMajority (.of_tidy hV) _ _).tidy, h.repeatMajority q⟩, fun h => ?_⟩
+      (computableInPolyTime_repeatMajority hV _ _).tidy, h.repeatMajority q⟩, fun h => ?_⟩
     obtain ⟨p, V, hV, h⟩ := h 2
-    exact ⟨p, V, hV, h.decidesWithBoundedError fun _ => by simp⟩
+    exact ⟨p, V, (.of_tidy hV), h.decidesWithBoundedError fun _ => by simp⟩
   simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
 /-! ### Boolean closure of `BPP` -/

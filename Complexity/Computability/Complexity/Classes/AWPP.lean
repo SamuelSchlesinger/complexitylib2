@@ -141,10 +141,11 @@ theorem mem_AWPP_of_polyTime_exponent {g : α → ℤ} {r : α → ℕ}
 /-- Polynomial-time many-one reductions preserve AWPP after dyadic denominator padding. -/
 theorem PolyTimeReducible.mem_AWPP {β : Type} {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ AWPP encB) : A ∈ AWPP enc := by
-  obtain ⟨r, hr, hAB⟩ := polyTimeReducible_iff_tidy.mp h
+  obtain ⟨r, hr, hAB⟩ := h
   obtain ⟨g, hg, p, hB⟩ := hB
-  refine mem_AWPP_of_polyTime_exponent (GapP.comp_mem hg (.of_tidy hr))
-    (r := fun a => p.eval (encB (r a)).length) (.of_tidy (by fun_prop)) (fun a => ?_)
+  refine mem_AWPP_of_polyTime_exponent (GapP.comp_mem hg hr)
+    (r := fun a => p.eval (encB (r a)).length) (.of_tidy (by have hr := hr.tidy; fun_prop))
+    (fun a => ?_)
   simpa only [Function.comp_apply, ← hAB a] using hB (r a)
 
 end Cslib.Complexity

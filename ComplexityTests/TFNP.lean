@@ -210,11 +210,6 @@ example : ∃ n : _ → ℕ, ComputableInPolyTime n encEndOfLine encUnary := by
   obtain ⟨-, n, -, -, hn, -⟩ := mem_PPAD.mp EndOfLine_mem_PPAD
   exact ⟨n, hn⟩
 
-/-- `mem_PPAD_iff_tidy` restates it tidily, for the tidy calculus. -/
-example : ∃ n : _ → ℕ, ComputableTidilyInPolyTime n encEndOfLine encUnary := by
-  obtain ⟨-, n, -, -, hn, -⟩ := mem_PPAD_iff_tidy.mp EndOfLine_mem_PPAD
-  exact ⟨n, hn⟩
-
 /-! ### Axiom guards -/
 
 /--

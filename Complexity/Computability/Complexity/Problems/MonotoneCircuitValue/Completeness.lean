@@ -291,7 +291,8 @@ end Instance
 positive and negative rails of its decider's tableau. -/
 theorem logSpaceReducible_of_mem_P {α : Type} {enc : α ↪ List Bool} {A : Set α}
     (hA : A ∈ P enc) : LogSpaceReducible enc encMonotoneCircuitValue A MonotoneCircuitValue := by
-  obtain ⟨f, ⟨t, s, ht, -, k, State, hfin, tm, htm⟩, hAf⟩ := mem_P_iff_tidy.mp hA
+  obtain ⟨f, hfpoly, hAf⟩ := hA
+  obtain ⟨t, s, ht, -, k, State, hfin, tm, htm⟩ := hfpoly.tidy
   have := Fintype.ofFinite State
   classical
   obtain ⟨C, d, htle⟩ := ht.exists_le

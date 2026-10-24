@@ -60,7 +60,7 @@ generator for each of the `2 ^ ℓ` seeds and takes the strict majority of the a
 ## Main results
 
 * `Cslib.Complexity.exists_computableInO_of_mem_DTIME`: deterministic time classes have
-  tidy deciders within the same time bound, up to constant factors.
+  deciders within the same time and space bound, up to constant factors.
 * `Turing.MultiTapeTM.ComputableInO.computableInPolyTime_take`: evaluation of a
   function computable in time `T n` on words of polynomially bounded `T n`.
 * `Turing.MultiTapeTM.ComputableInPolyTime.bitsEnumList_of_polyBounded`: enumeration of the
@@ -83,9 +83,10 @@ open Turing Turing.MultiTapeTM
 
 namespace Cslib.Complexity
 
-/-- **Deterministic time classes have tidy deciders.** A problem decided within time `O(t n)`, by
-a machine with any space bound, has a Boolean decider tidily computable within time and space
-`O(t n)`: time bounds space, and the tidy normal form costs a linear overhead. -/
+/-- **Deterministic time classes have deciders within time and space `O(t n)`.** A problem
+decided within time `O(t n)`, by a machine with any space bound, has a Boolean decider computable
+within time and space `O(t n)`: time bounds space, and the tidy normal form of the proof costs a
+linear overhead. -/
 theorem exists_computableInO_of_mem_DTIME {A : Set (List Bool)} {t : ℕ → ℕ}
     (h : A ∈ DTIME encBits t) :
     ∃ g : List Bool → Bool, (∀ y, y ∈ A ↔ g y = true) ∧

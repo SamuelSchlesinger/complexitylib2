@@ -40,7 +40,7 @@ first-order interpretations.
   `G.compl.induced = G.inducedᶜ` and `(G.compl, m) ∈ Clique ↔ (G, m) ∈ IndependentSet`.
 * `Cslib.Complexity.Graph.le_cliqueNum_iff`, `Cslib.Complexity.Graph.cliqueNum_compl`: the clique
   number is the largest target of `Clique`, and that of the complement is the independence number.
-* `Cslib.Complexity.Graph.computableTidilyInPolyTime_compl`: complementing a graph on its declared
+* `Cslib.Complexity.Graph.computableInPolyTime_compl`: complementing a graph on its declared
   vertices is polynomial-time.
 * `Cslib.Complexity.Clique.mem_NP`: `Clique ∈ NP (encPair encGraph encNat)`.
 * `Cslib.Complexity.polyTimeReducible_IndependentSet_Clique`: `IndependentSet` reduces to `Clique`

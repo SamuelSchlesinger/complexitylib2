@@ -165,7 +165,7 @@ the length required by the reduced instance. -/
 theorem PolyTimeReducible.mem_NPWithOracle {encA : α ↪ List Bool} {encB : β ↪ List Bool}
     {L : Set α} {L' : Set β} (h : PolyTimeReducible encA encB L L')
     (hL' : L' ∈ NPWithOracle A encB) : L ∈ NPWithOracle A encA := by
-  obtain ⟨g, hg, hL⟩ := polyTimeReducible_iff_tidy.mp h
+  obtain ⟨g, hg, hL⟩ := h
   obtain ⟨p, V, hV, hL'⟩ := hL'
   obtain ⟨r, hlen⟩ := hg.polyBounded_length.exists_polynomial
   -- the certificate length of the reduced instance, as a polynomial of the instance length
@@ -173,6 +173,7 @@ theorem PolyTimeReducible.mem_NPWithOracle {encA : α ↪ List Bool} {encB : β 
   have hpq (a : α) : p.eval (encB (g a)).length ≤ q.eval (encA a).length := by
     rw [hq, Polynomial.eval_comp]
     exact p.eval_mono (hlen a)
+  have hg := hg.tidy
   refine ⟨q, fun aw => V (g aw.1, aw.2.take (p.eval (encB (g aw.1)).length)),
     hV.preprocess (f := V) (g := fun aw : α × List Bool =>
       (g aw.1, aw.2.take (p.eval (encB (g aw.1)).length))) (.of_tidy (by fun_prop)), fun a => ?_⟩

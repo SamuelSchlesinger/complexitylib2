@@ -148,7 +148,7 @@ theorem DecidableInTimeO.exists_computableInO (h : DecidableInTimeO A enc T) :
     try simp only [encBool_apply, List.length_singleton]
     omega
 
-/-- A tidy decider within time `O(t)`, for `t ≤ T`, decides within time `O(T)`. -/
+/-- A decider within time `O(t)`, for `t ≤ T`, decides within time `O(T)`. -/
 theorem DecidableInTimeO.of_computableInO {g : α → Bool} {t S : α → ℕ}
     (hg : ComputableInO g enc encBool t S) (hA : ∀ a, a ∈ A ↔ g a = true)
     (hT : ∀ a, (t a : ℝ) ≤ T a) : DecidableInTimeO A enc T := by
@@ -230,7 +230,7 @@ section Machines
 
 variable {α : Type} {enc : α ↪ List Bool} {A B : Set α}
 
-/-- A tidy decider within time `O(t)`, for `t` within a constant times `2 ^ (δ μ a)` times a
+/-- A decider within time `O(t)`, for `t` within a constant times `2 ^ (δ μ a)` times a
 polynomial, decides within time `2 ^ (δ μ a)` times a polynomial. -/
 theorem DecidableInExpTime.of_computableInO {μ : α → ℕ} {δ : ℝ} {g : α → Bool}
     {t S : α → ℕ} (hg : ComputableInO g enc encBool t S) (hA : ∀ a, a ∈ A ↔ g a = true)

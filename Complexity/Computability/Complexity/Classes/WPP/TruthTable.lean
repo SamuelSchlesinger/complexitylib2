@@ -126,12 +126,12 @@ theorem truthTable_mem_WPP (hA : A ∈ WPP (encPair enc encUnary))
     {a | d (a, truthTableAnswers A r a) = true} ∈ WPP enc := by
   have hr := hr.tidy
   have hd := hd.tidy
-  rw [mem_WPP_iff_tidy] at hA ⊢
+  rw [mem_WPP] at hA ⊢
   obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := hA
   have hF (a) : (∏ i ∈ range (r a), f (a, i)) ≠ 0 :=
     prod_ne_zero_iff.mpr fun i _ => hn (a, i)
-  refine ⟨answerGap g f r d, answerGap_mem hg (mem_GapP_of_polyTime (.of_tidy hf)) hr hd,
-    _, ComputableTidilyInPolyTime.intBin_prod_range hf hr, hF, ?_, ?_⟩
+  refine ⟨answerGap g f r d, answerGap_mem hg (mem_GapP_of_polyTime hf) hr hd,
+    _, .of_tidy (ComputableTidilyInPolyTime.intBin_prod_range hf.tidy hr), hF, ?_, ?_⟩
   · intro a
     rw [answerGap_eq hR hA]
     split_ifs <;> simp
@@ -148,14 +148,15 @@ theorem truthTable_mem_LWPP (hA : A ∈ LWPP (encPair enc encUnary))
     {a | d (a, truthTableAnswers A r a) = true} ∈ LWPP enc := by
   have hr := hr.tidy
   have hd := hd.tidy
-  obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := mem_LWPP_iff_tidy.mp hA
+  obtain ⟨g, hg, f, hf, hn, hR, hA⟩ := mem_LWPP.mp hA
   let F (x : α × ℕ) := f ((encPair enc encUnary x).length)
   have hF : ComputableTidilyInPolyTime F (encPair enc encUnary) encIntBin :=
-    hf.comp (.encoding_length _)
+    hf.tidy.comp (.encoding_length _)
   have he := answerGap_eq (f := F) (r := r) (d := d) hR hA
   obtain ⟨p, hb⟩ := hr.polyBounded.exists_polynomial
   let T (x : ℕ × ℕ) := ∏ i ∈ range x.2, f (2 * x.1 + 1 + i)
   have hT : ComputableTidilyInPolyTime T (encPair encUnary encUnary) encIntBin := by
+    have hf := hf.tidy
     apply ComputableTidilyInPolyTime.intBin_prod_range
       (f := fun x : (ℕ × ℕ) × ℕ => f (2 * x.1.1 + 1 + x.2)) <;> fun_prop
   have hp : ComputableTidilyInPolyTime (fun n => p.eval n + 1) encUnary encUnary := by fun_prop

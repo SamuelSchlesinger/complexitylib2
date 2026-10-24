@@ -74,8 +74,8 @@ namespace SharpP
 the bits that the chosen verifier does not read must be `false`. -/
 theorem add_mem {f₁ f₂ : α → ℕ} (h₁ : f₁ ∈ SharpP enc) (h₂ : f₂ ∈ SharpP enc) :
     f₁ + f₂ ∈ SharpP enc := by
-  obtain ⟨p₁, V₁, hV₁, hf₁⟩ := mem_SharpP_iff_tidy.mp h₁
-  obtain ⟨p₂, V₂, hV₂, hf₂⟩ := mem_SharpP_iff_tidy.mp h₂
+  obtain ⟨p₁, V₁, hV₁, hf₁⟩ := mem_SharpP.mp h₁
+  obtain ⟨p₂, V₂, hV₂, hf₂⟩ := mem_SharpP.mp h₂
   refine ⟨p₁ + p₂ + 1, selectVerifier
       (andVerifier (fun a => p₁.eval (enc a).length) V₁ allFalseVerifier)
       (andVerifier (fun a => p₂.eval (enc a).length) V₂ allFalseVerifier), by fun_prop,
@@ -92,8 +92,8 @@ theorem add_mem {f₁ f₂ : α → ℕ} (h₁ : f₁ ∈ SharpP enc) (h₂ : f�
 certificate. -/
 theorem mul_mem {f₁ f₂ : α → ℕ} (h₁ : f₁ ∈ SharpP enc) (h₂ : f₂ ∈ SharpP enc) :
     f₁ * f₂ ∈ SharpP enc := by
-  obtain ⟨p₁, V₁, hV₁, hf₁⟩ := mem_SharpP_iff_tidy.mp h₁
-  obtain ⟨p₂, V₂, hV₂, hf₂⟩ := mem_SharpP_iff_tidy.mp h₂
+  obtain ⟨p₁, V₁, hV₁, hf₁⟩ := mem_SharpP.mp h₁
+  obtain ⟨p₂, V₂, hV₂, hf₂⟩ := mem_SharpP.mp h₂
   refine ⟨p₁ + p₂, andVerifier (fun a => p₁.eval (enc a).length) V₁ V₂, by fun_prop,
     fun a => ?_⟩
   rw [Pi.mul_apply, hf₁ a, hf₂ a, Polynomial.eval_add, acceptCount_andVerifier]
@@ -251,7 +251,8 @@ theorem SharpP.comp_mem {β : Type} {encB : β ↪ List Bool} {f : β → ℕ} {
     (hf : f ∈ SharpP encB) (hg : ComputableInPolyTime g enc encB) :
     f ∘ g ∈ SharpP enc := by
   have hg := hg.tidy
-  obtain ⟨q, W, hW, hWB⟩ := mem_SharpP_iff_tidy.mp hf
+  obtain ⟨q, W, hW, hWB⟩ := mem_SharpP.mp hf
+  have hW := hW.tidy
   have h := mem_SharpP_of_polyTime_length
     (V := fun x => W (g x.1, x.2))
     (r := fun a => q.eval (encB (g a)).length) (.of_tidy (by fun_prop)) (.of_tidy (by fun_prop))

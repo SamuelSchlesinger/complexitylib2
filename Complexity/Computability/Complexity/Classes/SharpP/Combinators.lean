@@ -46,14 +46,10 @@ independent random choices [Arora and Barak, Chapters 7 and 17][AroraBarak09].
 
 * `Cslib.Complexity.acceptCount_andVerifier`, `Cslib.Complexity.acceptCount_orVerifier`,
   `Cslib.Complexity.acceptCount_selectVerifier`: counts of the combined verifiers.
-* `Cslib.Complexity.computableTidilyInPolyTime_andVerifier`,
-  `Cslib.Complexity.computableTidilyInPolyTime_orVerifier`,
-  `Cslib.Complexity.computableTidilyInPolyTime_selectVerifier`: the combined verifiers are
-  polynomial-time.
 * `Cslib.Complexity.computableInPolyTime_andVerifier`,
   `Cslib.Complexity.computableInPolyTime_orVerifier`,
-  `Cslib.Complexity.computableInPolyTime_selectVerifier`: plain `fun_prop` rules accepting plain
-  verifier hypotheses.
+  `Cslib.Complexity.computableInPolyTime_selectVerifier`: the combined verifiers are
+  polynomial-time.
 
 ## References
 

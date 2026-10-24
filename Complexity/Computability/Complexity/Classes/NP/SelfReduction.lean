@@ -276,8 +276,8 @@ theorem exists_search (h : SAT ∈ P encCNF) :
     ∃ g : CNF ℕ → List Bool, ComputableInPolyTime g encCNF encBits ∧
       ∀ φ, verifier (φ, g φ) = true ↔ φ ∈ SAT := by
   have this : ∃ g : CNF ℕ → List Bool, ComputableTidilyInPolyTime g encCNF encBits ∧ ∀ φ, verifier (φ, g φ) = true ↔ φ ∈ SAT := by
-    obtain ⟨D, hD, hSAT⟩ := mem_P_iff_tidy.mp h
-    exact ⟨search D, (computableInPolyTime_search (D := fun _ => D) (.of_tidy (hD.comp (snd _ _))) (.of_tidy id')).tidy,
+    obtain ⟨D, hD, hSAT⟩ := mem_P.mp h
+    exact ⟨search D, (computableInPolyTime_search (D := fun _ => D) (.of_tidy (hD.comp (.of_tidy (snd _ _))).tidy) (.of_tidy id')).tidy,
       fun φ => verifier_search_iff fun ψ _ => (hSAT ψ).symm⟩
   simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 

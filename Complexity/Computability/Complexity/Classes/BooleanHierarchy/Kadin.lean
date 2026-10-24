@@ -152,8 +152,8 @@ private theorem congr_poly (h : OnSliceAlt enc b k q R) {q' : Polynomial ℕ}
 `α`. -/
 private theorem mem_SigmaP (h : OnSliceAlt enc true k 0 R) : {a | R a []} ∈ SigmaP k enc := by
   obtain ⟨ps, V, hk, hV, hR⟩ := h
-  refine mem_SigmaP_iff_tidy.mpr ⟨ps, fun x => V ((x.1, []), x.2), hk, ?_, fun a => ?_⟩
-  · exact hV.tidy.comp (((fst enc encBits).prod (.const [])).prod (snd enc encBits))
+  refine Complexity.mem_SigmaP.mpr ⟨ps, fun x => V ((x.1, []), x.2), hk, ?_, fun a => ?_⟩
+  · exact .of_tidy (hV.tidy.comp (((fst enc encBits).prod (.const [])).prod (snd enc encBits)))
   · exact hR a [] (by simp)
 
 /-- Negating the verifier swaps quantifier polarities. -/

@@ -59,9 +59,9 @@ open _root_.Turing _root_.Turing.MultiTapeTM
 
 variable {α β : Type} {enc : α ↪ List Bool}
 
-/-! ### `PSPACE` through tidy computability -/
+/-! ### `PSPACE` through explicit time and space bounds -/
 
-/-- A problem in `PSPACE` has a tidy decider within explicit bounds, the space polynomial in the
+/-- A problem in `PSPACE` has a decider within explicit bounds, the space polynomial in the
 length of the encoded instance. -/
 theorem exists_computableInO_of_mem_PSPACE {L : Set α} (hL : L ∈ PSPACE enc) :
     ∃ T S, PolyBounded (fun a => (enc a).length) S ∧
@@ -69,7 +69,7 @@ theorem exists_computableInO_of_mem_PSPACE {L : Set α} (hL : L ∈ PSPACE enc) 
   let ⟨f, T, S, hf, hS, hL⟩ := mem_PSPACE_iff_computableInO.mp hL
   ⟨T, S, hS, f, hf, hL⟩
 
-/-- A tidy decider within polynomial space puts a problem in `PSPACE`. -/
+/-- A decider within polynomial space puts a problem in `PSPACE`. -/
 theorem mem_PSPACE_of_computableInO {L : Set α} {f : α → Bool} {T S : α → ℕ}
     (hf : Turing.MultiTapeTM.ComputableInO f enc encBool T S) (hS : PolyBounded (fun a => (enc a).length) S)
     (hL : ∀ a, a ∈ L ↔ f a = true) : L ∈ PSPACE enc :=

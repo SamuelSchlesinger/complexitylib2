@@ -465,7 +465,7 @@ private theorem exists_mul_mem_GapP_of_sharpPWithOracle_of_mem_LWPP (hA : A ∈ 
     {c : α → ℕ} (hc : c ∈ SharpPWithOracle A enc) :
     ∃ S : ℕ → ℤ, ComputableTidilyInPolyTime S encUnary encIntBin ∧
       (∀ n, S n ≠ 0) ∧ (fun a => S (enc a).length * (c a : ℤ)) ∈ GapP enc := by
-  obtain ⟨g, hg, f, hf, hfn, hrange, hmem⟩ := mem_LWPP_iff_tidy.mp hA
+  obtain ⟨g, hg, f, hf, hfn, hrange, hmem⟩ := mem_LWPP.mp hA
   have hg_eq (w : List Bool) : g w = open Classical in if w ∈ A then f w.length else 0 := by
     by_cases hw : w ∈ A
     · simpa only [hw, ↓reduceIte, encBits_apply] using (hmem w).mp hw
@@ -485,7 +485,7 @@ private theorem exists_mul_mem_GapP_of_sharpPWithOracle_of_mem_LWPP (hA : A ∈ 
   let D : ℕ → ℤ := fun n => ((List.range (bound n)).map f).prod
   have hD : ComputableTidilyInPolyTime D encUnary encIntBin :=
     ComputableTidilyInPolyTime.intBin_prod.comp
-      ((ComputableTidilyInPolyTime.map hf).comp
+      ((ComputableTidilyInPolyTime.map hf.tidy).comp
         (ComputableTidilyInPolyTime.range.comp hbound))
   have hDn (n : ℕ) : D n ≠ 0 := List.prod_ne_zero (by simp [hfn])
   let S : ℕ → ℤ := fun n => D n ^ τ n
@@ -503,7 +503,7 @@ private theorem exists_mul_mem_GapP_of_sharpPWithOracle_of_mem_LWPP (hA : A ∈ 
       (encPair (encPair enc encBits) encUnary) encBool := by fun_prop
   have hK : ComputableTidilyInPolyTime K (encPair enc encBits) encIntBin :=
     ComputableTidilyInPolyTime.intBin_prod.comp
-      ((ComputableTidilyInPolyTime.map hf).comp
+      ((ComputableTidilyInPolyTime.map hf.tidy).comp
         (ComputableTidilyInPolyTime.filterWithInput hlist htest))
   let H : α × List Bool → ℤ := fun x => g x.2 * K x
   have hH : H ∈ GapP (encPair enc encBits) :=

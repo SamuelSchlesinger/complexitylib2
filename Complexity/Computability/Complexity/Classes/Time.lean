@@ -76,7 +76,7 @@ within time and space `O(t' m)`
 ## Main results
 
 * `Cslib.Complexity.DTIME_mono_of_le_mul_add`: `DTIME` absorbs constant factors.
-* `Cslib.Complexity.computableInO_indicator_of_mem_DTIME`: a tidy decider within the
+* `Cslib.Complexity.computableInO_indicator_of_mem_DTIME`: a decider within the
   same time and space bounds up to constants.
 * `Cslib.Complexity.preimage_mem_DTIME`: `DTIME` under timed reductions.
 * `Cslib.Complexity.DTIME_mono_of_eventually_le`, `Cslib.Complexity.NTIME_mono_of_eventually_le`,
@@ -422,7 +422,7 @@ a fair-coin machine halting within a polynomial clock, and a fair-coin machine h
 clock `T` is a verifier replaying random strings of length `T`. -/
 theorem mem_BPP_iff_exists_mem_BPTIME {α : Type} {enc : α ↪ List Bool} {A : Set α} :
     A ∈ BPP enc ↔ ∃ k, A ∈ BPTIME enc (· ^ k) := by
-  rw [mem_BPP_iff_tidy]
+  rw [mem_BPP]
   constructor
   · rintro ⟨p, V, hV, hA⟩
     -- sample a random string and run the verifier on it
@@ -431,7 +431,7 @@ theorem mem_BPP_iff_exists_mem_BPTIME {α : Type} {enc : α ↪ List Bool} {A : 
     have hcount : ComputableTidilyInPolyTime (fun a => p.eval (enc a).length) enc encUnary :=
       (ComputableTidilyInPolyTime.unary_eval p).comp
         (ComputableTidilyInPolyTime.encoding_length enc)
-    have hprogram : IsPPTOn enc encBool program := hcount.sampleList.map_with (.of_tidy hV)
+    have hprogram : IsPPTOn enc encBool program := hcount.sampleList.map_with hV
     obtain ⟨k, State, hfinite, machine, c, d, heval, hhalt⟩ := hprogram.exists_halting_machine
     refine ⟨d, c * 2 ^ d, c, k, State, hfinite, machine,
       MultiTapePTM.DecidesWithBoundedErrorInTime.mono (t := fun a => c * ((enc a).length + 1) ^ d)
@@ -445,12 +445,12 @@ theorem mem_BPP_iff_exists_mem_BPTIME {α : Type} {enc : α ↪ List Bool} {A : 
     -- replay the coins
     refine ⟨Polynomial.C c₁ * Polynomial.X ^ d + Polynomial.C c₂,
       fun x => decide (machine.runClosedCoins x.2 (enc x.1) = [true]),
-      ComputableTidilyInPolyTime.decide_eq'
+      .of_tidy (ComputableTidilyInPolyTime.decide_eq'
         ((MultiTapePTM.computableTidilyInPolyTime_runClosedCoins machine).comp
           ((ComputableTidilyInPolyTime.snd enc encBits).prod
             ((ComputableTidilyInPolyTime.of_eq (encMid := encBits) fun _ => rfl).comp
               (ComputableTidilyInPolyTime.fst enc encBits))))
-        (ComputableTidilyInPolyTime.const [true]), fun a => ?_⟩
+        (ComputableTidilyInPolyTime.const [true])), fun a => ?_⟩
     have heval : (Polynomial.C c₁ * Polynomial.X ^ d + Polynomial.C c₂).eval (enc a).length =
         c₁ * (enc a).length ^ d + c₂ := by
       simp

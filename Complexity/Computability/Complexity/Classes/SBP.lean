@@ -36,7 +36,6 @@ are proved in `Complexity.Computability.Complexity.Classes.ArthurMerlin.Amplific
 
 ## Main results
 
-* `Cslib.Complexity.mem_SBP_iff_tidy`: membership through a tidy threshold machine.
 * `Cslib.Complexity.NP_subset_SBP`, `Cslib.Complexity.BPP_subset_SBP`,
   `Cslib.Complexity.SBP_subset_PP`.
 * `Cslib.Complexity.union_mem_SBP`, `Cslib.Complexity.PolyTimeReducible.mem_SBP`: union and
@@ -70,22 +69,16 @@ theorem mem_SBP : A ∈ SBP enc ↔ ∃ f ∈ SharpP enc, ∃ k : α → ℕ, Co
     ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) :=
   Iff.rfl
 
-/-- `Cslib.Complexity.mem_SBP` with a tidy threshold machine, for proofs that compose machines. -/
-theorem mem_SBP_iff_tidy : A ∈ SBP enc ↔
-    ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧
-      ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) := by
-  simp only [mem_SBP, computableInPolyTime_iff_computableTidilyInPolyTime]
-
 /-- Replacing `(f, k)` by `(2f + 1, 2k + 1)` makes the threshold positive. -/
 theorem mem_SBP_iff_exists_pos_threshold : A ∈ SBP enc ↔
     ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableInPolyTime k enc encNat ∧
       (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) := by
   have this : A ∈ SBP enc ↔ ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧ (∀ a, 0 < k a) ∧ ∀ a, (a ∈ A → k a ≤ f a) ∧ (a ∉ A → 2 * f a < k a) := by
-    rw [mem_SBP_iff_tidy]
+    rw [mem_SBP]
     constructor
     · rintro ⟨f, hf, k, hk, hA⟩
       refine ⟨f + f + 1, SharpP.add_mem (SharpP.add_mem hf hf) SharpP.one_mem,
-        fun a => k a + k a + 1, by fun_prop,
+        fun a => k a + k a + 1, by have hk := hk.tidy; fun_prop,
         fun a => by positivity, fun a => ?_⟩
       simp only [Pi.add_apply, Pi.one_apply]
       constructor
@@ -96,7 +89,7 @@ theorem mem_SBP_iff_exists_pos_threshold : A ∈ SBP enc ↔
         have := (hA a).2 ha
         lia
     · rintro ⟨f, hf, k, hk, -, hA⟩
-      exact ⟨f, hf, k, hk, hA⟩
+      exact ⟨f, hf, k, (.of_tidy hk), hA⟩
   simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
 
 /-- Threshold one recognizes precisely the positive #P counts. -/

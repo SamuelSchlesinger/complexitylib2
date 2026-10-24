@@ -107,7 +107,7 @@ of the proof, where `n` is the length of the encoded instance and `p(n)` the len
 certificates, and runs the `NP` verifier on the bits read. -/
 theorem exists_mem_PCP_zero_of_mem_NP {A : Set α} (hA : A ∈ NP enc) :
     ∃ k : ℕ, A ∈ PCP (fun _ => 0) (fun n => (n + 1) ^ k) enc := by
-  obtain ⟨p, V, hV, hver⟩ := mem_NP_iff_tidy.mp hA
+  obtain ⟨p, V, hV, hver⟩ := mem_NP.mp hA
   obtain ⟨c, k, hle⟩ := polynomiallyBounded_iff_le.mp (PolynomiallyBounded.polynomial_eval p)
   refine ⟨k, ⟨fun _ => 0, fun x => List.range (p.eval (enc x.1).length),
     fun y => V (y.1.1, y.2)⟩, 0, c, ⟨?_, ?_, ?_⟩, ?_, ?_, ?_, ?_⟩
@@ -123,7 +123,7 @@ theorem exists_mem_PCP_zero_of_mem_NP {A : Set α} (hA : A ∈ NP enc) :
       (ComputableTidilyInPolyTime.map ComputableTidilyInPolyTime.unary_to_binary).comp
         (ComputableTidilyInPolyTime.range.comp h1)
   · apply ComputableInPolyTime.of_tidy
-    exact hV.comp (((ComputableTidilyInPolyTime.fst enc encBits).comp
+    exact hV.tidy.comp (((ComputableTidilyInPolyTime.fst enc encBits).comp
       (ComputableTidilyInPolyTime.fst (encPair enc encBits) encBits)).pair
       (ComputableTidilyInPolyTime.snd (encPair enc encBits) encBits))
   · intro a

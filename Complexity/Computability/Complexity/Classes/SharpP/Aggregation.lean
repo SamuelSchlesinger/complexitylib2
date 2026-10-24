@@ -50,7 +50,8 @@ theorem SharpP.sum_bits_mem {f : α × List Bool → ℕ} {r : α → ℕ}
     (hr : ComputableInPolyTime r enc encUnary) :
     (fun a => ∑ w : Fin (r a) → Bool, f (a, List.ofFn w)) ∈ SharpP enc := by
   have hr := hr.tidy
-  obtain ⟨p, V, hV, hf⟩ := mem_SharpP_iff_tidy.mp hf
+  obtain ⟨p, V, hV, hf⟩ := mem_SharpP.mp hf
+  have hV := hV.tidy
   let q : α → ℕ := fun a => p.eval (2 * (enc a).length + 1 + r a)
   let W : α × List Bool → Bool := fun x => V ((x.1, x.2.take (r x.1)), x.2.drop (r x.1))
   have hq : ComputableTidilyInPolyTime q enc encUnary := by dsimp [q]; fun_prop

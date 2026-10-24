@@ -191,10 +191,8 @@ def PromiseP (enc : α ↪ List Bool) : Set (PromiseProblem α) := promiseClass 
 /-- **Goldreich's definition of promise-P**: a promise problem is in `PromiseP` when a
 polynomial-time function solves it. -/
 theorem mem_PromiseP_iff :
-    Q ∈ PromiseP enc ↔ ∃ f : α → Bool, ComputableInPolyTime f enc encBool ∧ Q.SolvedBy f := by
-  have this : Q ∈ PromiseP enc ↔ ∃ f : α → Bool, ComputableTidilyInPolyTime f enc encBool ∧ Q.SolvedBy f :=
-    mem_promiseClass_iff_solvedBy fun _ => mem_P_iff_tidy
-  simpa only [computableInPolyTime_iff_computableTidilyInPolyTime] using this
+    Q ∈ PromiseP enc ↔ ∃ f : α → Bool, ComputableInPolyTime f enc encBool ∧ Q.SolvedBy f :=
+  mem_promiseClass_iff_solvedBy fun _ => mem_P
 
 @[simp] theorem ofSet_mem_PromiseP {A : Set α} : ofSet A ∈ PromiseP enc ↔ A ∈ P enc :=
   ofSet_mem_promiseClass

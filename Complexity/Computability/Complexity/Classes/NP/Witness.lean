@@ -166,8 +166,9 @@ theorem mem_NP_of_witness (D : Decoder encW) {check : α × β → Bool} {R : α
     (hp : ∀ a b, R a b → ∃ b', R a b' ∧ (encW b').length ≤ p.eval (enc a).length) :
     {a | ∃ b, R a b} ∈ NP enc := by
   have hcheck := hcheck.tidy
-  exact mem_NP_iff_tidy.mpr
-    ⟨_, _, (computableInPolyTime_witnessVerifier D (.of_tidy hcheck)).tidy, isVerifier_witnessVerifier D hR hp⟩
+  exact mem_NP.mpr
+    ⟨_, _, computableInPolyTime_witnessVerifier D (.of_tidy hcheck),
+      isVerifier_witnessVerifier D hR hp⟩
 
 end Witness
 
@@ -245,8 +246,8 @@ theorem mem_NP_of_subsetWitness {encγ : γ ↪ List Bool} {vs : α → List γ}
   have hvs := hvs.tidy
   have hcheck := hcheck.tidy
   obtain ⟨p, hle⟩ := hvs.polyBounded_length.exists_polynomial
-  refine mem_NP_iff_tidy.mpr ⟨p, _,
-    (computableInPolyTime_subsetVerifier (.of_tidy hvs) (.of_tidy hcheck)).tidy,
+  refine mem_NP.mpr ⟨p, _,
+    computableInPolyTime_subsetVerifier (.of_tidy hvs) (.of_tidy hcheck),
     isVerifier_subsetVerifier (fun a => ?_) hP⟩
   exact (length_le_length_encList encγ (vs a)).trans (hle a)
 
@@ -259,15 +260,16 @@ end Subset
 expects. For the oracle classes, see `Cslib.Complexity.PolyTimeReducible.mem_NPWithOracle`. -/
 theorem PolyTimeReducible.mem_NP {encB : β ↪ List Bool} {B : Set β}
     (h : PolyTimeReducible enc encB A B) (hB : B ∈ NP encB) : A ∈ NP enc := by
-  obtain ⟨f, hf, hAB⟩ := polyTimeReducible_iff_tidy.mp h
-  obtain ⟨q, W, hW, hWB⟩ := mem_NP_iff_tidy.mp hB
+  obtain ⟨f, hf, hAB⟩ := h
+  obtain ⟨q, W, hW, hWB⟩ := Complexity.mem_NP.mp hB
+  have hf := hf.tidy
   have hlen : ComputableTidilyInPolyTime (fun a => q.eval (encB (f a)).length) enc encUnary :=
     (unary_eval q).comp ((encoding_length encB).comp hf)
   obtain ⟨p, hle⟩ := hlen.polyBounded.exists_polynomial
-  refine mem_NP_iff_tidy.mpr ⟨p,
+  refine Complexity.mem_NP.mpr ⟨p,
     fun x => W (f x.1, x.2.take (q.eval (encB (f x.1)).length)), ?_,
     IsVerifier.of_padding (fun a w hw h => ?_) fun a ha => ?_⟩
-  · exact hW.comp ((hf.comp (fst enc encBits)).prod
+  · exact .of_tidy <| hW.tidy.comp ((hf.comp (fst enc encBits)).prod
       (bitsTakeWithInput (snd enc encBits) (hlen.comp (fst enc encBits))))
   · refine (hAB a).2 ((hWB (f a)).2 ⟨_, List.length_take_of_le ?_, h⟩)
     rw [hw]
@@ -291,10 +293,11 @@ theorem mem_NP_setOf_exists_append {V : α × List Bool → Bool}
     {y : α × List Bool | ∃ v : List Bool, v.length = q.eval (enc y.1).length ∧
       V (y.1, y.2 ++ v) = true} ∈ NP (encPair enc encBits) := by
   have hV := hV.tidy
-  refine mem_NP_iff_tidy.mpr
+  refine mem_NP.mpr
     ⟨q, fun z => V (z.1.1, z.1.2 ++ z.2.take (q.eval (enc z.1.1).length)), ?_, fun y => ?_⟩
-  · exact hV.comp ((fst _ _).fst'.prod (bitsAppend (fst _ _).snd' (bitsTakeWithInput (snd _ _)
-      ((unary_eval q).comp ((encoding_length enc).comp (fst _ _).fst')))))
+  · exact .of_tidy <| hV.comp ((fst _ _).fst'.prod (bitsAppend (fst _ _).snd'
+      (bitsTakeWithInput (snd _ _) ((unary_eval q).comp ((encoding_length enc).comp
+        (fst _ _).fst')))))
   · have hle : q.eval (enc y.1).length ≤ q.eval (encPair enc encBits y).length :=
       q.eval_mono (length_le_encPair_left _ _ _)
     constructor
