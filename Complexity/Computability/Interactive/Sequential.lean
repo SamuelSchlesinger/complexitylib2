@@ -769,7 +769,10 @@ theorem Reduction.id_complete (rel : T → U → Prop) :
     (Reduction.id (oP := emptySpec) (oV := emptySpec)).Complete World.plain rel rel 0 := by
   intro x w hxw
   rw [Reduction.run, World.plain_eval_execute, PMF.toOuterMeasure_map_apply]
-  simp [Reduction.id, runStrategy, Verifier.outputOn, hxw]
+  simp only [Reduction.id, runStrategy, bind_pure_comp, map_pure, plainLaw_pure,
+    Verifier.outputOn, Sum.elim_inl, OracleComp.interpret_pure, not_and, Set.preimage_ofPred_eq,
+    PMF.toOuterMeasure_pure_apply, Set.mem_ofPred_eq, hxw, not_true_eq_false, imp_false,
+    nonpos_iff_eq_zero, ite_eq_right_iff, one_ne_zero, not_not]
   rfl
 
 /-- The reduction without rounds is round-by-round sound without error. -/
