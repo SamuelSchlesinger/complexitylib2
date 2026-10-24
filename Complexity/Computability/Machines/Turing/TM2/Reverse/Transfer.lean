@@ -37,7 +37,7 @@ preserve the caller's binary encodings and impose no computable-inverse hypothes
 * [M. Sipser, *Introduction to the Theory of Computation*, Section 8.1][Sipser2013]
 -/
 
-@[expose] public section
+public section
 
 namespace Turing.MultiTapeTM
 
@@ -86,9 +86,7 @@ theorem ComputableInTimeAndSpace.exists_tm2Computable
     (hout : PolyBounded (fun a => (encIn a).length) fun a => (encOut (f a)).length) :
     ∃ h : TM2Computable encIn encOut f, (∀ stack, Finite (h.tm.Γ stack)) ∧
       ∃ space : α → ℕ, PolyBounded (fun a => (encIn a).length) space ∧
-        ∀ a i stack, (((TM2.stepTotal h.tm.m)^[i]
-          (initList h.tm (List.map h.inputAlphabet.symm (encIn a)))).stk stack).length ≤
-            space a := by
+        h.StacksBounded space := by
   obtain ⟨k, State, hfinite, tm, htm⟩ := h
   let : Fintype State := Fintype.ofFinite State
   let target : TM2Computable encIn encOut f := {
@@ -121,9 +119,7 @@ theorem ComputableInTimeAndSpace.exists_tm2Computable_bool {f : α → Bool}
     (hs : PolyBounded (fun a => (encIn a).length) s) :
     ∃ h : TM2Computable encIn encBool f, (∀ stack, Finite (h.tm.Γ stack)) ∧
       ∃ space : α → ℕ, PolyBounded (fun a => (encIn a).length) space ∧
-        ∀ a i stack, (((TM2.stepTotal h.tm.m)^[i]
-          (initList h.tm (List.map h.inputAlphabet.symm (encIn a)))).stk stack).length ≤
-            space a :=
+        h.StacksBounded space :=
   h.exists_tm2Computable hs (by simpa using (PolyBounded.const (size :=
     fun a => (encIn a).length) 1))
 
@@ -133,9 +129,7 @@ theorem ComputableInPolySpace.exists_tm2Computable
     (h : ComputableInPolySpace f encIn encOut) :
     ∃ h : TM2Computable encIn encOut f, (∀ stack, Finite (h.tm.Γ stack)) ∧
       ∃ space : α → ℕ, PolyBounded (fun a => (encIn a).length) space ∧
-        ∀ a i stack, (((TM2.stepTotal h.tm.m)^[i]
-          (initList h.tm (List.map h.inputAlphabet.symm (encIn a)))).stk stack).length ≤
-            space a := by
+        h.StacksBounded space := by
   obtain ⟨t, s, hs, h, hout⟩ := h
   have hspace := PolyBounded.of_polynomiallyBounded (fun a => (encIn a).length) hs
   exact h.exists_tm2Computable hspace (hspace.mono hout)
@@ -157,9 +151,7 @@ theorem computableInPolySpace_iff_tm2 :
     ComputableInPolySpace f encIn encOut ↔
       ∃ h : TM2Computable encIn encOut f, (∀ stack, Finite (h.tm.Γ stack)) ∧
         ∃ space : α → ℕ, PolyBounded (fun a => (encIn a).length) space ∧
-          ∀ a i stack, (((TM2.stepTotal h.tm.m)^[i]
-            (initList h.tm (List.map h.inputAlphabet.symm (encIn a)))).stk stack).length ≤
-              space a := by
+          h.StacksBounded space := by
   refine ⟨ComputableInPolySpace.exists_tm2Computable, ?_⟩
   rintro ⟨h, hfinite, space, hspace, hstacks⟩
   let := hfinite
@@ -179,9 +171,7 @@ theorem mem_PSPACE_iff_tm2 {α : Type} {encIn : α ↪ List Bool} {A : Set α} :
     A ∈ PSPACE encIn ↔ ∃ (f : α → Bool) (h : TM2Computable encIn encBool f),
       (∀ stack, Finite (h.tm.Γ stack)) ∧
         (∃ space : α → ℕ, PolyBounded (fun a => (encIn a).length) space ∧
-          ∀ a i stack, (((TM2.stepTotal h.tm.m)^[i]
-            (initList h.tm (List.map h.inputAlphabet.symm (encIn a)))).stk stack).length ≤
-              space a) ∧ (∀ a, a ∈ A ↔ f a = true) := by
+          h.StacksBounded space) ∧ (∀ a, a ∈ A ↔ f a = true) := by
   rw [mem_PSPACE_iff_computableTidilyInPolySpace]
   constructor
   · rintro ⟨f, hf, hA⟩

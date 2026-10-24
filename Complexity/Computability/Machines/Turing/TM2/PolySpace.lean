@@ -24,6 +24,10 @@ rather than an assertion of a linear space bound.
 the original binary encodings. Its target counts input and output storage, so it does not
 preserve sublinear native work-space bounds.
 
+## Main definitions
+
+* `Turing.TM2Computable.StacksBounded`: a uniform bound on all reachable stack lengths.
+
 ## Main results
 
 * `Turing.TM2.run_polySpace`: a polynomial-time binary clock and polynomially bounded source
@@ -71,6 +75,15 @@ namespace Turing.TM2Computable
 
 open MultiTapeTM MultiTapeTM.ComputableTidilyInPolyTime
 
+/-- Every stack of every configuration reached from the encoded input `a` has length at most
+`space a`. Since `Turing.TM2.stepTotal` fixes halted configurations, this bounds the initial,
+intermediate and final stacks of the computation. -/
+def StacksBounded {α β αΓ βΓ : Type} {ea : α → List αΓ} {eb : β → List βΓ} {f : α → β}
+    (h : TM2Computable ea eb f) (space : α → ℕ) : Prop :=
+  ∀ a i stack,
+    (((TM2.stepTotal h.tm.m)^[i]
+      (initList h.tm (List.map h.inputAlphabet.symm (ea a)))).stk stack).length ≤ space a
+
 /-- A terminating Mathlib computation with polynomially bounded source stacks is tidily
 computable within polynomial space. No source runtime bound or computable space bound is needed.
 The bound includes the input and output stacks at initialization, during execution and at
@@ -80,9 +93,7 @@ theorem computableTidilyInPolySpace {α β αΓ βΓ : Type} [Finite αΓ] [Fini
     (h : TM2Computable ea eb f) [∀ k, Finite (h.tm.Γ k)]
     (ha : Function.Injective ea) (hb : Function.Injective eb)
     {space : α → ℕ} (hspace : PolyBounded (fun a => (ea a).length) space)
-    (hstacks : ∀ a i k,
-      (((TM2.stepTotal h.tm.m)^[i]
-        (initList h.tm (List.map h.inputAlphabet.symm (ea a)))).stk k).length ≤ space a) :
+    (hstacks : h.StacksBounded space) :
     ComputableTidilyInPolySpace f
       ((⟨ea, ha⟩ : α ↪ List αΓ).trans (encList (encFinite αΓ)))
       ((⟨eb, hb⟩ : β ↪ List βΓ).trans (encList (encFinite βΓ))) := by

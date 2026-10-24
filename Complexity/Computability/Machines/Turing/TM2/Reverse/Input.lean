@@ -29,7 +29,7 @@ the flag unset represents the right boundary, including the initial position on 
 * `Turing.MultiTapeTM.ToTM2.Input.Represents.move`: moves agree, including boundary clamping.
 -/
 
-@[expose] public section
+public section
 
 namespace Turing.MultiTapeTM.ToTM2
 
@@ -49,28 +49,28 @@ namespace Input
 variable {Symbol : Type}
 
 /-- Start at native position one, also when the input is empty. -/
-def init (input : List Symbol) : Input Symbol := ⟨[], input, false⟩
+@[expose] def init (input : List Symbol) : Input Symbol := ⟨[], input, false⟩
 
 /-- Read the current input symbol, or a blank at either boundary. -/
-def read (z : Input Symbol) : Option Symbol :=
+@[expose] def read (z : Input Symbol) : Option Symbol :=
   if z.atLeft then none else z.right.head?
 
 /-- Move left, stopping at the blank before the input. -/
-def moveLeft (z : Input Symbol) : Input Symbol :=
+@[expose] def moveLeft (z : Input Symbol) : Input Symbol :=
   if z.atLeft then z else
     match z.left with
     | [] => { z with atLeft := true }
     | a :: l => ⟨l, a :: z.right, false⟩
 
 /-- Move right, stopping at the blank after the input. -/
-def moveRight (z : Input Symbol) : Input Symbol :=
+@[expose] def moveRight (z : Input Symbol) : Input Symbol :=
   if z.atLeft then { z with atLeft := false } else
     match z.right with
     | [] => z
     | a :: r => ⟨a :: z.left, r, false⟩
 
 /-- Move the input head in the indicated direction. -/
-def move (z : Input Symbol) : SignType → Input Symbol
+@[expose] def move (z : Input Symbol) : SignType → Input Symbol
   | .neg => z.moveLeft
   | .zero => z
   | .pos => z.moveRight
@@ -100,7 +100,7 @@ theorem length_eq (h : z.Represents input pos) :
   simpa only [List.length_append, List.length_reverse] using congrArg List.length h.contents
 
 /-- A zipper read agrees with indexing the original input at the native head position. -/
-theorem read_eq_getElem? (h : z.Represents input pos) :
+private theorem read_eq_getElem? (h : z.Represents input pos) :
     z.read = if pos.val = 0 then none else input[pos.val - 1]? := by
   rcases z with ⟨l, r, b⟩
   cases b with
@@ -119,7 +119,7 @@ theorem read_eq_inputSymbol {k : ℕ} {State : Type*} {cfg : Cfg k Symbol State 
   split_ifs <;> grind
 
 /-- Moving left preserves the representation, with clamping at the left boundary. -/
-theorem moveLeft (h : z.Represents input pos) :
+private theorem moveLeft (h : z.Represents input pos) :
     z.moveLeft.Represents input (moveInputPos pos .neg) := by
   have hm := val_moveInputPos_eq pos .neg
   simp only [SignType.cast] at hm
@@ -134,21 +134,21 @@ theorem moveLeft (h : z.Represents input pos) :
     cases l with
     | nil =>
       refine ⟨h.contents, ?_, ?_⟩
-      · simp [moveLeft]
+      · simp [Input.moveLeft]
       · have hp : pos.val = 1 := h.pos_eq
         change (moveInputPos pos .neg).val = 0
         omega
     | cons a l =>
       refine ⟨?_, ?_, ?_⟩
-      · simpa [moveLeft, List.reverse_cons, List.append_assoc] using h.contents
-      · simp [moveLeft]
+      · simpa [Input.moveLeft, List.reverse_cons, List.append_assoc] using h.contents
+      · simp [Input.moveLeft]
       · have hp : pos.val = (a :: l).length + 1 := h.pos_eq
         simp only [List.length_cons] at hp
         change (moveInputPos pos .neg).val = l.length + 1
         omega
 
 /-- Moving right preserves the representation, with clamping at the right boundary. -/
-theorem moveRight (h : z.Represents input pos) :
+private theorem moveRight (h : z.Represents input pos) :
     z.moveRight.Represents input (moveInputPos pos .pos) := by
   have hm := val_moveInputPos_eq pos .pos
   simp only [SignType.cast] at hm
@@ -160,7 +160,7 @@ theorem moveRight (h : z.Represents input pos) :
     have hl : l = [] := h.left_nil rfl
     subst l
     refine ⟨h.contents, ?_, ?_⟩
-    · simp [moveRight]
+    · simp [Input.moveRight]
     · have hp : pos.val = 0 := h.pos_eq
       change (moveInputPos pos .pos).val = 1
       omega
@@ -174,8 +174,8 @@ theorem moveRight (h : z.Represents input pos) :
       omega
     | cons a r =>
       refine ⟨?_, ?_, ?_⟩
-      · simpa [moveRight, List.reverse_cons, List.append_assoc] using h.contents
-      · simp [moveRight]
+      · simpa [Input.moveRight, List.reverse_cons, List.append_assoc] using h.contents
+      · simp [Input.moveRight]
       · have hp : pos.val = l.length + 1 := h.pos_eq
         simp only [List.length_cons] at hlen
         change (moveInputPos pos .pos).val = l.length + 1 + 1

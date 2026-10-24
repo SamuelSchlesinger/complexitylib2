@@ -73,6 +73,8 @@ counting folds a counter directly instead of constructing the matching sublist.
   runtime bit-string slicing, with computed unary indices.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.takeUnary`, `.listTakeWithInput`,
   `.listDropWithInput`: slice framed lists at computed unary indices.
+* `Turing.MultiTapeTM.bits_encList_polyTime`, `.trans_encList_polyTime`: convert between raw
+  binary words and framed lists of encoded bits, also after an arbitrary binary embedding.
 -/
 
 @[expose] public section
@@ -1002,3 +1004,64 @@ theorem length_bits_comp {α : Type} {input : α ↪ List Bool} {word : α → L
   length_bits.comp hword
 
 end Turing.MultiTapeTM.ComputableInPolyTime
+
+namespace Turing.MultiTapeTM
+
+open ComputableTidilyInPolyTime
+
+private theorem foldl_snoc (word acc : List Bool) :
+    word.foldl (fun acc bit => acc ++ [bit]) acc = acc ++ word := by
+  induction word generalizing acc with
+  | nil => simp
+  | cons bit word ih => simp only [List.foldl_cons, ih, List.append_assoc, List.singleton_append]
+
+/-- Framing a fixed Boolean encoding, or parsing its frames and converting each symbol, takes
+polynomial time. The encodings of `false` and `true` can be arbitrary fixed words. -/
+theorem bits_encList_polyTime (enc : Bool ↪ List Bool) :
+    ComputableInPolyTime (fun word => word) encBits (encList enc) ∧
+      ComputableInPolyTime (fun word => word) (encList enc) encBits := by
+  let C := 2 * max (enc false).length (enc true).length + 1
+  have hsymbol (bit : Bool) : (enc bit).length ≤ max (enc false).length (enc true).length := by
+    cases bit
+    · exact le_max_left _ _
+    · exact le_max_right _ _
+  have hforward := foldl' (encA := encBool) (encL := encBits) (encB := encList enc)
+    (step := fun acc bit => acc ++ [bit]) id' (const [])
+    ((ComputableTidilyInDegree.snoc enc).computableTidilyInPolyTime.comp
+      ((fst (encList enc) encBool).prod
+        ((of_finite (id : Bool → Bool) (encA := encBool) (encB := enc)).comp
+          (snd (encList enc) encBool))))
+    (B := fun word : List Bool => word.length * C)
+    (PolyBounded.self.mul (.const C)) (by
+      intro word i hi
+      simp only [foldl_snoc, List.nil_append]
+      exact (length_encList_le enc _ (fun bit _ => hsymbol bit)).trans
+        (Nat.mul_le_mul_right C (by simp only [List.length_take]; omega)))
+  have hreverse := foldl' (encA := enc) (encL := encList enc) (encB := encBits)
+    (step := fun acc bit => acc ++ [bit]) id' (const [])
+    (bitsAppend (fst encBits enc)
+      ((of_finite (fun bit : Bool => [bit]) (encA := enc) (encB := encBits)).comp
+        (snd encBits enc)))
+    (B := fun word : List Bool => (encList enc word).length)
+    PolyBounded.self (by
+      intro word i hi
+      simp only [foldl_snoc, List.nil_append, encBits_apply, List.length_take]
+      exact (Nat.min_le_right _ _).trans (length_le_length_encList enc word))
+  constructor
+  · simpa only [foldl_snoc, List.nil_append, id_eq] using ComputableInPolyTime.of_tidy hforward
+  · simpa only [foldl_snoc, List.nil_append, id_eq] using ComputableInPolyTime.of_tidy hreverse
+
+/-- The word conversion preserves an arbitrary caller-supplied encoding. No computable inverse
+of `encIn` is assumed: expose its word, convert that word, and reuse the resulting encoding. -/
+theorem trans_encList_polyTime {α : Type} (encIn : α ↪ List Bool)
+    (enc : Bool ↪ List Bool) :
+    ComputableInPolyTime (fun a => a) encIn (encIn.trans (encList enc)) ∧
+      ComputableInPolyTime (fun a => a) (encIn.trans (encList enc)) encIn := by
+  obtain ⟨hforward, hreverse⟩ := bits_encList_polyTime enc
+  constructor
+  · exact .of_tidy ((hforward.tidy.comp (encode encIn)).of_enc_eq fun _ => rfl)
+  · have hexpose : ComputableTidilyInPolyTime encIn (encIn.trans (encList enc))
+        (encList enc) := of_eq fun _ => rfl
+    exact .of_tidy ((hreverse.tidy.comp hexpose).of_enc_eq fun _ => rfl)
+
+end Turing.MultiTapeTM
