@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.DecisionTree.Certificate
 public import Complexity.Computability.QueryComplexity.OneSided
 public import Complexity.Foundations.Data.BitString.Weight
 

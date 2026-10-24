@@ -7,11 +7,12 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.DecisionTree.Certificate
+public import Complexity.Computability.QueryComplexity.OneSided
+public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.Weight
 
 /-!
-# Query complexity measures of threshold functions
+# Query complexity measures of threshold functions and parity
 
 The threshold function `Th^n_j` says that at least `j` of `n` bits are true. A coordinate `i` is
 sensitive for it at `x` exactly when `x` has weight `j` and `x i` is true, or (for `j ≥ 1`) weight
@@ -24,7 +25,9 @@ measures agree: for `1 ≤ j ≤ n`,
 In particular majority has sensitivity `⌊n/2⌋ + 1` for `n ≥ 1`. The disjunction `OR_n = Th^n_1`
 is sensitive to every bit at the all-false input, so `bs(OR_n) = n`. A single true bit certifies
 its value `1`, while certifying the value `0` takes all `n` bits.
-The measures are those of [BuhrmanDeWolf2002].
+Flipping any bit flips the parity, so parity is sensitive to every bit at every input
+(`BitString.sensitivityAt_parity`), and its sensitivity, block sensitivity and certificate
+complexity all equal `n`. The measures are those of [BuhrmanDeWolf2002].
 
 ## Main results
 
@@ -38,6 +41,8 @@ The measures are those of [BuhrmanDeWolf2002].
 * `Cslib.QueryComplexity.certificateComplexityFor_threshold_one_right_true`,
   `Cslib.QueryComplexity.certificateComplexityFor_threshold_one_right_false`: `C₁(OR_n) = 1` for
   `n ≥ 1`, and `C₀(OR_n) = n`.
+* `Cslib.BitString.sensitivity_parity`, `Cslib.QueryComplexity.blockSensitivity_parity`,
+  `Cslib.QueryComplexity.certificateComplexity_parity`: `s`, `bs` and `C` of `parity n` are `n`.
 
 ## References
 
@@ -228,6 +233,40 @@ theorem certificateComplexityFor_threshold_one_right_false :
     simp
   exact certificateComplexityAt_threshold_one_right.ge.trans
     (certificateComplexityAt_le_certificateComplexityFor hx)
+
+end QueryComplexity
+
+/-! ### Parity -/
+
+namespace BitString
+
+/-- Parity is sensitive to every bit at every input. -/
+theorem sensitivityAt_parity (x : BitString n) : sensitivityAt (parity n) x = n := by
+  have : (univ.filter fun i => parity n (Function.update x i !x i) ≠ parity n x) = univ := by
+    refine eq_univ_of_forall fun i => mem_filter.2 ⟨mem_univ i, ?_⟩
+    rw [parity, parityOn_update_not (mem_univ i)]
+    cases parityOn univ x <;> decide
+  change #(univ.filter fun i => parity n (Function.update x i !x i) ≠ parity n x) = n
+  rw [this, card_univ, Fintype.card_fin]
+
+/-- The sensitivity of parity is its number of coordinates. -/
+theorem sensitivity_parity : sensitivity (parity n) = n :=
+  le_antisymm (sensitivity_le_card _) ((sensitivityAt_parity (fun _ => false)).symm.trans_le
+    (sensitivityAt_le_sensitivity _ _))
+
+end BitString
+
+namespace QueryComplexity
+
+/-- The block sensitivity of parity is its number of coordinates. -/
+theorem blockSensitivity_parity : blockSensitivity (parity n) = n :=
+  le_antisymm (blockSensitivity_le_card _)
+    (sensitivity_parity.symm.trans_le (sensitivity_le_blockSensitivity _))
+
+/-- The certificate complexity of parity is its number of coordinates. -/
+theorem certificateComplexity_parity : certificateComplexity (parity n) = n :=
+  le_antisymm (certificateComplexity_le_card _)
+    (blockSensitivity_parity.symm.trans_le (blockSensitivity_le_certificateComplexity _))
 
 end QueryComplexity
 
