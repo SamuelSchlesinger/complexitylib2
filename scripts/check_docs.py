@@ -16,16 +16,40 @@ from urllib.parse import unquote, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE_ROOTS = ("Init", "Std", "Lean", "Lake")
+LOCAL_DOC_ROOTS = ("Complexity", "Cslib")
+NON_EXTERNAL_ROOTS = frozenset({
+    *LOCAL_DOC_ROOTS,
+    "abstracts",
+    "declarations",
+    "find",
+    "guide",
+    "src",
+})
+SHELL_DOC_PAGES = frozenset({
+    "404.html",
+    "foundational_types.html",
+    "index.html",
+    "navbar.html",
+    "references.html",
+    "search.html",
+    "tactics.html",
+})
 LOCAL_DECLARATION_PREFIXES = (
     "./Complexity/",
     "./Complexity.html",
     "./Cslib/",
     "./Cslib.html",
 )
+# Where the guide and trimmed API docs link declarations.
+API_DOCS_URL = "https://www.cslib.io/complexitylib/"
+MATHLIB_DOCS_URL = "https://leanprover-community.github.io/mathlib4_docs/"
+EXTERNAL_TARGETS_FILE = "external-doc-targets.json"
+KERNEL_RECURSOR_ANCHORS = frozenset({
+    ("Init/Prelude.html", "Eq.rec"),
+    ("Init/Prelude.html", "Eq.ndrec"),
+})
 HREF_RE = re.compile(r'href="([^"]*)"')
-IMPORT_ITEM_RE = re.compile(r'<li><a href="([^"]+)">[^<]*</a></li>')
-EMPTY_IMPORTS_DETAILS_RE = re.compile(r'<details><summary>Imports</summary><ul></ul></details>')
+ID_ATTR_RE = re.compile(r'id="([^"]*)"')
 DEP_BROKEN_LINK_RE = re.compile(
     r'<code><a href="([^"]+)">([^<]*\.lean)</a></code>'
     r'|<a href="([^"]+)">(<code>[^<]+</code>)</a>'
@@ -128,59 +152,138 @@ def is_published_doc_file(docs, norm_path):
     return target is not None and target.is_file()
 
 
-def strip_imports_div(text):
-    start = text.find('<div class="imports">')
-    if start == -1:
-        return text
-    end = text.find("</div>", start)
-    return text[:start] + text[end + 6:] if end != -1 else text
+def is_external_doc_relpath(norm):
+    if not norm or norm in SHELL_DOC_PAGES or not norm.endswith(".html"):
+        return False
+    top = norm.split("/", 1)[0]
+    if "/" not in norm:
+        top = top[:-len(".html")]
+    return top not in NON_EXTERNAL_ROOTS
 
 
-def imported_module_closure(docs, modules):
-    imports = {}
-    for module, info in modules.items():
-        for importer in info.get("importedBy", ()):
-            imports.setdefault(importer, []).append(module)
+def page_anchors(page_path, cache=None):
+    if cache is not None and page_path in cache:
+        return cache[page_path]
+    anchors = {html.unescape(i) for i in ID_ATTR_RE.findall(page_path.read_text())}
+    if cache is not None:
+        cache[page_path] = anchors
+    return anchors
 
-    closure = set()
-    stack = [module for module in modules if module.split(".", 1)[0] not in CORE_ROOTS]
-    while stack:
-        module = stack.pop()
-        if module in closure:
+
+def collect_guide_external_pages():
+    guide_dir = ROOT / "guide/.lake/build/site/html-multi"
+    if not guide_dir.is_dir():
+        return set()
+    pages = set()
+    for base_url in (MATHLIB_DOCS_URL, API_DOCS_URL):
+        pattern = re.compile(r'href="' + re.escape(base_url) + r'([^"]*)"')
+        for html_page in sorted(guide_dir.rglob("*.html")):
+            for target in pattern.findall(html_page.read_text()):
+                path, _, _ = html.unescape(target).partition("#")
+                rel_path = unquote(path)
+                norm = posixpath.normpath(rel_path) if rel_path else ""
+                if is_external_doc_relpath(norm):
+                    pages.add(norm)
+    return pages
+
+
+def load_external_targets(docs):
+    manifest_path = docs.parent / EXTERNAL_TARGETS_FILE
+    if not manifest_path.is_file():
+        return {"pages": set(), "anchors": {}}
+    raw = json.loads(manifest_path.read_text())
+    return {
+        "pages": set(raw.get("pages", ())),
+        "anchors": {rel: set(items) for rel, items in raw.get("anchors", {}).items()},
+    }
+
+
+def rewrite_external_dependency_links(docs, index, external_pages):
+    existing = load_external_targets(docs)
+    if external_pages:
+        valid_external_pages = {
+            rel for rel in external_pages
+            if (docs / rel).is_file() or rel in existing["pages"]
+        }
+    else:
+        valid_external_pages = set(existing["pages"])
+    anchor_cache = {}
+    anchors_by_page = {
+        rel: (set() if (docs / rel).is_file() else set(existing["anchors"].get(rel, ())))
+        for rel in valid_external_pages
+    }
+    for info in index.get("declarations", {}).values():
+        doc_link = info.get("docLink", "")
+        if not doc_link or doc_link.startswith(LOCAL_DECLARATION_PREFIXES):
             continue
-        closure.add(module)
-        for imported in imports.get(module, ()):
-            if imported not in closure and imported in modules:
-                stack.append(imported)
+        split = urlsplit(doc_link)
+        norm = posixpath.normpath(unquote(split.path))
+        if norm in valid_external_pages and split.fragment:
+            anchors_by_page[norm].add(unquote(split.fragment))
 
-    page_to_module = {module.replace(".", "/") + ".html": module for module in modules}
-    non_module_pages = [
-        page.relative_to(docs).as_posix()
-        for page in sorted(docs.rglob("*.html"))
-        if page.is_file()
-        and page.relative_to(docs).as_posix() not in page_to_module
-        and page.relative_to(docs).as_posix() != "navbar.html"
-    ] if docs.is_dir() else []
-    page_queue = [
-        module.replace(".", "/") + ".html" for module in sorted(closure)
-    ] + non_module_pages
-    scanned_pages = set()
-    while page_queue:
-        rel_page = page_queue.pop()
-        if rel_page in scanned_pages:
-            continue
-        scanned_pages.add(rel_page)
-        page = docs / rel_page
+    preload_pages = set(valid_external_pages) if len(valid_external_pages) <= 200 else set()
+    preload_pages |= (collect_guide_external_pages() & valid_external_pages)
+    for rel in sorted(preload_pages):
+        if (docs / rel).is_file():
+            anchors_by_page[rel].update(page_anchors(docs / rel, anchor_cache))
+
+    for page in sorted(docs.rglob("*.html")):
         if not page.is_file():
             continue
-        text = strip_imports_div(page.read_text())
-        for raw_href in dict.fromkeys(html.unescape(h).partition("#")[0] for h in HREF_RE.findall(text)):
-            norm = resolve_relative_href(rel_page, raw_href)
-            target_module = page_to_module.get(norm) if norm else None
-            if target_module and target_module not in closure:
-                closure.add(target_module)
-                page_queue.append(norm)
-    return closure
+        rel_page = page.relative_to(docs).as_posix()
+        if rel_page == "navbar.html" or rel_page in external_pages:
+            continue
+        text = page.read_text()
+
+        def replace_href(match):
+            raw_href = match.group(1)
+            unescaped = html.unescape(raw_href)
+            if unescaped.startswith(MATHLIB_DOCS_URL):
+                target = unescaped[len(MATHLIB_DOCS_URL):]
+                path_part, sep, fragment = target.partition("#")
+                rel_target = unquote(path_part)
+                norm = posixpath.normpath(rel_target) if rel_target else ""
+                if not norm or norm == "." or norm == ".." or norm.startswith(("/", "../")):
+                    norm = ""
+                require(norm in valid_external_pages,
+                        f"Broken dependency link in {rel_page}: {rel_target}")
+                if (docs / norm).is_file():
+                    anchors_by_page[norm].update(page_anchors(docs / norm, anchor_cache))
+                if sep and fragment:
+                    anchor = unquote(fragment)
+                    if (norm, anchor) not in KERNEL_RECURSOR_ANCHORS:
+                        require(anchor in anchors_by_page[norm],
+                                f"Broken dependency anchor in {rel_page}: {norm}#{anchor}")
+                return match.group(0)
+            path_part, sep, fragment = unescaped.partition("#")
+            norm = resolve_relative_href(rel_page, path_part)
+            if norm is None:
+                return match.group(0)
+            if norm not in external_pages and not (
+                not is_published_doc_file(docs, norm) and is_external_doc_relpath(norm)
+            ):
+                return match.group(0)
+            require(norm in valid_external_pages,
+                    f"Broken dependency link in {rel_page}: {norm}")
+            if (docs / norm).is_file():
+                anchors_by_page[norm].update(page_anchors(docs / norm, anchor_cache))
+            if sep and fragment:
+                anchor = unquote(fragment)
+                if (norm, anchor) not in KERNEL_RECURSOR_ANCHORS:
+                    require(anchor in anchors_by_page[norm],
+                            f"Broken dependency anchor in {rel_page}: {norm}#{anchor}")
+            rewritten = f"{MATHLIB_DOCS_URL}{norm}" + (f"#{fragment}" if sep and fragment else "")
+            return f'href="{html.escape(rewritten, quote=True)}"'
+
+        updated = HREF_RE.sub(replace_href, text)
+        if updated != text:
+            page.write_text(updated)
+
+    manifest_path = docs.parent / EXTERNAL_TARGETS_FILE
+    manifest_path.write_text(json.dumps({
+        "pages": sorted(valid_external_pages),
+        "anchors": {rel: sorted(anchors) for rel, anchors in sorted(anchors_by_page.items()) if anchors},
+    }, ensure_ascii=False, separators=(",", ":")))
 
 
 def remove_empty_parents(path, stop):
@@ -206,33 +309,7 @@ def trim_navbar(navbar_path, pruned_pages):
     navbar_path.write_text(text)
 
 
-def trim_module_imports(docs, pruned_pages):
-    if not docs.is_dir() or not pruned_pages:
-        return
-    for page in sorted(docs.rglob("*.html")):
-        if not page.is_file() or page.name == "navbar.html":
-            continue
-        text = page.read_text()
-        start = text.find('<div class="imports">')
-        if start == -1:
-            continue
-        end = text.find("</div>", start)
-        if end == -1:
-            continue
-        rel_page = page.relative_to(docs).as_posix()
-        block = text[start:end + 6]
-        updated_block = IMPORT_ITEM_RE.sub(
-            lambda m: (
-                "" if resolve_relative_href(rel_page, m.group(1)) in pruned_pages else m.group(0)
-            ),
-            block,
-        )
-        updated_block = EMPTY_IMPORTS_DETAILS_RE.sub("", updated_block)
-        if updated_block != block:
-            page.write_text(text[:start] + updated_block + text[end + 6:])
-
-
-def sanitize_dependency_code_links(docs, modules=()):
+def sanitize_dependency_code_links(docs, modules=(), pruned_pages=()):
     if not docs.is_dir():
         return
     page_to_module = {module.replace(".", "/") + ".html": module for module in modules}
@@ -240,7 +317,11 @@ def sanitize_dependency_code_links(docs, modules=()):
         if not page.is_file():
             continue
         rel_page = page.relative_to(docs).as_posix()
-        if rel_page in ("Complexity.html", "navbar.html") or rel_page.startswith("Complexity/"):
+        if (
+            rel_page in ("Complexity.html", "navbar.html")
+            or rel_page.startswith("Complexity/")
+            or rel_page in pruned_pages
+        ):
             continue
         text = page.read_text()
         if (
@@ -274,13 +355,15 @@ def trim_output():
     require(index_path.is_file(), "Missing documentation output: declarations/declaration-data.bmp")
     index = json.loads(index_path.read_text())
     modules = index["modules"]
-    closure = imported_module_closure(docs, modules)
-    pruned_modules = {
+    kept_modules = {
         module for module in modules
-        if module.split(".", 1)[0] in CORE_ROOTS and module not in closure
+        if module.split(".", 1)[0] in LOCAL_DOC_ROOTS
     }
-    kept_modules = set(modules) - pruned_modules
+    pruned_modules = set(modules) - kept_modules
     pruned_pages = {module.replace(".", "/") + ".html" for module in pruned_modules}
+
+    sanitize_dependency_code_links(docs, modules, pruned_pages)
+    rewrite_external_dependency_links(docs, index, pruned_pages)
 
     for rel_page in sorted(pruned_pages):
         page = docs / rel_page
@@ -289,8 +372,6 @@ def trim_output():
             remove_empty_parents(page, docs)
 
     trim_navbar(docs / "navbar.html", pruned_pages)
-    trim_module_imports(docs, pruned_pages)
-    sanitize_dependency_code_links(docs, modules)
 
     kept_declarations = {
         name: info for name, info in index.get("declarations", {}).items()
@@ -327,12 +408,54 @@ def trim_output():
     index_path.write_text(json.dumps(trimmed_index, ensure_ascii=False, separators=(",", ":")))
 
 
+def verify_external_doc_target(docs, raw_target, external_targets, anchor_cache, *,
+                               context_page=None, is_guide=False):
+    path, sep, fragment = raw_target.partition("#")
+    rel_path = unquote(path)
+    norm = posixpath.normpath(rel_path) if rel_path else ""
+    if not norm or norm == "." or norm == ".." or norm.startswith(("/", "../")):
+        norm = ""
+    local_file = (docs / norm) if norm and is_external_doc_relpath(norm) else None
+    page_exists = (
+        norm in external_targets["pages"]
+        or (local_file is not None and is_published_doc_file(docs, norm))
+    )
+    if not page_exists:
+        if is_guide:
+            raise ValueError(f"Guide links to a missing documentation page: {path}")
+        raise ValueError(f"Broken external dependency link in {context_page}: {rel_path}")
+    if sep and fragment:
+        anchor = unquote(fragment)
+        if (norm, anchor) in KERNEL_RECURSOR_ANCHORS:
+            return
+        known_anchors = set(external_targets["anchors"].get(norm, ()))
+        if local_file is not None and local_file.is_file():
+            known_anchors.update(page_anchors(local_file, anchor_cache))
+        if anchor not in known_anchors:
+            if is_guide:
+                raise ValueError(f"Guide links to a missing documentation anchor: {raw_target}")
+            raise ValueError(
+                f"Broken external dependency anchor in {context_page}: {norm}#{anchor}"
+            )
+
+
 def check_internal_links(docs):
     pages = sorted(page for page in docs.rglob("*.html") if page.is_file())
     checked_targets = {}
+    external_targets = load_external_targets(docs)
+    anchor_cache = {}
     for page in pages:
         rel_page = page.relative_to(docs).as_posix()
-        for raw_href in dict.fromkeys(html.unescape(h).partition("#")[0] for h in HREF_RE.findall(page.read_text())):
+        text = page.read_text()
+        for raw in HREF_RE.findall(text):
+            unescaped = html.unescape(raw)
+            if unescaped.startswith(MATHLIB_DOCS_URL):
+                verify_external_doc_target(
+                    docs, unescaped[len(MATHLIB_DOCS_URL):],
+                    external_targets, anchor_cache, context_page=rel_page,
+                )
+                continue
+            raw_href = unescaped.partition("#")[0]
             norm = resolve_relative_href(rel_page, raw_href)
             if norm is None:
                 continue
@@ -413,10 +536,6 @@ def check_output():
     print(f"Documentation covers {len(sources)} modules and representative theorem search entries.")
 
 
-# Where the guide links declarations (guide/ComplexityGuide/ApiDocs.lean).
-API_DOCS_URL = "https://www.cslib.io/complexitylib/"
-
-
 def expected_abstract_paths():
     catalogue_path = ROOT / "abstracts/catalogue.json"
     if not catalogue_path.is_file():
@@ -431,14 +550,18 @@ def check_guide_links():
     docs = ROOT / "docbuild/.lake/build/doc"
     pages = sorted((ROOT / "guide/.lake/build/site/html-multi").rglob("*.html"))
     require(pages, "Missing guide output")
-    link = re.compile(r'href="' + re.escape(API_DOCS_URL) + r'([^"]*)"')
+    local_link_re = re.compile(r'href="' + re.escape(API_DOCS_URL) + r'([^"]*)"')
+    external_link_re = re.compile(r'href="' + re.escape(MATHLIB_DOCS_URL) + r'([^"]*)"')
     anchors = {}
-    links = set()
+    local_links = set()
+    external_links = set()
     for page in pages:
-        links.update(html.unescape(target) for target in link.findall(page.read_text()))
+        text = page.read_text()
+        local_links.update(html.unescape(target) for target in local_link_re.findall(text))
+        external_links.update(html.unescape(target) for target in external_link_re.findall(text))
     abstract_paths = expected_abstract_paths()
     abstracts_staged = (docs / "abstracts").is_dir()
-    for target in sorted(links):
+    for target in sorted(local_links):
         path, _, fragment = target.partition("#")
         rel_path = unquote(path) or "index.html"
         if rel_path.startswith("abstracts/"):
@@ -458,7 +581,13 @@ def check_guide_links():
                 anchors[file] = {html.unescape(i) for i in ids}
             require(unquote(fragment) in anchors[file],
                     f"Guide links to a missing documentation anchor: {target}")
-    print(f"The guide's {len(links)} links into the documentation resolve.")
+    external_targets = load_external_targets(docs)
+    for target in sorted(external_links):
+        verify_external_doc_target(
+            docs, target, external_targets, anchors, is_guide=True,
+        )
+    total_links = len(local_links) + len(external_links)
+    print(f"The guide's {total_links} links into the documentation resolve.")
 
 
 def main():
@@ -466,7 +595,7 @@ def main():
     parser.add_argument("--config-only", action="store_true",
                         help="check pins before invoking Lake; do not require built documentation")
     parser.add_argument("--trim", action="store_true",
-                        help="prune unimported core pages and trim declaration data before checking")
+                        help="externalize dependency pages and trim declaration data before checking")
     parser.add_argument("--guide", action="store_true",
                         help="also check the built guide's links into the built documentation")
     args = parser.parse_args()
