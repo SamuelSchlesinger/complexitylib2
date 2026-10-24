@@ -1878,7 +1878,6 @@ public import Complexity.Probability.UniversalHash
 public import Complexity.Tactic.FirstOrder
 public import Complexity.Tactic.FirstOrder.Init
 public import Complexity.Tactic.PPT
-public import Complexity.Tactic.PlainMirror
 public import Complexity.Tactic.PolyTime
 public import Complexity.Tactic.PolyTime.Init
 public import Complexity.Tactic.Stateful

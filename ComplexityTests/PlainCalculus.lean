@@ -9,34 +9,97 @@ import Complexity.Tactic.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Plain.Calculus
 import Complexity.Computability.Complexity.Parameterized.PlainCalculus
 
-/-! Plain synthesis through generated rules, captured routines and preserved resource premises. -/
+/-! Plain synthesis through ordinary rules, captured routines and preserved resource premises. -/
 
 universe u
 
--- Existing hand-written rules can be more general than their tidy sources. Every collision
--- must cover the transformed telescope, including monomorphic-to-polymorphic space transport.
-run_meta do
-  let sources := #[
-    `Turing.MultiTapeTM.ComputableTidilyInPolySpace.comp,
-    `Turing.MultiTapeTM.ComputableTidilyInPolySpace.comp',
-    `Turing.MultiTapeTM.ComputableTidilyInPolySpace.ite,
-    `Turing.MultiTapeTM.ComputableTidilyInPolySpace.of_polyTime,
-    `Turing.MultiTapeTM.ComputableTidilyInPolySpace.prod,
-    `Turing.MultiTapeTM.ComputableTidilyInPolyTime.fst',
-    `Turing.MultiTapeTM.ComputableTidilyInPolyTime.snd',
-    `Turing.MultiTapeTM.ComputableTidilyInPolyTime.trans,
-    `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_finite]
-  for source in sources do
-    let target := Cslib.Tactic.PlainMirror.mirrorName source
-    let originalTargetType := (← Lean.getConstInfo target).type
-    Cslib.Tactic.PlainMirror.mirrorDeclaration source target
-    unless (← Lean.getConstInfo target).type == originalTargetType do
-      throwError "existing rule was overwritten: {target}"
-    unless (← Cslib.Tactic.PlainMirror.getMirror? source) == some target do
-      throwError "covered collision is absent from registry: {source}"
-
-
 open Turing.MultiTapeTM
+
+-- Ordinary checked coverage clients retain the narrower construction statements while using
+-- the existing broader canonical APIs. The inventory inspects the five named proof heads.
+namespace ComplexityTests.PlainCalculus
+
+theorem coverage_polySpace_comp :
+    ∀ {α β γ : Type} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
+      {encOut : γ ↪ List Bool} {f : β → γ} {g : α → β},
+      ComputableInPolySpace f encMid encOut →
+        ComputableInPolySpace g encIn encMid →
+          ComputableInPolySpace (fun (a : α) => f (g a)) encIn encOut := by
+  intros
+  apply Turing.MultiTapeTM.ComputableInPolySpace.comp <;> assumption
+
+theorem coverage_polySpace_comp' :
+    ∀ {α β γ : Type} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
+      {encOut : γ ↪ List Bool} {f : β → γ} {g : α → β},
+      ComputableInPolySpace f encMid encOut →
+        ComputableInPolySpace g encIn encMid →
+          ComputableInPolySpace (fun (a : α) => f (g a)) encIn encOut := by
+  intros
+  apply Turing.MultiTapeTM.ComputableInPolySpace.comp' <;> assumption
+
+theorem coverage_polyTime_fst' :
+    ∀ {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {δ : Type}
+      {encD : δ ↪ List Bool} {f : α → β × δ},
+      ComputableInPolyTime f encA
+          (encPair encB encD) →
+        ComputableInPolyTime (fun (x : α) => (f x).1) encA encB := by
+  intros
+  apply Turing.MultiTapeTM.ComputableInPolyTime.fst' <;> assumption
+
+theorem coverage_polyTime_snd' :
+    ∀ {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {δ : Type}
+      {encD : δ ↪ List Bool} {f : α → β × δ},
+      ComputableInPolyTime f encA
+          (encPair encB encD) →
+        ComputableInPolyTime (fun (x : α) => (f x).2) encA encD := by
+  intros
+  apply Turing.MultiTapeTM.ComputableInPolyTime.snd' <;> assumption
+
+theorem coverage_polyTime_trans :
+    ∀ {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {δ : Type}
+      {encD : δ ↪ List Bool} {f : α → β} {g : β → δ},
+      ComputableInPolyTime f encA encB →
+        ComputableInPolyTime g encB encD →
+          ComputableInPolyTime (fun (x : α) => g (f x)) encA encD := by
+  intros
+  apply Turing.MultiTapeTM.ComputableInPolyTime.trans <;> assumption
+
+example :
+    ∀ {α β : Type} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool} {c : α → Bool}
+      {f g : α → β},
+      ComputableInPolySpace c encIn encBool →
+        ComputableInPolySpace f encIn encMid →
+          ComputableInPolySpace g encIn encMid →
+            ComputableInPolySpace
+              (fun (a : α) => if c a = Bool.true then f a else g a) encIn encMid := by
+  intros
+  apply Turing.MultiTapeTM.ComputableInPolySpace.ite <;> assumption
+
+example :
+    ∀ {α β : Type} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool} {f : α → β},
+      ComputableInPolyTime f encIn encMid →
+        ComputableInPolySpace f encIn encMid := by
+  intros
+  apply Turing.MultiTapeTM.ComputableInPolySpace.of_polyTime
+  assumption
+
+example :
+    ∀ {α β δ : Type} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool} {encD : δ ↪ List Bool}
+      {f : α → β} {g : α → δ},
+      ComputableInPolySpace f encIn encMid →
+        ComputableInPolySpace g encIn encD →
+          ComputableInPolySpace (fun (a : α) => (f a, g a)) encIn
+            (encPair encMid encD) := by
+  intros
+  apply Turing.MultiTapeTM.ComputableInPolySpace.prod <;> assumption
+
+example :
+    ∀ {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} [Finite α] (f : α → β),
+      ComputableInPolyTime f encA encB := by
+  intros
+  apply Turing.MultiTapeTM.ComputableInPolyTime.of_finite
+
+end ComplexityTests.PlainCalculus
 
 -- Newly landed generic membership rules use the same public plain entrypoint.
 example : ComputableInPolyTime (fun p : ℕ × List ℕ => decide (p.1 ∈ p.2))
@@ -78,19 +141,6 @@ example {α β γ : Type u} {enc : α ↪ List Bool} {encB : β ↪ List Bool}
     (hf : ComputableInPolyTime f enc (encPair encB encC)) :
     ComputableInPolyTime (fun a => (f a).1) enc encB :=
   ComputableInPolyTime.fst' (enc₁ := encB) (enc₂ := encC) hf
-
-/-- error: Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_linear retains an unsupported tidy notion after transformation -/
-#guard_msgs in
-attribute [plain_mirror rejectedLinearProbe] ComputableTidilyInPolyTime.of_linear
-
-run_meta do
-  let source := `Turing.MultiTapeTM.ComputableTidilyInPolyTime.foldl_of_bounded_growth
-  let target := `Turing.MultiTapeTM.ComputableInPolyTime.foldl_of_bounded_growth
-  unless (← Cslib.Tactic.PlainMirror.getMirror? source) == some target do
-    throwError "bounded-growth mirror is absent from the registry"
-  unless (← Cslib.Tactic.PlainMirror.getMirror?
-      `Turing.MultiTapeTM.ComputableTidilyInPolyTime.of_linear).isNone do
-    throwError "unsupported exact-resource conversion was recorded as covered"
 
 /-- info: 'Turing.MultiTapeTM.ComputableInPolyTime.binary_add' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
