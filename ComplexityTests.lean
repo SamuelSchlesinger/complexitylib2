@@ -347,6 +347,7 @@ import ComplexityTests.PlainAutomationSupport
 import ComplexityTests.PlainCapturedMap
 import ComplexityTests.PlainIntMulOracleRun
 import ComplexityTests.PlainLawfulBEq
+import ComplexityTests.PlainPPTPreprocess
 import ComplexityTests.PlainPurePPT
 import ComplexityTests.PolySpaceFold
 import ComplexityTests.PolyTimeBinaryWord
