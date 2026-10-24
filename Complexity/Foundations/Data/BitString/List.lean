@@ -53,6 +53,7 @@ namespace Cslib.BitString
 /-- View a list as `n` bits, padding missing bits with `false`. -/
 def ofList (n : ℕ) (word : List Bool) : BitString n := fun i => word.getD i.val false
 
+/-- Viewing `List.ofFn bits` as an `n`-bit string recovers `bits`. -/
 @[simp] theorem ofList_ofFn {n : ℕ} (bits : BitString n) :
     ofList n (List.ofFn bits) = bits := by
   funext i
@@ -142,6 +143,7 @@ theorem block_ofList_prefix {count rows width : ℕ} (h : rows ≤ count) (word 
 def listRow (width row : ℕ) (word : List Bool) : List Bool :=
   (word.drop (row * width) ++ List.replicate width false).take width
 
+/-- Every extracted row has length `width`. -/
 @[simp] theorem length_listRow (width row : ℕ) (word : List Bool) :
     (listRow width row word).length = width := by
   simp [listRow]
@@ -210,6 +212,7 @@ theorem listRow_eq_ofFn {count : ℕ} (width : ℕ) (row : Fin count) (word : Li
 def listRows (count width : ℕ) (word : List Bool) : List (List Bool) :=
   (List.range count).map (fun row => listRow width row word)
 
+/-- Extracting `count` rows produces a list of length `count`. -/
 @[simp] theorem length_listRows (count width : ℕ) (word : List Bool) :
     (listRows count width word).length = count := by
   simp [listRows]
