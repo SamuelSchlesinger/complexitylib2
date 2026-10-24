@@ -40,19 +40,19 @@ that the reverse is killed at the same step.
 
 ## Main definitions
 
-* `Cslib.RotationMap.killTime`: the step at which a walk with given kill signals is killed.
+* `Cslib.killTime`: the step at which a walk with given kill signals is killed.
 * `Cslib.RotationMap.killedPow`: the killed power of a rotation map.
 
 ## Main results
 
-* `Cslib.RotationMap.killTime_cons`: a walk survives its first step unless its first signal is `0`,
+* `Cslib.killTime_cons`: a walk survives its first step unless its first signal is `0`,
   and is then killed one step after the walk along its remaining signals.
-* `Cslib.RotationMap.card_filter_killTime_eq`, `Cslib.RotationMap.card_filter_le_killTime`: the
+* `Cslib.card_filter_killTime_eq`, `Cslib.card_filter_le_killTime`: the
   truncated geometric law of the kill time.
-* `Cslib.RotationMap.sum_ite_killTime_eq`, `Cslib.RotationMap.card_filter_killTime_eq_and`: given
+* `Cslib.sum_ite_killTime_eq`, `Cslib.card_filter_killTime_eq_and`: given
   its kill time, a killed walk is a uniformly random walk of that length.
-* `Cslib.RotationMap.expect_killTime_eq`, `Cslib.RotationMap.expect_le_killTime`,
-  `Cslib.RotationMap.expect_ite_killTime_eq`, `Cslib.RotationMap.expect_prod_ite_killTime_eq`: the
+* `Cslib.expect_killTime_eq`, `Cslib.expect_le_killTime`,
+  `Cslib.expect_ite_killTime_eq`, `Cslib.expect_prod_ite_killTime_eq`: the
   law of killed walks, as uniform averages.
 * `Cslib.RotationMap.card_filter_killTime_eq_and_splitWalk`: the crossing count for killed walks.
 * `Cslib.RotationMap.neighbor_killedPow`, `Cslib.RotationMap.rot_pow_killTime`: the edges of the
@@ -67,12 +67,12 @@ that the reverse is killed at the same step.
 
 @[expose] public section
 
-namespace Cslib.RotationMap
+namespace Cslib
 
 open Finset
 open scoped BigOperators
 
-variable {V D : Type*} (G : RotationMap V D)
+variable {V D : Type*}
 
 section KillTime
 
@@ -203,25 +203,6 @@ theorem card_filter_killTime_eq_and {ℓ : ℕ} (hℓ : ℓ < T) (P : V × (Fin 
   rw [card_filter, card_filter, mul_comm, ← smul_eq_mul, ← sum_ite_killTime_eq hℓ]
   simp only [ite_and]
 
-/-- **The crossing count for killed walks.** Counted by the dart `d` crossed at step `i`, the walks
-of length `T` and kill signals for which the walk is killed at its step `ℓ < T`, crosses `d` at its
-step `i < ℓ`, the reverse of its first `i` steps satisfies `P d` and its steps from `i + 1` to `ℓ`
-satisfy `Q d` are counted by independent factors and the weight of the length `ℓ`. -/
-theorem card_filter_killTime_eq_and_splitWalk {ℓ : ℕ} (hℓ : ℓ < T) (i : Fin ℓ)
-    (P : V × D → (Fin i → D) → Prop) (Q : V × D → (Fin (ℓ - (i + 1)) → D) → Prop)
-    [∀ d, DecidablePred (P d)] [∀ d, DecidablePred (Q d)] :
-    #{x : V × (Fin T → D) × (Fin T → Fin q) | killTime x.2.2 = ℓ ∧
-        (P (G.walkDart (x.1, Fin.take ℓ hℓ.le x.2.1) i)
-            ((G.pow i).rot (x.1, Fin.take i i.isLt.le (Fin.take ℓ hℓ.le x.2.1))).2 ∧
-          Q (G.walkDart (x.1, Fin.take ℓ hℓ.le x.2.1) i)
-            (G.walkDrop (x.1, Fin.take ℓ hℓ.le x.2.1) (i + 1)).2)} =
-      (∑ d, #{r | P d r} * #{s | Q d s}) *
-        (Fintype.card D ^ (T - ℓ) * ((q - 1) ^ ℓ * q ^ (T - (ℓ + 1)))) := by
-  rw [← G.card_filter_splitWalk i P Q]
-  exact card_filter_killTime_eq_and hℓ fun w ↦
-    P (G.walkDart w i) ((G.pow i).rot (w.1, Fin.take i i.isLt.le w.2)).2 ∧
-      Q (G.walkDart w i) (G.walkDrop w (i + 1)).2
-
 end Law
 
 section Expect
@@ -291,6 +272,30 @@ theorem expect_prod_ite_killTime_eq [Fintype V] [Nonempty D] {ℓ : ℕ} (hℓ :
 
 end Expect
 
+namespace RotationMap
+
+variable (G : RotationMap V D)
+
+/-- **The crossing count for killed walks.** Counted by the dart `d` crossed at step `i`, the walks
+of length `T` and kill signals for which the walk is killed at its step `ℓ < T`, crosses `d` at its
+step `i < ℓ`, the reverse of its first `i` steps satisfies `P d` and its steps from `i + 1` to `ℓ`
+satisfy `Q d` are counted by independent factors and the weight of the length `ℓ`. -/
+theorem card_filter_killTime_eq_and_splitWalk {T q : ℕ} [NeZero q] [Fintype V] [Fintype D]
+    {ℓ : ℕ} (hℓ : ℓ < T) (i : Fin ℓ)
+    (P : V × D → (Fin i → D) → Prop) (Q : V × D → (Fin (ℓ - (i + 1)) → D) → Prop)
+    [∀ d, DecidablePred (P d)] [∀ d, DecidablePred (Q d)] :
+    #{x : V × (Fin T → D) × (Fin T → Fin q) | killTime x.2.2 = ℓ ∧
+        (P (G.walkDart (x.1, Fin.take ℓ hℓ.le x.2.1) i)
+            ((G.pow i).rot (x.1, Fin.take i i.isLt.le (Fin.take ℓ hℓ.le x.2.1))).2 ∧
+          Q (G.walkDart (x.1, Fin.take ℓ hℓ.le x.2.1) i)
+            (G.walkDrop (x.1, Fin.take ℓ hℓ.le x.2.1) (i + 1)).2)} =
+      (∑ d, #{r | P d r} * #{s | Q d s}) *
+        (Fintype.card D ^ (T - ℓ) * ((q - 1) ^ ℓ * q ^ (T - (ℓ + 1)))) := by
+  rw [← G.card_filter_splitWalk i P Q]
+  exact card_filter_killTime_eq_and hℓ fun w ↦
+    P (G.walkDart w i) ((G.pow i).rot (w.1, Fin.take i i.isLt.le w.2)).2 ∧
+      Q (G.walkDart w i) (G.walkDrop w (i + 1)).2
+
 section KilledPow
 
 /-- Overwriting the first `n` labels with `r` leaves `r` as the first `n` labels. -/
@@ -345,4 +350,6 @@ theorem rot_pow_killTime (p : V × (Fin T → D) × (Fin T → Fin q)) :
 
 end KilledPow
 
-end Cslib.RotationMap
+end RotationMap
+
+end Cslib
