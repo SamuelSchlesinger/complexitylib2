@@ -35,10 +35,11 @@ with both sides of size at least `K_n` and `log K_n = o(n)`.
 
 ## Main definitions
 
-* `Cslib.Circuits.Frontier.agreement`: the fraction of inputs on which membership in `S` and in `T`
-  agree.
-* `Cslib.Circuits.Frontier.correlation`: agreement minus disagreement.
-* `Cslib.Circuits.Frontier.AverageCaseBound`: the average-case claim with coefficient `L`.
+* `Cslib.Circuits.Frontier.agreement`: the fraction of inputs on which membership in two sets of
+  inputs agrees.
+* `Cslib.Circuits.Frontier.correlation`: agreement minus disagreement between two sets of inputs.
+* `Cslib.Circuits.Frontier.AverageCaseBound`: the average-case lower-bound claim for a linear
+  gate-count coefficient.
 
 ## Main results
 

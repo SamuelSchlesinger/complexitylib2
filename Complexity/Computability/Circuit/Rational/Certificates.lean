@@ -303,8 +303,10 @@ private lemma block_eq (φ : K →+* E) (L : Matrix (Fin q) (Fin q) (Affine.Form
   simp only [Rectangular.blockMatrix, Matrix.sum_apply, Matrix.kroneckerMap_apply,
     RingHom.mapMatrix_apply, Matrix.map_apply, coefficients, hc]
 
-/-- If an affine pencil `L` becomes invertible over `LaurentReduction.F E`, then its certificate
-determinant `determinant χ N L` is a nonzero polynomial. -/
+/-- Under the stated primitive-character (`hχ`) and dimension/size hypotheses (`1 ≤ q`, `q ≤ B`,
+`1 ≤ N`, `M = N + 2 * (n + 1) ^ 3 * B`, `B * (2 * (n + 1) ^ 3 * B) < M`, `0 < d`), an invertible
+positive-dimensional matrix evaluation of `L` over `LaurentReduction.F E` gives a nonzero
+certificate determinant `determinant χ N L`. -/
 lemma determinant_ne_zero (χ : AddChar (ZMod M) K) (hχ : χ.IsPrimitive)
     (φ : K →+* E) (L : Matrix (Fin q) (Fin q) (Affine.Form n))
     (B d : ℕ) (hq : 1 ≤ q) (hqB : q ≤ B) (hN : 1 ≤ N)

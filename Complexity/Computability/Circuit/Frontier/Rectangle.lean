@@ -48,12 +48,14 @@ and those outside `S` differ in number by at most a `2 b` fraction (`signedCount
 
 ## Main definitions
 
-* `Cslib.Circuits.Frontier.rectangle`: the rectangle with sides `A` on `X` and `B` on `Xᶜ`.
-* `Cslib.Circuits.Frontier.RectangleFree`: every rectangle inside `S` has a side with fewer
-  than `K` elements.
-* `Cslib.Circuits.Frontier.signedCount`: the inputs of `R` in `S` minus those outside `S`.
-* `Cslib.Circuits.Frontier.RectangleBias`: on every rectangle with both sides of size at
-  least `K`, the density of `S` is within `b` of `1/2`.
+* `Cslib.Circuits.Frontier.rectangle`: the combinatorial rectangle on a coordinate subset and its
+  complement with given projections on each side.
+* `Cslib.Circuits.Frontier.RectangleFree`: every combinatorial rectangle contained in a target set
+  has a side below a size threshold.
+* `Cslib.Circuits.Frontier.signedCount`: the number of inputs of a finite subset inside a target set
+  minus the number outside.
+* `Cslib.Circuits.Frontier.RectangleBias`: on every combinatorial rectangle with both sides at least
+  a size threshold, the density of a target set is within a given bias of `1/2`.
 
 ## Main results
 
