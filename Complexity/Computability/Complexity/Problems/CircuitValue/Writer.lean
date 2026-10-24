@@ -9,7 +9,6 @@ module
 
 public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Machines.ReadMachine.Tidy
-import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpaceLib
 import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength

@@ -9,7 +9,6 @@ module
 
 public import Complexity.Computability.TreeEval.Reader.Cert.Step
 public import Complexity.Computability.Machines.ReadMachine.Tidy
-import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 
 /-!
 # The Tree Evaluation read machine within its space budget

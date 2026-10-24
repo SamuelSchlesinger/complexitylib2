@@ -23,7 +23,7 @@ wire) followed by the input bits.
 
 The circuit value problem is in `P` (`Cslib.Complexity.CircuitValue.mem_P`): the decider
 evaluates the gate list with the polynomial-time evaluator
-`Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalOutput`. Ladner showed that it is
+`Cslib.Circuits.Boolean.computableInPolyTime_evalOutput`. Ladner showed that it is
 `P`-complete under logarithmic-space reductions [Ladner1975]; this is proved in
 `CircuitValue/Completeness.lean` (`Cslib.Complexity.CircuitValue.logSpaceComplete`).
 
@@ -89,11 +89,12 @@ theorem eval_eq_evalOutput (x : Σ n, Circuit signature n 1 × BitString n) :
 theorem computableTidilyInPolyTime_eval :
     ComputableTidilyInPolyTime (fun x : Σ n, Circuit signature n 1 × BitString n =>
       x.2.1.eval interpretation x.2.2 0) encCircuitValue encBool := by
-  have hraw : ComputableTidilyInPolyTime
+  apply ComputableInPolyTime.tidy
+  have hraw : ComputableInPolyTime
       (fun x : Σ n, Circuit signature n 1 × BitString n => ((x.1, x.2.1.code), List.ofFn x.2.2))
       encCircuitValue (encPair (encPair encUnary encCode) encBits) :=
     .of_eq fun _ => rfl
-  have hout : ComputableTidilyInPolyTime
+  have hout : ComputableInPolyTime
       (fun r : (ℕ × (List (Op × List ℕ) × List ℕ)) × List Bool =>
         evalOutput r.2 r.1.2.1 (r.1.2.2.headD 0))
       (encPair (encPair encUnary encCode) encBits) encBool := by

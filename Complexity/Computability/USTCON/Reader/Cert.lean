@@ -9,7 +9,6 @@ module
 
 public import Complexity.Computability.USTCON.Reader.Encode
 public import Complexity.Computability.Machines.ReadMachine.Tidy
-import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpaceLib
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Streaming
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
