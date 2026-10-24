@@ -58,4 +58,17 @@ example : True := by
     have : ComputableInPolyTime BitString.binaryValue encBits encUnary := by polytime
   trivial
 
+-- Runtime bit widths remain unary resources even though the sampled result is binary.
+example : IsPPTOn encUnary encNat (fun width => sampleBinaryNat (width + 1)) := by fun_prop
+
+example {α : Type} {input : α ↪ List Bool} {width : α → ℕ}
+    (hwidth : ComputableInPolyTime width input encUnary) :
+    IsPPTOn input encNat (fun a => sampleBinaryNat (width a)) := by fun_prop
+
+run_meta do
+  for name in [`Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_dyadicSize,
+      `Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleBinaryNat] do
+    if (← Lean.getEnv).contains name then
+      throwError "retired sampler rule remains: {name}"
+
 end ComplexityTests.UniformNat
