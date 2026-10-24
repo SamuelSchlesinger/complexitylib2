@@ -122,6 +122,12 @@ theorem computableTidilyInPolyTime_compl :
   unfold compl encGraph
   fun_prop
 
+/-- Complementing a graph on its declared vertices is polynomial-time with the graph encoding. -/
+@[fun_prop]
+theorem computableInPolyTime_compl :
+    ComputableInPolyTime compl encGraph encGraph :=
+  .of_tidy computableTidilyInPolyTime_compl
+
 end Graph
 
 namespace Clique
