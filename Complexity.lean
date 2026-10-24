@@ -1500,7 +1500,6 @@ public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
 public import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrSignature
 public import Complexity.Crypto.Protocols.Signature.RandomOracle
 public import Complexity.Foundations.Analysis.BernoulliInequality
-public import Complexity.Crypto.Protocols.SigmaProtocol.Lyubashevsky
 public import Complexity.Foundations.Analysis.HarmonicMean
 public import Complexity.Foundations.Analysis.MarkovInequality
 public import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
