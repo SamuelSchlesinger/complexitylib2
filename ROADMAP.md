@@ -1232,7 +1232,9 @@ Jukna coverage below is an additional target beyond the V1 port:
   [sequential composition](Complexity/Computability/Interactive/Sequential.lean) is proved for
   completeness, soundness, knowledge soundness and round-by-round soundness, and so is per-stage
   iteration. [Round-by-round soundness implies soundness](Complexity/Computability/Interactive/Plain.lean).
-  Sumcheck, the first client, is in review (#703). Open, in order:
+  [Sumcheck with a final evaluation check](Complexity/Computability/Interactive/Sumcheck.lean),
+  the first client, is perfectly complete and has soundness error `n · d / |F|`; both follow from
+  the one-round theorems by composition. Open, in order:
   - the `PublicCoin → IP` bridge, with a uniform word verifier and adversarial decoding;
   - parallel and AND/OR composition, and round-by-round knowledge soundness;
   - oracle statements. Today a later phase cannot query an earlier phase's oracle message,
