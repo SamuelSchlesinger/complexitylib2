@@ -13,7 +13,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSp
 /-!
 # Residues within linear work space
 
-The residue operations of `Cslib.TreeEval.Reader` are tidily computable within work space linear
+The residue operations of `Cslib.TreeEval.Reader` are computable within work space linear
 in the lengths of their encoded arguments.
 
 ## Main results
@@ -28,21 +28,21 @@ namespace Cslib.TreeEval
 
 namespace Reader
 
-open Turing MultiTapeTM ComputableTidilyInSpace
+open Turing MultiTapeTM ComputableInSpace
 
 /-- The projections of a triple. -/
 theorem proj3 :
-    ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => q.1) encNat3 encNat
+    ComputableInSpace (fun q : ℕ × ℕ × ℕ => q.1) encNat3 encNat
       (fun q => (encNat3 q).length) ∧
-    ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => q.2.1) encNat3 encNat
+    ComputableInSpace (fun q : ℕ × ℕ × ℕ => q.2.1) encNat3 encNat
       (fun q => (encNat3 q).length) ∧
-    ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => q.2.2) encNat3 encNat
+    ComputableInSpace (fun q : ℕ × ℕ × ℕ => q.2.2) encNat3 encNat
       (fun q => (encNat3 q).length) :=
   ⟨fst _ _, fst' (snd _ _), snd' (snd _ _)⟩
 
 /-- The sum modulo `p`, from `(p, a, b)`. -/
 theorem addMod_inSpace :
-    ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => addMod q.1 q.2.1 q.2.2) encNat3 encNat
+    ComputableInSpace (fun q : ℕ × ℕ × ℕ => addMod q.1 q.2.1 q.2.2) encNat3 encNat
       fun q => (encNat3 q).length := by
   obtain ⟨hp, ha, hb⟩ := proj3
   exact budget_comp_lin natMod (linear_mul _)
@@ -50,7 +50,7 @@ theorem addMod_inSpace :
 
 /-- The product modulo `p`, from `(p, a, b)`. -/
 theorem mulMod_inSpace :
-    ComputableTidilyInSpace (fun q : ℕ × ℕ × ℕ => mulMod q.1 q.2.1 q.2.2) encNat3 encNat
+    ComputableInSpace (fun q : ℕ × ℕ × ℕ => mulMod q.1 q.2.1 q.2.2) encNat3 encNat
       fun q => (encNat3 q).length := by
   obtain ⟨hp, ha, hb⟩ := proj3
   exact budget_comp_lin natMod (linear_mul _)
@@ -58,7 +58,7 @@ theorem mulMod_inSpace :
 
 /-- The negation modulo `p`, from `(p, a)`. -/
 theorem negMod_inSpace :
-    ComputableTidilyInSpace (fun q : ℕ × ℕ => negMod q.1 q.2) (encPair encNat encNat) encNat
+    ComputableInSpace (fun q : ℕ × ℕ => negMod q.1 q.2) (encPair encNat encNat) encNat
       fun q => (encPair encNat encNat q).length := by
   have hp := fst encNat encNat
   have hm := budget_comp_lin natMod (linear_mul _) (budget_prod (snd encNat encNat) hp)
@@ -67,7 +67,7 @@ theorem negMod_inSpace :
 
 /-- The residue of `x` or of `1 - x` modulo `p`, from `((p, x), b)`. -/
 theorem chi_inSpace :
-    ComputableTidilyInSpace (fun q : (ℕ × ℕ) × Bool => chi q.1.1 q.2 q.1.2)
+    ComputableInSpace (fun q : (ℕ × ℕ) × Bool => chi q.1.1 q.2 q.1.2)
       (encPair (encPair encNat encNat) encBool) encNat
       fun q => (encPair (encPair encNat encNat) encBool q).length := by
   have hpx := fst (encPair encNat encNat) encBool
@@ -96,10 +96,10 @@ theorem powMod_le {p a : ℕ} {k : ℕ} (hk : k ≤ p - 2) : powMod p a k ≤ p 
 
 /-- **The inverse of the unit of round `j`**, `unitInv p j` from `(p, j)`. -/
 theorem unitInv_inSpace :
-    ComputableTidilyInSpace (fun q : ℕ × ℕ => unitInv q.1 q.2) (encPair encNat encNat) encNat
+    ComputableInSpace (fun q : ℕ × ℕ => unitInv q.1 q.2) (encPair encNat encNat) encNat
       fun q => (encPair encNat encNat q).length := by
   have hp := fst encNat encNat
-  have hstep : ComputableTidilyInSpace powStep encNat3 encNat3 fun q => (encNat3 q).length := by
+  have hstep : ComputableInSpace powStep encNat3 encNat3 fun q => (encNat3 q).length := by
     obtain ⟨hp, ha, hacc⟩ := proj3
     exact budget_prod hp (budget_prod ha
       (budget_comp_linear mulMod_inSpace (budget_prod hp (budget_prod hacc ha))))
@@ -109,7 +109,7 @@ theorem unitInv_inSpace :
   refine (snd' (snd' (budget_iterate hn hinit hstep (fun q k hk => ?_)
     (.of_le_linear 4 8 fun q => le_rfl)))).of_enc_eq fun q => by rw [iterate_powStep]; rfl
   rw [iterate_powStep]
-  have h₁ := ComputableTidilyInO.length_encNat_mono (powMod_le (p := q.1) (a := q.2 + 1)
+  have h₁ := ComputableInO.length_encNat_mono (powMod_le (p := q.1) (a := q.2 + 1)
     (k := k) (by omega))
   have h₂ := length_encNat_add_le_add q.1 1
   have h₃ := length_encNat_add_le_add q.2 1

@@ -13,10 +13,10 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSp
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StepMachine
 
 /-!
-# Tidy step machines from read machines
+# Resource certificates for read-machine simulation
 
-If the halting test, the address and the step of a read machine are tidily computable within
-bounds on its states, then so is the step of `Turing.ReadMachine.toStepMachine`, within bounds on
+If the halting test, address and step of a read machine have charged plain certificates within
+bounds on its states, then so does the step of `Turing.ReadMachine.toStepMachine`, within bounds on
 its states, which add the position of the head: the work space grows by the length of the position
 in binary, and the time by a factor of the position, to compare it with the address.
 
@@ -24,7 +24,8 @@ in binary, and the time by a factor of the position, to compare it with the addr
 
 * `Turing.ReadMachine.pairFalse_inSpace`, `Turing.ReadMachine.comp_pairFalse_inSpace`: evaluating
   a function of a state and a bit at the bit `false` within the space budget of the step.
-* `Turing.ReadMachine.tidy_toStepMachine`: the simulating step machine is tidy.
+* `Turing.ReadMachine.toStepMachine_resourceCertificate`: the simulating step machine has a
+  resource certificate.
 -/
 
 @[expose] public section
@@ -33,7 +34,7 @@ namespace Turing
 
 namespace ReadMachine
 
-open MultiTapeTM MultiTapeTM.ComputableTidilyInO
+open MultiTapeTM MultiTapeTM.ComputableInO
 
 /-! ### Computing within fixed budgets -/
 
@@ -44,52 +45,52 @@ variable {γ β δ : Type} {encIn : γ ↪ List Bool} {encB : β ↪ List Bool} 
 
 /-- Composition within the budgets. -/
 theorem budget_comp {f : γ → β} {g : β → δ} {Tg Sg : β → ℕ}
-    (hg : ComputableTidilyInO g encB encD Tg Sg) (hf : ComputableTidilyInO f encIn encB Bt Bs)
+    (hg : ComputableInO g encB encD Tg Sg) (hf : ComputableInO f encIn encB Bt Bs)
     (hT : (fun x => Tg (f x)) ≼ Bt) (hS : (fun x => Sg (f x)) ≼ Bs) :
-    ComputableTidilyInO (fun x => g (f x)) encIn encD Bt Bs :=
+    ComputableInO (fun x => g (f x)) encIn encD Bt Bs :=
   (hg.comp hf).weaken (.add (.refl _) hT) (.add (.refl _) hS)
 
 /-- Composition with a map computed in linear time and space, within the budgets. -/
 theorem budget_comp_linear {f : γ → β} {g : β → δ}
-    (hg : ComputableTidilyInO g encB encD (fun b => (encB b).length) fun b => (encB b).length)
-    (hf : ComputableTidilyInO f encIn encB Bt Bs) (hst : Bs ≼ Bt) :
-    ComputableTidilyInO (fun x => g (f x)) encIn encD Bt Bs :=
+    (hg : ComputableInO g encB encD (fun b => (encB b).length) fun b => (encB b).length)
+    (hf : ComputableInO f encIn encB Bt Bs) (hst : Bs ≼ Bt) :
+    ComputableInO (fun x => g (f x)) encIn encD Bt Bs :=
   budget_comp hg hf (BigOLe.trans hf.length_le hst) hf.length_le
 
 /-- Pairs within the budgets. -/
-theorem budget_prod {f : γ → β} {g : γ → δ} (hf : ComputableTidilyInO f encIn encB Bt Bs)
-    (hg : ComputableTidilyInO g encIn encD Bt Bs) :
-    ComputableTidilyInO (fun x => (f x, g x)) encIn (encPair encB encD) Bt Bs :=
+theorem budget_prod {f : γ → β} {g : γ → δ} (hf : ComputableInO f encIn encB Bt Bs)
+    (hg : ComputableInO g encIn encD Bt Bs) :
+    ComputableInO (fun x => (f x, g x)) encIn (encPair encB encD) Bt Bs :=
   (hf.prod hg).weaken (.add (.refl _) (.refl _)) (.add (.refl _) (.refl _))
 
 /-- Conditionals within the budgets. -/
 theorem budget_ite {c : γ → Bool} {f g : γ → β}
-    (hc : ComputableTidilyInO c encIn encBool Bt Bs) (hf : ComputableTidilyInO f encIn encB Bt Bs)
-    (hg : ComputableTidilyInO g encIn encB Bt Bs) :
-    ComputableTidilyInO (fun x => if c x then f x else g x) encIn encB Bt Bs :=
+    (hc : ComputableInO c encIn encBool Bt Bs) (hf : ComputableInO f encIn encB Bt Bs)
+    (hg : ComputableInO g encIn encB Bt Bs) :
+    ComputableInO (fun x => if c x then f x else g x) encIn encB Bt Bs :=
   (hc.ite hf hg).weaken (.add (.refl _) (.ite _ (.refl _) (.refl _)))
     (.add (.refl _) (.ite _ (.refl _) (.refl _)))
 
 /-- A constant within the budgets. -/
 theorem budget_const (b : β) (hl : (fun x => (encIn x).length) ≼ Bs) (hst : Bs ≼ Bt) :
-    ComputableTidilyInO (fun _ : γ => b) encIn encB Bt Bs :=
+    ComputableInO (fun _ : γ => b) encIn encB Bt Bs :=
   (const b).weaken (hl.trans hst) hl
 
 /-- A function of finitely many values, within the budgets. -/
 theorem budget_finite {f : γ → β} [Finite β] (g : β → δ)
-    (hf : ComputableTidilyInO f encIn encB Bt Bs) (hst : Bs ≼ Bt) :
-    ComputableTidilyInO (fun x => g (f x)) encIn encD Bt Bs :=
-  budget_comp_linear (ComputableTidilyInDegree.of_finite g).inO_one hf hst
+    (hf : ComputableInO f encIn encB Bt Bs) (hst : Bs ≼ Bt) :
+    ComputableInO (fun x => g (f x)) encIn encD Bt Bs :=
+  budget_comp_linear (ComputableInDegree.of_finite g).inO_one hf hst
 
 /-- Pairing a state with the bit `false`, within any space budget at least the encoded pair
 length. -/
 theorem pairFalse_inSpace {α : Type} {enc : α ↪ List Bool} {B : α × Bool → ℕ}
     (hB : ∀ x, (encPair enc encBool (x, false)).length ≤ B (x, false)) :
-    ComputableTidilyInSpace (fun x : α => (x, false)) enc (encPair enc encBool)
+    ComputableInSpace (fun x : α => (x, false)) enc (encPair enc encBool)
       fun x => B (x, false) :=
-  (ComputableTidilyInSpace.budget_prod
-    (ComputableTidilyInSpace.of_inO (.of_linear (.of_eq (f := id) fun _ => rfl)))
-    (ComputableTidilyInSpace.budget_const (encB := encBool) false (.refl _))).weaken
+  (ComputableInSpace.budget_prod
+    (ComputableInSpace.of_inO (.of_linear (.of_eq (f := id) fun _ => rfl)))
+    (ComputableInSpace.budget_const (encB := encBool) false (.refl _))).weaken
       (.of_le fun x => by
         have := hB x
         simp only [length_encPair] at this ⊢
@@ -99,9 +100,9 @@ theorem pairFalse_inSpace {α : Type} {enc : α ↪ List Bool} {B : α × Bool �
 step. -/
 theorem comp_pairFalse_inSpace {α : Type} {enc : α ↪ List Bool} {B : α × Bool → ℕ}
     (hB : ∀ x, (encPair enc encBool (x, false)).length ≤ B (x, false)) {f : α × Bool → β}
-    (h : ComputableTidilyInSpace f (encPair enc encBool) encB B) :
-    ComputableTidilyInSpace (fun x : α => f (x, false)) enc encB fun x => B (x, false) :=
-  ComputableTidilyInSpace.budget_comp h (pairFalse_inSpace hB) (.refl _)
+    (h : ComputableInSpace f (encPair enc encBool) encB B) :
+    ComputableInSpace (fun x : α => f (x, false)) enc encB fun x => B (x, false) :=
+  ComputableInSpace.budget_comp h (pairFalse_inSpace hB) (.refl _)
 
 end Budget
 
@@ -136,11 +137,11 @@ theorem inLen_le_timeB (p : (σ × ℕ) × Option Bool) : inLen encS p ≤ timeB
 
 /-- The projections of the input are within the budgets. -/
 theorem budget_proj :
-    ComputableTidilyInO (fun p : (σ × ℕ) × Option Bool => p.1.1) (encStepIn encS) encS
+    ComputableInO (fun p : (σ × ℕ) × Option Bool => p.1.1) (encStepIn encS) encS
       (timeB encS T S) (spaceB encS S) ∧
-    ComputableTidilyInO (fun p : (σ × ℕ) × Option Bool => p.1.2) (encStepIn encS) encNat
+    ComputableInO (fun p : (σ × ℕ) × Option Bool => p.1.2) (encStepIn encS) encNat
       (timeB encS T S) (spaceB encS S) ∧
-    ComputableTidilyInO (fun p : (σ × ℕ) × Option Bool => p.2) (encStepIn encS)
+    ComputableInO (fun p : (σ × ℕ) × Option Bool => p.2) (encStepIn encS)
       (encOption encBool) (timeB encS T S) (spaceB encS S) := by
   have h₁ := fst (encPair encS encNat) (encOption encBool)
   refine ⟨(fst' h₁).weaken (.of_le inLen_le_timeB)
@@ -216,13 +217,14 @@ theorem inLen_le (p : (σ × ℕ) × Option Bool) :
   obtain ⟨q, a⟩ := p
   rcases a with _ | b <;> simp [inLen, encStepIn]
 
-/-- **The simulating step machine is tidy**, if the halting test, the address and the step of the
-read machine are tidily computable within bounds on its states. -/
-theorem tidy_toStepMachine (hhalt : ComputableTidilyInO m.halt encS encBool T S)
-    (haddr : ComputableTidilyInO m.addr encS (encOption encNat) T S)
-    (hstep : ComputableTidilyInO (fun p : σ × Bool => m.step p.1 p.2) (encPair encS encBool)
+/-- **The simulating step machine has a resource certificate** when the halting test, address
+and step have charged plain bounds on its states. -/
+theorem toStepMachine_resourceCertificate (hhalt : ComputableInO m.halt encS encBool T S)
+    (haddr : ComputableInO m.addr encS (encOption encNat) T S)
+    (hstep : ComputableInO (fun p : σ × Bool => m.step p.1 p.2) (encPair encS encBool)
       (encPair encS encBits) (fun p => T p.1) fun p => S p.1) :
-    (m.toStepMachine).Tidy (encPair encS encNat) (stateT encS T S) (stateS encS S) where
+    (m.toStepMachine).ResourceCertificate (encPair encS encNat)
+      (stateT encS T S) (stateS encS S) where
   computable_halt := by
     refine ((hhalt.comp (fst encS encNat)).mono_le (fun q => ?_) fun q => ?_)
     · simp only [stateT]
@@ -246,15 +248,15 @@ theorem tidy_toStepMachine (hhalt : ComputableTidilyInO m.halt encS encBool T S)
     have hS : (fun p : (σ × ℕ) × Option Bool => S p.1.1) ≼ spaceB encS S := .of_le fun p => by
       simp [spaceB]
     have hA := budget_comp haddr hq hT hS
-    have hisN := budget_comp_linear (encD := encBool) (ComputableTidilyInO.of_linear
+    have hisN := budget_comp_linear (encD := encBool) (ComputableInO.of_linear
       (.of_isEmpty (encIn := encOption encNat) (f := fun o : Option ℕ => o.isNone)
         fun o => by cases o <;> simp)) hA hst
-    have hgetD := budget_comp_linear (ComputableTidilyInDegree.getD (enc₁ := encNat) 0).inO_one
+    have hgetD := budget_comp_linear (ComputableInDegree.getD (enc₁ := encNat) 0).inO_one
       hA hst
     have hA₁ := budget_comp natSucc hgetD (sq_bigOLe hgetD.length_le)
       (.add hgetD.length_le (.const 1 _))
     have hpair := budget_prod hpos hA₁
-    have he := budget_comp (ComputableTidilyInO.eq encNat) hpair
+    have he := budget_comp (ComputableInO.eq encNat) hpair
       ((BigOLe.of_le fun p => by simp only [length_encPair]; nlinarith).trans
         (sq_bigOLe hpair.length_le)) hpair.length_le
     have hl := budget_comp natLt hpair (lt_bigOLe hpair.length_le)

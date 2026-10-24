@@ -13,7 +13,7 @@ public import Complexity.Computability.TreeEval.Reader.Size
 /-!
 # Tree Evaluation in small space
 
-**Cook and Mertz**: Tree Evaluation of value length `ℓ` and height `H` is tidily computable on
+**Cook and Mertz**: Tree Evaluation of value length `ℓ` and height `H` is computable on
 multi-tape Turing machines in space `O((ℓ + H + 1) · log (ℓ + 2) + log (n + 2))`, where `n`
 is the length of the encoded instance. On nontrivial instances (`1 ≤ ℓ` and `1 ≤ H`), both `2 ^ ℓ`
 and `2 ^ H` are at most `n`, so `ℓ, H < |n|` and `|ℓ| ≤ ||n||` (writing `|m|` for the binary length
@@ -30,11 +30,11 @@ of the read machine together with the position of the head, stay within the spac
 
 ## Main results
 
-* `Cslib.TreeEval.computableTidilyInSpace_eval`: Tree Evaluation in space
+* `Cslib.TreeEval.computableInBigO_eval`: Tree Evaluation in space
   `O(spaceBound ℓ H + log (n + 2))`.
 * `Cslib.TreeEval.spaceBound_add_length_le_log_mul_log_log`: on nontrivial instances,
   `spaceBound ℓ H + |n + 1| ≤ 6 · |n| · ||n||`.
-* `Cslib.TreeEval.computableTidilyInSpace_eval_log_mul_log_log`: Tree Evaluation on nontrivial
+* `Cslib.TreeEval.computableInBigO_eval_log_mul_log_log`: Tree Evaluation on nontrivial
   instances in space `O(|n| · ||n||) = O(log n · log log n)`.
 
 ## References
@@ -61,12 +61,12 @@ def encNontrivialInstance : NontrivialInstance ↪ List Bool :=
     encNontrivialInstance I = encInstance I.1 := rfl
 
 /-- **Tree Evaluation in small space** (Cook–Mertz): the value of the tree of an instance of value
-length `ℓ` and height `H` is tidily computable from its encoding in space
+length `ℓ` and height `H` is computable from its encoding in space
 `O((ℓ + H + 1) · log (ℓ + 2) + log (n + 2))`. -/
-theorem computableTidilyInSpace_eval : ∃ t, ComputableTidilyInBigO
+theorem computableInBigO_eval : ∃ t, ComputableInBigO
     (fun I : Instance => List.ofFn I.tree.eval) encInstance encBits t
     fun I => spaceBound I.ell I.height + (encNat ((encInstance I).length + 1)).length := by
-  obtain ⟨T, hT⟩ := tidy_machine
+  obtain ⟨T, hT⟩ := machine_resourceCertificate
   have hc (I : Instance) :
       machine.toStepMachine.Computes (encInstance I) (List.ofFn I.tree.eval) := by
     obtain ⟨n, s, hrun, hhalt⟩ := exists_run_eq I.tree
@@ -77,7 +77,7 @@ theorem computableTidilyInSpace_eval : ∃ t, ComputableTidilyInBigO
   let tS := ReadMachine.stateT encState T stateBudget
   let tMax (I : Instance) : ℕ := ∑ i ∈ Finset.range (rounds I + 1),
     tS (machine.toStepMachine.run (encInstance I) i).state
-  refine ⟨_, (hT.computableTidilyInTimeAndSpace (fun I : Instance => List.ofFn I.tree.eval)
+  refine ⟨_, (hT.computableInBigO (fun I : Instance => List.ofFn I.tree.eval)
     rounds hr (fun I => by rw [encBits_apply, ho]) (tMax := tMax)
     (sMax := fun I => 5 * 2 ^ 12 * spaceBound I.ell I.height +
       2 * (encNat ((encInstance I).length + 1)).length + 6) fun I i hi => ⟨?_, ?_⟩).weaken
@@ -93,7 +93,7 @@ theorem computableTidilyInSpace_eval : ∃ t, ComputableTidilyInBigO
     have hs : (encState (machine.run (encInstance I) j).state).length ≤
         stateBudget (machine.run (encInstance I) j).state := by
       simp only [stateBudget, stepBudget, encStepInT, length_encPair, encState_apply]; omega
-    have hp := ComputableTidilyInO.length_encNat_mono hpos
+    have hp := ComputableInO.length_encNat_mono hpos
     simp only [ReadMachine.stateS, length_encPair]
     change _ + 2 * (2 * (encState (machine.run (encInstance I) j).state).length + 1 + _) + 4 ≤ _
     omega
@@ -119,7 +119,7 @@ theorem spaceBound_add_length_le_log_mul_log_log {I : Instance}
   have hℓL : I.ell < L := ell_lt_length_encNat_length_encInstance hH
   have hHL : I.height < L := height_lt_length_encNat_length_encInstance hℓ
   have hℓM : (encNat I.ell).length ≤ M :=
-    ComputableTidilyInO.length_encNat_mono hℓL.le
+    ComputableInO.length_encNat_mono hℓL.le
   have hsp : spaceBound I.ell I.height ≤ (2 * L) * (2 * M) := by
     rw [spaceBound]
     exact Nat.mul_le_mul (by omega) (by omega)
@@ -133,14 +133,14 @@ theorem spaceBound_add_length_le_log_mul_log_log {I : Instance}
   nlinarith
 
 /-- **Tree Evaluation in space `O(log n · log log n)`** (Cook–Mertz): on nontrivial instances
-(`1 ≤ ℓ` and `1 ≤ H`), the value of the tree is tidily computable from its encoding in space
+(`1 ≤ ℓ` and `1 ≤ H`), the value of the tree is computable from its encoding in space
 `O(|n| · ||n||)`, where `n` is the length of the encoded instance and `|m| = (encNat m).length`. -/
-theorem computableTidilyInSpace_eval_log_mul_log_log : ∃ t, ComputableTidilyInBigO
+theorem computableInBigO_eval_log_mul_log_log : ∃ t, ComputableInBigO
     (fun I : NontrivialInstance => List.ofFn I.1.tree.eval) encNontrivialInstance encBits t
     fun I => (encNat (encNontrivialInstance I).length).length *
       (encNat (encNat (encNontrivialInstance I).length).length).length := by
-  obtain ⟨t, c, k, State, hfinite, tm, htm⟩ := computableTidilyInSpace_eval
-  have hN : ComputableTidilyInBigO (fun I : NontrivialInstance => List.ofFn I.1.tree.eval)
+  obtain ⟨t, c, k, State, hfinite, tm, htm⟩ := computableInBigO_eval
+  have hN : ComputableInBigO (fun I : NontrivialInstance => List.ofFn I.1.tree.eval)
       encNontrivialInstance encBits (fun I => t I.1)
       (fun I => spaceBound I.1.ell I.1.height + (encNat ((encInstance I.1).length + 1)).length) :=
     ⟨c, k, State, hfinite, tm, fun I => htm I.1⟩
