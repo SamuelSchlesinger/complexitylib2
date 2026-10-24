@@ -233,6 +233,7 @@ import ComplexityTests.KarpLipton2
 import ComplexityTests.KarpReductions
 import ComplexityTests.KeyedSort
 import ComplexityTests.KolmogorovCrypto
+import ComplexityTests.KolmogorovTimeBounded
 import ComplexityTests.Ladner
 import ComplexityTests.LinearHash
 import ComplexityTests.ListBasicImports
