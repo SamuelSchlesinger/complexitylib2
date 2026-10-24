@@ -70,7 +70,7 @@ example : ∃ common, EntropyGrid.PaddingBounds paddedSeed (fun _ => 0) (fun _ =
     paddedSeed.length_isPolyTime.tidy
     (show ComputableTidilyInPolyTime (fun _ => 0) encUnary encUnary from by fun_prop)
     (show ComputableTidilyInPolyTime (fun _ => 2) encUnary encUnary from by fun_prop)
-  exact ⟨common, ⟨by fun_prop, by fun_prop, hcommon, fun _ _ _ => Nat.le_refl 0, hsize⟩⟩
+  exact ⟨common, ⟨by fun_prop, by fun_prop, .of_tidy hcommon, fun _ _ _ => Nat.le_refl 0, hsize⟩⟩
 
 -- The evaluator is total on malformed seeds too; here an empty seed returns the default bit.
 example : paddedSeed.evaluate 7 [] = ([], false) := rfl
