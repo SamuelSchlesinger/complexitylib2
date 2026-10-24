@@ -229,10 +229,42 @@ private theorem getD_ofFn {E : ℕ} (x : BitString E) {p : ℕ} (hp : p < E) :
 private def decodeMatrix (n : ℕ) (u : List Bool) : Matrix (Fin n) (Fin n) Bool :=
   Matrix.of fun i j => u.getD (i * n + j) false
 
+/-- The column selected by row `i` of a matrix of size `n` encoded row by row in `w`: the first
+`j < n` with bit `i * n + j` of `w` set, or `0` when there is none. -/
+def image (n : ℕ) (w : List Bool) (i : ℕ) : ℕ :=
+  ((List.range n).filter fun j => w.getD (i * n + j) false).headD 0
+
+private theorem image_lt {n : ℕ} (w : List Bool) (i : ℕ) (hn : 0 < n) : image n w i < n := by
+  unfold image
+  cases h : (List.range n).filter (fun j => w.getD (i * n + j) false) with
+  | nil => exact hn
+  | cons j l =>
+    have : j ∈ (List.range n).filter (fun j => w.getD (i * n + j) false) :=
+      h ▸ List.mem_cons_self
+    simpa using (List.mem_filter.1 this).1
+
+/-- A row with a single set bit selects its column. -/
+private theorem image_eq {n : ℕ} {w : List Bool} {i c : ℕ} (hc : c < n)
+    (hw : ∀ j < n, w.getD (i * n + j) false = decide (j = c)) : image n w i = c := by
+  unfold image
+  rw [List.filter_congr (fun j hj => hw j (List.mem_range.1 hj)), List.filter_eq,
+    List.count_eq_one_of_mem List.nodup_range (List.mem_range.2 hc), List.replicate_one]
+  rfl
+
+private theorem computableTidilyInPolyTime_image {γ : Type} {input : γ ↪ List Bool} {n i : γ → ℕ}
+    {w : γ → List Bool} (hn : ComputableTidilyInPolyTime n input encUnary)
+    (hw : ComputableTidilyInPolyTime w input encBits)
+    (hi : ComputableTidilyInPolyTime i input encUnary) :
+    ComputableTidilyInPolyTime (fun x => image (n x) (w x) (i x)) input encUnary := by
+  unfold image
+  fun_prop
+
+attribute [local fun_prop] computableTidilyInPolyTime_image
+
 /-- The map read from the matrix starting after `k` bits of a word: row `i` selects its first set
-bit (`Cslib.Complexity.GraphIsomorphism.image`). -/
+bit (`image`). -/
 private def decodeMap (n k : ℕ) (u : List Bool) (i : Fin n) : Fin n :=
-  ⟨GraphIsomorphism.image n (u.drop k) i, GraphIsomorphism.image_lt _ _ i.pos⟩
+  ⟨image n (u.drop k) i, image_lt _ _ i.pos⟩
 
 private theorem decodeMatrix_code {E : ℕ} (hE : n * n ≤ E) (M : Matrix (Fin n) (Fin n) Bool)
     (σ : Equiv.Perm (Fin n)) : decodeMatrix n (List.ofFn (code E M σ)) = M := by
@@ -248,7 +280,7 @@ private theorem decide_val_eq {σ : Equiv.Perm (Fin n)} {i : Fin n} {j : ℕ} (h
 private theorem decodeMap_code {E : ℕ} (hE : 2 * (n * n) ≤ E) (M : Matrix (Fin n) (Fin n) Bool)
     (σ : Equiv.Perm (Fin n)) : decodeMap n (n * n) (List.ofFn (code E M σ)) = σ := by
   funext i
-  refine Fin.ext (GraphIsomorphism.image_eq (σ i).2 fun j hj => ?_)
+  refine Fin.ext (image_eq (σ i).2 fun j hj => ?_)
   have hlt : (i : ℕ) * n + j < n * n := index_lt i ⟨j, hj⟩
   rw [List.getD_eq_getElem?_getD, List.getElem?_drop, ← List.getD_eq_getElem?_getD,
     getD_ofFn _ (by omega)]
@@ -264,7 +296,7 @@ private theorem getD_ofFn_cert_zero {C : ℕ} (hC : 0 < C) (b : Bool) (τ : Equi
 private theorem decodeMap_cert {C : ℕ} (hC : n * n + 1 ≤ C) (b : Bool) (τ : Equiv.Perm (Fin n)) :
     decodeMap n 1 (List.ofFn (cert C b τ)) = τ := by
   funext i
-  refine Fin.ext (GraphIsomorphism.image_eq (τ i).2 fun j hj => ?_)
+  refine Fin.ext (image_eq (τ i).2 fun j hj => ?_)
   have hlt : (i : ℕ) * n + j < n * n := index_lt i ⟨j, hj⟩
   rw [List.getD_eq_getElem?_getD, List.getElem?_drop, ← List.getD_eq_getElem?_getD,
     getD_ofFn _ (by omega)]
@@ -276,14 +308,14 @@ private theorem decodeMap_cert {C : ℕ} (hC : n * n + 1 ≤ C) (b : Bool) (τ :
 
 /-- The test of an element `u` and a certificate `v`, for matrices of size `n`, elements of `E` bits
 and the adjacency `adj b i j` of graph `b`. Write `f` for the map selected by the second matrix of
-`u` (`Cslib.Complexity.GraphIsomorphism.image`), `M` for the first matrix of `u`, `b` for the first
+`u` (`image`), `M` for the first matrix of `u`, `b` for the first
 bit of `v` and `τ` for the map selected by the rest of `v`. The test accepts when the bits of `u`
 after position `2 n²` are `false`, the second matrix of `u` is the matrix of `f`, `f` is an
 injective automorphism of `M`, and `τ` is injective and carries the adjacency of graph `b` to
 `M`. -/
 def check (n E : ℕ) (adj : Bool → ℕ → ℕ → Bool) (u v : List Bool) : Bool :=
-  let f := fun i => GraphIsomorphism.image n (u.drop (n * n)) i
-  let τ := fun i => GraphIsomorphism.image n (v.drop 1) i
+  let f := fun i => image n (u.drop (n * n)) i
+  let τ := fun i => image n (v.drop 1) i
   ((List.range (E - 2 * (n * n))).all fun p => !u.getD (2 * (n * n) + p) false) &&
     (List.range n).all fun i => (List.range n).all fun j =>
       (u.getD (n * n + (i * n + j)) false == decide (f i = j)) &&
@@ -297,14 +329,14 @@ theorem check_eq_true_iff {n E : ℕ} {adj : Bool → ℕ → ℕ → Bool} {u v
       (∀ p < E - 2 * (n * n), u.getD (2 * (n * n) + p) false = false) ∧
       ∀ i < n, ∀ j < n,
         u.getD (n * n + (i * n + j)) false =
-          decide (GraphIsomorphism.image n (u.drop (n * n)) i = j) ∧
-        (i = j ∨ GraphIsomorphism.image n (u.drop (n * n)) i ≠
-          GraphIsomorphism.image n (u.drop (n * n)) j) ∧
-        u.getD (GraphIsomorphism.image n (u.drop (n * n)) i * n +
-          GraphIsomorphism.image n (u.drop (n * n)) j) false = u.getD (i * n + j) false ∧
-        (i = j ∨ GraphIsomorphism.image n (v.drop 1) i ≠ GraphIsomorphism.image n (v.drop 1) j) ∧
-        u.getD (GraphIsomorphism.image n (v.drop 1) i * n +
-          GraphIsomorphism.image n (v.drop 1) j) false = adj (v.getD 0 false) i j := by
+          decide (image n (u.drop (n * n)) i = j) ∧
+        (i = j ∨ image n (u.drop (n * n)) i ≠
+          image n (u.drop (n * n)) j) ∧
+        u.getD (image n (u.drop (n * n)) i * n +
+          image n (u.drop (n * n)) j) false = u.getD (i * n + j) false ∧
+        (i = j ∨ image n (v.drop 1) i ≠ image n (v.drop 1) j) ∧
+        u.getD (image n (v.drop 1) i * n +
+          image n (v.drop 1) j) false = adj (v.getD 0 false) i j := by
   simp only [check, Bool.and_eq_true, List.all_eq_true, List.mem_range, Bool.not_eq_eq_eq_not,
     Bool.not_true, beq_iff_eq, Bool.or_eq_true, decide_eq_true_eq, ne_eq, and_assoc]
 

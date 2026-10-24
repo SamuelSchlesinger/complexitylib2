@@ -53,18 +53,11 @@ theorem expect_card_collisions_le {n m : ℕ} (pairs : Finset (BitString n × Bi
     (𝔼 rows : Fin m → BitString n,
       ((pairs.filter fun p => hash rows p.1 = hash rows p.2).card : ℝ)) ≤
       pairs.card / (2 : ℝ) ^ m := by
-  have hpair (p : BitString n × BitString n) (hp : p ∈ pairs) :
-      (𝔼 rows : Fin m → BitString n, if hash rows p.1 = hash rows p.2 then (1 : ℝ) else 0) ≤
-        ((2 : ℝ) ^ m)⁻¹ := by
-    have h := isTwoUniversal n m p.1 p.2 (distinct p hp)
-    simpa only [Fintype.expect_eq_sum_div_card, sum_div, ite_div, one_div, zero_div,
-      PMF.uniformOfFintype_apply, ENNReal.toReal_inv, ENNReal.toReal_natCast,
-      Fintype.card_fun, Fintype.card_fin, Fintype.card_bool, Nat.cast_pow, Nat.cast_ofNat,
-      ENNReal.toReal_pow, ENNReal.toReal_ofNat] using h
   simp only [← sum_boole]
   rw [expect_sum_comm]
   calc
-    _ ≤ ∑ _p ∈ pairs, ((2 : ℝ) ^ m)⁻¹ := sum_le_sum hpair
+    _ ≤ ∑ _p ∈ pairs, (Fintype.card (BitString m) : ℝ)⁻¹ :=
+      sum_le_sum fun p hp => (isTwoUniversal n m).expect_boole_le (distinct p hp)
     _ = _ := by simp [div_eq_mul_inv]
 
 /-- Some Boolean matrix collides on at most a `2⁻ᵐ` fraction of the specified distinct pairs.

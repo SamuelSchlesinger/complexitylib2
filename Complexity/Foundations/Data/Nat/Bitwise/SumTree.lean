@@ -86,7 +86,7 @@ theorem sumTree_eq_sum (f : ℕ → Bool) (j q : ℕ) :
       ring
 
 /-- Counting all the bit positions containing a numeral gives its number of set bits. -/
-theorem sum_testBit_eq_length_bitIndices {x k : ℕ} (hx : x < 2 ^ k) :
+theorem _root_.Nat.sum_testBit_eq_length_bitIndices {x k : ℕ} (hx : x < 2 ^ k) :
     (∑ i ∈ range k, (x.testBit i).toNat) = x.bitIndices.length := by
   have hbits : (range k).filter (fun i => x.testBit i = true) = x.bitIndices.toFinset := by
     ext i
@@ -110,7 +110,7 @@ theorem sum_testBit_eq_length_bitIndices {x k : ℕ} (hx : x < 2 ^ k) :
 theorem sumTree_testBit {x m : ℕ} (hx : x < 2 ^ (2 ^ m)) :
     sumTree x.testBit m 0 = x.bitIndices.length := by
   rw [sumTree_eq_sum]
-  simpa using sum_testBit_eq_length_bitIndices hx
+  simpa using Nat.sum_testBit_eq_length_bitIndices hx
 
 /-- Bit `b` of node `q` at level `j` in a tree with `2^m` leaves. -/
 def sumTreeAddress (m j b q : ℕ) : ℕ := (j + b + 3) * 2 ^ (m - j) + q

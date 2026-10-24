@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Logics.FirstOrder.Ordered.BitSum
-public import Complexity.Foundations.Data.BitString.Multiplication
+public import Complexity.Foundations.Data.Nat.Bitwise.Multiplication
 
 /-!
 # Native multiplication columns

@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.FineGrained.Assignment
+import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
@@ -92,15 +93,15 @@ def step (s : State) : State :=
   (s.1, (s.2.1 + 1, s.2.2 || s.1.1.eval (bitsAssignment s.1.2 s.2.1)))
 
 /-- The initial state: no assignment tried yet. -/
-def init (φ : CNF ℕ) : State := ((φ, ThreeSAT.distinctVars φ), (0, false))
+def init (φ : CNF ℕ) : State := ((φ, φ.distinctVars), (0, false))
 
 /-- **Exhaustive search**: try the `2 ^ n` assignments numbered by `i < 2 ^ n` on the `n` distinct
 variables of the formula. -/
-def search (φ : CNF ℕ) : Bool := (step^[2 ^ (ThreeSAT.distinctVars φ).length] (init φ)).2.2
+def search (φ : CNF ℕ) : Bool := (step^[2 ^ φ.distinctVars.length] (init φ)).2.2
 
 private theorem iterate_step_init (φ : CNF ℕ) (k : ℕ) :
-    step^[k] (init φ) = ((φ, ThreeSAT.distinctVars φ),
-      (k, (List.range k).any fun i => φ.eval (bitsAssignment (ThreeSAT.distinctVars φ) i))) := by
+    step^[k] (init φ) = ((φ, φ.distinctVars),
+      (k, (List.range k).any fun i => φ.eval (bitsAssignment φ.distinctVars i))) := by
   induction k with
   | zero => rfl
   | succ k ih =>
@@ -110,7 +111,7 @@ private theorem iterate_step_init (φ : CNF ℕ) (k : ℕ) :
 /-- **Exhaustive search decides `SAT`.** -/
 theorem search_eq_true_iff (φ : CNF ℕ) : search φ = true ↔ φ ∈ SAT := by
   rw [search, iterate_step_init, mem_SAT,
-    CNF.satisfiable_iff_exists_bitsAssignment fun v hv => ThreeSAT.mem_distinctVars.mpr hv]
+    CNF.satisfiable_iff_exists_bitsAssignment fun v hv => CNF.mem_distinctVars.mpr hv]
   simp
 
 /-! ### Running time -/
@@ -127,6 +128,7 @@ private theorem computableTidilyInPolyTime_step
   unfold step
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 open ComputableTidilyInPolyTime in
 /-- The initial state is computed in polynomial time. -/
 private theorem computableTidilyInPolyTime_init
@@ -134,10 +136,11 @@ private theorem computableTidilyInPolyTime_init
   unfold init
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 open ComputableTidilyInPolyTime in
 /-- The number `2 ^ n` of rounds is computed in binary in polynomial time. -/
 private theorem computableTidilyInPolyTime_count :
-    ComputableTidilyInPolyTime (fun φ => 2 ^ (ThreeSAT.distinctVars φ).length) encCNF encNat := by
+    ComputableTidilyInPolyTime (fun φ => 2 ^ φ.distinctVars.length) encCNF encNat := by
   fun_prop
 
 /-- **The running time of exhaustive search**: within time `2 ^ n` times a polynomial in the
@@ -151,13 +154,13 @@ theorem exists_computableTidilyInO_search : ∃ e, ComputableTidilyInO search en
   obtain ⟨d₂, _, hans⟩ := (show ComputableTidilyInPolyTime (fun s : State => s.2.2) encState encBool
     by fun_prop).exists_degree
   obtain ⟨cv, dv, hvs⟩ :=
-    ThreeSAT.computableTidilyInPolyTime_distinctVars.polyBounded_length.exists_le
+    SAT.computableInPolyTime_distinctVars.tidy.polyBounded_length.exists_le
   set size : CNF ℕ → ℕ := fun φ => (encCNF φ).length
   set B : CNF ℕ → ℕ := fun φ => (2 * cv + 13) * (size φ + 1) ^ (dv + 1)
-  have hn (φ : CNF ℕ) : (ThreeSAT.distinctVars φ).length ≤ size φ := by
-    rw [ThreeSAT.length_distinctVars]
+  have hn (φ : CNF ℕ) : φ.distinctVars.length ≤ size φ := by
+    rw [CNF.length_distinctVars]
     exact φ.numVars_le_length_vars.trans (SAT.length_vars_le φ)
-  have hstate : ∀ φ, ∀ k ≤ 2 ^ (ThreeSAT.distinctVars φ).length,
+  have hstate : ∀ φ, ∀ k ≤ 2 ^ φ.distinctVars.length,
       (encState (step^[k] (init φ))).length ≤ B φ := by
     intro φ k hk
     have hK := ComputableTidilyInO.length_encNat_mono hk
@@ -189,19 +192,19 @@ theorem exists_computableTidilyInO_search : ∃ e, ComputableTidilyInO search en
     ((hpow d).add (hB.add (.of_forall_le 4 2 fun φ => le_rfl)))
     ((hL d₁).add ((hL d₀).add (hpow d₂)))
     (T := fun φ => ((encCNF φ).length + 1) ^ d₁ + ((encCNF φ).length + 1) ^ d₀ +
-      (2 ^ (ThreeSAT.distinctVars φ).length + 1) * ((B φ + 1) ^ d + B φ +
-        ((encNat (2 ^ (ThreeSAT.distinctVars φ).length)).length + 1) ^ 2) +
-      ((encState (step^[2 ^ (ThreeSAT.distinctVars φ).length] (init φ))).length + 1) ^ d₂)
+      (2 ^ φ.distinctVars.length + 1) * ((B φ + 1) ^ d + B φ +
+        ((encNat (2 ^ φ.distinctVars.length)).length + 1) ^ 2) +
+      ((encState (step^[2 ^ φ.distinctVars.length] (init φ))).length + 1) ^ d₂)
     (fun φ => by
-      have hK : ((encNat (2 ^ (ThreeSAT.distinctVars φ).length)).length + 1) ^ 2 ≤
+      have hK : ((encNat (2 ^ φ.distinctVars.length)).length + 1) ^ 2 ≤
           4 * (size φ + 1) ^ 2 := by
         rw [encNat_two_pow]
         simp only [List.length_append, List.length_replicate, List.length_singleton]
-        calc ((ThreeSAT.distinctVars φ).length + 1 + 1) ^ 2 ≤ (2 * (size φ + 1)) ^ 2 :=
+        calc (φ.distinctVars.length + 1 + 1) ^ 2 ≤ (2 * (size φ + 1)) ^ 2 :=
               Nat.pow_le_pow_left (by have := hn φ; omega) 2
           _ = 4 * (size φ + 1) ^ 2 := by ring
       have hS := Nat.pow_le_pow_left (Nat.add_le_add_right (hstate φ _ le_rfl) 1) d₂
-      rw [ThreeSAT.length_distinctVars] at hK hS ⊢
+      rw [CNF.length_distinctVars] at hK hS ⊢
       have := Nat.mul_le_mul_left (2 ^ φ.numVars + 1)
         (Nat.add_le_add_left hK ((B φ + 1) ^ d + B φ))
       simp only [size] at this hS ⊢
@@ -210,7 +213,7 @@ theorem exists_computableTidilyInO_search : ∃ e, ComputableTidilyInO search en
   all_goals
     have h₁ := hT φ
     simp only [size] at h₁
-    generalize 2 ^ (ThreeSAT.distinctVars φ).length = N at h₁ ⊢
+    generalize 2 ^ φ.distinctVars.length = N at h₁ ⊢
     generalize (encNat N).length = K at h₁ ⊢
     obtain ⟨X, hX⟩ : ∃ X, (B φ + 1) ^ d + B φ = X := ⟨_, rfl⟩
     rw [hX] at h₁

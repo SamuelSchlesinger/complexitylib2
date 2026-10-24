@@ -93,7 +93,7 @@ theorem compl_adj_iff {G : Graph} {u v : ℕ} (hu : u ∈ G.1) (hv : v ∈ G.1) 
       exact ⟨ha', hb', hne⟩
     · rintro ⟨ha, hb, hne⟩
       exact ⟨a, ha, b, ⟨hb, hne⟩, rfl, rfl⟩
-  simp only [toSimpleGraph, SimpleGraph.fromRel_adj, ne_eq, hedge]
+  simp only [toSimpleGraph_adj, ne_eq, hedge]
   constructor
   · rintro ⟨huv, ⟨-, -, -, h₁, h₂⟩ | ⟨-, -, -, h₁, h₂⟩⟩
     · exact ⟨huv, fun ⟨_, h⟩ => h.elim h₁ h₂⟩

@@ -50,7 +50,7 @@ variable {C α D : Type} [FinEnum α] [FinEnum D]
 /-- An amplification round with complete constructive enumerations for every finite parameter. -/
 def amplifyEnumerated (eval : C → α → α → Bool) (fallback : C)
     (rotate : ℕ × (ℕ × D) → ℕ × D) (T q : ℕ) [NeZero q] (g : Graph C) :
-    Graph ((Bool × (Fin 6 → Bool)) → (Bool × (Fin 6 → Bool)) → Bool) :=
+    Graph (SelectedAlphabet → SelectedAlphabet → Bool) :=
   g.amplify eval fallback rotate T q (FinEnum.toList (PowerLabel D T q)) FinEnum.equiv
     (FinEnum.toList (Fin 5 × Rand (PowerAlphabet D α T))) (FinEnum.toList (Fin 6))
 

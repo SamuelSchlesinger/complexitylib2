@@ -93,7 +93,7 @@ theorem GapP.weightedReplay_mem [Finite Control] [Finite Operation]
     GapP.ite_mem hquery (GapP.comp_mem hH hrequest) GapP.zero_mem
   have hdenom : (fun x : (α × List Bool) × ℕ => (2 : ℤ) ^ R x.1.1) ∈
       GapP (encPair (encPair enc encBits) encUnary) :=
-    GapP.of_polyTime (by fun_prop)
+    mem_GapP_of_polyTime (by fun_prop)
   have hbit : ComputableTidilyInPolyTime
       (fun x : (α × List Bool) × ℕ => x.1.2.getD x.2 false)
       (encPair (encPair enc encBits) encUnary) encBool := by fun_prop

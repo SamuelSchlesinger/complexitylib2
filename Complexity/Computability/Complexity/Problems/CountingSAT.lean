@@ -179,7 +179,7 @@ private theorem computableTidilyInPolyTime_two_pow_add {α : Type} (enc : α ↪
 
 /-- The number given with a formula, as a function in `#P`. -/
 private theorem snd_mem_SharpP : (Prod.snd : CNF ℕ × ℕ → ℕ) ∈ SharpP (encPair encCNF encNat) :=
-  SharpP.of_polyTime (.snd encCNF encNat)
+  mem_SharpP_of_polyTime (.snd encCNF encNat)
 
 /-- The number of satisfying assignments of the formula of a pair, as a function in `#P`. -/
 private theorem sharpSAT_fst_mem_SharpP :
@@ -232,7 +232,7 @@ theorem compl_SharpSATExact_coCeqPComplete :
 /-- The number of assignments to the occurring variables of a formula, as a function in `#P`. -/
 private theorem two_pow_card_vars_mem_SharpP :
     (fun φ : CNF ℕ => 2 ^ φ.vars.toFinset.card) ∈ SharpP encCNF :=
-  SharpP.of_polyTime (ComputableTidilyInPolyTime.binary_two_pow.comp
+  mem_SharpP_of_polyTime (ComputableTidilyInPolyTime.binary_two_pow.comp
     SharpSAT.computableTidilyInPolyTime_card_vars)
 
 /-- **`MAJSAT` belongs to `PP`.** -/

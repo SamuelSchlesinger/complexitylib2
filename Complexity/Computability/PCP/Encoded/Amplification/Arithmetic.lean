@@ -46,8 +46,7 @@ namespace Cslib.PCP.Encoded.Graph
 open Cslib.PCP.HadamardTester Turing.MultiTapeTM
 open ConstraintGraph.Amplification.Arithmetic
 
-local notation "Alphabet" => (Bool × (Fin 6 → Bool))
-local notation "Constraint" => (Alphabet → Alphabet → Bool)
+local notation "Constraint" => (SelectedAlphabet → SelectedAlphabet → Bool)
 local notation "Label" => RotationMap.AffinePlaneFamilyLabel (ZMod 257) 257
 
 /-- Concrete enumeration of the arithmetic expander's fixed field. -/

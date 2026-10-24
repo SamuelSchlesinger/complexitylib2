@@ -30,7 +30,7 @@ private def φ₂ : CNF ℕ := [[(0, true)], [(0, false)]]
 
 example : φ₁.numVars = 3 := by decide
 
-example : ThreeSAT.distinctVars φ₁ = [0, 1, 2] := by decide
+example : φ₁.distinctVars = [0, 1, 2] := by decide
 
 /-- Repeated variables count once; variables are numbered arbitrarily. -/
 example : CNF.numVars ([[(7, true), (7, false)], [(100, true)]] : CNF ℕ) = 2 := by decide

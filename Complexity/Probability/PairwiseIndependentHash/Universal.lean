@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Probability.HashFamily
+public import Complexity.Probability.UniversalHash
 public import Complexity.Probability.PairwiseIndependentHash
 import Complexity.Probability.PMF.Uniform
 import Complexity.Probability.PMF
@@ -24,8 +24,9 @@ at least one, is therefore universal and Δ-universal.
 
 ## Main results
 
-* `Cslib.Probability.IsPairwiseIndependentHash.isUniversalHash`: pairwise independence implies
-  `1 / |Y|`-universality.
+* `Cslib.Probability.IsPairwiseIndependentHash.isUniversalHash`,
+  `Cslib.Probability.IsPairwiseIndependentHash.isTwoUniversal`: pairwise independence implies
+  `1 / |Y|`-universality (two-universality).
 * `Cslib.Probability.IsPairwiseIndependentHash.isDeltaUniversalHash`: pairwise independence
   implies `1 / |Y|`-Δ-universality.
 
@@ -107,6 +108,12 @@ theorem toOuterMeasure_apply_eq_comp [Nonempty ι] (hh : IsPairwiseIndependentHa
 theorem isUniversalHash [Nonempty ι] (hh : IsPairwiseIndependentHash h) :
     IsUniversalHash (PMF.uniformOfFintype ι) h (Fintype.card Y : ℝ≥0∞)⁻¹ :=
   fun _ _ hx => (hh.toOuterMeasure_apply_eq_comp hx id).le
+
+/-- A pairwise independent family with a uniform seed is two-universal. -/
+theorem isTwoUniversal [Nonempty ι] (hh : IsPairwiseIndependentHash h) :
+    IsTwoUniversal (PMF.uniformOfFintype ι) h := fun x x' hx => by
+  have : Nonempty Y := ⟨h (Classical.arbitrary ι) x⟩
+  exact isTwoUniversal_iff_isUniversalHash.mpr hh.isUniversalHash x x' hx
 
 /-- A pairwise independent family with a uniform seed, into an additive group, is
 `1 / |Y|`-Δ-universal. -/

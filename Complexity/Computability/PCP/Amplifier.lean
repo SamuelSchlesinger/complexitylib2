@@ -49,6 +49,8 @@ the consequences of the interface. Running times are formalized for the executab
 ## Main results
 
 * `Cslib.PCP.min_two_pow_mul_le_iterate`: iterating a clipped doubling bound.
+* `Cslib.PCP.ConstraintGraph.gap_le_of_min_two_pow_mul_le`: reaching the threshold once `2 ^ k`
+  exceeds the edge count.
 * `Cslib.PCP.Amplifier.satisfiable_iter_iff`: the iterates preserve satisfiability.
 * `Cslib.PCP.Amplifier.min_le_unsatVal_iter`: the value after `k` rounds is at least
   `min (2 ^ k UNSAT(G)) γ`.
@@ -90,6 +92,16 @@ theorem min_two_pow_mul_le_iterate {X : Type*} (step : X → X) (value : X → �
             min_eq_right (by linarith : gap ≤ 2 * gap), pow_succ', mul_assoc]
       _ ≤ min (2 * value (step^[k] x)) gap :=
         min_le_min (mul_le_mul_of_nonneg_left ih zero_le_two) le_rfl
+
+/-- If `min (2 ^ k * UNSAT(G)) γ ≤ u`, `γ ≤ 1`, and `|E| ≤ 2 ^ k`, then an unsatisfiable
+constraint graph `G` satisfies `γ ≤ u`, since `1 / |E| ≤ UNSAT(G)`. -/
+theorem ConstraintGraph.gap_le_of_min_two_pow_mul_le {V E α : Type*} [Fintype E] [Nonempty α]
+    (G : ConstraintGraph V E α) {γ u : ℝ} (hγ₁ : γ ≤ 1) (hunsat : ¬ G.Satisfiable)
+    {k : ℕ} (hk : Fintype.card E ≤ 2 ^ k) (hmin : min (2 ^ k * G.unsatVal) γ ≤ u) :
+    γ ≤ u := by
+  refine le_trans (le_min ?_ le_rfl) hmin
+  exact hγ₁.trans ((G.one_le_card_mul_unsatVal hunsat).trans
+    (mul_le_mul_of_nonneg_right (by exact_mod_cast hk) G.unsatVal_nonneg))
 
 /-- A **finite constraint graph** over the alphabet `α`: a constraint graph bundled with its finite
 types of vertices and edges, so that transformations changing these types can be iterated. -/
@@ -177,10 +189,8 @@ variable [Nonempty α]
 4.2][Dinur2005]: `k` rounds suffice when `|E| ≤ 2 ^ k`, since the value of an unsatisfiable graph
 is at least `1 / |E|`. -/
 theorem gap_le_unsatVal_iter {G : FinConstraintGraph.{u} α} (h : ¬ G.graph.Satisfiable) {k : ℕ}
-    (hk : Fintype.card G.E ≤ 2 ^ k) : A.gap ≤ (A.iter k G).graph.unsatVal := by
-  refine le_trans (le_min ?_ le_rfl) (A.min_le_unsatVal_iter k G)
-  exact A.gap_le_one.trans ((G.graph.one_le_card_mul_unsatVal h).trans
-    (mul_le_mul_of_nonneg_right (by exact_mod_cast hk) G.graph.unsatVal_nonneg))
+    (hk : Fintype.card G.E ≤ 2 ^ k) : A.gap ≤ (A.iter k G).graph.unsatVal :=
+  G.graph.gap_le_of_min_two_pow_mul_le A.gap_le_one h hk (A.min_le_unsatVal_iter k G)
 
 /-- **The dichotomy** [Dinur, Corollary 4.2][Dinur2005]: after `k` rounds with `|E| ≤ 2 ^ k`, the
 value is either zero, when the graph was satisfiable, or at least `γ`. -/

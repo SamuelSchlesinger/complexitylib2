@@ -176,8 +176,7 @@ theorem unsatVal_powerPreprocess [Nonempty α] [Fintype D]
       ((g.regularPreprocess eval fallback family).power T q).toConstraintGraph.unsatVal := by
   classical
   rw [toGraph_powerPreprocess g eval fallback family rotate hrotate T q walks hwalks hmem,
-    ConstraintGraph.unsatVal_comap_equiv,
-    ConstraintGraph.unsatVal_map _ (halfEdgeNumber_fin_injective _)]
+    ConstraintGraph.unsatVal_comap_map_of_injective _ (halfEdgeNumber_fin_injective _)]
 
 include hrotate in
 /-- Exact numbering preserves satisfiability of the complete powered graph. -/
@@ -187,8 +186,8 @@ theorem satisfiable_powerPreprocess_iff [Nonempty α]
       ((g.regularPreprocess eval fallback family).power T q).toConstraintGraph.Satisfiable := by
   classical
   rw [toGraph_powerPreprocess g eval fallback family rotate hrotate T q walks hwalks hmem,
-    ConstraintGraph.satisfiable_comap_iff _ (Equiv.surjective _),
-    ConstraintGraph.satisfiable_map _ (halfEdgeNumber_fin_injective _)]
+    ConstraintGraph.satisfiable_comap_map_iff _ (halfEdgeNumber_fin_injective _)
+      (Equiv.surjective _)]
 
 end Correctness
 

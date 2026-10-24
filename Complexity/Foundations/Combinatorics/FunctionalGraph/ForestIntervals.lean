@@ -8,9 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.CheckpointForest
+public import Complexity.Foundations.Data.List.Lex
 public import Mathlib.Data.Finset.Sort
 public import Mathlib.Data.List.Iterate
-public import Mathlib.Data.List.Lex
 public import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
@@ -22,7 +22,7 @@ is reached from `x` before cycle entry (`∃ t ≤ transientDepth f x, f^[t] x =
 `forestPath f y` is a prefix of `forestPath f x` (`forestPath_prefix`).
 
 Under the lexicographic order on root-to-vertex paths, the extensions of any prefix form an
-order-convex interval (`list_prefix_interval`). Ranking the `|α|` root paths (`forestRank`) and
+order-convex interval (`List.IsPrefix.of_le_of_le`). Ranking the `|α|` root paths (`forestRank`) and
 taking the maximum descendant rank (`forestUpper`) therefore assigns two labels in
 `Fin (Nat.card α)` to every state such that ancestry before cycle entry is equivalent to interval
 containment (`forest_interval_spec`, `exists_forest_intervals`).
@@ -42,8 +42,6 @@ containment (`forest_interval_spec`, `exists_forest_intervals`).
 
 * `Cslib.FunctionalGraph.forestPath_prefix`: `forestPath f y <+: forestPath f x` iff `y` is reached
   from `x` within `transientDepth f x` steps.
-* `Cslib.FunctionalGraph.list_prefix_interval`: lists sharing a prefix form a lexicographic
-  interval.
 * `Cslib.FunctionalGraph.forest_interval_spec`: `forestRank` and `forestUpper` characterize
   ancestry before cycle entry.
 * `Cslib.FunctionalGraph.exists_forest_intervals`: interval labels in `Fin (Nat.card α)` exist over
@@ -141,44 +139,6 @@ theorem forestPath_prefix (x y : α) :
   · rintro ⟨t, ht, rfl⟩
     exact forestPath_iterate_prefix f x ht
 
-omit [Finite α] in
-/-- Lists with a common prefix form a lexicographic interval. -/
-theorem list_prefix_interval [LinearOrder α] {p a b c : List α}
-    (ha : p <+: a) (hb : p <+: b) (hac : a ≤ c) (hcb : c ≤ b) : p <+: c := by
-  induction p generalizing a b c with
-  | nil => exact List.nil_prefix
-  | cons h p ih =>
-    obtain ⟨as, rfl⟩ := ha
-    obtain ⟨bs, rfl⟩ := hb
-    cases c with
-    | nil =>
-      have hlt : ([] : List α) < h :: (p ++ as) := List.Lex.nil
-      exact (not_lt_of_ge hac hlt).elim
-    | cons k cs =>
-      have head_le {a b : α} {as bs : List α} (hh : a :: as ≤ b :: bs) : a ≤ b := by
-        rcases lt_or_eq_of_le hh with hh | hh
-        · exact List.head_le_of_lt hh
-        · exact (List.cons.inj hh).1.le
-      have hk : h = k := le_antisymm (head_le hac) (head_le hcb)
-      subst k
-      have tail_le {as bs : List α} (hh : h :: as ≤ h :: bs) : as ≤ bs := by
-        rcases lt_or_eq_of_le hh with hh | hh
-        · exact le_of_lt (show as < bs from List.lex_cons_iff.mp hh)
-        · exact (List.cons.inj hh).2.le
-      obtain ⟨ds, he⟩ := ih ⟨as, rfl⟩ ⟨bs, rfl⟩ (tail_le hac) (tail_le hcb)
-      exact ⟨ds, congrArg (List.cons h) he⟩
-
-omit [Finite α] in
-/-- A list is lexicographically at most every list it is a prefix of. -/
-theorem list_prefix_le [LinearOrder α] {a b : List α} (h : a <+: b) : a ≤ b := by
-  obtain ⟨tail, rfl⟩ := h
-  induction a with
-  | nil =>
-    cases tail with
-    | nil => exact le_rfl
-    | cons _ _ => exact le_of_lt (show ([] : List α) < _ from List.Lex.nil)
-  | cons a as ih => exact List.cons_le_cons a ih
-
 section Labels
 
 variable [Fintype α] [LinearOrder α]
@@ -228,10 +188,9 @@ theorem forest_interval_spec (x y : α) :
       ((forestDescendantRanks f y).max'_mem (forestDescendantRanks_nonempty f y))
     change forestRank f z = forestUpper f y at he
     rw [← he] at hhi
-    exact list_prefix_interval ⟨[], List.append_nil _⟩ hz
-      ((forestRank_le f y x).mp hlo) ((forestRank_le f x z).mp hhi)
+    exact hz.of_le_of_le ((forestRank_le f y x).mp hlo) ((forestRank_le f x z).mp hhi)
   · intro hp
-    refine ⟨(forestRank_le f y x).mpr (list_prefix_le hp), ?_⟩
+    refine ⟨(forestRank_le f y x).mpr (List.isPrefix_le hp), ?_⟩
     exact (forestDescendantRanks f y).le_max' _
       ((mem_forestDescendantRanks f y _).mpr ⟨x, hp, rfl⟩)
 

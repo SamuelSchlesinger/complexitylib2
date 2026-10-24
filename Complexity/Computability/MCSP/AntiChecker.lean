@@ -52,8 +52,8 @@ formalized here.
 * `Cslib.MCSP.exists_card_le_sixteen_mul`: the good-string lemma.
 * `Cslib.MCSP.exists_isAntiChecker`: small anti-checkers, combinatorially.
 * `Cslib.MCSP.isAntiChecker_computableFunctions_iff`,
-  `Cslib.MCSP.isAntiChecker_computableFunctions_iff_not_mem`: anti-checkers against circuits.
-* `Cslib.MCSP.exists_lt_complexityOn`, `Cslib.MCSP.exists_ofFunction_not_mem`: small
+  `Cslib.MCSP.isAntiChecker_computableFunctions_iff_notMem`: anti-checkers against circuits.
+* `Cslib.MCSP.exists_lt_complexityOn`, `Cslib.MCSP.exists_ofFunction_notMem`: small
   anti-checkers against circuits.
 
 ## References
@@ -244,7 +244,7 @@ theorem isAntiChecker_computableFunctions_iff {f : BooleanFunction n} {S : Set (
 /-- Against the functions computable with at most `s` gates, `S` is an anti-checker for `f`
 exactly when the Succinct MCSP instance of the values of `f` on `S`, with threshold `s`, is a
 no-instance. -/
-theorem isAntiChecker_computableFunctions_iff_not_mem {f : BooleanFunction n}
+theorem isAntiChecker_computableFunctions_iff_notMem {f : BooleanFunction n}
     {S : Finset (BitString n)} :
     IsAntiChecker (computableFunctions n s) f S ↔
       SuccinctMCSP.Instance.ofFunction f S s ∉ SuccinctMCSP := by
@@ -285,7 +285,7 @@ theorem exists_lt_complexityOn {m b : ℕ} (hm : 0 < m) (hnm : n ≤ m) {f : Boo
 /-- **Small anti-checkers against circuits**, as Succinct MCSP: under the hypotheses of
 `exists_lt_complexityOn`, the values of `f` on some set of at most `16 b` inputs are a no-instance
 of Succinct MCSP at threshold `s`. -/
-theorem exists_ofFunction_not_mem {m b : ℕ} (hm : 0 < m) (hnm : n ≤ m) {f : BooleanFunction n}
+theorem exists_ofFunction_notMem {m b : ℕ} (hm : 0 < m) (hnm : n ≤ m) {f : BooleanFunction n}
     (hf : m * s + complexity interpretation (single (strictMajority m)) <
       complexity interpretation (single f))
     (hb : #(computableFunctions n s) < 2 ^ b) :

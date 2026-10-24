@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Foundations.Data.BitString.Sparse
+public import Complexity.Foundations.Data.Nat.Bitwise.Sparse
 public import Mathlib.Data.Fintype.Prod
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Data.Fintype.Card
@@ -175,21 +175,21 @@ def positionMask {r : ℕ} (b : Fin r → ℕ) : ℕ := ∑ i, 2 ^ b i
 theorem positionMask_testBit {r : ℕ} (b : Fin r → ℕ) (hb : Function.Injective b) (k : ℕ) :
     (positionMask b).testBit k = true ↔ ∃ i, b i = k := by
   simpa only [Bool.toNat_true, one_mul, Finset.mem_univ, true_and, positionMask] using
-    Cslib.BitString.testBit_sum_injective Finset.univ b
+    Nat.testBit_sum_injective Finset.univ b
       (fun _ _ _ _ he => hb he) (fun _ => true) k
 
 /-- A position mask fits in any width above all its distinct positions. -/
 theorem positionMask_lt {r L : ℕ} (b : Fin r → ℕ) (hb : Function.Injective b)
     (hL : ∀ i, b i < L) : positionMask b < 2 ^ L := by
   simpa only [Bool.toNat_true, one_mul, positionMask] using
-    Cslib.BitString.sum_injective_lt_two_pow Finset.univ b
+    Nat.sum_injective_lt_two_pow Finset.univ b
       (fun _ _ _ _ he => hb he) (fun _ => true) (fun i _ => hL i)
 
 /-- Expand the masked product into all its binary cross terms. -/
 theorem maskedProduct_eq {r : ℕ} (b m : Fin r → ℕ) (hb : Function.Injective b) (x : ℕ) :
     (x &&& positionMask b) * positionMask m =
       ∑ p : Fin r × Fin r, (x.testBit (b p.1)).toNat * 2 ^ (b p.1 + m p.2) := by
-  rw [positionMask, Cslib.BitString.and_sum_two_pow b hb]
+  rw [positionMask, Nat.and_sum_two_pow b hb]
   simp only [positionMask, Fintype.sum_mul_sum, Fintype.sum_prod_type, pow_add, mul_assoc]
 
 /-- No carries occur anywhere in a collision-free product. At every cross-term position,
@@ -199,7 +199,7 @@ theorem maskedProduct_testBit {r : ℕ} (b m : Fin r → ℕ)
     (hb : Function.Injective b) (x : ℕ) (i j : Fin r) :
     ((x &&& positionMask b) * positionMask m).testBit (b i + m j) = x.testBit (b i) := by
   apply Bool.eq_iff_iff.mpr
-  rw [maskedProduct_eq b m hb, Cslib.BitString.testBit_sum_injective _ _
+  rw [maskedProduct_eq b m hb, Nat.testBit_sum_injective _ _
     (fun _ _ _ _ he => h he)]
   constructor
   · rintro ⟨p, _, hp, he⟩
@@ -232,7 +232,7 @@ theorem approximateSketch_eq {r w : ℕ} (b m : Fin r → ℕ)
   intro k
   apply Bool.eq_iff_iff.mpr
   rw [approximateSketch, Nat.testBit_land, Bool.and_eq_true,
-    positionMask_testBit _ hf, Cslib.BitString.testBit_sum_injective _ _
+    positionMask_testBit _ hf, Nat.testBit_sum_injective _ _
       (fun _ _ _ _ he => hf he)]
   constructor
   · rintro ⟨hp, i, hi⟩

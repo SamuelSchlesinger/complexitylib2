@@ -52,7 +52,7 @@ variable {α : Type} [FinEnum α]
 
 /-- Run every selected check and query, then materialize the output constraints. -/
 def composeSelectedEnumerated (g : Graph (α → α → Bool)) :
-    Graph ((Bool × (Fin 6 → Bool)) → (Bool × (Fin 6 → Bool)) → Bool) :=
+    Graph (SelectedAlphabet → SelectedAlphabet → Bool) :=
   SelectedHadamardTester.implementation.composeEnumerated g
 
 /-- Selected composition accepts any certified input-constraint encoding. -/

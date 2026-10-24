@@ -136,6 +136,7 @@ tooling.
   completed issues and link any remaining work once the change lands.
 - For your own implementation, follow the worker rules and obtain another coordinator's review.
   Changing roles or delegating authorship never makes an author eligible to approve their work.
+  The one exception is a validated coordinator fix, described under [Review cycle](#review-cycle).
 
 If a shared GitHub account prevents formal approval, use one brief PR comment naming the reviewer
 agent/session, revision and verdict. This is agent review, not platform or human approval.
@@ -343,6 +344,16 @@ After fixes, review the delta and affected reasoning. Revisit more of the code w
 invalidates earlier conclusions. Reuse existing reviews after verifying their scope and source
 identity; do not repeat a full review of unchanged code. Before merging, confirm that the current
 revision is covered and required validation passes.
+
+A coordinator may push a fix to a PR directly, instead of passing it back, when they are confident
+in it and have validated it. Typical cases are rebases and conflict resolution, refreshed generated
+baselines, imports, lint, proof repairs that leave statements unchanged, and corrections to
+documentation, citations or `ROADMAP.md`. Check the head first and add commits on top; force-push
+only for an announced rebase. Preserve the author's credit, and name the commits and their
+validation in the PR. Such a fix needs no second reviewer: the coordinator who made it may approve
+the resulting revision. Other reviewers, and coordinators for everything else, send findings back to
+the author as review comments. That includes changes to public statements, the meaning of
+definitions or the API, and any fix the coordinator is less sure of.
 
 Finish with a short approval or a clear request for changes. A substantive concern may need a
 long explanation; a clean review does not need a checklist of everything inspected. Record the

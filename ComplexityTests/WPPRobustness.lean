@@ -18,7 +18,7 @@ private def language : Set (List Bool) := {w | w.headD false = true}
 
 private def gap (w : List Bool) : ℤ := if w.headD false then -1 else 0
 
-private theorem gap_mem : gap ∈ GapP encBits := GapP.of_polyTime (by unfold gap; fun_prop)
+private theorem gap_mem : gap ∈ GapP encBits := mem_GapP_of_polyTime (by unfold gap; fun_prop)
 
 private def targets (n : ℕ) : List ℤ := -1 :: -1 :: List.replicate n (-2)
 
@@ -88,7 +88,7 @@ example : ComputableInPolyTime
 example : language ∈ LWPP encBits := by
   apply mem_LWPP_of_indexed_targets
     (g := indexedGap) (f := fun ni : ℕ × ℕ => -((ni.2 : ℤ) + 1)) (r := fun n => n + 1)
-  · apply GapP.of_polyTime
+  · apply mem_GapP_of_polyTime
     have hl : ComputableTidilyInPolyTime (fun w : List Bool => (w.length : ℤ))
         encBits encIntBin := ComputableTidilyInPolyTime.intBin_natCast.comp
           (ComputableTidilyInPolyTime.unary_to_binary.comp (.encoding_length encBits))

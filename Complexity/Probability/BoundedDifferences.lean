@@ -285,21 +285,8 @@ theorem pi_abs_sub_mean_ge (hf : HasBoundedDifferences f c) (p : ∀ i, PMF (α 
     (hε : 0 ≤ ε) :
     ((pi p).toOuterMeasure {x | ε ≤ |f x - ∑ y, (pi p y).toReal * f y|}).toReal ≤
       2 * Real.exp (-2 * ε ^ 2 / ∑ i, c i ^ 2) := by
-  let lower : Set (∀ i, α i) := {x | f x ≤ (∑ y, (pi p y).toReal * f y) - ε}
-  let upper : Set (∀ i, α i) := {x | (∑ y, (pi p y).toReal * f y) + ε ≤ f x}
-  have hevent : {x | ε ≤ |f x - ∑ y, (pi p y).toReal * f y|} = lower ∪ upper := by
-    ext x
-    simp only [Set.mem_ofPred_eq, Set.mem_union, le_abs, lower, upper]
-    constructor <;> rintro (h | h)
-    · right; linarith
-    · left; linarith
-    · right; linarith
-    · left; linarith
-  rw [hevent]
-  have hunion := ENNReal.toReal_le_add
-    (measure_union_le (μ := (pi p).toOuterMeasure) lower upper)
-    (toOuterMeasure_ne_top _ _) (toOuterMeasure_ne_top _ _)
-  linarith [hf.pi_le_mean_sub p hε, hf.pi_ge_mean_add p hε]
+  linarith [toOuterMeasure_abs_sub_ge_toReal_le (pi p) f (∑ y, (pi p y).toReal * f y) ε,
+    hf.pi_ge_mean_add p hε, hf.pi_le_mean_sub p hε]
 
 end HasBoundedDifferences
 

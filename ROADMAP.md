@@ -313,8 +313,8 @@ existing developments, source credit and saved branches remain available for a f
    [Hastad](Complexity/Computability/PCP/Approximation/Hastad.lean) proves the analytic core:
    completeness and soundness of Håstad's noisy 3-bit linear test on folded Long Code tables
    against `GapLabelCover` with a uniform threshold `0 < η < 1`
-   (`hastad_gapLabelCover_dichotomy_lt_one`), exercised on genuine parallel-edge no-instances in
-   [the tests](ComplexityTests/Hastad.lean), and
+   (`Cslib.PCP.Hastad.gapLabelCover_dichotomy_lt_one`), exercised on genuine parallel-edge
+   no-instances in [the tests](ComplexityTests/Hastad.lean), and
    [MaxExactThreeSAT](Complexity/Computability/PCP/Approximation/MaxExactThreeSAT.lean) proves the
    easy `7 / 8` random-assignment bound. The reduction to MAX-E3LIN/MAX-E3SAT and NP-hardness of
    Label Cover (PCP theorem with parallel repetition) remain open.

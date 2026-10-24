@@ -9,6 +9,7 @@ module
 
 public import Complexity.Foundations.Data.BitString.Enumeration
 public import Complexity.Foundations.Relation.RelatesWithinSteps
+import Complexity.Foundations.Logic.Function.Iterate
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 

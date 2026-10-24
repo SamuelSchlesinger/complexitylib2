@@ -63,7 +63,7 @@ This coupling is used only in the proof; the selected tester reads just one chec
 private theorem passes_iff_forall_checks (C : α → α → Prop) (π : Pos α → Bool) (ω : Rand α) :
     (hadamardTester C).Passes π ω ↔
       ∀ i, (checks (equationCoeff C) i).Passes π ω := by
-  simp [checks, hadamardTester, Fin.forall_fin_succ]
+  simp [checks, hadamardTester, test, Fin.forall_fin_succ]
 
 end HadamardTester
 

@@ -20,35 +20,36 @@ native visited space, even during arbitrarily long computations that revisit old
 
 ## Main definitions
 
-* `Turing.MultiTapeTM.ToTM2.Tape.window`: the stored interval at an absolute head position.
-* `Turing.MultiTapeTM.ToTM2.Tape.nativeAction`: the work-tape action, including halted stuttering.
-* `Turing.MultiTapeTM.ToTM2.Tape.run`: raw work tapes along a native machine run.
+* `Turing.MultiTapeTM.ToTM2.RawTape.window`: the stored interval at an absolute head position.
+* `Turing.MultiTapeTM.ToTM2.RawTape.nativeAction`: the work-tape action, including halted
+  stuttering.
+* `Turing.MultiTapeTM.ToTM2.RawTape.run`: raw work tapes along a native machine run.
 
 ## Main results
 
-* `Turing.MultiTapeTM.ToTM2.Tape.window_run`: stored cells are exactly visited cells.
-* `Turing.MultiTapeTM.ToTM2.Tape.span_run_eq_spaceUsedByTape`: exact per-tape space.
-* `Turing.MultiTapeTM.ToTM2.Tape.sum_span_run_le`: a native space bound bounds all raw storage.
+* `Turing.MultiTapeTM.ToTM2.RawTape.window_run`: stored cells are exactly visited cells.
+* `Turing.MultiTapeTM.ToTM2.RawTape.span_run_eq_spaceUsedByTape`: exact per-tape space.
+* `Turing.MultiTapeTM.ToTM2.RawTape.sum_span_run_le`: a native space bound bounds all raw storage.
 -/
 
-@[expose] public section
+public section
 
-namespace Turing.MultiTapeTM.ToTM2.Tape
+namespace Turing.MultiTapeTM.ToTM2.RawTape
 
 variable {k : ℕ} {Symbol State : Type*} {input : List Symbol}
 
 /-- Absolute positions stored by a raw tape with its head at `pos`. -/
-def window (t : Tape Symbol) (pos : ℤ) : Finset ℤ :=
+def window (t : RawTape Symbol) (pos : ℤ) : Finset ℤ :=
   Finset.Icc (pos - t.left.length) (pos + t.right.length)
 
-@[simp] theorem card_window (t : Tape Symbol) (pos : ℤ) :
+@[simp] private theorem card_window (t : RawTape Symbol) (pos : ℤ) :
     (t.window pos).card = t.span := by
   rw [window, Int.card_Icc]
   unfold span
   omega
 
 /-- A tape step stores precisely its previous window and its new head position. -/
-theorem window_step (t : Tape Symbol) (a : Option (Option Symbol) × SignType) (pos : ℤ) :
+private theorem window_step (t : RawTape Symbol) (a : Option (Option Symbol) × SignType) (pos : ℤ) :
     (t.step a).window (pos + a.2) = insert (pos + a.2) (t.window pos) := by
   ext z
   simp only [window, Finset.mem_Icc, Finset.mem_insert]
@@ -58,14 +59,14 @@ theorem window_step (t : Tape Symbol) (a : Option (Option Symbol) × SignType) (
   all_goals omega
 
 /-- The action on work tape `i`; a halted machine neither writes nor moves. -/
-noncomputable def nativeAction (tm : MultiTapeTM k Symbol State)
+@[expose] noncomputable def nativeAction (tm : MultiTapeTM k Symbol State)
     (c : Cfg k Symbol State input) (i : Fin k) : Option (Option Symbol) × SignType :=
   match c.state with
   | none => (none, .zero)
   | some q => (tm.tr q c.inputSymbol c.workTapeSymbols).workTapes i
 
 /-- The effective action gives the exact new head position, including after halting. -/
-theorem nativeAction_pos (tm : MultiTapeTM k Symbol State)
+private theorem nativeAction_pos (tm : MultiTapeTM k Symbol State)
     (c : Cfg k Symbol State input) (i : Fin k) :
     (tm.step c).workTapePos i = c.workTapePos i + (nativeAction tm c i).2 := by
   cases hs : c.state with
@@ -73,20 +74,20 @@ theorem nativeAction_pos (tm : MultiTapeTM k Symbol State)
   | some q => rw [tm.step_of_state hs]; simp [nativeAction, hs, Action.apply]
 
 /-- Raw tape semantics follows the native step, also at halted configurations. -/
-theorem Represents.nativeStep {t : Tape Symbol} {tm : MultiTapeTM k Symbol State}
+private theorem Represents.nativeStep {t : RawTape Symbol} {tm : MultiTapeTM k Symbol State}
     {c : Cfg k Symbol State input} {i : Fin k}
     (h : t.Represents (c.workTapes i) (c.workTapePos i)) :
     (t.step (nativeAction tm c i)).Represents
       ((tm.step c).workTapes i) ((tm.step c).workTapePos i) := by
   cases hs : c.state with
-  | none => simpa [nativeAction, hs, Tape.step, Tape.write, tm.step_of_halt hs] using h
+  | none => simpa [nativeAction, hs, RawTape.step, RawTape.write, tm.step_of_halt hs] using h
   | some q =>
     rw [nativeAction, hs, tm.step_of_state hs]
     exact h.step ((tm.tr q c.inputSymbol c.workTapeSymbols).workTapes i)
 
 /-- Raw work-tape states after `n` native steps from blank work tapes. -/
-noncomputable def run (tm : MultiTapeTM k Symbol State) (input : List Symbol) :
-    ℕ → Fin k → Tape Symbol
+@[expose] noncomputable def run (tm : MultiTapeTM k Symbol State) (input : List Symbol) :
+    ℕ → Fin k → RawTape Symbol
   | 0, _ => init
   | n + 1, i => (run tm input n i).step
       (nativeAction tm (tm.runFrom (tm.initCfg input) n) i)
@@ -154,4 +155,4 @@ theorem span_run_le {tm : MultiTapeTM k Symbol State} {input : List Symbol} {s :
   (Finset.single_le_sum (fun _ _ => Nat.zero_le _) (Finset.mem_univ i)).trans
     (sum_span_run_le hs n)
 
-end Turing.MultiTapeTM.ToTM2.Tape
+end Turing.MultiTapeTM.ToTM2.RawTape

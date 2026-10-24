@@ -8,7 +8,9 @@ module
 -- upstream: candidate (Mathlib, subadditivity of matrix rank)
 
 public import Complexity.Init
+public import Mathlib.LinearAlgebra.Dimension.LinearMap
 public import Mathlib.LinearAlgebra.Matrix.Rank
+import Mathlib.LinearAlgebra.Dimension.DivisionRing
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 /-!
@@ -17,18 +19,22 @@ import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 Over a field, the column space of `A + B` lies in the sum of the column spaces of `A` and `B`, so
 the rank of a sum of matrices is at most the sum of their ranks (`Matrix.rank_add_le`). Negation
 does not change the rank (`Matrix.rank_neg`), and scaling does not increase it, over any commutative
-semiring with the strong rank condition (`Matrix.rank_smul_le`).
+semiring with the strong rank condition (`Matrix.rank_smul_le`). The natural matrix rank also
+agrees with the cardinal rank of `Matrix.toLin'` (`Matrix.natCast_rank_eq_rank_toLin'`).
 
 ## Main results
 
 * `Matrix.rank_add_le`, `Matrix.rank_sub_le`: rank is subadditive.
 * `Matrix.rank_neg`: negation preserves rank.
 * `Matrix.rank_smul_le`: scaling does not increase rank.
+* `Matrix.natCast_rank_eq_rank_toLin'`: the natural matrix rank agrees with linear-map rank.
 
 ## References
 
 These are standard facts of linear algebra; they are used to compare the ranks of communication
 matrices in [E. Kushilevitz and N. Nisan, *Communication Complexity*][KushilevitzNisan1997].
+`Matrix.natCast_rank_eq_rank_toLin'` is ported from LinearAlgebra/Rank.lean in
+[S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 
 @[expose] public section
@@ -61,5 +67,11 @@ theorem rank_add_le (A B : Matrix m n K) : (A + B).rank ≤ A.rank + B.rank := b
 /-- The rank of a difference of matrices over a field is at most the sum of their ranks. -/
 theorem rank_sub_le (A B : Matrix m n K) : (A - B).rank ≤ A.rank + B.rank := by
   simpa [sub_eq_add_neg] using rank_add_le A (-B)
+
+/-- The natural rank of a finite matrix agrees with the cardinal rank of its linear map. -/
+theorem natCast_rank_eq_rank_toLin' [DecidableEq n] (M : Matrix m n K) :
+    (M.rank : Cardinal) = M.toLin'.rank := by
+  rw [Matrix.rank, Matrix.toLin'_apply']
+  exact Module.finrank_eq_rank _ _
 
 end Matrix

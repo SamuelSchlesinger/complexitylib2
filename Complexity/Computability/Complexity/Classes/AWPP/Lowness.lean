@@ -180,12 +180,12 @@ theorem PPWithOracle_eq_PP_of_mem_AWPP (hA : A ∈ AWPP encBits) (enc : α ↪ L
   let S : α → ℤ := fun a => ∑ w : Fin (r a) → Bool, F (a, List.ofFn w)
   have hS : S ∈ GapP enc := GapP.sum_bits_mem hF hr
   let E : α → ℤ := fun a => 2 ^ (R a * T a)
-  have hE : E ∈ GapP enc := GapP.of_polyTime (by dsimp [E]; fun_prop)
+  have hE : E ∈ GapP enc := mem_GapP_of_polyTime (by dsimp [E]; fun_prop)
   have hcoef : (fun a => 2 * (2 : ℤ) ^ r a + 1) ∈ GapP enc :=
-    GapP.of_polyTime (by fun_prop)
+    mem_GapP_of_polyTime (by fun_prop)
   apply mem_PP_iff_exists_GapP.mpr
   refine ⟨fun a => 4 * S a - (2 * (2 : ℤ) ^ r a + 1) * E a,
-    GapP.sub_mem' (GapP.mul_mem (GapP.of_polyTime (by fun_prop)) hS)
+    GapP.sub_mem' (GapP.mul_mem (mem_GapP_of_polyTime (by fun_prop)) hS)
       (GapP.mul_mem hcoef hE), fun a => ?_⟩
   have herror (w : Fin (r a) → Bool) : (2 : ℤ) ^ (r a + T a + 4) *
       |F (a, List.ofFn w) - E a * (if V (a, List.ofFn w) then 1 else 0)| ≤

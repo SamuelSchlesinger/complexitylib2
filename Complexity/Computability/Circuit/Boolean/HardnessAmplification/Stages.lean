@@ -21,7 +21,7 @@ Reconstructing a worst-case hard function from a predictor for its encoding
 at computed points: Goldreich–Levin decoding of the inner Hadamard code
 (`Cslib.Circuits.Boolean.glPredictor`), local list decoding of the outer Reed–Muller code along
 lines with advice (`Cslib.Code.lineListDecode`), and self-correction by interpolation and majority
-trees (`Cslib.Code.lagrangeDecode`, `Cslib.Code.majTree`). This module bounds the De Morgan circuit
+trees (`Cslib.Code.lagrangeDecode`, `Cslib.majTree`). This module bounds the De Morgan circuit
 size of each stage given the circuit size of the previous one.
 
 A field element is represented by `w` bits through an encoding `enc : F ≃ BitString w`, and a

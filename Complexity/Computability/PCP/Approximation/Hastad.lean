@@ -32,29 +32,29 @@ is not formalized.
    `g : β → Bool`, a `δ`-biased noise function `μ : β → Bool`, and checks whether
    `B f ^^ A g = A ((f ∘ π) + g + μ)`.
 3. On valid Long Code tables `B = longCode (π x)` and `A = longCode x`, the linear test accepts with
-   probability `1 - δ` (`Cslib.PCP.Hastad.hastadLinearProb_longCode`).
-4. By Walsh–Fourier inversion, the test correlation `hastadLinearCorr π δ B A` equals
+   probability `1 - δ` (`Cslib.PCP.Hastad.linearProb_longCode`).
+4. By Walsh–Fourier inversion, the test correlation `linearCorr π δ B A` equals
    `∑ T : Finset β, (1 - 2 * δ) ^ #T * fourierCoeff (signVal ∘ B) (projectSet π T) *
      fourierCoeff (signVal ∘ A) T ^ 2`
-   (`Cslib.PCP.Hastad.hastadLinearCorr_eq_sum`). Splitting at degree `k` and applying
-   Cauchy–Schwarz and Parseval's identity bounds `(hastadLinearCorr π δ B A) ^ 2` by
+   (`Cslib.PCP.Hastad.linearCorr_eq_sum`). Splitting at degree `k` and applying
+   Cauchy–Schwarz and Parseval's identity bounds `(linearCorr π δ B A) ^ 2` by
    `(1 - 2 * δ) ^ (2 * k) + k ^ 2 * ∑ x, spectralWeight k A x * spectralWeight k B (π x)`
-   (`Cslib.PCP.Hastad.hastadLinearCorr_sq_le`), where `spectralWeight k A` is a sub-probability
+   (`Cslib.PCP.Hastad.linearCorr_sq_le`), where `spectralWeight k A` is a sub-probability
    distribution on `β`.
 5. Decoding the spectral weights into a labelling bounds the average correlation over a Label Cover
-   instance by its value (`Cslib.PCP.Hastad.hastadGraphLinearCorr_sq_le`).
+   instance by its value (`Cslib.PCP.Hastad.graphLinearCorr_sq_le`).
 
 ## Main definitions
 
-* `Cslib.PCP.Hastad.hastadGraphLinearCorr`, `Cslib.PCP.Hastad.hastadGraphLinearProb`: multi-edge
+* `Cslib.PCP.Hastad.graphLinearCorr`, `Cslib.PCP.Hastad.graphLinearProb`: multi-edge
   test averages over a Label Cover instance.
 
 ## Main results
 
 * `Cslib.PCP.Hastad.exists_labelling_of_spectralWeight`: spectral decoding of Label Cover tables.
-* `Cslib.PCP.Hastad.hastadGraphLinearCorr_sq_le`: multi-edge Cauchy–Schwarz + Parseval soundness
+* `Cslib.PCP.Hastad.graphLinearCorr_sq_le`: multi-edge Cauchy–Schwarz + Parseval soundness
   bound.
-* `Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy_lt_one`: for every `ε` and `δ` there is a
+* `Cslib.PCP.Hastad.gapLabelCover_dichotomy_lt_one`: for every `ε` and `δ` there is a
   threshold `0 < η < 1`,
   independent of the label sets, such that on `GapLabelCover` yes-instances some folded tables pass
   the 3-bit test with probability `1 - δ`, and on no-instances every folded table passes with
@@ -209,79 +209,79 @@ private theorem sum_spectralWeight_le_unsatVal (g : Graph (β → γ)) (k : ℕ)
 
 /-- Average correlation of Håstad's 3-bit linear test across the edges of a Label Cover instance
 `g : Graph (β → γ)`. -/
-noncomputable def hastadGraphLinearCorr (g : Graph (β → γ)) (δ : ℝ)
+noncomputable def graphLinearCorr (g : Graph (β → γ)) (δ : ℝ)
     (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool) : ℝ :=
   𝔼 i : Fin g.edges.length,
-    hastadLinearCorr (g.edges.get i).constraint δ (B (g.edges.get i).dst) (A (g.edges.get i).src)
+    linearCorr (g.edges.get i).constraint δ (B (g.edges.get i).dst) (A (g.edges.get i).src)
 
 /-- Average acceptance probability of Håstad's 3-bit linear test across the edges of a Label Cover
 instance `g : Graph (β → γ)`. -/
-noncomputable def hastadGraphLinearProb (g : Graph (β → γ)) (δ : ℝ)
+noncomputable def graphLinearProb (g : Graph (β → γ)) (δ : ℝ)
     (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool) : ℝ :=
   𝔼 i : Fin g.edges.length,
-    hastadLinearProb (g.edges.get i).constraint δ (B (g.edges.get i).dst) (A (g.edges.get i).src)
+    linearProb (g.edges.get i).constraint δ (B (g.edges.get i).dst) (A (g.edges.get i).src)
 
 omit [Nonempty β] [Nonempty γ] in
 /-- For a Label Cover instance with at least one edge,
-`hastadGraphLinearProb g δ B A = 1 / 2 + 1 / 2 * hastadGraphLinearCorr g δ B A`. -/
-private theorem hastadGraphLinearProb_eq_add_hastadGraphLinearCorr {g : Graph (β → γ)}
+`graphLinearProb g δ B A = 1 / 2 + 1 / 2 * graphLinearCorr g δ B A`. -/
+private theorem graphLinearProb_eq_add_graphLinearCorr {g : Graph (β → γ)}
     (hg : g.edges ≠ []) (δ : ℝ) (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool) :
-    hastadGraphLinearProb g δ B A = 1 / 2 + 1 / 2 * hastadGraphLinearCorr g δ B A := by
+    graphLinearProb g δ B A = 1 / 2 + 1 / 2 * graphLinearCorr g δ B A := by
   have hne : (univ : Finset (Fin g.edges.length)).Nonempty :=
     univ_nonempty_iff.2 ⟨⟨0, List.length_pos_of_ne_nil hg⟩⟩
-  simp only [hastadGraphLinearProb, hastadGraphLinearCorr, hastadLinearProb_eq_add_hastadLinearCorr,
+  simp only [graphLinearProb, graphLinearCorr, linearProb_eq_add_linearCorr,
     expect_add_distrib, expect_const hne, ← mul_expect]
 
 omit [Nonempty β] [Nonempty γ] in
 /-- **Multi-edge completeness of Håstad's tests**: if `(ℓ, r)` satisfies every edge of a non-empty
 Label Cover instance `g`, then the Long Code tables `B w = longCode (r w)` and
 `A u = longCode (ℓ u)` are folded and achieve linear acceptance `1 - δ`. -/
-theorem hastadGraphProb_longCode_of_satisfies {g : Graph (β → γ)} (hg : g.edges ≠ []) (δ : ℝ)
+theorem graphLinearProb_longCode_of_satisfies {g : Graph (β → γ)} (hg : g.edges ≠ []) (δ : ℝ)
     {ℓ : ℕ → β} {r : ℕ → γ} (hℓr : ∀ d ∈ g.edges, d.constraint (ℓ d.src) = r d.dst) :
     (∀ w, IsOdd (longCode (r w))) ∧
-      hastadGraphLinearProb g δ (fun w => longCode (r w)) (fun u => longCode (ℓ u)) = 1 - δ := by
+      graphLinearProb g δ (fun w => longCode (r w)) (fun u => longCode (ℓ u)) = 1 - δ := by
   have hne : (univ : Finset (Fin g.edges.length)).Nonempty :=
     univ_nonempty_iff.2 ⟨⟨0, List.length_pos_of_ne_nil hg⟩⟩
   refine ⟨fun w => isOdd_longCode (r w), ?_⟩
-  unfold hastadGraphLinearProb
+  unfold graphLinearProb
   have hterm (i : Fin g.edges.length) :
-      hastadLinearProb (g.edges.get i).constraint δ
+      linearProb (g.edges.get i).constraint δ
         (longCode (r (g.edges.get i).dst)) (longCode (ℓ (g.edges.get i).src)) = 1 - δ := by
-    rw [← hℓr (g.edges.get i) (List.get_mem _ _), hastadLinearProb_longCode]
+    rw [← hℓr (g.edges.get i) (List.get_mem _ _), linearProb_longCode]
   simp only [hterm, expect_const hne]
 
 /-- **Multi-edge soundness bound for Håstad's 3-bit test over Label Cover**
 [Håstad, Theorem 5.6][Hastad2001]: for any Label Cover instance `g : Graph (β → γ)`, noise rate
 `0 ≤ δ ≤ 1 / 2`, degree cutoff `k`, folded right tables `B`, and left tables `A`, the squared
-average correlation `hastadGraphLinearCorr g δ B A ^ 2` is at most
+average correlation `graphLinearCorr g δ B A ^ 2` is at most
 `(1 - 2 * δ) ^ (2 * k) + k ^ 2 * (1 - (g.toGraph projectionEval).unsatVal)`. -/
-theorem hastadGraphLinearCorr_sq_le (g : Graph (β → γ)) {δ : ℝ} (hδ0 : 0 ≤ δ) (hδ1 : δ ≤ 1 / 2)
+theorem graphLinearCorr_sq_le (g : Graph (β → γ)) {δ : ℝ} (hδ0 : 0 ≤ δ) (hδ1 : δ ≤ 1 / 2)
     (k : ℕ) {B : ℕ → (γ → Bool) → Bool} (hB : ∀ w, IsOdd (B w))
     (A : ℕ → (β → Bool) → Bool) :
-    hastadGraphLinearCorr g δ B A ^ 2 ≤
+    graphLinearCorr g δ B A ^ 2 ≤
       (1 - 2 * δ) ^ (2 * k) + (k : ℝ) ^ 2 * (1 - (g.toGraph projectionEval).unsatVal) := by
   have hρ0 : 0 ≤ 1 - 2 * δ := by linarith
   have hunsat1 : (g.toGraph projectionEval).unsatVal ≤ 1 :=
     (g.toGraph projectionEval).unsatVal_le_one
   rcases g.edges.eq_nil_or_concat with hnil | ⟨l, d, hconcat⟩
   · have hempty : IsEmpty (Fin g.edges.length) := by simp [hnil]
-    have hcorr0 : hastadGraphLinearCorr g δ B A = 0 := by
-      simp [hastadGraphLinearCorr]
+    have hcorr0 : graphLinearCorr g δ B A = 0 := by
+      simp [graphLinearCorr]
     rw [hcorr0, sq, mul_zero]
     positivity
   · have hm_pos : (0 : ℝ) < g.edges.length := by
       rw [hconcat, List.length_concat]
       positivity
     have hjensen :
-        hastadGraphLinearCorr g δ B A ^ 2 ≤
+        graphLinearCorr g δ B A ^ 2 ≤
           𝔼 i : Fin g.edges.length,
-            hastadLinearCorr (g.edges.get i).constraint δ
+            linearCorr (g.edges.get i).constraint δ
               (B (g.edges.get i).dst) (A (g.edges.get i).src) ^ 2 :=
       sq_expect_le_expect_sq univ _
     refine hjensen.trans ?_
     rw [Fintype.expect_eq_sum_div_card, Fintype.card_fin, div_le_iff₀ hm_pos]
     calc (∑ i : Fin g.edges.length,
-          hastadLinearCorr (g.edges.get i).constraint δ
+          linearCorr (g.edges.get i).constraint δ
             (B (g.edges.get i).dst) (A (g.edges.get i).src) ^ 2)
       _ ≤ ∑ i : Fin g.edges.length,
             ((1 - 2 * δ) ^ (2 * k) +
@@ -289,7 +289,7 @@ theorem hastadGraphLinearCorr_sq_le (g : Graph (β → γ)) {δ : ℝ} (hδ0 : 0
                 spectralWeight k (A (g.edges.get i).src) x *
                   spectralWeight k (B (g.edges.get i).dst) ((g.edges.get i).constraint x)) :=
         sum_le_sum fun i _ =>
-          hastadLinearCorr_sq_le (g.edges.get i).constraint hδ0 hδ1 k
+          linearCorr_sq_le (g.edges.get i).constraint hδ0 hδ1 k
             (hB (g.edges.get i).dst) (A (g.edges.get i).src)
       _ = g.edges.length * (1 - 2 * δ) ^ (2 * k) +
             (k : ℝ) ^ 2 * ∑ i : Fin g.edges.length, ∑ x : β,
@@ -307,23 +307,23 @@ theorem hastadGraphLinearCorr_sq_le (g : Graph (β → γ)) {δ : ℝ} (hδ0 : 0
 `1 - (g.toGraph projectionEval).unsatVal ≤ η` and `(1 - 2 * δ) ^ (2 * k) + k ^ 2 * η ≤ (8 * ε) ^ 2`
 (`0 ≤ ε`), every assignment of folded right tables `B` and left tables `A` has average linear
 correlation at most `8 * ε`. -/
-private theorem hastadGraphLinearCorr_le_of_unsatVal (g : Graph (β → γ)) {δ : ℝ} (hδ0 : 0 ≤ δ)
+private theorem graphLinearCorr_le_of_unsatVal (g : Graph (β → γ)) {δ : ℝ} (hδ0 : 0 ≤ δ)
     (hδ1 : δ ≤ 1 / 2) (k : ℕ) {η ε : ℝ} (hε : 0 ≤ ε)
     (hη : 1 - (g.toGraph projectionEval).unsatVal ≤ η)
     (hparam : (1 - 2 * δ) ^ (2 * k) + (k : ℝ) ^ 2 * η ≤ (8 * ε) ^ 2)
     {B : ℕ → (γ → Bool) → Bool} (hB : ∀ w, IsOdd (B w)) (A : ℕ → (β → Bool) → Bool) :
-    hastadGraphLinearCorr g δ B A ≤ 8 * ε := by
-  have hsq : hastadGraphLinearCorr g δ B A ^ 2 ≤ (8 * ε) ^ 2 := by
-    calc hastadGraphLinearCorr g δ B A ^ 2
+    graphLinearCorr g δ B A ≤ 8 * ε := by
+  have hsq : graphLinearCorr g δ B A ^ 2 ≤ (8 * ε) ^ 2 := by
+    calc graphLinearCorr g δ B A ^ 2
       _ ≤ (1 - 2 * δ) ^ (2 * k) + (k : ℝ) ^ 2 * (1 - (g.toGraph projectionEval).unsatVal) :=
-        hastadGraphLinearCorr_sq_le g hδ0 hδ1 k hB A
+        graphLinearCorr_sq_le g hδ0 hδ1 k hB A
       _ ≤ (1 - 2 * δ) ^ (2 * k) + (k : ℝ) ^ 2 * η := by gcongr
       _ ≤ (8 * ε) ^ 2 := hparam
   exact (abs_le_of_sq_le_sq' hsq (by positivity)).2
 
 /-- For every `ε > 0` and `0 < δ < 1 / 2`, there exist a degree cutoff `k : ℕ` and a Label Cover
 soundness threshold `η > 0` such that `(1 - 2 * δ) ^ (2 * k) + k ^ 2 * η ≤ (8 * ε) ^ 2`. -/
-private theorem exists_hastad_params {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 : δ < 1 / 2) :
+private theorem exists_params {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 : δ < 1 / 2) :
     ∃ (k : ℕ) (η : ℝ), 0 < η ∧ (1 - 2 * δ) ^ (2 * k) + (k : ℝ) ^ 2 * η ≤ (8 * ε) ^ 2 := by
   have hρ0 : 0 ≤ 1 - 2 * δ := by linarith
   have hρ1 : 1 - 2 * δ < 1 := by linarith
@@ -345,28 +345,28 @@ for every `ε > 0` and `0 < δ < 1 / 2`, there exists a Label Cover soundness pa
 independent of the label sets `β` and `γ`, such that for every Label Cover instance
 `g : Graph (β → γ)` with `g.edges ≠ []`:
 1. (**Completeness**) If `g ∈ (GapLabelCover β γ 1 η).yes`, there exist folded tables `B` and `A`
-   achieving `hastadGraphLinearProb g δ B A = 1 - δ`.
+   achieving `graphLinearProb g δ B A = 1 - δ`.
 2. (**Soundness**) If `g ∈ (GapLabelCover β γ 1 η).no`, then for all folded right tables `B` and
-   all left tables `A`, `hastadGraphLinearProb g δ B A ≤ 1 / 2 + 4 * ε`.
+   all left tables `A`, `graphLinearProb g δ B A ≤ 1 / 2 + 4 * ε`.
 
 This is the analytic core of Håstad's MAX-E3LIN hardness proof. It is not a reduction: no
 instance of MAX-E3LIN or MAX-E3SAT is constructed, and NP-hardness of `GapLabelCover` is not
 proved here. The threshold is strictly below the completeness value, as required by the
 no-instance promise. This does not assert that no-instances exist for every fixed pair of label
 sets; sufficiently large label sets can be required. -/
-theorem hastad_gapLabelCover_dichotomy_lt_one {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ)
+theorem gapLabelCover_dichotomy_lt_one {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ)
     (hδ1 : δ < 1 / 2) :
     ∃ η : ℝ, 0 < η ∧ η < 1 ∧ ∀ {β γ : Type} [Fintype β] [DecidableEq β] [Nonempty β]
       [Fintype γ] [DecidableEq γ] [Nonempty γ] {g : Graph (β → γ)}, g.edges ≠ [] →
       (g ∈ (GapLabelCover β γ 1 η).yes →
         ∃ (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool),
           (∀ w, IsOdd (B w)) ∧
-            hastadGraphLinearProb g δ B A = 1 - δ) ∧
+            graphLinearProb g δ B A = 1 - δ) ∧
       (g ∈ (GapLabelCover β γ 1 η).no →
         ∀ (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool),
           (∀ w, IsOdd (B w)) →
-            hastadGraphLinearProb g δ B A ≤ 1 / 2 + 4 * ε) := by
-  obtain ⟨k, θ, hθ, hparam⟩ := exists_hastad_params hε hδ0 hδ1
+            graphLinearProb g δ B A ≤ 1 / 2 + 4 * ε) := by
+  obtain ⟨k, θ, hθ, hparam⟩ := exists_params hε hδ0 hδ1
   let η := min θ (1 / 2)
   have hη : 0 < η := lt_min hθ (by norm_num)
   have hη1 : η < 1 := (min_le_right _ _).trans_lt (by norm_num)
@@ -381,28 +381,28 @@ theorem hastad_gapLabelCover_dichotomy_lt_one {ε δ : ℝ} (hε : 0 < ε) (hδ0
     have hsat : (g.toGraph projectionEval).Satisfiable :=
       (g.toGraph projectionEval).unsatVal_eq_zero_iff.1 hunsat0
     obtain ⟨ℓ, r, hℓr⟩ := (satisfiable_toGraph_projectionEval_iff g).1 hsat
-    obtain ⟨hfold, hlin⟩ := hastadGraphProb_longCode_of_satisfies hg δ hℓr
+    obtain ⟨hfold, hlin⟩ := graphLinearProb_longCode_of_satisfies hg δ hℓr
     exact ⟨fun w => longCode (r w), fun u => longCode (ℓ u), hfold, hlin⟩
   · intro hno B A hB
     simp only [GapLabelCover, PromiseProblem.mem_no_gapMax] at hno
-    have hcorr := hastadGraphLinearCorr_le_of_unsatVal g hδ0.le hδ1.le k hε.le hno.1 hparam' hB A
-    have hlin := hastadGraphLinearProb_eq_add_hastadGraphLinearCorr hg δ B A
+    have hcorr := graphLinearCorr_le_of_unsatVal g hδ0.le hδ1.le k hε.le hno.1 hparam' hB A
+    have hlin := graphLinearProb_eq_add_graphLinearCorr hg δ B A
     linarith
 
-/-- Compatibility form of `hastad_gapLabelCover_dichotomy_lt_one`, retaining the original public
+/-- Compatibility form of `gapLabelCover_dichotomy_lt_one`, retaining the original public
 statement. Use the stronger theorem when a nontrivial Label Cover gap is needed. -/
-theorem hastad_gapLabelCover_dichotomy {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 : δ < 1 / 2) :
+theorem gapLabelCover_dichotomy {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1 : δ < 1 / 2) :
     ∃ η : ℝ, 0 < η ∧ ∀ {β γ : Type} [Fintype β] [DecidableEq β] [Nonempty β]
       [Fintype γ] [DecidableEq γ] [Nonempty γ] {g : Graph (β → γ)}, g.edges ≠ [] →
       (g ∈ (GapLabelCover β γ 1 η).yes →
         ∃ (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool),
           (∀ w, IsOdd (B w)) ∧
-            hastadGraphLinearProb g δ B A = 1 - δ) ∧
+            graphLinearProb g δ B A = 1 - δ) ∧
       (g ∈ (GapLabelCover β γ 1 η).no →
         ∀ (B : ℕ → (γ → Bool) → Bool) (A : ℕ → (β → Bool) → Bool),
           (∀ w, IsOdd (B w)) →
-            hastadGraphLinearProb g δ B A ≤ 1 / 2 + 4 * ε) := by
-  obtain ⟨η, hη, _, h⟩ := hastad_gapLabelCover_dichotomy_lt_one hε hδ0 hδ1
+            graphLinearProb g δ B A ≤ 1 / 2 + 4 * ε) := by
+  obtain ⟨η, hη, _, h⟩ := gapLabelCover_dichotomy_lt_one hε hδ0 hδ1
   exact ⟨η, hη, h⟩
 
 end Cslib.PCP.Hastad

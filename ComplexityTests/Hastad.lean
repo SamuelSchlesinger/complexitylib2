@@ -75,26 +75,26 @@ private def oneEdgeGraph : Graph (Bool → Bool) :=
 tables achieving linear acceptance `1 - δ`. -/
 example (δ : ℝ) :
     (∀ w, IsOdd (longCode ((fun _ : ℕ => false) w))) ∧
-      Hastad.hastadGraphLinearProb oneEdgeGraph δ
+      Hastad.graphLinearProb oneEdgeGraph δ
         (fun _ => longCode false) (fun _ => longCode false) = 1 - δ :=
-  Hastad.hastadGraphProb_longCode_of_satisfies (by decide : oneEdgeGraph.edges ≠ []) δ
+  Hastad.graphLinearProb_longCode_of_satisfies (by decide : oneEdgeGraph.edges ≠ []) δ
     (fun d hd => by
       simp only [oneEdgeGraph, List.mem_singleton] at hd
       subst hd
       rfl)
 
-/-- The soundness threshold `η` of `hastad_gapLabelCover_dichotomy` does not depend on the label
+/-- The soundness threshold `η` of `gapLabelCover_dichotomy` does not depend on the label
 sets: one `η` serves instances over `Bool → Bool` and over `Fin 3 → Bool`. This checks the
 quantifier order only: with two right labels a random labelling satisfies at least half of the
 edges, so both no-instance sets are empty unless `η ≥ 1 / 2`. -/
 example : ∃ η : ℝ, 0 < η ∧
     (∀ g : Graph (Bool → Bool), g.edges ≠ [] → g ∈ (GapLabelCover Bool Bool 1 η).no →
       ∀ B A, (∀ w, IsOdd (B w)) →
-        Hastad.hastadGraphLinearProb g (1 / 4) B A ≤ 1 / 2 + 4 * (1 / 16)) ∧
+        Hastad.graphLinearProb g (1 / 4) B A ≤ 1 / 2 + 4 * (1 / 16)) ∧
     (∀ g : Graph (Fin 3 → Bool), g.edges ≠ [] → g ∈ (GapLabelCover (Fin 3) Bool 1 η).no →
       ∀ B A, (∀ w, IsOdd (B w)) →
-        Hastad.hastadGraphLinearProb g (1 / 4) B A ≤ 1 / 2 + 4 * (1 / 16)) := by
-  obtain ⟨η, hη, h⟩ := Hastad.hastad_gapLabelCover_dichotomy (ε := 1 / 16) (δ := 1 / 4)
+        Hastad.graphLinearProb g (1 / 4) B A ≤ 1 / 2 + 4 * (1 / 16)) := by
+  obtain ⟨η, hη, h⟩ := Hastad.gapLabelCover_dichotomy (ε := 1 / 16) (δ := 1 / 4)
     (by norm_num) (by norm_num) (by norm_num)
   exact ⟨η, hη, fun _ hg => (h hg).2, fun _ hg => (h hg).2⟩
 
@@ -149,16 +149,16 @@ private theorem parallelGraph_unsatVal (n : ℕ) :
 /-- The theorem's positive threshold admits an actual graph no-instance with nonempty edges,
 and therefore bounds the concrete odd Long Code tables on that graph. This exercises retained
 analytic soundness; it makes no SAT reduction or hardness claim. The threshold is chosen from
-`hastad_gapLabelCover_dichotomy_lt_one` before the label sets. Its strict upper bound ensures
+`gapLabelCover_dichotomy_lt_one` before the label sets. Its strict upper bound ensures
 that the no-instance domain is not empty merely because the gap thresholds overlap. -/
 theorem exists_soundness_noInstance : ∃ η : ℝ, 0 < η ∧ η < 1 ∧ ∃ n : ℕ,
     (parallelGraph n).edges ≠ [] ∧ (parallelGraph n).WellFormed ∧
     1 - ((parallelGraph n).toGraph projectionEval).unsatVal = 1 / (n + 1 : ℝ) ∧
     parallelGraph n ∈ (GapLabelCover Unit (Fin (n + 1)) 1 η).no ∧
     (∀ _w : ℕ, IsOdd (longCode (0 : Fin (n + 1)))) ∧
-    Hastad.hastadGraphLinearProb (parallelGraph n) (1 / 4)
+    Hastad.graphLinearProb (parallelGraph n) (1 / 4)
       (fun _ => longCode 0) (fun _ => longCode ()) ≤ 1 / 2 + 4 * (1 / 64) := by
-  obtain ⟨η, hη, hη1, h⟩ := Hastad.hastad_gapLabelCover_dichotomy_lt_one
+  obtain ⟨η, hη, hη1, h⟩ := Hastad.gapLabelCover_dichotomy_lt_one
     (ε := 1 / 64) (δ := 1 / 4)
     (by norm_num) (by norm_num) (by norm_num)
   obtain ⟨n, hn⟩ := exists_nat_one_div_lt hη
@@ -181,11 +181,11 @@ info: 'ComplexityTests.Hastad.exists_soundness_noInstance' depends on axioms:
 #print axioms ComplexityTests.Hastad.exists_soundness_noInstance
 
 /--
-info: 'Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy_lt_one' depends on axioms:
+info: 'Cslib.PCP.Hastad.gapLabelCover_dichotomy_lt_one' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy_lt_one
+#print axioms Cslib.PCP.Hastad.gapLabelCover_dichotomy_lt_one
 
 /--
 info: 'Cslib.Logic.PL.Clause.IsExactThreeDistinct.expect_eval_eq_false' depends on axioms:
@@ -230,11 +230,11 @@ info: 'Cslib.BitString.chi_comp_eq_chi_projectSet' depends on axioms:
 #print axioms Cslib.BitString.chi_comp_eq_chi_projectSet
 
 /--
-info: 'Cslib.PCP.Hastad.hastadLinearCorr_eq_sum' depends on axioms:
+info: 'Cslib.PCP.Hastad.linearCorr_eq_sum' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.hastadLinearCorr_eq_sum
+#print axioms Cslib.PCP.Hastad.linearCorr_eq_sum
 
 /--
 info: 'Cslib.PCP.Hastad.sum_spectralWeight_le_one' depends on axioms:
@@ -244,24 +244,24 @@ info: 'Cslib.PCP.Hastad.sum_spectralWeight_le_one' depends on axioms:
 #print axioms Cslib.PCP.Hastad.sum_spectralWeight_le_one
 
 /--
-info: 'Cslib.PCP.Hastad.hastadLinearCorr_sq_le' depends on axioms:
+info: 'Cslib.PCP.Hastad.linearCorr_sq_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.hastadLinearCorr_sq_le
+#print axioms Cslib.PCP.Hastad.linearCorr_sq_le
 
 /--
-info: 'Cslib.PCP.Hastad.hastadGraphLinearCorr_sq_le' depends on axioms:
+info: 'Cslib.PCP.Hastad.graphLinearCorr_sq_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.hastadGraphLinearCorr_sq_le
+#print axioms Cslib.PCP.Hastad.graphLinearCorr_sq_le
 
 /--
-info: 'Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy' depends on axioms:
+info: 'Cslib.PCP.Hastad.gapLabelCover_dichotomy' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.PCP.Hastad.hastad_gapLabelCover_dichotomy
+#print axioms Cslib.PCP.Hastad.gapLabelCover_dichotomy
 
 end ComplexityTests.Hastad

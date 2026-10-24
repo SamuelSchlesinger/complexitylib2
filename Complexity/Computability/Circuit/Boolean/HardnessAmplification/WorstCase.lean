@@ -45,7 +45,7 @@ four stages, each querying the previous one:
    that computes `p` at all but a small fraction of the points
    (`Cslib.Code.exists_card_lineListDecode_ne_le`).
 3. Self-correction by interpolation along lines and majority trees computes `p` at every point of
-   the grid `h (BitString b) ^ m` (`Cslib.Code.exists_forall_majTree_eq`).
+   the grid `h (BitString b) ^ m` (`Cslib.exists_forall_majTree_eq`).
 4. Reading off `f` from the value of `p` on the grid.
 
 The stages are bit-blasted De Morgan circuits whose costs are bounded by

@@ -70,21 +70,7 @@ open Turing.MultiTapeTM
 
 namespace VertexCover
 
-/-! ### Uncovered edges and bounded search tree -/
-
-/-- Whether the edge `e` joins two distinct declared vertices of `G` and neither endpoint is in
-`C`. -/
-def isUncoveredEdge (G : Graph) (C : List ℕ) (e : ℕ × ℕ) : Bool :=
-  G.1.any (fun v => decide (v = e.1)) && G.1.any (fun v => decide (v = e.2)) &&
-    decide (e.1 ≠ e.2) && !C.any (fun v => decide (v = e.1)) && !C.any (fun v => decide (v = e.2))
-
-/-- The edges of `G` between distinct declared vertices with neither endpoint in `C`. -/
-def uncoveredEdges (G : Graph) (C : List ℕ) : List (ℕ × ℕ) :=
-  G.2.filter (isUncoveredEdge G C)
-
-/-- Whether `C` covers every edge of `G` between declared vertices. -/
-def isCover (G : Graph) (C : List ℕ) : Bool :=
-  (uncoveredEdges G C).isEmpty
+/-! ### Bounded search tree -/
 
 /-- One step in the bounded search tree for vertex cover: if `C` is already a cover, keep `C`;
 otherwise pick the first uncovered edge `(u, v)` and add `u` (when `b = false`) or `v` (when
@@ -102,39 +88,6 @@ def foldBranch (G : Graph) (bs : List Bool) : List ℕ :=
 private theorem foldBranch_append_singleton (G : Graph) (bs : List Bool) (b : Bool) :
     foldBranch G (bs ++ [b]) = branchStep G (foldBranch G bs) b := by
   simp [foldBranch]
-
-theorem isUncoveredEdge_eq_true_iff {G : Graph} {C : List ℕ} {e : ℕ × ℕ} :
-    isUncoveredEdge G C e = true ↔
-      e.1 ∈ G.1 ∧ e.2 ∈ G.1 ∧ e.1 ≠ e.2 ∧ e.1 ∉ C ∧ e.2 ∉ C := by
-  simp only [isUncoveredEdge, Bool.and_eq_true, List.any_eq_true, decide_eq_true_eq,
-    Bool.not_eq_true', List.any_eq_false, exists_eq_right, and_assoc]
-  exact ⟨fun ⟨h₁, h₂, h₃, h₄, h₅⟩ => ⟨h₁, h₂, h₃, fun h => h₄ e.1 h rfl, fun h => h₅ e.2 h rfl⟩,
-    fun ⟨h₁, h₂, h₃, h₄, h₅⟩ =>
-      ⟨h₁, h₂, h₃, fun v hv hve => h₄ (hve ▸ hv), fun v hv hve => h₅ (hve ▸ hv)⟩⟩
-
-theorem mem_uncoveredEdges_iff {G : Graph} {C : List ℕ} {e : ℕ × ℕ} :
-    e ∈ uncoveredEdges G C ↔
-      e ∈ G.2 ∧ e.1 ∈ G.1 ∧ e.2 ∈ G.1 ∧ e.1 ≠ e.2 ∧ e.1 ∉ C ∧ e.2 ∉ C := by
-  rw [uncoveredEdges, List.mem_filter, isUncoveredEdge_eq_true_iff]
-
-/-- `isCover G C` holds exactly when every edge between declared vertices of `G` has an endpoint in
-`C`. -/
-theorem isCover_eq_true_iff {G : Graph} {C : List ℕ} :
-    isCover G C = true ↔
-      ∀ u ∈ G.1, ∀ v ∈ G.1, G.toSimpleGraph.Adj u v → u ∈ C ∨ v ∈ C := by
-  simp only [isCover, uncoveredEdges, List.isEmpty_iff, List.filter_eq_nil_iff,
-    isUncoveredEdge_eq_true_iff, Graph.toSimpleGraph, SimpleGraph.fromRel_adj, not_and,
-    not_not, Prod.forall]
-  constructor
-  · rintro h u hu v hv ⟨huv, he | he⟩
-    · by_cases huC : u ∈ C
-      · exact Or.inl huC
-      · exact Or.inr (h u v he hu hv huv huC)
-    · by_cases hvC : v ∈ C
-      · exact Or.inr hvC
-      · exact Or.inl (h v u he hv hu huv.symm hvC)
-  · intro h u v he hu hv huv huC
-    exact (h u hu v hv ⟨huv, Or.inl he⟩).resolve_left huC
 
 private theorem headD_mem_uncoveredEdges {G : Graph} {C : List ℕ}
     (h : isCover G C = false) :
@@ -346,64 +299,6 @@ theorem computableTidilyInPolyTime_cap :
   exact bitsBoundedBinaryValueWithInput
     ((length_list encNat).comp (Graph.computableTidilyInPolyTime_distinctVertices.comp (fst _ _)))
     (bitsReverse.comp ((encode encNat).comp (snd _ _)))
-
-open ComputableTidilyInPolyTime in
-/-- Testing whether an edge is uncovered is polynomial-time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_isUncoveredEdge :
-    ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => isUncoveredEdge p.1.1 p.1.2 p.2)
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool := by
-  have hV : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => p.1.1.1)
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) (encList encNat) := by
-    unfold encGraph
-    fun_prop
-  have hC : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => p.1.2)
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) (encList encNat) := by
-    fun_prop
-  have h₁ : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => p.1.1.1.any fun v => decide (v = p.2.1))
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool :=
-    anyWithInput hV (by fun_prop)
-  have h₂ : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => p.1.1.1.any fun v => decide (v = p.2.2))
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool :=
-    anyWithInput hV (by fun_prop)
-  have h₃ : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => decide (p.2.1 ≠ p.2.2))
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool := by
-    fun_prop
-  have h₄ : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => !p.1.2.any fun v => decide (v = p.2.1))
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool :=
-    bool_not.comp (anyWithInput hC (by fun_prop))
-  have h₅ : ComputableTidilyInPolyTime
-      (fun p : (Graph × List ℕ) × (ℕ × ℕ) => !p.1.2.any fun v => decide (v = p.2.2))
-      (encPair (encPair encGraph (encList encNat)) (encPair encNat encNat)) encBool :=
-    bool_not.comp (anyWithInput hC (by fun_prop))
-  exact bool_and' (bool_and' (bool_and' (bool_and' h₁ h₂) h₃) h₄) h₅
-
-open ComputableTidilyInPolyTime in
-/-- Listing the uncovered edges is polynomial-time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_uncoveredEdges :
-    ComputableTidilyInPolyTime (fun p : Graph × List ℕ => uncoveredEdges p.1 p.2)
-      (encPair encGraph (encList encNat)) (encList (encPair encNat encNat)) := by
-  have hE : ComputableTidilyInPolyTime (fun p : Graph × List ℕ => p.1.2)
-      (encPair encGraph (encList encNat)) (encList (encPair encNat encNat)) := by
-    unfold encGraph
-    fun_prop
-  exact filterWithInput hE computableTidilyInPolyTime_isUncoveredEdge
-
-open ComputableTidilyInPolyTime in
-/-- Testing whether `C` is a cover of `G` is polynomial-time. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime_isCover :
-    ComputableTidilyInPolyTime (fun p : Graph × List ℕ => isCover p.1 p.2)
-      (encPair encGraph (encList encNat)) encBool :=
-  (listIsEmpty' (encPair encNat encNat)).comp computableTidilyInPolyTime_uncoveredEdges
 
 open ComputableTidilyInPolyTime in
 /-- A single step of the bounded search tree is polynomial-time. -/

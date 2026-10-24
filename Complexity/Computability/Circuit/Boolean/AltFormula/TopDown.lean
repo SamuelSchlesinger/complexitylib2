@@ -226,7 +226,7 @@ theorem two_rpow_lt_size_of_eval_eq_parity {d : ℕ} (hd : 2 ≤ d) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ (op : AltOp) (f : AltFormula n d),
       (∀ x, eval op f x = parity n x) →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < size f + 2 * n + 1 := by
-  obtain ⟨ε, hε, N, hN⟩ := parity_communication_lower_bound.{0} d hd
+  obtain ⟨ε, hε, N, hN⟩ := not_solvesKW_parity.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn op f hf => ?_⟩
   have h := lt_of_not_ge fun hle => hN n (le_of_max_le_left hn) hle _
     (solvesKW_kwProtocol hf ⟨0, le_of_max_le_right hn⟩)
@@ -241,7 +241,7 @@ theorem two_rpow_lt_size_of_eval_eq_majority {d : ℕ} (hd : 2 ≤ d) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ (op : AltOp) (f : AltFormula n d),
       (∀ x, eval op f x = majority n x) →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < size f + 2 * n + 1 := by
-  obtain ⟨ε, hε, N, hN⟩ := strictMajority_communication_lower_bound.{0} d hd
+  obtain ⟨ε, hε, N, hN⟩ := not_solvesKW_strictMajority.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn op f hf => ?_⟩
   have hP := solvesKW_kwProtocol hf ⟨0, le_of_max_le_right hn⟩
   -- a protocol for majority gives one for strict majority

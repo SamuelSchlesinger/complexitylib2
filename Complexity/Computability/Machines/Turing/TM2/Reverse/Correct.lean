@@ -21,7 +21,7 @@ holds the current work cells; raw stacks retain blank cells and preserve the two
 * `Turing.MultiTapeTM.ToTM2.stepAux_action`: a compiled action realizes the raw tape update.
 -/
 
-@[expose] public section
+public section
 
 namespace Turing.MultiTapeTM.ToTM2
 
@@ -37,17 +37,17 @@ private theorem control_write (d : Data k State) (i : Fin k) (w : Option (Option
       = control { d with work := Function.update d.work i ((d.work i).write w) } symbol busy := by
   apply Control.ext <;> try rfl
   funext j
-  by_cases h : j = i <;> simp [Function.update, control, Tape.write, h]
+  by_cases h : j = i <;> simp [Function.update, control, RawTape.write, h]
 
 private theorem store_write (d : Data k State) (i : Fin k) (w : Option (Option Bool)) :
     store { d with work := Function.update d.work i ((d.work i).write w) } = store d := by
   funext s
   cases s with
   | work j side =>
-    by_cases h : j = i <;> cases side <;> simp [store, Tape.write, h]
+    by_cases h : j = i <;> cases side <;> simp [store, RawTape.write, h]
   | _ => rfl
 
-theorem stepAux_writeWork (d : Data k State) (i : Fin k) (w : Option (Option Bool))
+private theorem stepAux_writeWork (d : Data k State) (i : Fin k) (w : Option (Option Bool))
     (next : Statement k State) (symbol : Option Bool) (busy : Bool) :
     TM2.stepAux (writeWork i w next) (control d symbol busy) (store d) =
       TM2.stepAux next
@@ -64,8 +64,8 @@ private theorem control_moveLeft (d : Data k State) (i : Fin k)
   funext j
   by_cases h : j = i
   · subst j
-    simp only [control, store, Tape.moveLeft, List.headD_eq_head?_getD, Function.update_self]
-  · simp only [control, store, Tape.moveLeft, List.headD_eq_head?_getD, Function.update_of_ne h]
+    simp only [control, store, RawTape.moveLeft, List.headD_eq_head?_getD, Function.update_self]
+  · simp only [control, store, RawTape.moveLeft, List.headD_eq_head?_getD, Function.update_of_ne h]
 
 private theorem store_moveLeft (d : Data k State) (i : Fin k) :
     Function.update
@@ -76,7 +76,7 @@ private theorem store_moveLeft (d : Data k State) (i : Fin k) :
   cases s with
   | work j side =>
     by_cases h : j = i
-    · subst j; cases side <;> simp [Function.update, store, Tape.moveLeft]
+    · subst j; cases side <;> simp [Function.update, store, RawTape.moveLeft]
     · cases side <;> simp [Function.update, store, h]
   | _ => rfl
 
@@ -89,8 +89,8 @@ private theorem control_moveRight (d : Data k State) (i : Fin k)
   funext j
   by_cases h : j = i
   · subst j
-    simp only [control, store, Tape.moveRight, List.headD_eq_head?_getD, Function.update_self]
-  · simp only [control, store, Tape.moveRight, List.headD_eq_head?_getD, Function.update_of_ne h]
+    simp only [control, store, RawTape.moveRight, List.headD_eq_head?_getD, Function.update_self]
+  · simp only [control, store, RawTape.moveRight, List.headD_eq_head?_getD, Function.update_of_ne h]
 
 private theorem store_moveRight (d : Data k State) (i : Fin k) :
     Function.update
@@ -101,11 +101,11 @@ private theorem store_moveRight (d : Data k State) (i : Fin k) :
   cases s with
   | work j side =>
     by_cases h : j = i
-    · subst j; cases side <;> simp [Function.update, store, Tape.moveRight]
+    · subst j; cases side <;> simp [Function.update, store, RawTape.moveRight]
     · cases side <;> simp [Function.update, store, h]
   | _ => rfl
 
-theorem stepAux_moveWork (d : Data k State) (i : Fin k) (direction : SignType)
+private theorem stepAux_moveWork (d : Data k State) (i : Fin k) (direction : SignType)
     (next : Statement k State) (symbol : Option Bool) (busy : Bool) :
     TM2.stepAux (moveWork i direction next) (control d symbol busy) (store d) =
       TM2.stepAux next
@@ -114,7 +114,7 @@ theorem stepAux_moveWork (d : Data k State) (i : Fin k) (direction : SignType)
         (store
           { d with work := Function.update d.work i ((d.work i).step (none, direction)) }) := by
   cases direction with
-  | zero => simp [moveWork, Tape.step, Tape.write, Function.update_eq_self]
+  | zero => simp [moveWork, RawTape.step, RawTape.write, Function.update_eq_self]
   | neg =>
     simp only [moveWork, TM2.stepAux]
     rw [Function.update_of_ne (by simp : Stack.work i false ≠ Stack.work i true)]
@@ -138,7 +138,7 @@ theorem stepAux_moveWork (d : Data k State) (i : Fin k) (direction : SignType)
     rw [control_moveRight, store_moveRight]
     rfl
 
-theorem stepAux_workAction (d : Data k State) (i : Fin k)
+private theorem stepAux_workAction (d : Data k State) (i : Fin k)
     (a : Option (Option Bool) × SignType) (next : Statement k State)
     (symbol : Option Bool) (busy : Bool) :
     TM2.stepAux (workAction i a next) (control d symbol busy) (store d) =
@@ -147,7 +147,7 @@ theorem stepAux_workAction (d : Data k State) (i : Fin k)
         (store { d with work := Function.update d.work i ((d.work i).step a) }) := by
   rw [workAction, stepAux_writeWork, stepAux_moveWork]
   cases a with | mk w direction =>
-    cases direction <;> simp [Tape.step, Tape.write, Function.update_idem]
+    cases direction <;> simp [RawTape.step, RawTape.write, Function.update_idem]
 
 private def applyWorks (d : Data k State)
     (a : Fin k → Option (Option Bool) × SignType) (indices : List (Fin k)) : Data k State :=
@@ -185,7 +185,7 @@ private theorem applyWorks_eq (indices : List (Fin k)) (h : indices.Nodup)
     · by_cases hmem : j ∈ indices <;> simp [hj, hmem]
 
 /-- Each work tape is updated once, in a fixed straight-line statement. -/
-theorem stepAux_allWork (a : Fin k → Option (Option Bool) × SignType) (d : Data k State)
+private theorem stepAux_allWork (a : Fin k → Option (Option Bool) × SignType) (d : Data k State)
     (next : Statement k State) (symbol : Option Bool) (busy : Bool) :
     TM2.stepAux ((List.finRange k).foldr (fun i next => workAction i (a i) next) next)
       (control d symbol busy) (store d) =
@@ -206,7 +206,7 @@ theorem step_encode [Fintype State] (tm : MultiTapeTM k Bool State) (d : Data k 
     {q : State} (hq : d.state = some q) :
     TM2.step (program tm.q₀ tm.tr) (encode d) = some (encode (Data.totalStep tm d)) := by
   simp only [encode, TM2.step, program, TM2.stepAux]
-  rw [stepAux_select]
+  rw [TM2.stepAux_select]
   change some (TM2.stepAux
     (match d.state with
     | none => TM2.Stmt.goto (fun _ => .clean)
@@ -222,7 +222,7 @@ theorem step_encode_halt [Fintype State] (tm : MultiTapeTM k Bool State) (d : Da
     TM2.step (program tm.q₀ tm.tr) (encode d) =
       some ⟨some .clean, control d d.input.right.head? false, store d⟩ := by
   simp only [encode, TM2.step, program, TM2.stepAux]
-  rw [stepAux_select]
+  rw [TM2.stepAux_select]
   simp only [control, hq, TM2.stepAux, store]
 
 /-- Native initialization already has the stack layout required by the compiler. -/

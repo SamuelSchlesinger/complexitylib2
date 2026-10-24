@@ -235,7 +235,7 @@ from `x` to `y`. The transform of the connected component of the root of `x` is 
 `λ ≤ 4 / 5` on at most `|V| |B| ^ ℓ` vertices, and it maps into `G_ℓ`. -/
 theorem exists_neighbor_pow_reingold_eq {V : Type u} [Fintype V] [DecidableEq V]
     (hH : H.spectralExpansion ≤ 1 / 5) (G : RotationMap V B)
-    (hG : ∀ v, Fintype.card B ≤ 2 * #{i | G.neighbor v i = v}) {ℓ T : ℕ}
+    (hG : ∀ v, Fintype.card B ≤ 2 * G.edgeCount v v) {ℓ T : ℕ}
     (hℓ : 2 * Fintype.card V ^ 2 * Fintype.card B ^ 2 * 5 ^ ℓ ≤ 5 * 6 ^ ℓ)
     (hT : Fintype.card V * Fintype.card B ^ ℓ * 4 ^ T ≤ 5 ^ T)
     {x y : ReingoldVertex V B ℓ} (hxy : G.toSimpleGraph.Reachable x.root y.root) :
@@ -245,12 +245,8 @@ theorem exists_neighbor_pow_reingold_eq {V : Type u} [Fintype V] [DecidableEq V]
   set C := {v | G.toSimpleGraph.Reachable x.root v}
   have hxC : x.root ∈ C := SimpleGraph.Reachable.refl _
   -- the spectral gap of the component
-  have hR : ∀ v, Fintype.card B ≤ 2 * #{i | (G.componentGraph x.root).neighbor v i = v} := by
-    intro v
-    convert hG v using 3
-    ext i
-    simp only [mem_filter, mem_univ, true_and]
-    exact Subtype.ext_iff
+  have hR : ∀ v, Fintype.card B ≤ 2 * (G.componentGraph x.root).edgeCount v v := fun v ↦ by
+    simpa using hG v
   have hCV : Fintype.card C ≤ Fintype.card V := Fintype.card_subtype_le _
   have hC : 0 < Fintype.card C := Fintype.card_pos_iff.2 ⟨⟨x.root, hxC⟩⟩
   have hB : 0 < Fintype.card B := Fintype.card_pos
@@ -314,7 +310,7 @@ every vertex of `G` are self-loops, `2 |V|² |B|² 5 ^ ℓ ≤ 5 · 6 ^ ℓ` and
 `T` in `G_ℓ` from the vertex `(⋯ (s, b) ⋯, b)` ends over `t`. -/
 theorem reachable_iff_exists_root_neighbor_pow_reingold {V : Type u} [Fintype V] [DecidableEq V]
     (hH : H.spectralExpansion ≤ 1 / 5) (G : RotationMap V B)
-    (hG : ∀ v, Fintype.card B ≤ 2 * #{i | G.neighbor v i = v}) {ℓ T : ℕ}
+    (hG : ∀ v, Fintype.card B ≤ 2 * G.edgeCount v v) {ℓ T : ℕ}
     (hℓ : 2 * Fintype.card V ^ 2 * Fintype.card B ^ 2 * 5 ^ ℓ ≤ 5 * 6 ^ ℓ)
     (hT : Fintype.card V * Fintype.card B ^ ℓ * 4 ^ T ≤ 5 ^ T) (s t : V) (b : B) :
     G.toSimpleGraph.Reachable s t ↔

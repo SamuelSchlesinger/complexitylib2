@@ -53,7 +53,7 @@ open ConstraintGraph.Amplification.Arithmetic
 attribute [local instance] Cslib.PCP.HadamardTester.instFinEnumBool
 
 /-- The fixed output alphabet of the selected composition and arithmetic amplification pipeline. -/
-abbrev GapAlphabet : Type := Bool × (Fin 6 → Bool)
+abbrev GapAlphabet : Type := SelectedAlphabet
 
 /-- Split, compact, normalize, and amplify a CNF formula using the concrete arithmetic family. -/
 def gapGraph {V : Type} [DecidableEq V] (φ : CNF V) :

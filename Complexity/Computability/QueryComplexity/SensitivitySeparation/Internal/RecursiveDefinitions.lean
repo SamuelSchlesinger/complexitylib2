@@ -35,7 +35,6 @@ row `i` satisfies the target predicate and that, for each out-neighbour `j` of `
 * `recursiveFamily_nested`: the construction preserves nested families.
 * `recursiveFamily_zero`: if `0 < r` and every child predicate rejects the all-false input, so does
   every next-level predicate.
-* `recursive_coordinates_card`: the next level has `k * r * Fintype.card I` input coordinates.
 
 ## References
 
@@ -66,7 +65,7 @@ theorem gateIndex_lt_last {h : ℕ} (q : Fin h) : gateIndex q < Fin.last h :=
   Fin.castSucc_lt_last _
 
 /-- `gateIndex` is antitone: `q ≤ q'` implies `gateIndex q' ≤ gateIndex q`. -/
-theorem gateIndex_antitone {h : ℕ} {q q' : Fin h} (hqq : q ≤ q') :
+private theorem gateIndex_antitone {h : ℕ} {q q' : Fin h} (hqq : q ≤ q') :
     gateIndex q' ≤ gateIndex q := by
   exact Fin.rev_le_rev.mpr hqq
 
@@ -150,11 +149,6 @@ theorem recursiveFamily_zero {k r h : ℕ} {I : Type} (T : Tournament k)
     have hz := hzero (Fin.last h)
     change F (Fin.last h) (fun _ => false) = true at ht
     simp [hz] at ht
-
-/-- The coordinate type `(Fin k × Fin r) × I` has `k * r * Fintype.card I` elements. -/
-theorem recursive_coordinates_card {k r : ℕ} {I : Type} [Fintype I] :
-    Fintype.card ((Fin k × Fin r) × I) = k * r * Fintype.card I := by
-  simp
 
 end Internal
 

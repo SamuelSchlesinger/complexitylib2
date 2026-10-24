@@ -14,6 +14,7 @@ public import Mathlib.LinearAlgebra.Matrix.Rank
 public import Mathlib.Algebra.Order.Floor.Div
 import Complexity.Computability.Circuit.Program
 import Complexity.Computability.Circuit.Simulation
+import Complexity.Foundations.LinearAlgebra.Matrix.Rank
 import Complexity.Foundations.LinearAlgebra.Rank
 
 /-!
