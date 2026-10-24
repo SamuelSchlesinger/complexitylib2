@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Circuit.Boolean.KeyedSort
 import Complexity.Foundations.Data.BitString.Basic
 import Mathlib.Data.List.Sort
+import ComplexityTests.CircuitMaterialize
 
 /-!
 # Computed-key sorting clients
@@ -14,11 +15,13 @@ import Mathlib.Data.List.Sort
 A parity key is computed from two bits; the third bit is unrelated payload. Exhaustive
 checks compare recomputed keys and complete records against independent list sorting.
 Boundary cases include empty keys, empty records, zero sorting depth and nonuniform gate costs.
+The exhaustive check evaluates the materialized circuit, which `materialize_eq` proves equal to
+the original.
 -/
 
 namespace ComplexityTests.KeyedSort
 
-open Cslib Cslib.Circuits Cslib.Circuits.Boolean
+open Cslib Cslib.Circuits Cslib.Circuits.Boolean ComplexityTests.CircuitMaterialize
 
 private def parityKey : Circuit signature 3 1 :=
   ((Formula.input (0 : Fin 3)).xor (Formula.input 1)).toCircuit
@@ -83,7 +86,7 @@ example : (keyedSortCircuit (Circuit.oneGate (.const true) (Fin.elim0 : Fin 0 â†
 #guard_msgs in
 #eval
   [false, true].all fun ascending =>
-    let c := keyedSortCircuit parityKey 2 ascending
+    let c := materialize (keyedSortCircuit parityKey 2 ascending)
     (List.finRange 4096).all fun raw =>
       let input := (BitString.equivFin 12).symm raw
       let output := (c.evalVector interpretation input).get

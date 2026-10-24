@@ -45,6 +45,7 @@ import ComplexityTests.CircuitHamming.Parseval
 import ComplexityTests.CircuitHamming.Pointwise
 import ComplexityTests.CircuitLayerPadding
 import ComplexityTests.CircuitLayering
+import ComplexityTests.CircuitMaterialize
 import ComplexityTests.CircuitMetric
 import ComplexityTests.CircuitValueCompleteness
 import ComplexityTests.ClassClosure

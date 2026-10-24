@@ -62,7 +62,7 @@ noncomputable def emptyZeroKnowledgeProof : ZeroKnowledgeProof encBits (∅ : Se
       (reply1 := fun _ => []) (reply2 := fun _ => []) (bound := fun _ => 0)
       (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
       (fun _ _ => le_rfl) (fun _ _ => le_rfl)
-    ppt
+    exact hrun.map (by fun_prop)
   complete _ _ _ hw := Bool.noConfusion hw
   sound _ _ _ P := by simp [acceptProb, Prover.run]
   zero_knowledge {_} _ :=
@@ -96,7 +96,7 @@ noncomputable def univZeroKnowledgeProof :
       (reply1 := fun _ => []) (reply2 := fun _ => []) (bound := fun _ => 0)
       (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
       (fun _ _ => le_rfl) (fun _ _ => le_rfl)
-    ppt
+    exact hrun.map (by fun_prop)
   complete _ _ _ _ := by simp [acceptProb, Prover.run]
   sound _ _ ha := absurd (Set.mem_univ _) ha
   zero_knowledge {Vstar} hV := by
@@ -109,7 +109,7 @@ noncomputable def univZeroKnowledgeProof :
         (reply1 := fun _ => []) (reply2 := fun _ => []) (bound := fun _ => 0)
         (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
         (fun _ _ => le_rfl) (fun _ _ => le_rfl)
-      ppt
+      exact hrun.map (by fun_prop)
     · convert ComputationallyIndistinguishable.refl _ using 2 with n
       exact (ProbComp.eval_map _ _).trans
         (congrArg (PMF.map Prod.fst)
