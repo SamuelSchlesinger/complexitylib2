@@ -18,7 +18,6 @@ import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormal
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 import Complexity.Foundations.Data.Nat.PolynomialBound.Exponential
 
@@ -65,9 +64,6 @@ inclusions of the chains are elsewhere: `P ⊆ PSPACE` (`Cslib.Complexity.P_subs
 
 ## Main results
 
-* `Turing.MultiTapeNTM.RunsInTime.runsInSpace`: space is at most time.
-* `Turing.MultiTapeNTM.DecidesInTime.decidesInSpace`: a time-bounded decider is a space-bounded
-  one.
 * `Cslib.Complexity.NP_subset_NPSPACE`, `Cslib.Complexity.NP_subset_PSPACE`.
 * `Cslib.Complexity.PSPACE_subset_EXP`, `Cslib.Complexity.NP_subset_EXP`.
 * `Cslib.Complexity.SigmaP_subset_PSPACE`, `Cslib.Complexity.PH_subset_PSPACE`.
@@ -82,48 +78,6 @@ inclusions of the chains are elsewhere: `P ⊆ PSPACE` (`Cslib.Complexity.P_subs
 -/
 
 @[expose] public section
-
-namespace Turing.MultiTapeNTM
-
-variable {k : ℕ} {State Symbol : Type*} {input : List Symbol} {ntm : MultiTapeNTM k Symbol State}
-
-/-- **Space is at most time.** Under a time bound `t`, every computation path visits at most
-`k * (t + 1)` work-tape cells: within `t` steps each head visits at most `t + 1` cells, and from
-step `t` on the path stays at a halted configuration. -/
-theorem RunsInTime.runsInSpace {t : ℕ} (h : ntm.RunsInTime input t) :
-    ntm.RunsInSpace input (k * (t + 1)) := by
-  intro p
-  rcases le_or_gt p.time t with hle | hlt
-  · exact (RunPath.space_le_mul_time_add_one p.toRunPath).trans
-      (Nat.mul_le_mul_left k (Nat.add_le_add_right hle 1))
-  -- the first `t` steps have halted, and the path stays there
-  have ht : t < p.length + 1 := by unfold ComputationPath.time RunPath.time at hlt; omega
-  let q : ntm.ComputationPath input :=
-    ⟨p.toRunPath.take ⟨t, ht⟩, by rw [RelSeries.head_take]; exact p.head_eq⟩
-  have hq : q.time = t := rfl
-  have hhalt : (p.toRunPath ⟨t, ht⟩).Halted := by
-    have hlast : q.last = p.toRunPath ⟨t, ht⟩ := RelSeries.last_take _ _
-    exact hlast ▸ h q hq.ge
-  have hsub : ∀ c ∈ p.toRunPath, c ∈ q.toRunPath := by
-    rintro _ ⟨j, rfl⟩
-    rcases le_or_gt j.val t with hj | hj
-    · exact ⟨⟨j, Nat.lt_succ_of_le hj⟩, rfl⟩
-    · refine ⟨Fin.last _, ?_⟩
-      have hj' := RunPath.last_eq_of_halted (p.toRunPath.take j) ⟨t, Nat.lt_succ_of_lt hj⟩ hhalt
-      rw [RelSeries.last_take] at hj'
-      change p.toRunPath ⟨t, ht⟩ = p.toRunPath j
-      exact hj'.symm
-  exact (RunPath.space_le_of_subset hsub).trans
-    ((RunPath.space_le_mul_time_add_one q.toRunPath).trans_eq (by rw [← hq]; rfl))
-
-/-- A decider within time `t` decides within the space it visits in that time, `k * (t a + 1)`, and
-every branch halts within `t a` steps. -/
-theorem DecidesInTime.decidesInSpace {α : Type*} {ntm : MultiTapeNTM k Bool State}
-    {enc : α ↪ List Bool} {A : Set α} {t : α → ℕ} (h : ntm.DecidesInTime enc A t) :
-    ntm.DecidesInSpace enc A fun a => k * (t a + 1) :=
-  ⟨fun a => ⟨(h a).1.runsInSpace, (h a).2⟩, fun a => ⟨t a, (h a).1⟩⟩
-
-end Turing.MultiTapeNTM
 
 namespace Cslib.Complexity
 
