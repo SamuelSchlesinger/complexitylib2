@@ -518,7 +518,7 @@ theorem EUFCMA.oneTimeEUFCMA {M : MACScheme} (h : M.EUFCMA) : M.OneTimeEUFCMA :=
   apply OneTimeEUFCMA.of_negligible
   intro adversary hadversary
   have hred := h.negligible (SignatureScheme.limitToOneQuery bound adversary)
-    (SignatureScheme.isOraclePPT_limitToOneQuery hbound_poly hadversary)
+    (SignatureScheme.isOraclePPT_limitToOneQuery (.of_tidy hbound_poly) hadversary)
   refine hred.congr fun n => ?_
   congr 1
   simp only [eufOneTimeGame, eufCmaGame, ProbComp.eval_bind, ProbComp.eval_pure]

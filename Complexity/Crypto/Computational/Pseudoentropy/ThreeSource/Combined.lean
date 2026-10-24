@@ -57,17 +57,21 @@ def combinedGenerate (n sourceBits observationBound densityBound commonBits : �
 /-- The complete grid construction has one uniform polynomial-time implementation. -/
 theorem isPolyTime_combinedGenerate {pair : SamplablePair} (saved : pair.SeedRealization)
     {observationBound densityBound common : ℕ → ℕ}
-    (hobservation : ComputableTidilyInPolyTime observationBound encUnary encUnary)
-    (hdensity : ComputableTidilyInPolyTime densityBound encUnary encUnary)
-    (hcommon : ComputableTidilyInPolyTime common encUnary encUnary) :
-    ComputableTidilyInPolyTime (fun input =>
+    (hobservation : ComputableInPolyTime observationBound encUnary encUnary)
+    (hdensity : ComputableInPolyTime densityBound encUnary encUnary)
+    (hcommon : ComputableInPolyTime common encUnary encUnary) :
+    ComputableInPolyTime (fun input =>
       combinedGenerate input.1 (saved.length input.1) (observationBound input.1)
         (densityBound input.1) (common input.1) (saved.evaluate input.1) input.2)
       (encPair encUnary encBits) encBits := by
+  have hobservation := hobservation.tidy
+  have hdensity := hdensity.tidy
+  have hcommon := hcommon.tidy
+  refine .of_tidy ?_
   have hlength := saved.length_isPolyTime.tidy
   unfold combinedGenerate
-  refine GeneratorXor.isPolyTime_generate (by polytime) (by polytime) (by polytime) ?_ (by polytime)
-  have hgenerate := isPolyTime_amplifiedGenerate saved hobservation hdensity hcommon
+  refine (GeneratorXor.isPolyTime_generate (.of_tidy (by polytime)) (.of_tidy (by polytime)) (.of_tidy (by polytime)) (.of_tidy ?_) (.of_tidy (by polytime))).tidy
+  have hgenerate := (isPolyTime_amplifiedGenerate saved (.of_tidy hobservation) (.of_tidy hdensity) (.of_tidy hcommon)).tidy
   exact hgenerate.comp (g := fun input : ((ℕ × List Bool) × ℕ) × List Bool =>
     ((input.1.1.1, input.1.2), input.2)) (by fun_prop)
 
@@ -101,7 +105,7 @@ theorem combinedGenerate_indistinguishable {pair : SamplablePair} {gap : ℕ →
     (outputBits := fun n => size (saved.length n) (densityBound n) * common n + 1)
     (generator := fun n index => amplifiedGenerate n (saved.length n) (observationBound n)
       (densityBound n) (common n) index (saved.evaluate n))
-    (by polytime) hcommon (by polytime) ?_ hchoose hsecure
-  exact isPolyTime_amplifiedGenerate saved hobservation hdensity hcommon
+    (.of_tidy (by polytime)) (.of_tidy hcommon) (.of_tidy (by polytime)) (.of_tidy ?_) hchoose hsecure
+  exact (isPolyTime_amplifiedGenerate saved (.of_tidy hobservation) (.of_tidy hdensity) (.of_tidy hcommon)).tidy
 
 end Cslib.Crypto.Pseudoentropy.EntropyGrid

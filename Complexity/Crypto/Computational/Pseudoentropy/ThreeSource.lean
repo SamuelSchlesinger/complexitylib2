@@ -62,9 +62,9 @@ noncomputable def finish (bound observationBits : ℕ)
 /-- The last observation hash composes with a certified intermediate result. -/
 theorem isPPTOn_finish {α : Type} {input : α ↪ List Bool} {bound observationBits : α → ℕ}
     {middle : α → List (List Bool) × List Bool × List Bool}
-    (hbound : ComputableTidilyInPolyTime bound input encUnary)
-    (hobservation : ComputableTidilyInPolyTime observationBits input encUnary)
-    (hmiddle : ComputableTidilyInPolyTime middle input
+    (hbound : ComputableInPolyTime bound input encUnary)
+    (hobservation : ComputableInPolyTime observationBits input encUnary)
+    (hmiddle : ComputableInPolyTime middle input
       (encPair (encList encBits) (encPair encBits encBits))) :
     IsPPTOn input encBits (fun a => finish (bound a) (observationBits a) (middle a)) := by
   unfold finish
@@ -87,12 +87,12 @@ theorem isPPTOn_extract {α : Type} {input : α ↪ List Bool}
     {source : α → ProbComp ((List Bool × Bool) × List Bool)}
     (hsource : IsPPTOn input
       (encPair (encPair encBits encBool) encBits) source)
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
-    (hseed : ComputableTidilyInPolyTime seedBits input encUnary)
-    (hbound : ComputableTidilyInPolyTime bound input encUnary)
-    (hobservation : ComputableTidilyInPolyTime observationBits input encUnary)
-    (hlabel : ComputableTidilyInPolyTime labelBits input encUnary)
-    (hremaining : ComputableTidilyInPolyTime remainingBits input encUnary) :
+    (hcount : ComputableInPolyTime count input encUnary)
+    (hseed : ComputableInPolyTime seedBits input encUnary)
+    (hbound : ComputableInPolyTime bound input encUnary)
+    (hobservation : ComputableInPolyTime observationBits input encUnary)
+    (hlabel : ComputableInPolyTime labelBits input encUnary)
+    (hremaining : ComputableInPolyTime remainingBits input encUnary) :
     IsPPTOn input encBits (fun a => extract (count a) (seedBits a) (bound a)
       (observationBits a) (labelBits a) (remainingBits a) (source a)) := by
   unfold extract
@@ -356,7 +356,7 @@ theorem replace_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ} (hpair
   let count := fun n => ExtractionSchedule.count n (saved.length n) (inverseSlack n)
   have hlength := saved.length_isPolyTime.tidy
   have hcount : ComputableTidilyInPolyTime count encUnary encUnary :=
-    ExtractionSchedule.isPolyTime_count (by fun_prop) hlength hslack
+    (ExtractionSchedule.isPolyTime_count (.of_tidy (by fun_prop)) (.of_tidy hlength) (.of_tidy hslack)).tidy
   let test (n i : ℕ) (middle : List (List Bool) × List Bool × List Bool) : ProbComp Bool := do
     let front ← finish (bound n) (observationBits n i) middle
     let suffix ← BitString.sampleList
@@ -369,8 +369,8 @@ theorem replace_indexed_labels {pair : SamplablePair} {gap : ℕ → ℝ} (hpair
     apply IsPPTOn.bind_with (left := encBits) (by fun_prop)
     apply IsPPTOn.bind_with (left := encBits) (by fun_prop)
     ppt
-  have h := hpair.extract_indexed_word_labels saved choose hcandidates hlabel hslack hnumerator
-    hdensity hchoose hvalid hbudget test htest
+  have h := hpair.extract_indexed_word_labels saved choose (.of_tidy hcandidates) (.of_tidy hlabel) (.of_tidy hslack) (.of_tidy hnumerator)
+    (.of_tidy hdensity) hchoose hvalid hbudget test htest
   have hideal (n i : ℕ) :
       ProbComp.eval (extractWordLabelsIdeal (Prod.fst <$> pair.sample n) (count n)
         (labelBits n i) >>= test n i) =

@@ -8,6 +8,7 @@ import Complexity.Crypto.Computational.Homomorphic.Leveled.Basic
 import Complexity.Crypto.Computational.Homomorphic.Leveled.Correctness
 import Complexity.Crypto.Computational.Homomorphic.Leveled.PolyTime
 import ComplexityTests.Crypto.HomomorphicExample
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 End-to-end clients of the depth-budgeted scheme. The insecure tagged fixture rejects its own
@@ -254,7 +255,7 @@ example : IsPPTOn
 example : IsPPTOn encUnary (encPair encBits encBits)
     (Leveled.scheme decryptionCircuits (fun n => n + 1)).keyGen := by
   exact Leveled.isPPTOn_scheme_keyGen keyGen_ppt encrypt_ppt decryptionCircuits
-    (fun n => n + 1) (by fun_prop)
+    (fun n => n + 1) (.of_tidy (by fun_prop))
 
 example : IsPPTOn
     (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits)))) encBits
