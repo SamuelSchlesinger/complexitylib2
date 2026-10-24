@@ -728,8 +728,9 @@ theorem length_entries_initState {B : Basis} {r : ℕ} (input : List ℕ) :
 open ComputableTidilyInPolyTime in
 /-- Building the initial memory is polynomial-time on framed lists of binary words. -/
 theorem initMemory_polyTime :
-    ComputableTidilyInPolyTime initMemory (encList encNat)
+    Turing.MultiTapeTM.ComputableInPolyTime initMemory (encList encNat)
       (SparseMemory.encoding encNat encNat) := by
+  refine .of_tidy ?_
   have hlen : ComputableTidilyInPolyTime (fun l : List ℕ => l.length) (encList encNat) encNat :=
     unary_to_binary.comp (length_list encNat)
   have hstep : ComputableTidilyInPolyTime (fun e : ℕ × ℕ => (e.2 + 1, e.1))
@@ -822,7 +823,7 @@ theorem Program.ComputesInTime.computableInPolyTime (hB : B.PolyTimeOps) {p : Pr
     (unary_eval Qs).comp (encoding_length encIn)
   have hstepsT : ComputableTidilyInPolyTime steps encIn encNat := unary_to_binary.comp hstepsU
   have hmemT : ComputableTidilyInPolyTime (fun a => initMemory (encode a)) encIn
-      (SparseMemory.encoding encNat encNat) := initMemory_polyTime.comp hencT
+      (SparseMemory.encoding encNat encNat) := initMemory_polyTime.tidy.comp hencT
   let cInit := FiniteState.initConstCertificate (r := r) (wordEncoding B)
     (NativeCertificate.const (ei := encIn) 0) (NativeCertificate.const 0) (ofPolyTime hmemT)
   have hInit : cInit.IsPolynomial :=
