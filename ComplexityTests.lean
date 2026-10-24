@@ -93,6 +93,7 @@ import ComplexityTests.CountingVerifier
 import ComplexityTests.Crypto.Bootstrapping
 import ComplexityTests.Crypto.Commitment
 import ComplexityTests.Crypto.Encryption
+import ComplexityTests.Crypto.FiatShamir
 import ComplexityTests.Crypto.FixedKeySecurity
 import ComplexityTests.Crypto.Forking
 import ComplexityTests.Crypto.GMWPointwise
@@ -236,6 +237,7 @@ import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MachineStateMap
 import ComplexityTests.ManyOne
+import ComplexityTests.ManyOneKernel
 import ComplexityTests.MassProduction
 import ComplexityTests.MassProduction.Fine
 import ComplexityTests.MassProduction.HighRate

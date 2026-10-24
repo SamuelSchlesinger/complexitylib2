@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Reduction.ManyOne
+public import Complexity.Computability.Reduction.ManyOne
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Computable
 
 /-!

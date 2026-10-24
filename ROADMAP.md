@@ -1179,10 +1179,14 @@ Jukna coverage below is an additional target beyond the V1 port:
   against direct attacks by uniform strict PPT impersonators under it. The general
   [forking lemma](Complexity/Probability/Forking.lean) (Bellare–Neven) is proved, also for
   [oracle programs](Complexity/Languages/Probabilistic/Forking.lean) with explicit coins and
-  presampled answers. Open (see #640): Fiat–Shamir/Schnorr signatures in the random-oracle model
-  with the bound of Theorem 19.16, and security against eavesdropping in the strict-PPT model,
-  where simulating transcripts needs approximately uniform `ZMod q` samples and hence an explicit
-  statistical-distance term.
+  presampled answers. [Fiat–Shamir signatures](Complexity/Crypto/Protocols/SigmaProtocol/FiatShamir.lean)
+  in the [random-oracle model](Complexity/Crypto/Protocols/Signature/RandomOracle.lean) are
+  correct and, exactly, EUF-CMA secure with the bound
+  `C(Q, 2) · δ + (Q + 1)/N + √((Q + 1) · ε')` of Theorem 19.16 and Equation 19.21, by the
+  [difference lemma](Complexity/Languages/Probabilistic/UntilBad.lean), presampling and forking.
+  Open (see #640): computational Schnorr signatures under discrete log for strict PPT forgers,
+  and security against eavesdropping in the strict-PPT model, where simulating transcripts needs
+  approximately uniform `ZMod q` samples and hence an explicit statistical-distance term.
 
 The current V1 port excludes the circuitized anti-checker, hardness-magnification argument and
 MINKT/MINCKT developments. The long-term canon above includes metacomplexity; those results should

@@ -1,0 +1,152 @@
+/-
+Copyright (c) 2026 Samuel Schlesinger. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Samuel Schlesinger
+-/
+
+import Complexity.Crypto.Protocols.SigmaProtocol.FiatShamir
+import Complexity.Crypto.Protocols.SigmaProtocol.SchnorrIdentification
+import Complexity.Probability.PMF
+import Mathlib.Tactic.LinearCombination
+import Mathlib.Tactic.NormNum.Prime
+
+/-!
+# Tests for Fiat–Shamir signatures
+
+Schnorr signatures in `ZMod 11`, with base `2`, are Fiat–Shamir signatures from Schnorr's
+protocol: honest signatures verify, and the commitments are `1 / 11`-unpredictable. Discrete
+logarithms are easy here: a forger that computes the witness and signs a message honestly, with
+one hash call, always wins, so the security theorem makes the reduction compute discrete
+logarithms with probability at least `81 / 242`.
+-/
+
+namespace ComplexityTests.Crypto.FiatShamir
+
+open Cslib Cslib.Probability Cslib.Crypto Cslib.Crypto.Protocols SigmaProtocol ROMSignature
+open scoped NNReal
+
+instance : Fact (Nat.Prime 11) := ⟨by norm_num⟩
+
+/-- Challenges are all of `ZMod 11`. -/
+abbrev ι : ZMod 11 ↪ ZMod 11 := Function.Embedding.refl _
+
+/-- Schnorr signatures on `Bool` messages in `ZMod 11` with base `2`. -/
+noncomputable abbrev scheme :=
+  fiatShamir (M := Bool) (schnorr ι (2 : ZMod 11)) (schnorrKeyGen 2)
+
+/-- Honest Schnorr signatures verify. -/
+example : scheme.Correct :=
+  fiatShamir_correct schnorr_complete fun _ h => mem_support_schnorrKeyGen h
+
+/-- Schnorr commitments in `ZMod 11` with base `2` are `1 / 11`-unpredictable: the commitment
+`r • 2` of a uniform `r` is uniform. -/
+theorem commit_unpredictable (key : ZMod 11 × ZMod 11) (t : ZMod 11) :
+    ((schnorr ι (2 : ZMod 11)).commit key.1 key.2).map Prod.fst t ≤ ((11 : ℝ≥0)⁻¹ : ℝ≥0) := by
+  have h2 : (2 : ZMod 11) ≠ 0 := by decide
+  have hmap : ((schnorr ι (2 : ZMod 11)).commit key.1 key.2).map Prod.fst =
+      (PMF.uniformOfFintype (ZMod 11)).map (Equiv.mulRight₀ (2 : ZMod 11) h2) := by
+    simp only [schnorr, linear, PMF.map_comp]
+    rfl
+  rw [hmap, PMF.uniformOfFintype_map_equiv, PMF.uniformOfFintype_apply, ZMod.card]
+  simp
+
+/-- The forger that computes the witness `6 • u` of `u` and signs `true` honestly, with one hash
+call. -/
+noncomputable def knower : Forger (ZMod 11) Bool (ZMod 11 × ZMod 11) (Bool × ZMod 11) (ZMod 11)
+    where
+  Coins := ZMod 11
+  coins := PMF.uniformOfFintype (ZMod 11)
+  forge u r := do
+    let c ← OracleComp.query (spec := ForgerSpec Bool (Bool × ZMod 11) (ZMod 11 × ZMod 11)
+      (ZMod 11)) (.inr (true, r • 2))
+    return (true, (r • 2, r + c • (6 • u)))
+
+/-- The knowing forger always wins. -/
+theorem succProbability_knower : Game.succProbability (eufCmaGame scheme knower) = 1 := by
+  rw [Game.succProbability, ENNReal.toNNReal_eq_one_iff]
+  refine le_antisymm (PMF.coe_le_one _ _) ?_
+  simp only [eufCmaGame, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+  refine PMF.le_bind_apply_on_support _ fun keys hkeys => ?_
+  obtain ⟨key, hkey, rfl⟩ := (_root_.PMF.mem_support_map_iff _ _ _).mp hkeys
+  have hrel := mem_support_schnorrKeyGen hkey
+  refine PMF.le_bind_apply_on_support _ fun (r : ZMod 11) _ => ?_
+  refine PMF.le_bind_apply_on_support _ fun forged hforged => ?_
+  simp only [knower, OracleComp.interpret_bind, OracleComp.interpret_query, StateT.run_bind,
+    OracleComp.interpret_pure, PMF.monad_bind_eq_bind, PMF.mem_support_bind_iff,
+    StateT.run_pure, PMF.monad_pure_eq_pure, _root_.PMF.mem_support_pure_iff] at hforged
+  obtain ⟨answer, hanswer, rfl⟩ := hforged
+  change answer ∈ ((memoize (fun _ => PMF.uniformOfFintype (ZMod 11)) (true, r • (2 : ZMod 11))
+    []).bind fun a => PMF.pure (a.1, a.2, ([] : List Bool))).support at hanswer
+  rw [memoize_of_none _ _ _ rfl] at hanswer
+  simp only [PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure, PMF.bind_bind, PMF.pure_bind,
+    PMF.mem_support_bind_iff, _root_.PMF.mem_support_pure_iff] at hanswer
+  obtain ⟨c, -, rfl⟩ := hanswer
+  refine PMF.le_bind_apply_on_support _ fun verified hverified => ?_
+  simp only [scheme, fiatShamir, OracleComp.interpret_map, OracleComp.interpret_query,
+    StateT.run_map, PMF.monad_map_eq_map, _root_.PMF.mem_support_map_iff] at hverified
+  obtain ⟨v, hv, rfl⟩ := hverified
+  change v ∈ (memoize (fun _ => PMF.uniformOfFintype (ZMod 11)) (true, r • (2 : ZMod 11))
+    [((true, r • 2), c)]).support at hv
+  rw [memoize_of_some _ _ _ _ List.lookup_cons_self, PMF.monad_pure_eq_pure,
+    _root_.PMF.mem_support_pure_iff] at hv
+  subst hv
+  have h11 : (11 : ZMod 11) = 0 := by decide
+  have haccept : (schnorr ι (2 : ZMod 11)).Accepts key.2 (r • 2) c (r + c • (6 • key.2)) := by
+    rw [schnorr_accepts_iff, ← hrel]
+    simp only [smul_eq_mul, Function.Embedding.refl_apply]
+    linear_combination (2 * c * key.1) * h11
+  have hverify : (schnorr ι (2 : ZMod 11)).verify key.2 (r • 2) c (r + c • (6 • key.2)) = true :=
+    haccept
+  simp only [hverify]
+  simp
+
+/-- The knowing forger makes one call. -/
+theorem knower_isQueryBounded (u r : ZMod 11) : OracleComp.IsQueryBounded (knower.forge u r) 1 :=
+  .liftBind _ _ 0 fun _ => .pure _ 0
+
+/-- The reduction built from the knowing forger computes a discrete logarithm with probability at
+least `81 / 242`: the security bound reads `1 ≤ 0 + 2 / 11 + √(2 · ε')`. -/
+example : (81 / 242 : ℝ) ≤ Game.succProbability (oneWayGame (schnorrKeyGen (2 : ZMod 11))
+    (fun α u => α • (2 : ZMod 11) = u)
+    (FiatShamir.reduction (schnorr ι (2 : ZMod 11))
+      (linearSimulate (fun _ => LinearMap.toSpanSingleton (ZMod 11) (ZMod 11) 2) id ι)
+      (linearExtract ι) knower 1)) := by
+  have h := succProbability_eufCmaGame_le (δ := 11⁻¹)
+    (fun _ h => mem_support_schnorrKeyGen h)
+    ((schnorr_specialSoundness (ι := ι) (g := (2 : ZMod 11))).specialSoundOn (schnorrKeyGen 2))
+    schnorr_specialHVZK (fun key _ t => commit_unpredictable key t) knower
+    knower_isQueryBounded
+  have hknower : Game.succProbability (eufCmaGame (fiatShamir (M := Bool)
+      (schnorr ι (2 : ZMod 11)) (schnorrKeyGen 2)) knower) = 1 := succProbability_knower
+  rw [hknower, ZMod.card] at h
+  set ε := (Game.succProbability (oneWayGame (schnorrKeyGen (2 : ZMod 11))
+    (fun α u => α • (2 : ZMod 11) = u)
+    (FiatShamir.reduction (schnorr ι (2 : ZMod 11))
+      (linearSimulate (fun _ => LinearMap.toSpanSingleton (ZMod 11) (ZMod 11) 2) id ι)
+      (linearExtract ι) knower 1)) : ℝ) with hε
+  have hε0 : 0 ≤ ε := NNReal.coe_nonneg _
+  have hchoose : ((Nat.choose 1 2 : ℕ) : ℝ) = 0 := by norm_num
+  rw [hchoose, zero_mul, zero_add, Nat.cast_one, show (1 : ℝ) + 1 = 2 by norm_num] at h
+  have hsqrt : (9 / 11 : ℝ) ≤ √(2 * ε) := by
+    simp only [NNReal.coe_one, Nat.cast_ofNat] at h
+    linarith
+  have hsq := Real.sq_sqrt (by positivity : (0 : ℝ) ≤ 2 * ε)
+  nlinarith [mul_le_mul hsqrt hsqrt (by norm_num) (Real.sqrt_nonneg _)]
+
+/-! ### Axioms -/
+
+/--
+info: 'Cslib.Crypto.Protocols.SigmaProtocol.succProbability_eufCmaGame_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms succProbability_eufCmaGame_le
+
+/--
+info: 'Cslib.Crypto.Protocols.SigmaProtocol.fiatShamir_correct' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms fiatShamir_correct
+
+end ComplexityTests.Crypto.FiatShamir

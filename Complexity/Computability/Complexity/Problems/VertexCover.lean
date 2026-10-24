@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Complexity.Problems.Graph
+public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Mathlib.Combinatorics.SimpleGraph.VertexCover
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
