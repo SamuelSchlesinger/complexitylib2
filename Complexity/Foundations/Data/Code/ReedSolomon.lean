@@ -18,7 +18,7 @@ import Mathlib.LinearAlgebra.Lagrange
 /-!
 # Reed–Solomon codes
 
-The *Reed–Solomon code* of dimension `k` with evaluation points `α : ι → F` in a field `F`
+The *Reed–Solomon code* with degree bound `k` and evaluation points `α : ι → F` in a field `F`
 consists of the words `i ↦ p (α i)` of values of the polynomials `p` of degree less than `k`
 (`Cslib.Code.reedSolomon`) [ReedSolomon1960], [GuruswamiRudraSudan2019],
 [MacWilliams and Sloane, Chapter 10][MacWilliamsSloane1977]. It is a linear code of length
@@ -42,7 +42,7 @@ meet the Singleton bound `Cslib.Code.finrank_add_le_card_add_one` with equality.
 * `Cslib.Code.le_hammingNorm_of_mem_reedSolomon`, `Cslib.Code.le_minDist_reedSolomon`: nonzero
   codewords have weight at least `n - k + 1`.
 * `Cslib.Code.minDist_reedSolomon`: the minimum distance is `n - k + 1`.
-* `Cslib.Code.finrank_reedSolomon`: the dimension is `k`.
+* `Cslib.Code.finrank_reedSolomon`: with distinct points and `k ≤ n`, the dimension is `k`.
 
 ## References
 
@@ -61,22 +61,22 @@ open Finset Polynomial
 
 variable {F ι : Type*} [Field F]
 
-/-- The *Reed–Solomon code* of dimension `k` with evaluation points `α`: the words `i ↦ p (α i)`
+/-- The *Reed–Solomon code* with degree bound `k` and evaluation points `α`: the words `i ↦ p (α i)`
 for the polynomials `p` of degree less than `k`. The points are usually distinct. -/
 noncomputable def reedSolomon (α : ι → F) (k : ℕ) : Submodule F (ι → F) :=
   (degreeLT F k).map (LinearMap.pi fun i => leval (α i))
 
 variable {α : ι → F} {k : ℕ}
 
-/-- A word is a codeword of the Reed–Solomon code of dimension `k` exactly when it is `i ↦ p (α i)`
-for a polynomial `p` of degree less than `k`. -/
+/-- A word is a codeword of `reedSolomon α k` exactly when it is `i ↦ p (α i)` for a polynomial `p`
+of degree less than `k`. -/
 theorem mem_reedSolomon {w : ι → F} :
     w ∈ reedSolomon α k ↔ ∃ p : F[X], p.degree < k ∧ (fun i => p.eval (α i)) = w := by
   simp only [reedSolomon, Submodule.mem_map, mem_degreeLT]
   rfl
 
-/-- The values `i ↦ p (α i)` of a polynomial `p` of degree less than `k` form a codeword of the
-Reed–Solomon code of dimension `k`. -/
+/-- The values `i ↦ p (α i)` of a polynomial `p` of degree less than `k` form a codeword of
+`reedSolomon α k`. -/
 theorem eval_mem_reedSolomon (α : ι → F) {p : F[X]} (hp : p.degree < k) :
     (fun i => p.eval (α i)) ∈ reedSolomon α k :=
   mem_reedSolomon.2 ⟨p, hp, rfl⟩
@@ -91,8 +91,8 @@ private theorem card_filter_eval_eq_zero_le (hα : Function.Injective α) {p : F
   obtain ⟨i, hi, rfl⟩ := mem_image.1 ha
   exact (mem_roots hp).2 (mem_filter.1 hi).2
 
-/-- With distinct points, a nonzero codeword of the Reed–Solomon code of dimension `k` has weight
-at least `n - k + 1`. -/
+/-- With distinct points, a nonzero codeword of the Reed–Solomon code with degree bound `k` has
+weight at least `n - k + 1`. -/
 theorem le_hammingNorm_of_mem_reedSolomon (hα : Function.Injective α) {w : ι → F}
     (hw : w ∈ reedSolomon α k) (hw0 : w ≠ 0) : Fintype.card ι - k + 1 ≤ hammingNorm w := by
   obtain ⟨p, hp, rfl⟩ := mem_reedSolomon.1 hw
@@ -108,15 +108,15 @@ theorem le_hammingNorm_of_mem_reedSolomon (hα : Function.Injective α) {w : ι 
   have hpos := hammingNorm_pos_iff.2 hw0
   omega
 
-/-- With distinct points, the Reed–Solomon code of dimension `k` has minimum distance at least
-`n - k + 1`. -/
+/-- With distinct points, the Reed–Solomon code with degree bound `k` has minimum distance at
+least `n - k + 1`. -/
 theorem le_minDist_reedSolomon (hα : Function.Injective α) (k : ℕ) :
     ((Fintype.card ι - k + 1 : ℕ) : ℕ∞) ≤ minDist (reedSolomon α k : Set (ι → F)) :=
   (le_minDist_iff_hammingNorm _).2 fun _ hw hw0 =>
     Nat.cast_le.2 (le_hammingNorm_of_mem_reedSolomon hα hw hw0)
 
-/-- **The distance of Reed–Solomon codes.** With distinct points, the Reed–Solomon code of
-dimension `1 ≤ k ≤ n` has minimum distance exactly `n - k + 1`. -/
+/-- **The distance of Reed–Solomon codes.** With distinct points, the Reed–Solomon code with
+degree bound `1 ≤ k ≤ n` has minimum distance exactly `n - k + 1`. -/
 theorem minDist_reedSolomon (hα : Function.Injective α) (hk : 1 ≤ k)
     (hkn : k ≤ Fintype.card ι) :
     minDist (reedSolomon α k : Set (ι → F)) = (Fintype.card ι - k + 1 : ℕ) := by
@@ -146,7 +146,7 @@ theorem minDist_reedSolomon (hα : Function.Injective α) (hk : 1 ≤ k)
     _ = (Fintype.card ι - k + 1 : ℕ) := by rw [hammingDist_zero_right, hnorm]
 
 omit [DecidableEq F] in
-/-- With distinct points, the Reed–Solomon code of dimension `k ≤ n` has dimension `k`. -/
+/-- With distinct points, the Reed–Solomon code with degree bound `k ≤ n` has dimension `k`. -/
 theorem finrank_reedSolomon (hα : Function.Injective α) (hkn : k ≤ Fintype.card ι) :
     Module.finrank F (reedSolomon α k) = k := by
   classical
