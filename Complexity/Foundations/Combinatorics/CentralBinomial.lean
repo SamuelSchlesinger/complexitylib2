@@ -5,7 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 module
--- upstream: candidate (the central binomial bounds to Mathlib's `Mathlib/Combinatorics/Choose`)
+-- upstream: candidate
 
 public import Complexity.Init
 public import Mathlib.Data.Nat.Choose.Central
@@ -29,6 +29,7 @@ binomial coefficients), are at most `6 / 10` of all sets when `100 (t + 1)² ≤
 
 ## Main results
 
+* `Cslib.centralBinom_sq_mul_le`: `C(2m, m)² (2m + 1) ≤ 16 ^ m`.
 * `Cslib.choose_half_sq_mul_le`: `C(n, ⌊n/2⌋)² (n + 1) ≤ 4 ^ n`.
 * `Cslib.ten_mul_card_filter_card_le_le`: few sets are much larger than half.
 

@@ -12,7 +12,7 @@ import Mathlib.Data.ZMod.Basic
 
 namespace ComplexityTests.UniformNat
 
-open Cslib Cslib.Probability Turing.MultiTapeTM
+open Cslib Cslib.ProbComp Cslib.Probability Turing.MultiTapeTM
 
 -- Binary words are most significant bit first; long words saturate before unary output grows.
 example : BitString.binaryValue [true, false, false] = 4 := by decide

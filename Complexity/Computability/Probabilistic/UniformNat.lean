@@ -66,7 +66,7 @@ theorem Turing.MultiTapeTM.ComputableInPolyTime.unary_dyadicSize :
 
 namespace Cslib.Probability
 
-open Turing.MultiTapeTM
+open ProbComp Turing.MultiTapeTM
 
 /-- A unary bit width gives a uniformly strict PPT sampler with binary natural output. -/
 theorem isPPTOn_sampleBinaryNat : IsPPTOn encUnary encNat sampleBinaryNat :=
@@ -87,8 +87,12 @@ theorem isPPTOn_sampleDyadicCoin {α : Type} {input : α ↪ List Bool}
     (hbound : ComputableTidilyInPolyTime bound input encUnary)
     (hnumerator : ComputableTidilyInPolyTime numerator input encUnary) :
     IsPPTOn input encBool (fun a => sampleDyadicCoin (bound a) (numerator a)) := by
-  unfold sampleDyadicCoin
-  ppt
+  have hcallback : ComputableInPolyTime
+      (fun p : α × ℕ => decide (p.2 < numerator p.1)) (encPair input encUnary) encBool := by
+    apply ComputableInPolyTime.of_tidy
+    fun_prop
+  simpa only [sampleDyadicCoin, bind_pure_comp] using
+    (isPPTOn_sampleDyadicIndex hbound).map_with hcallback
 
 /-- An efficiently supplied unary bound gives a strict PPT capped index sampler. -/
 @[program_certificate]
@@ -106,12 +110,12 @@ theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleBinaryNat {α : Type
     {input : α ↪ List Bool} {width : α → ℕ}
     (hwidth : ComputableTidilyInPolyTime width input encUnary) :
     Cslib.Probability.IsPPTOn input encNat
-      (fun a => Cslib.Probability.sampleBinaryNat (width a)) :=
+      (fun a => Cslib.ProbComp.sampleBinaryNat (width a)) :=
   Cslib.Probability.isPPTOn_sampleBinaryNat.preprocess hwidth
 
 namespace Cslib.Probability
 
-open Turing.MultiTapeTM
+open ProbComp Turing.MultiTapeTM
 
 /-- Approximately uniform residues: reducing a computed number of fair bits modulo a computed
 modulus is uniformly strict PPT, with binary output. -/
@@ -121,6 +125,7 @@ theorem isPPTOn_sampleModNat {α : Type} {input : α ↪ List Bool} {width modul
     IsPPTOn input encNat (fun a => sampleModNat (width a) (modulus a)) := by
   unfold sampleModNat
   exact (ComputableTidilyInPolyTime.sampleBinaryNat hwidth.tidy).map_with
-    (ComputableTidilyInPolyTime.binary_mod' (by fun_prop) (hmodulus.tidy.comp (by fun_prop)))
+    (.of_tidy (ComputableTidilyInPolyTime.binary_mod' (by fun_prop)
+      (hmodulus.tidy.comp (by fun_prop))))
 
 end Cslib.Probability

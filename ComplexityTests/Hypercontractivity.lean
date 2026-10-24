@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Foundations.BooleanAnalysis.Bonami
+import Complexity.Foundations.BooleanAnalysis.Hypercontractivity.LpNormMeasure
 
 /-! Instances, non-vacuity witnesses and axiom guards for hypercontractivity and the Bonami
 Lemma. -/
@@ -93,6 +94,48 @@ example (S : Finset ι) {q : ℝ} (hq : 2 ≤ q) :
 example : 𝔼 x : Fin 1 → Bool, noiseOp (√3)⁻¹ (chi ℝ {0}) x ^ 4 ≤
     (𝔼 x : Fin 1 → Bool, chi ℝ {0} x ^ 2) ^ 2 :=
   expect_noiseOp_pow_four_le _
+
+-- `lpNorm` on any finite type agrees with Mathlib's `MeasureTheory.lpNorm` for the uniform
+-- measure (`ProbabilityTheory.uniformOn Set.univ` and `uniformOfFintype.toMeasure`).
+example (f : (ι → Bool) → ℝ) :
+    lpNorm 2 f = MeasureTheory.lpNorm f (ENNReal.ofReal 2)
+      (ProbabilityTheory.uniformOn (Set.univ : Set (ι → Bool))) :=
+  lpNorm_eq_measureTheory_lpNorm_uniformOn two_pos f
+
+example (f : (ι → Bool) → ℝ) :
+    lpNorm 2 f = MeasureTheory.lpNorm f (ENNReal.ofReal 2)
+      (Probability.PMF.uniformOfFintype (ι → Bool)).toMeasure :=
+  lpNorm_eq_measureTheory_lpNorm two_pos f
+
+/--
+info: 'Cslib.BitString.lpNorm_equiv' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.lpNorm_equiv
+
+/--
+info: 'Cslib.BitString.lpNorm_prod' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.lpNorm_prod
+
+/--
+info: 'Cslib.BitString.lpNorm_subsingleton' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.lpNorm_subsingleton
+
+/--
+info: 'Cslib.BitString.lpNorm_eq_measureTheory_lpNorm_uniformOn' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.lpNorm_eq_measureTheory_lpNorm_uniformOn
+
+/--
+info: 'Cslib.BitString.lpNorm_eq_measureTheory_lpNorm' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.lpNorm_eq_measureTheory_lpNorm
 
 /--
 info: 'Cslib.BitString.sq_add_sq_mul_sq_rpow_le' depends on axioms: [propext, Classical.choice, Quot.sound]

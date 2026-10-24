@@ -34,7 +34,7 @@ stage leaves a `1 / (16 s + 1)` fraction of the free bits (as in
 The proof draws a random set `J` of `ℓ = ⌊n / (16 s + 1) ^ d⌋` coordinates and fixes the others
 to a random word `z`, a random restriction (partial assignment)
 (`PartialAssignment.sum_card_filter_outside`). A set `U` of at least `k` coordinates meets `J` in at
-least `s` of them for at least half of the `J` (`Finset.two_mul_card_filter_card_inter_lt_le`), so
+least `s` of them for at least half of the `J` (`Cslib.two_mul_card_filter_card_inter_lt_le`), so
 the weight on such `U` is at most twice the expected weight of the restriction on sets of at least
 `s` coordinates (`BitString.expect_sum_fourierCoeff_piecewise_sq`). That is zero when the
 restriction has a decision tree of depth below `s` (`DecisionTree.fourierCoeff_eq_zero_of_depth_lt`)
@@ -168,7 +168,7 @@ theorem sum_fourierCoeff_sq_le_of_computes {f : BooleanFunction n} {C : Circuit 
     rw [hswap, mul_sum, sum_filter]
     refine sum_le_sum fun U _ => ?_
     split_ifs with hU
-    · have hcount := Finset.two_mul_card_filter_card_inter_lt_le (s := univ) (U := U) (ℓ := ℓ)
+    · have hcount := two_mul_card_filter_card_inter_lt_le (s := univ) (U := U) (ℓ := ℓ)
         (m := s) (subset_univ U) (by simpa using hn0)
         (by
           have : 8 * n ≤ k * ℓ := (Nat.mul_le_mul_right _ (le_max_left _ _)).trans hk

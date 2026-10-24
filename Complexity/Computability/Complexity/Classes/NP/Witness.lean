@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+public import Complexity.Foundations.Data.List.SelectDistinct
 public import Mathlib.Data.Finset.Card
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -58,8 +59,8 @@ inner existential quantifier used in the Karp–Lipton argument.
 
 * `Cslib.Complexity.witnessVerifier`: the verifier of a witness relation, parsing certificates
   with a decoder.
-* `Cslib.Complexity.selectDistinct`, `Cslib.Complexity.subsetVerifier`: the distinct entries of a
-  list selected by a mask, and the verifier of a subset problem.
+* `Cslib.Complexity.subsetVerifier`: the verifier of a subset problem, selecting candidates by a
+  mask (`Cslib.Complexity.selectDistinct`).
 
 ## Main results
 
@@ -172,53 +173,6 @@ end Witness
 section Subset
 
 variable [DecidableEq γ]
-
-/-- The distinct entries of `l` selected by the mask `w`: position `i` of `l` is kept when bit `i`
-of `w` is `true` and `i` is the first occurrence of its entry in `l`. Missing bits are `false`, and
-bits beyond the length of `l` are ignored. Unlike `Cslib.Complexity.maskSelect`, which keeps every
-selected position and so selects sub-multisets, a repeated entry is selected at most once, so the
-selection describes a set. -/
-def selectDistinct (l : List γ) (w : List Bool) : List γ :=
-  (l.zipIdx.filter fun e => w.getD e.2 false && decide (l.idxOf e.1 = e.2)).map Prod.fst
-
-theorem mem_selectDistinct {l : List γ} {w : List Bool} {v : γ} :
-    v ∈ selectDistinct l w ↔ v ∈ l ∧ w.getD (l.idxOf v) false = true := by
-  simp only [selectDistinct, List.mem_map, List.mem_filter, List.mem_zipIdx_iff_getElem?,
-    Bool.and_eq_true, decide_eq_true_eq, Prod.exists]
-  constructor
-  · rintro ⟨u, i, ⟨hi, hw, hidx⟩, rfl⟩
-    exact ⟨List.mem_of_getElem? hi, hidx ▸ hw⟩
-  · rintro ⟨hv, hw⟩
-    have hlt : l.idxOf v < l.length := List.idxOf_lt_length_iff.2 hv
-    exact ⟨v, l.idxOf v, ⟨by simp [hlt], hw, rfl⟩, rfl⟩
-
-theorem nodup_selectDistinct (l : List γ) (w : List Bool) : (selectDistinct l w).Nodup := by
-  have hzip : l.zipIdx.Nodup := by
-    rw [List.Nodup, List.pairwise_iff_getElem]
-    intro i j hi hj hij h
-    have := congrArg Prod.snd h
-    simp only [List.getElem_zipIdx, Nat.zero_add] at this
-    omega
-  refine (hzip.filter _).map_on ?_
-  rintro ⟨u, i⟩ hu ⟨v, j⟩ hv (rfl : u = v)
-  simp only [List.mem_filter, Bool.and_eq_true, decide_eq_true_eq] at hu hv
-  rw [← hu.2.2, ← hv.2.2]
-
-/-- The full mask selects every entry of `l`, at its first occurrence. -/
-theorem mem_selectDistinct_replicate {l : List γ} {v : γ} :
-    v ∈ selectDistinct l (List.replicate l.length true) ↔ v ∈ l := by
-  rw [mem_selectDistinct, and_iff_left_iff_imp]
-  intro hv
-  rw [List.getD_eq_getElem?_getD, List.getElem?_replicate_of_lt (List.idxOf_lt_length_iff.2 hv)]
-  rfl
-
-/-- The full mask selects as many entries as `l` has distinct entries. -/
-theorem length_selectDistinct_replicate (l : List γ) :
-    (selectDistinct l (List.replicate l.length true)).length = l.toFinset.card := by
-  rw [← List.toFinset_card_of_nodup (nodup_selectDistinct _ _)]
-  congr 1
-  ext v
-  simp only [List.mem_toFinset, mem_selectDistinct_replicate]
 
 /-- The entries of `l` selected by the mask of a set `S` of entries of `l`, followed by any bits,
 are the elements of `S`. -/

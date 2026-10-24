@@ -80,11 +80,11 @@ theorem card_lt_two_pow (hS : IsFoolingSet f z S) (hp : p.run = f) (hz : ∃ x y
     #S < 2 ^ p.depth := by
   classical
   obtain ⟨x, y, hxy⟩ := hz
-  have hlt : #{i | p.leafOutput i = z} < p.leaves := by
+  have hlt : #{i | p.leafOutput i = z} < p.leafCount := by
     refine (card_lt_card (filter_ssubset.mpr ⟨p.leaf x y, mem_univ _, ?_⟩)).trans_eq ?_
     · rwa [← Protocol.run_eq_leafOutput_leaf, hp]
-    · exact card_fin p.leaves
-  exact (hS.card_le hp).trans_lt (hlt.trans_le p.leaves_le_two_pow_depth)
+    · exact card_fin p.leafCount
+  exact (hS.card_le hp).trans_lt (hlt.trans_le p.leafCount_le_two_pow_depth)
 
 /-- **The fooling-set bound on communication complexity.** A fooling set of at least `2 ^ n`
 pairs for a function `f` that is not constantly `z` forces `n + 1` bits. -/

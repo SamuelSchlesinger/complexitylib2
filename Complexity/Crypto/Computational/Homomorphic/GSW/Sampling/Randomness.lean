@@ -37,7 +37,7 @@ is proved separately; matrix computation and cryptographic security remain separ
 
 namespace Cslib.Crypto.Homomorphic.GSW
 
-open Probability
+open ProbComp Probability
 
 /-- A residue uses a uniform word of exactly its binary width. -/
 theorem exists_uniform_seed_sampleResidue (w : ℕ) :

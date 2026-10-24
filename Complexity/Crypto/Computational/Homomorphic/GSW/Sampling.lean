@@ -49,7 +49,7 @@ encryption security, complete native algorithm certificate or bootstrappability 
 
 namespace Cslib.Crypto.Homomorphic.GSW
 
-open Probability
+open ProbComp Probability
 
 /-- Sample one residue from `w` independent fair bits. -/
 noncomputable def sampleResidue (w : ℕ) : ProbComp (ZMod (2 ^ w)) :=

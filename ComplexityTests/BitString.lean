@@ -9,6 +9,7 @@ import Complexity.Foundations.Data.BitString.Binary
 import Complexity.Foundations.Data.BitString.Block
 import Complexity.Foundations.Data.BitString.Counter
 import Complexity.Foundations.Data.BitString.Enumeration
+import Complexity.Foundations.Data.BitString.Flip
 import Complexity.Foundations.Data.BitString.List
 import Complexity.Foundations.Data.BitString.List.Binary
 import Complexity.Foundations.Data.BitString.Parity
@@ -107,5 +108,16 @@ example : listRow 2 2 [true, false, false, true, true] = [true, false] := by dec
 example : (enum 3).length = 8 := by decide
 
 example : (enumList 2).Nodup := by decide
+
+-- `flipOn` negates the bits at the selected positions and keeps the others.
+example : flipOn ({0, 2} : Finset (Fin 3)) ![true, false, false] 2 = true := by
+  rw [flipOn_apply]
+  decide
+
+/--
+info: 'Cslib.BitString.flipOn_apply' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.BitString.flipOn_apply
 
 end ComplexityTests.BitString

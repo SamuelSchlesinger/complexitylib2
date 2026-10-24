@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Combinatorics.Expander.Basic
+public import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
 public import Mathlib.Combinatorics.SimpleGraph.Density
 public import Mathlib.Combinatorics.SimpleGraph.Finite
 
@@ -31,8 +32,10 @@ simple graph has a simple rotation map with labels `Fin d` (`exists_isSimple_toS
 
 * `Cslib.RotationMap.IsSimple.isRegularOfDegree`: the simple graph of a simple rotation map with
   labels `D` is regular of degree `|D|`.
-* `Cslib.RotationMap.IsSimple.walk_apply_eq_sum_neighborFinset`: its walk operator averages over
-  the neighbors.
+* `Cslib.RotationMap.IsSimple.walk_apply_eq_sum_neighborFinset`,
+  `Cslib.RotationMap.IsSimple.walk_apply_eq_adjMatrix_mulVec_div`,
+  `Cslib.RotationMap.IsSimple.walk_eq_smul_adjMatrix_mulVec`: its walk operator averages over
+  the neighbors and acts by the adjacency matrix divided by the degree.
 * `Cslib.RotationMap.IsSimple.card_interedges`: its edges between two sets of vertices are those
   of the rotation map.
 * `Cslib.RotationMap.exists_isSimple_toSimpleGraph_eq`: every `d`-regular simple graph is
@@ -109,6 +112,21 @@ theorem walk_apply_eq_sum_neighborFinset (hG : G.IsSimple) [G.toSimpleGraph.Loca
   classical
   rw [RotationMap.walk_apply, Fintype.expect_eq_sum_div_card, hG.neighborFinset_eq,
     sum_image fun _ _ _ _ h ↦ hG.neighbor_injective v h]
+
+/-- For a simple rotation map on a finite vertex set, the walk operator applies the adjacency matrix
+of its simple graph divided by the degree `|D|`. -/
+theorem walk_apply_eq_adjMatrix_mulVec_div [Fintype V] [DecidableEq V] (hG : G.IsSimple)
+    (f : V → ℝ) (v : V) :
+    G.walk f v = (G.toSimpleGraph.adjMatrix ℝ).mulVec f v / Fintype.card D := by
+  rw [hG.walk_apply_eq_sum_neighborFinset, G.toSimpleGraph.adjMatrix_mulVec_apply]
+
+/-- For a simple rotation map on a finite vertex set, the walk operator is the action of the
+adjacency matrix of its simple graph scaled by `|D|⁻¹`. -/
+theorem walk_eq_smul_adjMatrix_mulVec [Fintype V] [DecidableEq V] (hG : G.IsSimple)
+    (f : V → ℝ) :
+    G.walk f = (Fintype.card D : ℝ)⁻¹ • (G.toSimpleGraph.adjMatrix ℝ).mulVec f :=
+  funext fun v ↦ by
+    rw [Pi.smul_apply, hG.walk_apply_eq_adjMatrix_mulVec_div, div_eq_inv_mul, smul_eq_mul]
 
 /-- The edges of the simple graph between two sets of vertices are those of the rotation map. -/
 theorem card_interedges [DecidableEq V] [DecidableRel G.toSimpleGraph.Adj] (hG : G.IsSimple)

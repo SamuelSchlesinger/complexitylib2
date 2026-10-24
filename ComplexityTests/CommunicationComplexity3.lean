@@ -170,9 +170,9 @@ example : (Protocol.alice id (.output 0) (.output 1) : Protocol Bool Unit ℕ).l
   simp only [Protocol.leaf_alice, id, Bool.cond_true, Protocol.leafOutput_alice_natAdd,
     Protocol.leafOutput_output]
 
-example (send : Bool → Bool) (p₀ p₁ : Protocol Bool Unit ℕ) (i : Fin p₁.leaves) :
-    (Protocol.alice send p₀ p₁).leafAlice (Fin.natAdd p₀.leaves i) ×ˢ
-        (Protocol.alice send p₀ p₁).leafBob (Fin.natAdd p₀.leaves i) =
+example (send : Bool → Bool) (p₀ p₁ : Protocol Bool Unit ℕ) (i : Fin p₁.leafCount) :
+    (Protocol.alice send p₀ p₁).leafAlice (Fin.natAdd p₀.leafCount i) ×ˢ
+        (Protocol.alice send p₀ p₁).leafBob (Fin.natAdd p₀.leafCount i) =
       ({x | send x = true} ∩ p₁.leafAlice i) ×ˢ p₁.leafBob i := by
   simp
 

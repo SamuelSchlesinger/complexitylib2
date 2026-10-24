@@ -85,6 +85,11 @@ example (T_e T_π : List (BitString 4 × BitString 4)) :
       2 * (T_e.length : ℝ) * (T_π.length : ℝ) / (Fintype.card (BitString 4) : ℝ) :=
   toOuterMeasure_isBadSingleKeyEvenMansour_toReal_le T_e T_π
 
+example (program : OracleComp (EvenMansourSpec (BitString 4)) Bool) :
+    evenMansourIdealGame program =
+      (((OracleComp.interpret idealLazyHandler program).run ([], [])).map Prod.fst : PMF Bool) :=
+  evenMansourIdealGame_eq_lazy program
+
 /-! ### Axiom guards for headline results -/
 
 /--
@@ -183,5 +188,12 @@ info: 'Cslib.Crypto.EvenMansour.IsCallBounded.badSingleKeyEvenMansour_toReal_le'
 -/
 #guard_msgs in
 #print axioms IsCallBounded.badSingleKeyEvenMansour_toReal_le
+
+/--
+info: 'Cslib.Crypto.EvenMansour.evenMansourIdealGame_eq_lazy' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms evenMansourIdealGame_eq_lazy
 
 end Cslib.Crypto.EvenMansour.Tests

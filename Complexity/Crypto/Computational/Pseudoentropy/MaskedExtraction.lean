@@ -43,7 +43,7 @@ Adapted from the cslib `crypto` branch at
 
 namespace Cslib.Crypto.Pseudoentropy
 
-open Probability Probability.PMF BitString
+open ProbComp Probability Probability.PMF BitString
 
 open scoped NNReal
 

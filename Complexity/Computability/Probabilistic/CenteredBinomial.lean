@@ -37,7 +37,7 @@ charges both blocks of independent trials, their counts, and signed subtraction.
 
 namespace Cslib.Probability
 
-open Turing.MultiTapeTM
+open ProbComp Turing.MultiTapeTM
 
 /-- The centered-binomial program is uniformly strict PPT, with a unary parameter and binary
 signed output. No fixed finite output type or finite-rank encoding is used. -/
@@ -56,7 +56,7 @@ theorem isPPTOn_sampleCenteredBinomial :
         (hcast.comp (ComputableTidilyInPolyTime.snd _ _)))
   have hsecond := (hcount.preprocess
     (ComputableTidilyInPolyTime.fst encUnary encUnary)).map_with
-      (f := fun (p : ℕ × ℕ) (negative : ℕ) => (p.2 : ℤ) - negative) hsub
+      (f := fun (p : ℕ × ℕ) (negative : ℕ) => (p.2 : ℤ) - negative) (.of_tidy hsub)
   unfold sampleCenteredBinomial
   apply hcount.bind_with
   simpa only [bind_pure_comp] using hsecond
@@ -69,5 +69,5 @@ theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleCenteredBinomial {α
     {input : α ↪ List Bool} {parameter : α → ℕ}
     (hparameter : ComputableTidilyInPolyTime parameter input encUnary) :
     Cslib.Probability.IsPPTOn input encIntBin
-      (fun a => Cslib.Probability.sampleCenteredBinomial (parameter a)) :=
+      (fun a => Cslib.ProbComp.sampleCenteredBinomial (parameter a)) :=
   Cslib.Probability.isPPTOn_sampleCenteredBinomial.preprocess hparameter

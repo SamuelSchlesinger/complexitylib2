@@ -9,7 +9,9 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.CapacityCircuit
-public import Complexity.Foundations.Data.Code.Hadamard
+public import Complexity.Foundations.Data.BitString.Basic
+public import Mathlib.Data.Matrix.Mul
+import Complexity.Foundations.Data.Code.Hadamard
 import Mathlib.Algebra.BigOperators.Fin
 
 /-!
@@ -63,11 +65,11 @@ forcing `(pendingBiasStates p k).card` to be at least the number of distinct row
   `Cslib.Circuits.Boolean.WeightedThreshold.card_pendingBiasStates_le_add_one_of_row_const`:
   Section 6.1 state-space bounds.
 * `Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_summaries`,
-  `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_summaries_of_hadamardCode`,
-  `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_pow_intSummary_of_hadamardCode`:
+  `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_summaries_of_dotProduct`,
+  `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_pow_intSummary_of_dotProduct`:
   Proposition 9.1 input-summary and rank-precision lower bounds.
 * `Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_pendingBiasStates_of_phased`,
-`Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_pendingBiasStates_of_phased_hadamardCode`:
+`Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_pendingBiasStates_of_phased_dotProduct`:
   Section 9 phased-access cut lower bounds.
 
 ## References
@@ -450,14 +452,14 @@ theorem card_rows_le_card_summaries {X Y α : Type*} [Fintype X] [DecidableEq (Y
   card_image_le_card_image_of_factorsThrough f summary fun _ _ h =>
     f_eq_of_summary_eq p enc readout f summary hcomp hsum h
 
-/-- **Proposition 9.1 (Hadamard input-summary lower bound).** Any summary of `x : ι → Bool` that
-determines the direct input weights of a threshold program computing `hadamardCode` has at least
+/-- **Proposition 9.1 (Inner-product input-summary lower bound).** Any summary of `x : ι → Bool`
+that determines the direct input weights of a threshold program computing `x ⬝ᵥ y` has at least
 `2 ^ Fintype.card ι` distinct values. -/
-theorem two_pow_le_card_summaries_of_hadamardCode {ι α : Type*} [Fintype ι] [DecidableEq ι]
+theorem two_pow_le_card_summaries_of_dotProduct {ι α : Type*} [Fintype ι] [DecidableEq ι]
     [DecidableEq α] (p : Program signature n g)
     (enc : (ι → Bool) → (ι → Bool) → (Fin n → Bool))
     (readout : (Fin g → Bool) → Bool) (summary : (ι → Bool) → α)
-    (hcomp : ∀ x y, readout (p.eval interpretation (enc x y)) = hadamardCode x y)
+    (hcomp : ∀ x y, readout (p.eval interpretation (enc x y)) = x ⬝ᵥ y)
     (hsum : ∀ x₁ x₂ y, summary x₁ = summary x₂ →
       inputSummary p (enc x₁ y) = inputSummary p (enc x₂ y)) :
     2 ^ Fintype.card ι ≤ (univ.image summary).card := by
@@ -503,32 +505,32 @@ theorem card_intSummary_le_pow {ι : Type*} [Fintype ι] [DecidableEq ι] {r W :
 
 /-- **Proposition 9.1 (Integer summary product bound for inner product).** If an integer matrix
 `R : Fin r → ι → ℤ` determines the direct input weights of a threshold program computing
-`hadamardCode`, the product of its row ranges is at least `2 ^ Fintype.card ι`. -/
-theorem two_pow_le_prod_intSummary_of_hadamardCode {ι : Type*} [Fintype ι] {r : ℕ}
+`x ⬝ᵥ y`, the product of its row ranges is at least `2 ^ Fintype.card ι`. -/
+theorem two_pow_le_prod_intSummary_of_dotProduct {ι : Type*} [Fintype ι] {r : ℕ}
     (p : Program signature n g) (enc : (ι → Bool) → (ι → Bool) → (Fin n → Bool))
     (readout : (Fin g → Bool) → Bool) (R : Fin r → ι → ℤ)
-    (hcomp : ∀ x y, readout (p.eval interpretation (enc x y)) = hadamardCode x y)
+    (hcomp : ∀ x y, readout (p.eval interpretation (enc x y)) = x ⬝ᵥ y)
     (hsum : ∀ x₁ x₂ y, intSummary R x₁ = intSummary R x₂ →
       inputSummary p (enc x₁ y) = inputSummary p (enc x₂ y)) :
     2 ^ Fintype.card ι ≤ ∏ a : Fin r, (1 + ∑ i : ι, (R a i).natAbs) := by
   classical
-  exact (two_pow_le_card_summaries_of_hadamardCode p enc readout (intSummary R) hcomp hsum).trans
+  exact (two_pow_le_card_summaries_of_dotProduct p enc readout (intSummary R) hcomp hsum).trans
     (card_intSummary_le_prod R)
 
 /-- **Proposition 9.1, equation (20) (Rank-precision bound for inner product).** If an integer
 matrix `R : Fin r → ι → ℤ` with entries bounded in magnitude by `W` determines the direct input
-weights of a threshold program computing `hadamardCode`, then
+weights of a threshold program computing `x ⬝ᵥ y`, then
 `2 ^ Fintype.card ι ≤ (1 + Fintype.card ι * W) ^ r`. -/
-theorem two_pow_le_pow_intSummary_of_hadamardCode {ι : Type*} [Fintype ι] {r W : ℕ}
+theorem two_pow_le_pow_intSummary_of_dotProduct {ι : Type*} [Fintype ι] {r W : ℕ}
     (p : Program signature n g) (enc : (ι → Bool) → (ι → Bool) → (Fin n → Bool))
     (readout : (Fin g → Bool) → Bool) (R : Fin r → ι → ℤ)
     (hW : ∀ a i, (R a i).natAbs ≤ W)
-    (hcomp : ∀ x y, readout (p.eval interpretation (enc x y)) = hadamardCode x y)
+    (hcomp : ∀ x y, readout (p.eval interpretation (enc x y)) = x ⬝ᵥ y)
     (hsum : ∀ x₁ x₂ y, intSummary R x₁ = intSummary R x₂ →
       inputSummary p (enc x₁ y) = inputSummary p (enc x₂ y)) :
     2 ^ Fintype.card ι ≤ (1 + Fintype.card ι * W) ^ r := by
   classical
-  exact (two_pow_le_card_summaries_of_hadamardCode p enc readout (intSummary R) hcomp hsum).trans
+  exact (two_pow_le_card_summaries_of_dotProduct p enc readout (intSummary R) hcomp hsum).trans
     (card_intSummary_le_pow R hW)
 
 private theorem pendingBiasTrace_add_eq_of_pendingBiasTrace_eq (p : Program signature n g)
@@ -624,12 +626,12 @@ theorem card_rows_le_card_pendingBiasStates_of_phased {X Y : Type*} [Fintype X]
   exact pendingBiasTrace_mem_pendingBiasStates p (enc x y₀) k
 
 /-- **Section 9 (Phased-access pending-bias bound for inner product).** Under phased input access
-across cut `k`, any threshold program computing `hadamardCode` has at least `2 ^ Fintype.card ι`
+across cut `k`, any threshold program computing `x ⬝ᵥ y` has at least `2 ^ Fintype.card ι`
 pending-bias states at cut `k`. -/
-theorem two_pow_le_card_pendingBiasStates_of_phased_hadamardCode {ι : Type*} [Fintype ι]
+theorem two_pow_le_card_pendingBiasStates_of_phased_dotProduct {ι : Type*} [Fintype ι]
     (p : Program signature n g) (enc : (ι → Bool) → (ι → Bool) → (Fin n → Bool))
     (readout : (Fin g → Bool) → Bool) (k : ℕ)
-    (hcomp : ∀ x y, readout (p.eval interpretation (enc x y)) = hadamardCode x y)
+    (hcomp : ∀ x y, readout (p.eval interpretation (enc x y)) = x ⬝ᵥ y)
     (hpref : ∀ (j : Fin k) (hj : j.val < g) (x y : ι → Bool),
       inputSummary p (enc x y) ⟨j.val, hj⟩ =
         inputSummary p (enc x (fun _ => false)) ⟨j.val, hj⟩)

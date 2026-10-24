@@ -37,7 +37,7 @@ mass the average of `a₁ b₁`, where `a₁` and `b₁` are the fractions of th
 containing `i` in `A` and of `Ty ∪ {i}` in `B`. Call the partition bad for `A` if `a₁ < a₀ / 3`.
 Once `Ty` is fixed, `i` is a uniformly random point outside `Ty` and `b₀` is fixed, and a family of
 subsets of the complement of `Ty` for which many points are bad is small
-(`Finset.four_mul_sum_card_filter_notMem_le`, proved by Markov's inequality and counting subsets of
+(`Cslib.four_mul_sum_card_filter_notMem_le`, proved by Markov's inequality and counting subsets of
 a cube). So the partitions bad for `A` or, symmetrically, for `B` carry at most half of the mass of
 the disjoint pairs, up to an exponentially small error, while on the others `a₁ b₁ ≥ a₀ b₀ / 9`.
 This is *Razborov's corruption lemma* (`Disjointness.corrupted_hardDist`): on every rectangle the
@@ -205,7 +205,7 @@ private theorem low_le_two_pow (A : Finset (Finset U)) (s : Finset U) : low A s 
   rw [← card_powerset]
   exact card_le_card fun x hx => mem_powerset.mpr (mem_filter.mp hx).2
 
-/-- The error terms of `Finset.four_mul_sum_card_filter_notMem_le` for `j = 12 r` and
+/-- The error terms of `Cslib.four_mul_sum_card_filter_notMem_le` for `j = 12 r` and
 `#S ≥ 48 r`. -/
 private theorem slack_le {r s : ℕ} (hs : 48 * r ≤ s) (hs1 : 1 ≤ s) :
     8 * s * (27 / 32 : ℝ) ^ r + (((12 * r : ℕ) : ℝ) + 1) * 2 ^ (12 * r) * (3 / 4) ^ s ≤
@@ -510,7 +510,7 @@ variable (m) in
 `x ⊆ Tx` and `y ⊆ Ty`; with probability `1 / 2` output the disjoint pair `(x, y)`, and otherwise
 the pair `(x ∪ {i}, y ∪ {i})`, which meets in exactly `i`. Razborov draws subsets of fixed size
 `m / 2` instead; drawing all subsets lets the corruption bound be proved by counting subsets of
-a cube (`Finset.four_mul_sum_card_filter_notMem_le`). -/
+a cube (`Cslib.four_mul_sum_card_filter_notMem_le`). -/
 noncomputable def hardDist (hU : Fintype.card U = 2 * m + 1) :
     PMF (Finset U × Finset U) :=
   PMF.ofFintype (fun q => ENNReal.ofReal (hardWeight m q)) (by

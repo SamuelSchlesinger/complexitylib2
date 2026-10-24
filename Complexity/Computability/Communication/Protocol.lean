@@ -19,7 +19,7 @@ nodes are owned by one of the players, who sends one bit computed from their inp
 branch, and whose leaves are labelled by outputs (`Protocol.run`)
 [Kushilevitz and Nisan, Chapter 1][KushilevitzNisan1997]. Its depth is the number of bits sent in
 the worst case, and a protocol of depth `d` has at most `2 ^ d` leaves
-(`Protocol.leaves_le_two_pow_depth`). A function of the two inputs *solves* a relation `R` on
+(`Protocol.leafCount_le_two_pow_depth`). A function of the two inputs *solves* a relation `R` on
 inputs from `A × B` when its value on every such pair is related to the pair (`Solves`), and a
 protocol solves `R` when its output does (`Protocol.Solves`); the communication complexity of `R`
 on `A × B` is the least depth of a protocol solving it, or `⊤` if there is none
@@ -37,7 +37,7 @@ announces the value (`Protocol.ecomplexityFun_le_succ`).
 * `Cslib.Communication.Solves`: a function of the two inputs solves a relation.
 * `Cslib.Communication.Protocol`: deterministic two-party protocols.
 * `Cslib.Communication.Protocol.run`, `Cslib.Communication.Protocol.depth`,
-  `Cslib.Communication.Protocol.leaves`, `Cslib.Communication.Protocol.Solves`.
+  `Cslib.Communication.Protocol.leafCount`, `Cslib.Communication.Protocol.Solves`.
 * `Cslib.Communication.Protocol.ecomplexity`: the communication complexity of a relation.
 * `Cslib.Communication.Protocol.ecomplexityFun`: the communication complexity of a function.
 * `Cslib.Communication.Protocol.comap`: running a protocol on transformed inputs.
@@ -45,7 +45,7 @@ announces the value (`Protocol.ecomplexityFun_le_succ`).
 
 ## Main results
 
-* `Cslib.Communication.Protocol.leaves_le_two_pow_depth`: a protocol has at most `2 ^ depth`
+* `Cslib.Communication.Protocol.leafCount_le_two_pow_depth`: a protocol has at most `2 ^ depth`
   leaves.
 * `Cslib.Communication.Protocol.ecomplexity_le_iff`,
   `Cslib.Communication.Protocol.le_ecomplexity_iff`: upper and lower bounds on communication
@@ -113,10 +113,10 @@ def depth : Protocol X Y Z → ℕ
   | bob _ p₀ p₁ => max p₀.depth p₁.depth + 1
 
 /-- The number of leaves. -/
-def leaves : Protocol X Y Z → ℕ
+def leafCount : Protocol X Y Z → ℕ
   | output _ => 1
-  | alice _ p₀ p₁ => p₀.leaves + p₁.leaves
-  | bob _ p₀ p₁ => p₀.leaves + p₁.leaves
+  | alice _ p₀ p₁ => p₀.leafCount + p₁.leafCount
+  | bob _ p₀ p₁ => p₀.leafCount + p₁.leafCount
 
 @[simp] theorem run_output (z : Z) (x : X) (y : Y) : (output z : Protocol X Y Z).run x y = z :=
   rfl
@@ -140,25 +140,25 @@ def leaves : Protocol X Y Z → ℕ
     (bob send p₀ p₁).depth = max p₀.depth p₁.depth + 1 :=
   rfl
 
-@[simp] theorem leaves_output (z : Z) : (output z : Protocol X Y Z).leaves = 1 :=
+@[simp] theorem leafCount_output (z : Z) : (output z : Protocol X Y Z).leafCount = 1 :=
   rfl
 
-@[simp] theorem leaves_alice (send : X → Bool) (p₀ p₁ : Protocol X Y Z) :
-    (alice send p₀ p₁).leaves = p₀.leaves + p₁.leaves :=
+@[simp] theorem leafCount_alice (send : X → Bool) (p₀ p₁ : Protocol X Y Z) :
+    (alice send p₀ p₁).leafCount = p₀.leafCount + p₁.leafCount :=
   rfl
 
-@[simp] theorem leaves_bob (send : Y → Bool) (p₀ p₁ : Protocol X Y Z) :
-    (bob send p₀ p₁).leaves = p₀.leaves + p₁.leaves :=
+@[simp] theorem leafCount_bob (send : Y → Bool) (p₀ p₁ : Protocol X Y Z) :
+    (bob send p₀ p₁).leafCount = p₀.leafCount + p₁.leafCount :=
   rfl
 
 /-- A protocol sending `d` bits has at most `2 ^ d` leaves. -/
-theorem leaves_le_two_pow_depth (p : Protocol X Y Z) : p.leaves ≤ 2 ^ p.depth := by
+theorem leafCount_le_two_pow_depth (p : Protocol X Y Z) : p.leafCount ≤ 2 ^ p.depth := by
   induction p with
   | output z => simp
   | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ =>
     have h₀ := ih₀.trans (Nat.pow_le_pow_right (by decide) (le_max_left p₀.depth p₁.depth))
     have h₁ := ih₁.trans (Nat.pow_le_pow_right (by decide) (le_max_right p₀.depth p₁.depth))
-    simp only [leaves_alice, leaves_bob, depth_alice, depth_bob, pow_succ]
+    simp only [leafCount_alice, leafCount_bob, depth_alice, depth_bob, pow_succ]
     omega
 
 /-- A protocol solves the relation `R` on `A × B` when its output does: its output on every pair
@@ -267,8 +267,8 @@ def comap (f : X' → X) (g : Y' → Y) : Protocol X Y Z → Protocol X' Y' Z
   | output z => rfl
   | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [comap, ih₀, ih₁]
 
-@[simp] theorem leaves_comap (f : X' → X) (g : Y' → Y) (p : Protocol X Y Z) :
-    (p.comap f g).leaves = p.leaves := by
+@[simp] theorem leafCount_comap (f : X' → X) (g : Y' → Y) (p : Protocol X Y Z) :
+    (p.comap f g).leafCount = p.leafCount := by
   induction p with
   | output z => rfl
   | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [comap, ih₀, ih₁]

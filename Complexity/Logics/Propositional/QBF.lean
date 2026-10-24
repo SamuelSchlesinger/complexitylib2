@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
+public import Cslib.Foundations.Logic.Operators
 public import Complexity.Logics.Propositional.CNF
 public import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Finset.Lattice.Lemmas
@@ -27,18 +28,22 @@ The true closed formulas form the problem `TQBF`, which is `PSPACE`-complete [Ar
 Section 4.2][AroraBarak09] (`Cslib.Complexity.TQBF_pspaceComplete`).
 
 cslib's `Cslib.Logic.PL.Proposition` has no quantifiers and is a syntax for proof systems rather
-than an evaluated one, so it is not reused.
+than an evaluated one, so it is not reused. `QBF V` instantiates cslib's logical operator
+typeclasses (`Top`, `Bot`, `Cslib.Logic.HasNot`, `Cslib.Logic.HasAnd`, `Cslib.Logic.HasOr`,
+`Cslib.Logic.HasImp`, `Cslib.Logic.HasIff`), so that `⊤`, `⊥`, `¬`, `∧`, `∨`, `→`, `↔`, and `⋀`
+are available on `QBF V` when `Cslib.Logic` is open.
 
 ## Main definitions
 
-* `Cslib.Logic.PL.QBF`: the formulas.
+* `Cslib.Logic.PL.QBF`: the formulas, with `Top`, `Bot`, `HasNot`, `HasAnd`, `HasOr`, `HasImp`, and
+  `HasIff` instances.
 * `Cslib.Logic.PL.QBF.eval`: the value of a formula under an assignment.
 * `Cslib.Logic.PL.QBF.freeVars`, `Cslib.Logic.PL.QBF.Closed`.
 * `Cslib.Logic.PL.QBF.vars`, `Cslib.Logic.PL.QBF.size`: the variables, free or bound, and the number
   of nodes.
 * `Cslib.Logic.PL.QBF.exs`, `Cslib.Logic.PL.QBF.alls`, `Cslib.Logic.PL.QBF.conj`,
   `Cslib.Logic.PL.QBF.imp`, `Cslib.Logic.PL.QBF.iff`, `Cslib.Logic.PL.QBF.lit`: derived
-  connectives, blocks of quantifiers and conjunctions of lists.
+  connectives, blocks of quantifiers and conjunctions of lists (`QBF.conj_eq_finiteAnd`).
 * `Cslib.Logic.PL.QBF.ofClause`, `Cslib.Logic.PL.QBF.ofCNF`: clauses and formulas in conjunctive
   normal form as quantified Boolean formulas.
 
@@ -295,6 +300,17 @@ def imp (φ ψ : QBF V) : QBF V := or (not φ) ψ
 
 /-- Equivalence. -/
 def iff (φ ψ : QBF V) : QBF V := or (and φ ψ) (and (not φ) (not ψ))
+
+instance : Top (QBF V) := ⟨.top⟩
+instance : Bot (QBF V) := ⟨.bot⟩
+instance : HasNot (QBF V) := ⟨.not⟩
+instance : HasAnd (QBF V) := ⟨.and⟩
+instance : HasOr (QBF V) := ⟨.or⟩
+instance : HasImp (QBF V) := ⟨.imp⟩
+instance : HasIff (QBF V) := ⟨.iff⟩
+
+/-- `QBF.conj` agrees with `Cslib.Logic.finiteAnd` (`⋀`). -/
+theorem conj_eq_finiteAnd (φs : List (QBF V)) : conj φs = ⋀φs := rfl
 
 /-- The literal of `v` with sign `b`: `v` itself for `true`, its negation for `false`. -/
 def lit (v : V) (b : Bool) : QBF V := if b then var v else not (var v)

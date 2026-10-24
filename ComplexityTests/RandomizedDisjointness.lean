@@ -125,11 +125,11 @@ info: 'Cslib.Communication.Disjointness.corrupted_hardDist' depends on axioms:
 #print axioms Cslib.Communication.Disjointness.corrupted_hardDist
 
 /--
-info: 'Finset.four_mul_sum_card_filter_notMem_le' depends on axioms:
+info: 'Cslib.four_mul_sum_card_filter_notMem_le' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Finset.four_mul_sum_card_filter_notMem_le
+#print axioms Cslib.four_mul_sum_card_filter_notMem_le
 
 /--
 info: 'Cslib.Communication.PublicCoin.div_le_mul_ecomplexityFun_disjoint_add' depends on axioms:

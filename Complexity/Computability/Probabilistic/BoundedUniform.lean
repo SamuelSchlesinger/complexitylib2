@@ -36,7 +36,7 @@ Failure remains in the certified program's output.
 
 namespace Cslib.Probability
 
-open Turing.MultiTapeTM
+open ProbComp Turing.MultiTapeTM
 
 /-- Unary bounds and attempt counts give a uniform strict PPT sampler, including its failure
 result and every stored attempt. -/
@@ -53,7 +53,7 @@ theorem isPPTOn_sampleUniformInterval {α : Type} {input : α ↪ List Bool}
   have hfind : ComputableTidilyInPolyTime
       (fun p : α × List ℕ => p.2.find? (fun value => decide (value < bound p.1)))
       (encPair input (encList encUnary)) (encOption encUnary) := by fun_prop
-  exact hs.map_with hfind
+  exact hs.map_with (.of_tidy hfind)
 
 /-- Binary bounds need only a unary sampling width and attempt count. The width is the existing
 sampler's computed `log₂ bound + 1`, not a unary copy of `bound`; exponential cryptographic
@@ -80,7 +80,7 @@ theorem isPPTOn_sampleUniformInterval_binary {α : Type} {input : α ↪ List Bo
     simp only [min_def, Function.comp_def, decide_eq_true_eq]
   have hs : IsPPTOn input encNat (fun a => sampleBoundedIndex (bound a)) := by
     apply ((isPPTOn_sampleBinaryNat.preprocess hw).map_with
-      (f := fun a value => min (bound a) value) hmin).congr
+      (f := fun a value => min (bound a) value) (.of_tidy hmin)).congr
     intro a
     rw [sampleBoundedIndex_eq_binary, ← hwidth_eq a]
   have hfind : ComputableTidilyInPolyTime
@@ -89,7 +89,7 @@ theorem isPPTOn_sampleUniformInterval_binary {α : Type} {input : α ↪ List Bo
     apply ComputableTidilyInPolyTime.findWithInput (by fun_prop)
     exact ComputableTidilyInPolyTime.binary_lt.comp
       ((ComputableTidilyInPolyTime.snd _ _).prod (by fun_prop))
-  exact (hs.replicate ha).map_with hfind
+  exact (hs.replicate ha).map_with (.of_tidy hfind)
 
 /-- A runtime-varying integer box is sampled in uniform strict PPT when the numerical radius,
 dimension and per-coordinate attempt budget are efficiently supplied in unary. The full
@@ -122,7 +122,7 @@ theorem isPPTOn_sampleIntegerBox {α : Type} {input : α ↪ List Bool}
       (encList (encOption encInt)) (encOption (encList encInt)) := by
     unfold collectBox
     fun_prop
-  exact (((hs.map_with hcoordinate).replicate hd).map hcollect)
+  exact (((hs.map_with (.of_tidy hcoordinate)).replicate hd).map hcollect)
 
 /-- The complete framed optional output has a direct linear bound in dimension and unary
 radius; failure encodes as the empty word. -/

@@ -23,14 +23,14 @@ namespace CommunicationComplexityTests
 private def small : Protocol Bool Bool (Fin 3) :=
   .alice id (.output 0) (.bob id (.output 1) (.output 2))
 
-example : small.leaves = 3 := rfl
+example : small.leafCount = 3 := rfl
 example : small.depth = 2 := rfl
 example : (small.leaf false true).val = 0 := rfl
 example : (small.leaf true false).val = 1 := rfl
 example : (small.leaf true true).val = 2 := rfl
 
 /-- The last leaf. -/
-private def last : Fin small.leaves := ⟨2, by decide⟩
+private def last : Fin small.leafCount := ⟨2, by decide⟩
 
 example : small.leafOutput last = 2 := rfl
 

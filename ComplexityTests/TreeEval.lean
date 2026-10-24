@@ -55,6 +55,20 @@ example : ∃ n s, Reader.machine.run sample.encode n = ⟨s, [false, true]⟩ �
   obtain ⟨n, s, h, hs⟩ := Reader.exists_run_eq sample
   exact ⟨n, s, by rw [h]; congr 1, hs⟩
 
+open Reader in
+/-- The reader's space parameter on `sample` (`ℓ = 2`, `H = 2`) is `(2 + 2 + 1) * (2 + 1) = 15`. -/
+example : spaceBound 2 2 = 15 := by decide
+
+open Reader in
+/-- Along the run on `sample`, the reader state's encoded bit budget never exceeds
+`2 ^ 12 * spaceBound 2 2 = 61440`. -/
+example (step : ℕ) :
+    stateBudget (machine.run sample.encode step).state ≤ 61440 := by
+  calc stateBudget (machine.run sample.encode step).state
+    _ ≤ 2 ^ 12 * spaceBound 2 2 :=
+      stateBudget_le (bounds_of_inv (inv_run (T := sample) step))
+    _ = 61440 := by decide
+
 /-- The encoding of instances tells the sample instance apart from a leaf with its value. -/
 example : encInstance ⟨2, 2, sample⟩ ≠ encInstance ⟨2, 0, .leaf ![false, true]⟩ :=
   encInstance.injective.ne (by simp)
@@ -65,8 +79,30 @@ example : ∃ t, ComputableTidilyInBigO (fun I : Instance => List.ofFn I.tree.ev
     encBits t fun I => spaceBound I.ell I.height + (encNat ((encInstance I).length + 1)).length :=
   computableTidilyInSpace_eval
 
+open Turing MultiTapeTM Reader in
+/-- Instantiating `computableTidilyInSpace_eval` on `sample` (`spaceBound 2 2 + 7 = 22`) yields a
+finite-state multi-tape machine that tidily computes `[false, true]` from
+`encInstance ⟨2, 2, sample⟩` within `c * 23` space cells. -/
+example : ∃ (t c k : ℕ) (State : Type) (_ : Finite State) (tm : MultiTapeTM k Bool State),
+    tm.ComputesTidilyInTimeAndSpace (encInstance ⟨2, 2, sample⟩) [false, true]
+      (c * (t + 1)) (c * 23) := by
+  obtain ⟨t, c, k, State, hfinite, tm, htm⟩ := computableTidilyInSpace_eval
+  have h : tm.ComputesTidilyInTimeAndSpace (encInstance ⟨2, 2, sample⟩)
+      (List.ofFn sample.eval) (c * (t ⟨2, 2, sample⟩ + 1))
+      (c * (spaceBound 2 2 + (encNat ((encInstance ⟨2, 2, sample⟩).length + 1)).length + 1)) :=
+    htm ⟨2, 2, sample⟩
+  have hval : List.ofFn sample.eval = [false, true] := by decide
+  have hspace : spaceBound 2 2 + (encNat ((encInstance ⟨2, 2, sample⟩).length + 1)).length + 1 =
+      23 := by decide
+  rw [hval, hspace] at h
+  exact ⟨t ⟨2, 2, sample⟩, c, k, State, hfinite, tm, h⟩
+
 /-- The sample instance packaged as a nontrivial instance (`1 ≤ ℓ` and `1 ≤ H`). -/
 def sampleNontrivial : NontrivialInstance := ⟨⟨2, 2, sample⟩, by decide, by decide⟩
+
+/-- The encoded sample instance has `110` bits (`6` header bits, `3 * 32` gate bits, `4 * 2` leaf
+bits). -/
+example : (encInstance sampleNontrivial.1).length = 110 := by decide
 
 open Turing MultiTapeTM in
 example : sampleNontrivial.1.ell < (encNat (encInstance sampleNontrivial.1).length).length :=
@@ -75,6 +111,15 @@ example : sampleNontrivial.1.ell < (encNat (encInstance sampleNontrivial.1).leng
 open Turing MultiTapeTM in
 example : sampleNontrivial.1.height < (encNat (encInstance sampleNontrivial.1).length).length :=
   height_lt_length_encNat_length_encInstance sampleNontrivial.2.1
+
+open Turing MultiTapeTM Reader in
+/-- On `sampleNontrivial`, the raw space bound is `15 + 7 = 22` and the `6 · log n · log log n`
+upper bound is `6 * (7 * 3) = 126`. -/
+example : spaceBound sampleNontrivial.1.ell sampleNontrivial.1.height +
+      (encNat ((encInstance sampleNontrivial.1).length + 1)).length = 22 ∧
+    6 * ((encNat (encInstance sampleNontrivial.1).length).length *
+      (encNat (encNat (encInstance sampleNontrivial.1).length).length).length) = 126 := by
+  decide
 
 open Turing MultiTapeTM Reader in
 example : spaceBound sampleNontrivial.1.ell sampleNontrivial.1.height +
@@ -90,6 +135,26 @@ example : ∃ t, ComputableTidilyInBigO
     fun I => (encNat (encNontrivialInstance I).length).length *
       (encNat (encNat (encNontrivialInstance I).length).length).length :=
   computableTidilyInSpace_eval_log_mul_log_log
+
+open Turing MultiTapeTM in
+/-- Instantiating `computableTidilyInSpace_eval_log_mul_log_log` on `sampleNontrivial`
+(`7 * 3 = 21`) yields a finite-state multi-tape machine that tidily computes `[false, true]` from
+`encNontrivialInstance sampleNontrivial` within `c * 22` space cells. -/
+example : ∃ (t c k : ℕ) (State : Type) (_ : Finite State) (tm : MultiTapeTM k Bool State),
+    tm.ComputesTidilyInTimeAndSpace (encNontrivialInstance sampleNontrivial) [false, true]
+      (c * (t + 1)) (c * 22) := by
+  obtain ⟨t, c, k, State, hfinite, tm, htm⟩ := computableTidilyInSpace_eval_log_mul_log_log
+  have h : tm.ComputesTidilyInTimeAndSpace (encNontrivialInstance sampleNontrivial)
+      (List.ofFn sampleNontrivial.1.tree.eval) (c * (t sampleNontrivial + 1))
+      (c * ((encNat (encNontrivialInstance sampleNontrivial).length).length *
+        (encNat (encNat (encNontrivialInstance sampleNontrivial).length).length).length + 1)) :=
+    htm sampleNontrivial
+  have hval : List.ofFn sampleNontrivial.1.tree.eval = [false, true] := by decide
+  have hspace : (encNat (encNontrivialInstance sampleNontrivial).length).length *
+      (encNat (encNat (encNontrivialInstance sampleNontrivial).length).length).length + 1 =
+      22 := by decide
+  rw [hval, hspace] at h
+  exact ⟨t sampleNontrivial, c, k, State, hfinite, tm, h⟩
 
 end ComplexityTests.TreeEval
 

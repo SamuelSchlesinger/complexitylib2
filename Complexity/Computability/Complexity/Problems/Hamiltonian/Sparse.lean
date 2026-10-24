@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Diamond
 public import Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected
-public import Complexity.Computability.Complexity.Problems.IndependentSet
+public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Logics.Propositional.CNF.ModelCount
 import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
@@ -118,7 +118,7 @@ section Correctness
 
 variable {φ : CNF ℕ}
 
-private theorem mem_vars_of_mem_occurrences {o : Occurrence} (ho : o ∈ occurrences φ) :
+private theorem mem_vars_of_mem_occurrences {o : Occurrence ℕ} (ho : o ∈ occurrences φ) :
     o.2.2.1 ∈ φ.vars := by
   rw [← map_occurrences]
   exact List.mem_map_of_mem ho
@@ -140,7 +140,7 @@ private theorem mem_sparseDetours {d : Detour} :
     exact ⟨(o, p), List.mem_zipIdx_iff_getElem?.2 h, rfl⟩
 
 /-- The position of an occurrence is a position of its variable. -/
-private theorem mem_occurrencePositions_of_getElem? {o : Occurrence} {p : ℕ}
+private theorem mem_occurrencePositions_of_getElem? {o : Occurrence ℕ} {p : ℕ}
     (h : (occurrences φ)[p]? = some o) : p ∈ occurrencePositions φ o.2.2.1 := by
   have hp := (List.getElem?_eq_some_iff.1 h).1
   have hlen := length_occurrences φ
@@ -195,7 +195,7 @@ theorem satisfiable_sparseDetours_iff :
     obtain ⟨l, hl, hσl⟩ := (Clause.eval_eq_true_iff _ _).1
       ((CNF.eval_eq_true_iff _ _).1 hσ φ[j] (List.getElem_mem hj))
     obtain ⟨k, hk, rfl⟩ := List.getElem_of_mem hl
-    have ho : ((j, k, φ[j][k]) : Occurrence) ∈ occurrences φ := mem_occurrences.2 ⟨hj, hk, rfl⟩
+    have ho : ((j, k, φ[j][k]) : Occurrence ℕ) ∈ occurrences φ := mem_occurrences.2 ⟨hj, hk, rfl⟩
     obtain ⟨p, hp⟩ := List.mem_iff_getElem?.1 ho
     refine ⟨_, mem_sparseDetours.2 ⟨_, p, hp, rfl⟩, rfl, ?_⟩
     simp only
@@ -320,8 +320,8 @@ theorem computableTidilyInPolyTime_sparseDetours :
     ComputableTidilyInPolyTime sparseDetours encCNF (encList encDetour) := by
   have hdv := computableInPolyTime_distinctVars.tidy
   have hpos := computableTidilyInPolyTime_occurrencePositions
-  have hocc := computableTidilyInPolyTime_occurrences
-  unfold encOccurrence at hocc
+  have hocc := computableInPolyTime_occurrences.tidy
+  unfold encOccurrence Cslib.Logic.PL.encOccurrence at hocc
   unfold sparseDetours
   fun_prop
 

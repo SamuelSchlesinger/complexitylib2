@@ -373,7 +373,7 @@ private theorem isPPTOn_sampleList_verifier {p : Polynomial ℕ} {V : α × List
   have hcount : ComputableTidilyInPolyTime (fun a => p.eval (enc a).length) enc encUnary :=
     (ComputableTidilyInPolyTime.unary_eval p).comp
       (ComputableTidilyInPolyTime.encoding_length enc)
-  hcount.sampleList.map_with hV
+  hcount.sampleList.map_with (.of_tidy hV)
 
 /-- **Probabilistic-program characterization of `PromiseBPP`**: a promise problem is in
 `PromiseBPP` exactly when a uniform strict PPT Boolean program accepts every yes-instance with
@@ -804,7 +804,7 @@ theorem rpReducible_iff_exists_seeded :
         (ComputableTidilyInPolyTime.encoding_length encA)
     let R (a : α) : ProbComp β :=
       (fun w => f (a, w)) <$> BitString.sampleList (p.eval (encA a).length)
-    have hR : IsPPTOn encA encB R := hcount.sampleList.map_with hf.tidy
+    have hR : IsPPTOn encA encB R := hcount.sampleList.map_with hf
     refine ⟨R, hR, fun a ha b hb => ?_, fun a ha => ?_⟩
     · simp only [R, ProbComp.eval_map, BitString.eval_sampleList,
         PMF.mem_support_map_iff, BitString.mem_support_uniformList_iff] at hb

@@ -208,7 +208,7 @@ def ChosenMessageSecure : Prop :=
       nndist (probability (chosenMessageGame choose guess false security))
         (probability (chosenMessageGame choose guess true security)))
 
-open Cslib Cslib.Probability Turing.MultiTapeTM
+open Cslib Cslib.ProbComp Cslib.Probability Turing.MultiTapeTM
 
 private theorem independentList_eval {α : Type} (count : ℕ) (program : ProbComp α) :
     independentList count (ProbComp.eval program) =

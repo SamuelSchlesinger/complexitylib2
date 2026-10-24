@@ -31,19 +31,21 @@ range is at most `2 * (bound + 1)`. `sampleDyadicCoin bound numerator` compares 
 
 ## Main definitions
 
-* `sampleBinaryNat`: exact uniform sampling from a specified bit width.
-* `sampleModNat`: approximately uniform sampling of residues modulo a given modulus.
-* `sampleDyadicIndex`: exact uniform sampling in the power-of-two range.
-* `sampleBoundedIndex`: a capped uniform index with a rejection sentinel.
-* `sampleDyadicCoin`: an exact capped dyadic acceptance probability.
+* `Cslib.ProbComp.sampleBinaryNat`: exact uniform sampling from a specified bit width.
+* `Cslib.ProbComp.sampleModNat`: approximately uniform sampling of residues modulo a given modulus.
+* `Cslib.ProbComp.sampleDyadicIndex`: exact uniform sampling in the power-of-two range.
+* `Cslib.ProbComp.sampleBoundedIndex`: a capped uniform index with a rejection sentinel.
+* `Cslib.ProbComp.sampleDyadicCoin`: an exact capped dyadic acceptance probability.
 
 ## Main results
 
-* `eval_sampleBinaryNat`, `mem_support_sampleBinaryNat_iff`: the exact law and support.
-* `eval_sampleModNat`, `dist_map_natCast_eval_sampleModNat_le`: the law of the residue sampler
-  and its distance from uniform on `ZMod q`.
-* `eval_sampleDyadicIndex`, `eval_sampleBoundedIndex`: exact distribution laws.
-* `eval_sampleDyadicCoin_true`: exact acceptance mass, including zero and one.
+* `Cslib.ProbComp.eval_sampleBinaryNat`, `Cslib.ProbComp.mem_support_sampleBinaryNat_iff`:
+  the exact law and support.
+* `Cslib.ProbComp.eval_sampleModNat`, `Cslib.ProbComp.dist_map_natCast_eval_sampleModNat_le`:
+  the law of the residue sampler and its distance from uniform on `ZMod q`.
+* `Cslib.ProbComp.eval_sampleDyadicIndex`, `Cslib.ProbComp.eval_sampleBoundedIndex`:
+  exact distribution laws.
+* `Cslib.ProbComp.eval_sampleDyadicCoin_true`: exact acceptance mass, including zero and one.
 
 ## References
 
@@ -53,9 +55,9 @@ Adapted from Languages/Probabilistic/UniformNat.lean on the cslib `crypto` branc
 
 @[expose] public section
 
-namespace Cslib.Probability
+namespace Cslib.ProbComp
 
-open BitString
+open BitString Probability
 
 /-- Interpret exactly `width` independent fair bits as a binary natural number. -/
 noncomputable def sampleBinaryNat (width : ℕ) : ProbComp ℕ :=
@@ -183,4 +185,4 @@ theorem eval_sampleBoundedIndex (bound : ℕ) :
   simp [sampleBoundedIndex, ProbComp.eval_map, BitString.eval_sampleList,
     uniformList_boundedBinaryValue]
 
-end Cslib.Probability
+end Cslib.ProbComp

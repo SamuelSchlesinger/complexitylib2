@@ -37,7 +37,7 @@ the equality below exposes only the public marginal, as required by the security
 
 namespace Cslib.Crypto.Homomorphic.GSW
 
-open Probability
+open ProbComp Probability
 
 /-- Reduce the difference of two independent `η`-bit counts modulo the actual modulus. -/
 noncomputable def noiseLaw (w η : ℕ) : PMF (ZMod (2 ^ w)) :=

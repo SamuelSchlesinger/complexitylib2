@@ -7,19 +7,20 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Sign
-public import Complexity.Foundations.Data.Code.Hadamard
+public import Mathlib.Data.Matrix.Mul
 import Complexity.Foundations.LinearAlgebra.Matrix.Lindsey
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
 import Mathlib.Tactic.Ring
 
 /-!
-# Monochromatic rectangles for the Hadamard code
+# Monochromatic rectangles for the inner product
 
-The existing `BitString.hadamardCode x y` is the inner product modulo two. Lindsey's lemma bounds
-its signed sum over a rectangle `A × B` of bit strings indexed by `ι` by `√(|A| |B| 2 ^ |ι|)` in
-absolute value (`BitString.sq_sum_signVal_dotProduct_le`). So if it is constant on `A × B`, the
+Lindsey's lemma bounds the signed sum of the inner product modulo two `x ⬝ᵥ y` over a rectangle
+`A × B` of bit strings indexed by `ι` by `√(|A| |B| 2 ^ |ι|)` in absolute value
+(`BitString.sq_sum_signVal_dotProduct_le`). So if `x ⬝ᵥ y` is constant on `A × B`, the
 rectangle has at most `2 ^ Fintype.card ι` entries. Empty sides, zero coordinates, and both
 constant values are included.
 
@@ -30,7 +31,8 @@ equivalence between Boolean values and `ZMod 2`; it introduces no alternative in
 
 * `Cslib.BitString.sq_sum_signVal_dotProduct_le`: Lindsey's lemma for signed sums of the inner
   product over rectangles.
-* `Cslib.BitString.card_mul_le_two_pow_of_hadamardCode_eq`: the Hadamard rectangle bound.
+* `Cslib.BitString.card_mul_le_two_pow_of_dotProduct_eq`: the monochromatic inner-product rectangle
+  bound.
 
 ## References
 
@@ -72,13 +74,13 @@ theorem sq_sum_signVal_dotProduct_le (A B : Finset (ι → Bool)) :
 
 /-- A rectangle on which the inner product modulo two is constant has at most
 `2 ^ Fintype.card ι` entries. Neither side is required to be nonempty. -/
-theorem card_mul_le_two_pow_of_hadamardCode_eq (A B : Finset (ι → Bool)) (b : Bool)
-    (h : ∀ x ∈ A, ∀ y ∈ B, hadamardCode x y = b) :
+theorem card_mul_le_two_pow_of_dotProduct_eq (A B : Finset (ι → Bool)) (b : Bool)
+    (h : ∀ x ∈ A, ∀ y ∈ B, x ⬝ᵥ y = b) :
     A.card * B.card ≤ 2 ^ Fintype.card ι := by
   have hs : ∑ x ∈ A, ∑ y ∈ B, signVal (x ⬝ᵥ y) = #A * #B * signVal b := by
     calc
       _ = ∑ x ∈ A, ∑ y ∈ B, signVal b := sum_congr rfl fun x hx => sum_congr rfl fun y hy => by
-        rw [← hadamardCode_apply, h x hx y hy]
+        rw [h x hx y hy]
       _ = _ := by simp [mul_assoc]
   have hL := sq_sum_signVal_dotProduct_le A B
   rw [hs, mul_pow, show signVal b ^ 2 = 1 by cases b <;> norm_num, mul_one, sq] at hL

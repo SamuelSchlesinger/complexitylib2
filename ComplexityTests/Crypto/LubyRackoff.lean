@@ -116,6 +116,32 @@ example (keyGen : PMF (ZMod 7)) (F : ZMod 7 → ZMod 7 → ZMod 7) {ε₁ ε₂ 
       ε₁ + ε₂ + ε₃ + 2 * ((2 : ℕ).choose 2 : ℝ) * (Fintype.card (ZMod 7) : ℝ)⁻¹ :=
   advantage_feistel3KeyedGame_randomFunctionGame_le isQueryBounded_sampleDistinguisher h₁ h₂ h₃
 
+-- Concrete instantiation of the 3-round Luby–Rackoff PRP bound against a uniform random
+-- permutation (`idealPermGame`) over `ZMod 7 × ZMod 7`.
+example :
+    (Game.advantage (feistel3RandomRoundsGame sampleDistinguisher)
+      (idealPermGame sampleDistinguisher) : ℝ) ≤
+      2 * ((2 : ℕ).choose 2 : ℝ) * (Fintype.card (ZMod 7) : ℝ)⁻¹ +
+        ((2 : ℕ).choose 2 : ℝ) * ((Fintype.card (ZMod 7) : ℝ)⁻¹) ^ 2 :=
+  advantage_feistel3RandomRoundsGame_idealPermGame_le isQueryBounded_sampleDistinguisher
+
+-- Concrete instantiation of the full keyed 3-round Luby–Rackoff PRP theorem over `ZMod 7`.
+example (keyGen : PMF (ZMod 7)) (F : ZMod 7 → ZMod 7 → ZMod 7) {ε₁ ε₂ ε₃ : ℝ}
+    (h₁ : ∀ g₂ g₃,
+      (Game.advantage (prfSingleRealGame keyGen F (feistel3Reduction₁ g₂ g₃ sampleDistinguisher))
+        (prfSingleIdealGame (feistel3Reduction₁ g₂ g₃ sampleDistinguisher)) : ℝ) ≤ ε₁)
+    (h₂ : ∀ g₁ g₃,
+      (Game.advantage (prfSingleRealGame keyGen F (feistel3Reduction₂ g₁ g₃ sampleDistinguisher))
+        (prfSingleIdealGame (feistel3Reduction₂ g₁ g₃ sampleDistinguisher)) : ℝ) ≤ ε₂)
+    (h₃ : ∀ g₁ g₂,
+      (Game.advantage (prfSingleRealGame keyGen F (feistel3Reduction₃ g₁ g₂ sampleDistinguisher))
+        (prfSingleIdealGame (feistel3Reduction₃ g₁ g₂ sampleDistinguisher)) : ℝ) ≤ ε₃) :
+    (Game.advantage (feistel3KeyedGame keyGen F sampleDistinguisher)
+      (idealPermGame sampleDistinguisher) : ℝ) ≤
+      ε₁ + ε₂ + ε₃ + 2 * ((2 : ℕ).choose 2 : ℝ) * (Fintype.card (ZMod 7) : ℝ)⁻¹ +
+        ((2 : ℕ).choose 2 : ℝ) * ((Fintype.card (ZMod 7) : ℝ)⁻¹) ^ 2 :=
+  advantage_feistel3KeyedGame_idealPermGame_le isQueryBounded_sampleDistinguisher h₁ h₂ h₃
+
 -- Concrete instantiation of the bit-string specialization on `BitString 4`.
 example (D : OracleComp (fun _ : BitString 4 × BitString 4 => BitString 4 × BitString 4) Bool)
     (hQ : OracleComp.IsQueryBounded D 2) :
@@ -160,6 +186,36 @@ example :
       (idealStrongGame (feistel3CCAAttack (0 : ZMod 7) 1 2)) : ℝ) :=
   advantage_feistel3CCAAttack_idealStrongGame_pos f₁ f₂ f₃
     (l₂ := (2 : ZMod 7)) (by decide) (by decide) (by decide)
+
+-- Quantitative nonnegligible lower bound `1 - 1 / |G| - 4 / |G|²` against `idealStrongGame`
+-- over `ZMod 7` (`l₀ = 0 ≠ 1 = l₁, r₀ = 2`, giving advantage at least `38 / 49`).
+example :
+    1 - (Fintype.card (ZMod 7) : ℝ)⁻¹ - 4 * ((Fintype.card (ZMod 7) : ℝ)⁻¹) ^ 2 ≤
+      (Game.advantage
+        (OracleComp.interpret (feistelStrongOracle (feistel3 f₁ f₂ f₃))
+          (feistel3CCAAttack (0 : ZMod 7) 1 2))
+        (idealStrongGame (feistel3CCAAttack (0 : ZMod 7) 1 2)) : ℝ) :=
+  le_advantage_feistel3CCAAttack_idealStrongGame_of_ne f₁ f₂ f₃ (by decide)
+
+-- Concrete `Fin 3` instance for `RandomPermutation.uniform_interpret_eq_lazy` and
+-- `RandomPermutation.abs_sub_uniformPerm_forgetful_le`.
+example (program : OracleComp (RandomPermutation.PermOracleSpec (Fin 3)) Bool) :
+    (do
+      let π ← PMF.uniformOfFintype (Equiv.Perm (Fin 3))
+      OracleComp.interpret (fun q => PMF.pure (RandomPermutation.evalPerm π q)) program) =
+    (((OracleComp.interpret RandomPermutation.answer program).run []).map Prod.fst) :=
+  RandomPermutation.uniform_interpret_eq_lazy program
+
+example (program : OracleComp (RandomPermutation.PermOracleSpec (Fin 3)) Bool)
+    (hQ : OracleComp.IsQueryBounded program 2) :
+    |(((do
+        let π ← PMF.uniformOfFintype (Equiv.Perm (Fin 3))
+        OracleComp.interpret (fun q => PMF.pure (RandomPermutation.evalPerm π q)) program).bind
+          PMF.pure) true).toReal -
+      (((((OracleComp.interpret RandomPermutation.forgetfulAnswer program).run []).map
+        Prod.fst).bind PMF.pure) true).toReal| ≤
+      ((2 : ℕ).choose 2 : ℝ) * (Fintype.card (Fin 3) : ℝ)⁻¹ :=
+  RandomPermutation.abs_sub_uniformPerm_forgetful_le hQ PMF.pure true
 
 -- Separation against the independent-table game `independentTableStrongGame` over `ZMod 7`.
 example :
@@ -312,5 +368,82 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #guard_msgs (whitespace := lax) in
 #print axioms
   Cslib.Crypto.LubyRackoff.advantage_feistel4StrongKeyedGame_feistel4StrongRandomRoundsGame_le
+
+/--
+info: 'Cslib.RandomPermutation.answer_complete' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RandomPermutation.answer_complete
+
+/--
+info: 'Cslib.RandomPermutation.uniform_interpret_eq_lazy' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RandomPermutation.uniform_interpret_eq_lazy
+
+/--
+info: 'Cslib.RandomPermutation.uniformPerm_bind_apply_le_forgetful' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RandomPermutation.uniformPerm_bind_apply_le_forgetful
+
+/--
+info: 'Cslib.RandomPermutation.abs_sub_uniformPerm_forgetful_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RandomPermutation.abs_sub_uniformPerm_forgetful_le
+
+/--
+info: 'Cslib.RandomPermutation.abs_sub_uniformPerm_uniformFunc_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RandomPermutation.abs_sub_uniformPerm_uniformFunc_le
+
+/--
+info: 'Cslib.RandomPermutation.toOuterMeasure_bad_choose_two_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RandomPermutation.toOuterMeasure_bad_choose_two_le
+
+/--
+info: 'Cslib.Crypto.LubyRackoff.advantage_idealPermGame_randomFunctionGame_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.LubyRackoff.advantage_idealPermGame_randomFunctionGame_le
+
+/--
+info: 'Cslib.Crypto.LubyRackoff.advantage_feistel3RandomRoundsGame_idealPermGame_le' depends on
+axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.LubyRackoff.advantage_feistel3RandomRoundsGame_idealPermGame_le
+
+/--
+info: 'Cslib.Crypto.LubyRackoff.advantage_feistel3KeyedGame_idealPermGame_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.LubyRackoff.advantage_feistel3KeyedGame_idealPermGame_le
+
+/--
+info: 'Cslib.Crypto.LubyRackoff.idealStrongGame_feistel3CCAAttack_true_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.LubyRackoff.idealStrongGame_feistel3CCAAttack_true_le
+
+/--
+info: 'Cslib.Crypto.LubyRackoff.le_advantage_feistel3CCAAttack_idealStrongGame_of_ne' depends on
+axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.LubyRackoff.le_advantage_feistel3CCAAttack_idealStrongGame_of_ne
 
 end ComplexityTests.Crypto.LubyRackoff

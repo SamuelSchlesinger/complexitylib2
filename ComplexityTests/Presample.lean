@@ -10,7 +10,7 @@ import Complexity.Tactic.PPT
 
 namespace ComplexityTests.Presample
 
-open Cslib Cslib.Crypto Cslib.Probability Turing.MultiTapeTM
+open Cslib Cslib.Crypto Cslib.ProbComp Cslib.Probability Turing.MultiTapeTM
 
 -- Infinite output types and computed repetition counts charge the entire framed result list.
 example : IsPPTOn encUnary (encList encBits)

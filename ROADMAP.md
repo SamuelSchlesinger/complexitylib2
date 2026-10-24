@@ -579,7 +579,7 @@ developments, not assertions that every prerequisite is missing or assignments t
 | Algebraic and arithmetic complexity | Build on [VP and p-projections](Complexity/Computability/Circuit/Arithmetic/VP.lean), [VNP and VP ⊆ VNP](Complexity/Computability/Circuit/Arithmetic/VNP.lean), [determinant ∈ VP](Complexity/Computability/Circuit/Arithmetic/Determinant.lean) over commutative rings, and [Laplace expansion of the permanent](Complexity/Foundations/Data/Matrix/Permanent.lean). Prove permanent VNP-completeness with its characteristic assumptions, prove the Kabanets–Impagliazzo theorem, extend formula/branching-program models, identity testing, hitting sets, tensor and rank methods, and certify uniform construction costs separately from gate counts. |
 | Approximation and constraint satisfaction | [Random assignment](Complexity/Computability/PCP/Approximation/MaxExactThreeSAT.lean) proves the `7 / 8` random-assignment bound for exact 3-CNF with three distinct variables per clause (`CNF.IsExactThreeDistinct`), and [Håstad's 3-bit test](Complexity/Computability/PCP/Approximation/Hastad.lean) proves completeness and soundness of Håstad's 3-bit linear test against `GapLabelCover` (`1 - δ` vs `1 / 2 + 4 * ε`). Build the reduction to MAX-E3LIN and, via the 4-clause XOR gadget, to MAX-E3SAT on clauses with three distinct variables, Raz's parallel repetition theorem, and the perfect-completeness `(1, 7 / 8 + ε)` reduction; develop further gap and approximation-preserving reductions, APX/PTAS/FPTAS, canonical inapproximability consequences of PCP, CSP classifications and relaxation gaps. State assumptions such as the Unique Games Conjecture explicitly. |
 | Pseudorandomness and coding | Build on [conditional `P = BPP` from exponential worst-case hardness in `E` (Impagliazzo–Wigderson)](Complexity/Computability/Complexity/Classes/BPP/WorstCaseHardness.lean) via Nisan–Wigderson and Sudan–Trevisan–Vadhan, [Sudan's Reed–Solomon list decoding](Complexity/Foundations/Data/Code/Sudan.lean) (decoder correctness only: the decoder is noncomputable and no running time is claimed), and [expander-walk hitting bounds](Complexity/Foundations/Combinatorics/Expander/Hitting.lean). Extend space-bounded generators, extractors/condensers, limited independence, explicit expanders, and Guruswami–Sudan / local decoding. Separate finite combinatorial guarantees from uniform construction and decoding costs. |
-| Complexity-theoretic cryptography | One-way functions imply SAT ∉ P and SAT ∉ BPP, and MCSP ∈ BPP rules them out (Kabanets–Cai; [OneWay/MCSP](Complexity/Crypto/Computational/OneWay/MCSP.lean)). [Naor bit commitments](Complexity/Crypto/Computational/Commitment.lean) (with hiding against randomized stateful PPT receivers and deterministic polynomial-time receiver-string/bit families), [Goldreich–Micali–Wigderson zero knowledge for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean) (uniform zero knowledge over deterministic polynomial-time instance/witness/auxiliary-input families via a 3-copy masked-3SAT truth-table commitment protocol), [uniform symmetric MACs and PRF-based MACs](Complexity/Crypto/Computational/MAC.lean) (`SUFCMA`, `EUFCMA`, `OneTimeEUFCMA`, quantitative `EUF-CMA ≤ SUF-CMA`, unique-tag equivalence, and the Boneh–Shoup Theorem 6.2 PRF-to-SUF-CMA/EUF-CMA reduction), and [keyed collision-resistant hash families and the Merkle–Damgård transform](Complexity/Crypto/Computational/CollisionResistant.lean) are proved. Uniform one-way functions are also equivalent to one-time secure digital signatures for `n`-bit messages, via [Lamport's construction](Complexity/Crypto/Computational/OneWayToSignature.lean); full EUF-CMA security implies one-way functions. [Carter–Wegman MACs](Complexity/Crypto/Protocols/MAC/CarterWegman.lean) formalize unconditional one-time and adaptive multi-query issued-counter EUF-CMA/SUF-CMA security (`≤ ε`) from `ε`-almost-Δ-universal hash families together with the arbitrary-pad hybrid decomposition and `xpolyHash`/Boolean-matrix/subset-sum instantiations (computational PRF-pad security and fresh-counter nonces remain open). Extend the existing OWF/PRG/PRF/MAC/CRHF/commitment/ZK results with reusable adaptive reductions, many-time digital signatures, encryption, universal-instance zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
+| Complexity-theoretic cryptography | One-way functions imply SAT ∉ P and SAT ∉ BPP, and MCSP ∈ BPP rules them out (Kabanets–Cai; [OneWay/MCSP](Complexity/Crypto/Computational/OneWay/MCSP.lean)). [Naor bit commitments](Complexity/Crypto/Computational/Commitment.lean) (with hiding against randomized stateful PPT receivers and deterministic polynomial-time receiver-string/bit families), [Goldreich–Micali–Wigderson zero knowledge for NP](Complexity/Crypto/Computational/ZeroKnowledge.lean) (uniform zero knowledge over deterministic polynomial-time instance/witness/auxiliary-input families via a 3-copy masked-3SAT truth-table commitment protocol), [uniform symmetric MACs and PRF-based MACs](Complexity/Crypto/Computational/MAC.lean) (`SUFCMA`, `EUFCMA`, `OneTimeEUFCMA`, quantitative `EUF-CMA ≤ SUF-CMA`, unique-tag equivalence, and the Boneh–Shoup Theorem 6.2 PRF-to-SUF-CMA/EUF-CMA reduction), and [keyed collision-resistant hash families and the Merkle–Damgård transform](Complexity/Crypto/Computational/CollisionResistant.lean) are proved. Uniform one-way functions are also equivalent to one-time secure digital signatures for `n`-bit messages, via [Lamport's construction](Complexity/Crypto/Computational/OneWayToSignature.lean); full EUF-CMA security implies one-way functions. [Carter–Wegman MACs](Complexity/Crypto/Protocols/MAC/CarterWegman.lean) formalize unconditional one-time and adaptive multi-query issued-counter EUF-CMA/SUF-CMA security (`≤ ε`) from `ε`-almost-Δ-universal hash families together with the arbitrary-pad hybrid bound, the exact single-query fixed-nonce reduction to `prfRealGame`/`prfIdealGame` (`prfOneTimeGame_le`, `prfOneTimeGame_ofProbComp_le`), and `xpolyHash`/Boolean-matrix/subset-sum instantiations (`IsOraclePPT` admissibility of the PRF-pad reduction, uniform word-level forger/hash families, the asymptotic `PseudorandomFunction` corollary, and fresh-counter nonces remain open). Extend the existing OWF/PRG/PRF/MAC/CRHF/commitment/ZK results with reusable adaptive reductions, many-time digital signatures, encryption, universal-instance zero knowledge, hard-core and hardness-amplification methods, and connections to learning and average-case hardness. |
 | Communication, queries and data structures | Build on the `Ω(n)` bounded-error randomized disjointness lower bound ([Disjointness](Complexity/Computability/Communication/Disjointness.lean)), Karchmer–Wigderson ([Boolean](Complexity/Computability/Circuit/Boolean/KarchmerWigderson.lean), [monotone](Complexity/Computability/Circuit/Monotone/KarchmerWigderson.lean)), and Raz–Wigderson's monotone depth bound for bipartite matching ([BipartiteMatching](Complexity/Computability/Circuit/Monotone/BipartiteMatching.lean)). Extend multiparty protocols, discrepancy and information complexity, direct-sum/product results, lifting theorems, and reductions to streaming, sketching and cell-probe lower bounds. Reuse upstream query models. |
 | Proof complexity | Build on [Cook–Reckhow systems and simulations](Complexity/Computability/Complexity/ProofSystem.lean), including the polynomially bounded-system characterization of NP = coNP, the [resolution size–width tradeoff](Complexity/Logics/Propositional/Resolution/SizeWidth.lean), [tree-like resolution/DPLL search-tree certificates](Complexity/Logics/Propositional/Resolution/TreeLike.lean), [Tseitin formulas on expanders](Complexity/Logics/Propositional/Resolution/TseitinExpander.lean) and [Haken's pigeonhole lower bound](Complexity/Logics/Propositional/Resolution/Pigeonhole.lean). Extend proof-space lower bounds, Frege, cutting planes, polynomial calculus and sum-of-squares. The certificate correspondence does not certify a DPLL solver's runtime. |
 | Average-case complexity and learning | Uniform-distribution learning on CSLib's PAC API, the LMN low-degree algorithm and Kushilevitz–Mansour with membership queries are [proved](Complexity/MachineLearning/UniformLearning/KushilevitzMansour.lean); running times are not machine-certified. Distributional problems and reductions, samplability, average-to-worst-case connections, PAC/agnostic/SQ learning, learning lower bounds, compression and refutation. Existing cryptographic learners are starting points, not coverage of learning theory. |
@@ -1186,24 +1186,30 @@ Jukna coverage below is an additional target beyond the V1 port:
   [Carter–Wegman polynomial](Complexity/Probability/HashFamily/Polynomial.lean) and
   [multiply-shift](Complexity/Probability/HashFamily/MultiplyShift.lean) families are proved.
   [Feistel networks and the Luby–Rackoff theorem](Complexity/Crypto/Protocols/Cipher/LubyRackoff.lean)
-  (#748, Boneh–Shoup Section 4.4 / Luby–Rackoff 1988) prove the `Q.choose 2 * ε + Q.choose 2 / |G|`
+  (#748, #834, Boneh–Shoup Section 4.4 / Luby–Rackoff 1988), backed by the shared
+  [lazy bidirectional random-permutation sampler](Complexity/Languages/Probabilistic/RandomPermutation.lean)
+  (#834), prove the `Q.choose 2 * ε + Q.choose 2 / |G|`
   3-round adaptive CPA bound with Δ-universal Round 1
   (`advantage_feistel3HashIdealGame_randomFunctionGame_le`), the `2 * Q.choose 2 / |G|`
   uniform-random-round corollary (`advantage_feistel3RandomRoundsGame_randomFunctionGame_le`), the
   3-round and 4-round PRF-to-Feistel hybrid bounds
   (`advantage_feistel3KeyedGame_randomFunctionGame_le`,
-  `advantage_feistel4StrongKeyedGame_feistel4StrongRandomRoundsGame_le`), and the 3-query
+  `advantage_feistel4StrongKeyedGame_feistel4StrongRandomRoundsGame_le`), the PRP-PRF switching
+  bound `Q.choose 2 / |G|²` and 3-round PRP bounds against a uniform random permutation
+  (`advantage_idealPermGame_randomFunctionGame_le`,
+  `advantage_feistel3RandomRoundsGame_idealPermGame_le`,
+  `advantage_feistel3KeyedGame_idealPermGame_le`), and the 3-query
   chosen-ciphertext attack against 3-round Feistel (`eval_feistel3_feistel3CCAAttack`, with the
   equal-input sanity check `advantage_feistel3CCAAttack_self`, the finite positive gap
   `(|Equiv.Perm (G × G)|)⁻¹ ≤ advantage` against the true bidirectional random-permutation game
-  `idealStrongGame` for `|G| ≥ 3` in `le_advantage_feistel3CCAAttack_idealStrongGame`, and the
-  separate exact `1 - |G|⁻¹` bound against the independent-table benchmark
-  `independentTableStrongGame` in `advantage_feistel3CCAAttack_independentTable`). Open in #748: a
-  quantitative nonnegligible CCA advantage lower bound against `idealStrongGame` as the block size
-  grows, and the 4-round information-theoretic bidirectional random-round collision bound.
+  `idealStrongGame` for `|G| ≥ 3` in `le_advantage_feistel3CCAAttack_idealStrongGame`, the
+  quantitative nonnegligible lower bound `1 - |G|⁻¹ - 4 / |G|² ≤ advantage` against
+  `idealStrongGame` for any `l₀ ≠ l₁` in `le_advantage_feistel3CCAAttack_idealStrongGame_of_ne`,
+  and the separate exact `1 - |G|⁻¹` bound against the independent-table benchmark
+  `independentTableStrongGame` in `advantage_feistel3CCAAttack_independentTable`). Open in #748:
+  the 4-round information-theoretic bidirectional random-round collision bound.
   Open: the leftover hash lemma stated over `ε`-universal families, with `IsTwoUniversal` as its
-  `1 / |Y|` case and the pseudoentropy clients updated, and Carter–Wegman MACs from Δ-universal
-  hashing.
+  `1 / |Y|` case and the pseudoentropy clients updated.
 * **Sigma protocols, Schnorr identification and Fiat–Shamir (#581).** Boneh–Shoup Chapter 19.
   The exact algebraic core is proved:
   [Sigma protocols](Complexity/Crypto/Protocols/SigmaProtocol/Basic.lean) with explicit
@@ -1270,14 +1276,21 @@ Jukna coverage below is an additional target beyond the V1 port:
 
   The design is on #643, and the TQBF, PCP and GMW bridges are recorded there.
 * **Classic symmetric constructions (#640, track D).** Proved: PRF-based MACs (#677), keyed
-  collision-resistant hash families and Merkle–Damgård (#678), universal hashing (#663), and the
-  Even–Mansour cipher in the ideal-permutation model (algebraic permutations, one-query secrecy,
-  one-sided query security, 2-query breaks when omitting either whitening key, and the Boneh–Shoup
-  Theorem 4.10 bad-key transcript intersection bound `2 * Q_e * Q_π / |G|`, #761).
-  Open: lazy-sampled bidirectional random-permutation coupling connecting the Even–Mansour bad-key
-  intersection bound to full two-sided `Game.advantage`, Luby–Rackoff (three Feistel rounds over a
-  PRF give a PRP, four give a strong PRP), strongly unforgeable MACs and Carter–Wegman MACs from
-  Δ-universal hashing, and the Naor–Reingold PRF from the decisional Diffie–Hellman assumption.
+  collision-resistant hash families and Merkle–Damgård (#678), universal hashing (#663),
+  [Carter–Wegman MACs from Δ-universal hashing](Complexity/Crypto/Protocols/MAC/CarterWegman.lean)
+  (#736, including one-time, adaptive multi-query issued-counter, arbitrary-pad hybrid, and exact
+  single-query fixed-nonce `prfRealGame`/`prfIdealGame` reduction bounds), and the Even–Mansour
+  cipher in the ideal-permutation model (algebraic permutations, one-query secrecy, one-sided query
+  security, 2-query breaks when omitting either whitening key, the Boneh–Shoup Theorem 4.10
+  bad-key transcript intersection bound `2 * Q_e * Q_π / |G|`, and exact equivalence of the
+  two-sided ideal game with two independent lazy bidirectional random-permutation samplers in
+  `evenMansourIdealGame_eq_lazy`, #761, #834).
+  Open: `IsOraclePPT` admissibility, uniform word-level forger/hash families, the asymptotic
+  `PseudorandomFunction` corollary, and fresh-nonce multi-query Carter–Wegman MAC security;
+  coupling the Even–Mansour real game with the lazy ideal game via the bad-key transcript
+  intersection bound to bound full two-sided `Game.advantage`; the 4-round strong Feistel
+  information-theoretic collision bound (#748); and the Naor–Reingold PRF from the decisional
+  Diffie–Hellman assumption.
 
 * **Lattice Sigma protocols and post-quantum signatures (#640, track B).** Proved (#645): the
   [SIS hypothesis](Complexity/Crypto/Computational/SIS/Basic.lean) for power-of-two moduli, exact

@@ -97,6 +97,15 @@ theorem isPPT_wordInverter {f : List Bool → List Bool}
       (fun p : (ℕ × List Bool) × List Bool => evaluate p.1 p.2)
       (encPair (encPair encUnary encBits) encBits) encBool)
     (c d degree : ℕ) : IsPPT encBits (wordInverter f evaluate c d degree) := by
+  have hdecode : ComputableInPolyTime
+      (fun p : (((ℕ × List Bool) × Bool) × List Bool) × List Bool =>
+        wordDecode f
+          (fun query => evaluate (p.1.1.1.1, p.1.1.1.2 ++ query) p.1.2 ^^ p.1.1.2)
+          degree p.1.1.1.1 p.1.1.1.2 p.2)
+      (encPair (encPair (encPair (encPair encUnary encBits) encBool) encBits) encBits)
+      encBits := by
+    apply ComputableInPolyTime.of_tidy
+    fun_prop
   unfold wordInverter coinBudget
   ppt
 
