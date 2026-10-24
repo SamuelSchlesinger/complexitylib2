@@ -164,7 +164,8 @@ theorem foldl {γ α β : Type u} {encIn : γ ↪ List Bool}
   · exact Nat.le_add_left _ _
 
 /-- The first projection of an encoding of pairs, from its linear-time machine. -/
-private theorem fstGeneric {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
+theorem _root_.Turing.MultiTapeTM.PairEncoding.computableInPolyTime_fst
+    {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
     {enc : β₁ × β₂ ↪ List Bool} [h : PairEncoding enc₁ enc₂ enc] :
     ComputableInPolyTime (fun p : β₁ × β₂ => p.1) enc enc₁ :=
   let ⟨c, _, _, _, _, htm⟩ := h.fst
@@ -172,7 +173,8 @@ private theorem fstGeneric {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool}
     (fun _ => le_rfl)
 
 /-- The second projection of an encoding of pairs, from its linear-time machine. -/
-private theorem sndGeneric {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
+theorem _root_.Turing.MultiTapeTM.PairEncoding.computableInPolyTime_snd
+    {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
     {enc : β₁ × β₂ ↪ List Bool} [h : PairEncoding enc₁ enc₂ enc] :
     ComputableInPolyTime (fun p : β₁ × β₂ => p.2) enc enc₂ :=
   let ⟨c, _, _, _, _, htm⟩ := h.snd
@@ -184,13 +186,13 @@ private theorem sndGeneric {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool}
 @[fun_prop]
 theorem fst {α β : Type u} (encA : α ↪ List Bool) (encB : β ↪ List Bool) :
     ComputableInPolyTime (fun p : α × β => p.1) (encPair encA encB) encA :=
-  fstGeneric (enc₁ := encA) (enc₂ := encB) (enc := encPair encA encB)
+  PairEncoding.computableInPolyTime_fst (enc₁ := encA) (enc₂ := encB) (enc := encPair encA encB)
 
 /-- Project the second entry of an ordinary framed pair. -/
 @[fun_prop]
 theorem snd {α β : Type u} (encA : α ↪ List Bool) (encB : β ↪ List Bool) :
     ComputableInPolyTime (fun p : α × β => p.2) (encPair encA encB) encB :=
-  sndGeneric (enc₁ := encA) (enc₂ := encB) (enc := encPair encA encB)
+  PairEncoding.computableInPolyTime_snd (enc₁ := encA) (enc₂ := encB) (enc := encPair encA encB)
 
 /-- Reuse the same realizing machine for an equal encoded output. -/
 theorem of_enc_eq {δ : Type*} {encD : δ ↪ List Bool} {f : α → β} {g : α → δ}
@@ -206,6 +208,7 @@ theorem polyBounded_length {f : α → β} (hf : ComputableInPolyTime f encIn en
   exact PolyBounded.of_forall_le c d fun a => (h a).length_output_le
 
 /-- Pair two computed outputs using the standard pair encoding. -/
+@[fun_prop]
 theorem prod {α β γ : Type u} {encIn : α ↪ List Bool} {encB : β ↪ List Bool}
     {encC : γ ↪ List Bool} {f : α → β} {g : α → γ}
     (hf : ComputableInPolyTime f encIn encB) (hg : ComputableInPolyTime g encIn encC) :

@@ -7,6 +7,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Unary
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Fold
 import Mathlib.Tactic.FinCases
 
@@ -31,12 +32,6 @@ namespace Turing.MultiTapeTM
 
 /-! ### Unary numbers -/
 
-/-- Natural numbers in unary: `n` is encoded by `n` ones. -/
-@[expose] public def encUnary : ℕ ↪ List Bool :=
-  ⟨fun n => List.replicate n true, fun m n h => by simpa using congrArg List.length h⟩
-
-@[simp]
-public lemma encUnary_apply (n : ℕ) : encUnary n = List.replicate n true := rfl
 
 namespace ComputableTidilyInDegree
 
