@@ -117,12 +117,12 @@ import ComplexityTests.Crypto.HomomorphicLeveled
 import ComplexityTests.Crypto.HomomorphicRefresh
 import ComplexityTests.Crypto.KeyChainSecurity
 import ComplexityTests.Crypto.LeveledSecurity
+import ComplexityTests.Crypto.Lyubashevsky
 import ComplexityTests.Crypto.MAC
 import ComplexityTests.Crypto.MerkleDamgard
 import ComplexityTests.Crypto.PlainConstructors
 import ComplexityTests.Crypto.SchnorrDiscreteLog
 import ComplexityTests.Crypto.SigmaIdentification
-import ComplexityTests.Crypto.Lyubashevsky
 import ComplexityTests.Crypto.SigmaProtocol
 import ComplexityTests.Crypto.Signature
 import ComplexityTests.Crypto.UntilBad
