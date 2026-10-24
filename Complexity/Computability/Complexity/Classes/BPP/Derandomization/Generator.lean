@@ -183,14 +183,14 @@ open Turing.MultiTapeTM.ComputableTidilyInPolyTime
 variable {γ : Type} {encIn : γ ↪ List Bool}
 
 /-- Counting the common ones of two masks is polynomial-time. -/
-theorem computableTidilyInPolyTime_overlapCount :
+private theorem computableTidilyInPolyTime_overlapCount :
     ComputableTidilyInPolyTime (fun p : List Bool × List Bool => overlapCount p.1 p.2)
       (encPair encBits encBits) encUnary := by
   unfold overlapCount
   fun_prop
 
 /-- Reading the bits of a word at the ones of a mask is polynomial-time. -/
-theorem computableTidilyInPolyTime_restrictMask :
+private theorem computableTidilyInPolyTime_restrictMask :
     ComputableTidilyInPolyTime (fun p : List Bool × List Bool => restrictMask p.1 p.2)
       (encPair encBits encBits) encBits := by
   unfold restrictMask

@@ -88,7 +88,7 @@ def Candidate.verdict (candidate : Candidate) (n : ℕ) : WordQueryComp Unit Boo
     (fun op word => OracleComp.query (op, word)) (candidate.clock n) (List.replicate n true)
 
 /-- A candidate makes at most one request per instruction. -/
-theorem Candidate.length_queriesWith_verdict_le (candidate : Candidate) (n : ℕ)
+private theorem Candidate.length_queriesWith_verdict_le (candidate : Candidate) (n : ℕ)
     (A : Set (List Bool)) :
     (OracleComp.queriesWith (languageOracle A) (candidate.verdict n)).length ≤
       candidate.clock n := by
@@ -97,7 +97,7 @@ theorem Candidate.length_queriesWith_verdict_le (candidate : Candidate) (n : ℕ
     (fun choices => choices false) _ _ _
 
 /-- Every clock is eventually below `2 ^ n`. -/
-theorem Candidate.eventually_clock_lt (candidate : Candidate) :
+private theorem Candidate.eventually_clock_lt (candidate : Candidate) :
     ∀ᶠ n in Filter.atTop, candidate.clock n < 2 ^ n :=
   PolynomiallyBounded.eventually_lt_two_pow (f := candidate.clock)
     (by unfold Candidate.clock; fun_prop)
@@ -131,14 +131,14 @@ theorem exists_unaryLengthLanguage_notMem_PWithOracle :
 namespace BakerGillSolovay
 
 /-- Tracks whether every symbol read so far is `true`, and emits the verdict at the end. -/
-def allTrue : Transducer Bool Bool where
+private def allTrue : Transducer Bool Bool where
   q₀ := true
   step q b := (q && b, [])
   final q := [q]
   length_step_le _ _ := by simp
   length_final_le _ := by simp
 
-theorem allTrue_run (q : Bool) (x : List Bool) : allTrue.run q x = [q && x.all id] := by
+private theorem allTrue_run (q : Bool) (x : List Bool) : allTrue.run q x = [q && x.all id] := by
   induction x generalizing q with
   | nil => simp [allTrue]
   | cons b x ih =>
@@ -147,7 +147,7 @@ theorem allTrue_run (q : Bool) (x : List Bool) : allTrue.run q x = [q && x.all i
 
 /-- Whether the first word consists of `true` symbols only, beside a Boolean, in polynomial
 time. -/
-theorem computableTidilyInPolyTime_all_and :
+private theorem computableTidilyInPolyTime_all_and :
     ComputableTidilyInPolyTime
       (fun pair : (List Bool × List Bool) × Bool => pair.1.1.all id && pair.2)
       (encPair (encPair encBits encBits) encBool) encBool := by

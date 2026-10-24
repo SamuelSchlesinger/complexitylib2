@@ -268,7 +268,7 @@ private theorem inv_check {q : State} (hb : Bounds I q) (hc : q.ctl = .check) (h
         hb.lower, hb.frames⟩, hp⟩
 
 /-- **The invariant is kept by a step.** -/
-theorem inv_step {q : State} (h : Inv I q) (hd : q.ctl ≠ .done) :
+private theorem inv_step {q : State} (h : Inv I q) (hd : q.ctl ≠ .done) :
     Inv I (step q (machine.readBit I.encode q)).1 := by
   obtain ⟨hb, hp⟩ := h
   rcases hc : q.ctl with _ | _ | _ | _ | _ | _ | _ | _ | _ | _ <;>
@@ -285,7 +285,7 @@ theorem inv_step {q : State} (h : Inv I q) (hd : q.ctl ≠ .done) :
   · exact absurd hc hd
 
 /-- The initial state satisfies the invariant. -/
-theorem inv_init : Inv I init := by
+private theorem inv_init : Inv I init := by
   have hn := I.n_pos
   exact ⟨⟨Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, Nat.zero_le _,
     Nat.zero_le _, Nat.zero_le _, Nat.zero_le _, hn, hn, Nat.zero_le _, Nat.zero_le _⟩, rfl⟩
@@ -348,7 +348,7 @@ def stateConst : ℕ :=
 
 /-- **The states satisfying the bounds have `O(log n)` bits**: at most a constant times the number
 of binary digits of `n`, plus one. -/
-theorem length_encState_le_of_bounds {q : State} (hb : Bounds I q) :
+private theorem length_encState_le_of_bounds {q : State} (hb : Bounds I q) :
     (encState q).length ≤ stateConst * (Nat.size I.n + 1) := by
   set a := Nat.size I.n
   have hD : depthOf I = 16 * a + 524 := rfl

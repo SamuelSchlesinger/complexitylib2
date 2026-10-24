@@ -231,24 +231,24 @@ def visOf (z : List Bool) : List ℕ :=
   (List.range (z.length + 1)).map topNode ++ (List.range z.length).map bottomNode ++
     (List.range z.length).map fun j => valueNode j (z.getD j false)
 
-theorem topNode_mem_visOf : topNode j ∈ visOf z ↔ j ≤ z.length := by
+private theorem topNode_mem_visOf : topNode j ∈ visOf z ↔ j ≤ z.length := by
   simp only [visOf, List.mem_append, List.mem_map, List.mem_range]
   simp [topNode, bottomNode, valueNode, Nat.pair_eq_pair]
 
-theorem bottomNode_mem_visOf : bottomNode j ∈ visOf z ↔ j < z.length := by
+private theorem bottomNode_mem_visOf : bottomNode j ∈ visOf z ↔ j < z.length := by
   simp only [visOf, List.mem_append, List.mem_map, List.mem_range]
   simp [topNode, bottomNode, valueNode, Nat.pair_eq_pair]
 
-theorem chooserNode_notMem_visOf : chooserNode ∉ visOf z := by
+private theorem chooserNode_notMem_visOf : chooserNode ∉ visOf z := by
   simp only [visOf, List.mem_append, List.mem_map, List.mem_range]
   simp [topNode, bottomNode, valueNode, chooserNode, Nat.pair_eq_pair]
 
-theorem clauseNode_notMem_visOf {i : ℕ} : clauseNode i ∉ visOf z := by
+private theorem clauseNode_notMem_visOf {i : ℕ} : clauseNode i ∉ visOf z := by
   simp only [visOf, List.mem_append, List.mem_map, List.mem_range]
   simp [topNode, bottomNode, valueNode, clauseNode, Nat.pair_eq_pair]
 
 /-- Every vertex of `visOf z` is a top, a bottom or a value node. -/
-theorem mem_visOf {u : ℕ} : u ∈ visOf z ↔
+private theorem mem_visOf {u : ℕ} : u ∈ visOf z ↔
     (∃ j ≤ z.length, u = topNode j) ∨ (∃ j < z.length, u = bottomNode j) ∨
       ∃ j < z.length, u = valueNode j (z.getD j false) := by
   simp only [visOf, List.mem_append, List.mem_map, List.mem_range, Nat.lt_succ_iff, or_assoc]
@@ -260,7 +260,7 @@ theorem valueNode_inj {i : ℕ} {b c : Bool} : valueNode j b = valueNode i c ↔
   simp only [valueNode, Nat.pair_eq_pair, true_and]
   cases b <;> cases c <;> simp
 
-theorem valueNode_mem_visOf {b : Bool} :
+private theorem valueNode_mem_visOf {b : Bool} :
     valueNode j b ∈ visOf z ↔ j < z.length ∧ b = z.getD j false := by
   rw [mem_visOf]
   constructor
@@ -273,7 +273,7 @@ theorem valueNode_mem_visOf {b : Bool} :
     exact Or.inr (Or.inr ⟨j, hj, rfl⟩)
 
 /-- Crossing a diamond visits its value node, its bottom and the next top. -/
-theorem mem_visOf_append {b : Bool} {u : ℕ} :
+private theorem mem_visOf_append {b : Bool} {u : ℕ} :
     u ∈ visOf (z ++ [b]) ↔
       u ∈ topNode (z.length + 1) :: bottomNode z.length :: valueNode z.length b :: visOf z := by
   have hget (j : ℕ) (hj : j < z.length + 1) :
@@ -320,13 +320,13 @@ theorem geographyWins_formulaGraph_iff {vis : List ℕ} {v : ℕ} :
   refine exists_congr fun w => ⟨fun ⟨h, _, h'⟩ => ⟨h, h'⟩, fun ⟨h, h'⟩ => ⟨h, ?_, h'⟩⟩
   exact List.mem_cons_of_mem _ (List.mem_map_of_mem (f := Prod.snd) h)
 
-theorem lastIdx_lt {x : ℕ} (hx : x ∈ xs) : lastIdx xs x < xs.length := by
+private theorem lastIdx_lt {x : ℕ} (hx : x ∈ xs) : lastIdx xs x < xs.length := by
   have := List.length_pos_of_mem hx
   unfold lastIdx
   omega
 
 /-- From a value node whose bottom is visited, the player to move loses. -/
-theorem not_geographyWins_valueNode {vis : List ℕ} {j : ℕ} {c : Bool} (hj : j < xs.length)
+private theorem not_geographyWins_valueNode {vis : List ℕ} {j : ℕ} {c : Bool} (hj : j < xs.length)
     (hvis : bottomNode j ∈ vis) : ¬(formulaGraph xs ψ).GeographyWins vis (valueNode j c) := by
   rw [geographyWins_formulaGraph_iff]
   rintro ⟨w, hw, hwvis, -⟩
@@ -335,7 +335,7 @@ theorem not_geographyWins_valueNode {vis : List ℕ} {j : ℕ} {c : Bool} (hj : 
 
 /-- From the node of a clause, with every bottom visited, the first player wins exactly when the
 value node of the negation of some literal of the clause is unvisited. -/
-theorem geographyWins_clauseNode {vis : List ℕ} {i : ℕ} (hi : i < ψ.length)
+private theorem geographyWins_clauseNode {vis : List ℕ} {i : ℕ} (hi : i < ψ.length)
     (hvis : ∀ j < xs.length, bottomNode j ∈ vis) :
     (formulaGraph xs ψ).GeographyWins vis (clauseNode i) ↔
       ∃ l ∈ ψ[i], l.1 ∈ xs ∧ valueNode (lastIdx xs l.1) (!l.2) ∉ vis := by
@@ -432,7 +432,8 @@ theorem geographyWins_topNode_lt {z : List Bool} (hj : z.length < xs.length) :
 /-- **The game on the graph of a formula**, from the top of diamond `j` after the values `z` have
 been chosen: the player to move, the first player when `j` is even, wins exactly when the
 quantifiers over the remaining `k` variables, starting with `∃` when `j` is even, hold. -/
-theorem geographyWins_topNode (heven : Even xs.length) (hvars : ∀ c ∈ ψ, ∀ l ∈ c, l.1 ∈ xs) :
+private theorem geographyWins_topNode (heven : Even xs.length)
+    (hvars : ∀ c ∈ ψ, ∀ l ∈ c, l.1 ∈ xs) :
     ∀ (k : ℕ) (z : List Bool), z.length + k = xs.length →
       ((formulaGraph xs ψ).GeographyWins (visOf z) (topNode z.length) ↔
         ((z.length % 2 == 0) = true ↔ Alternation (z.length % 2 == 0) (List.replicate k 1)

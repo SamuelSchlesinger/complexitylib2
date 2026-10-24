@@ -158,12 +158,12 @@ def callSteps : QBF ℕ → ℕ
 /-! ### The assignment of a stack -/
 
 /-- A frame that is not a quantifier does not change the values of the stack. -/
-theorem lookup_cons_of_binds_eq_false {f : Frame} (h : ∀ v, f.binds v = false)
+private theorem lookup_cons_of_binds_eq_false {f : Frame} (h : ∀ v, f.binds v = false)
     (stack : List Frame) (v : ℕ) : lookup (f :: stack) v = lookup stack v := by
   simp [lookup, h v]
 
 /-- A quantifier frame over `x` gives `x` its value. -/
-theorem lookup_cons_quant {f : Frame} {k : QBF.Kind} {x : ℕ} (hk : k = .ex ∨ k = .all)
+private theorem lookup_cons_quant {f : Frame} {k : QBF.Kind} {x : ℕ} (hk : k = .ex ∨ k = .all)
     (hf : f.token = (k, x)) (stack : List Frame) (v : ℕ) :
     lookup (f :: stack) v = if v = x then some f.first.isSome else lookup stack v := by
   have hb : f.binds v = true ↔ v = x := by
@@ -177,14 +177,14 @@ theorem lookup_cons_quant {f : Frame} {k : QBF.Kind} {x : ℕ} (hk : k = .ex ∨
     simp [hv, lookup]
 
 /-- A frame that is not a quantifier does not change the assignment. -/
-theorem assignment_cons_of_binds_eq_false {f : Frame} (h : ∀ v, f.binds v = false)
+private theorem assignment_cons_of_binds_eq_false {f : Frame} (h : ∀ v, f.binds v = false)
     (stack : List Frame) : assignment (f :: stack) = assignment stack := by
   funext v
   simp only [assignment, lookup_cons_of_binds_eq_false h]
 
 /-- A quantifier frame over `x` sets `x` to `false` during its first pass and to `true` during its
 second. -/
-theorem assignment_cons_quant {f : Frame} {k : QBF.Kind} {x : ℕ} (hk : k = .ex ∨ k = .all)
+private theorem assignment_cons_quant {f : Frame} {k : QBF.Kind} {x : ℕ} (hk : k = .ex ∨ k = .all)
     (hf : f.token = (k, x)) (stack : List Frame) :
     assignment (f :: stack) = Function.update (assignment stack) x f.first.isSome := by
   funext v
@@ -192,13 +192,13 @@ theorem assignment_cons_quant {f : Frame} {k : QBF.Kind} {x : ℕ} (hk : k = .ex
   split_ifs <;> rfl
 
 /-- A frame that is not a quantifier does not change closedness. -/
-theorem closedIn_cons_of_binds_eq_false {f : Frame} (h : ∀ v, f.binds v = false)
+private theorem closedIn_cons_of_binds_eq_false {f : Frame} (h : ∀ v, f.binds v = false)
     (stack : List Frame) (φ : QBF ℕ) : closedIn (f :: stack) φ = closedIn stack φ := by
   simp only [closedIn, lookup_cons_of_binds_eq_false h]
 
 /-- Under a quantifier frame over `x`, a formula is closed exactly when quantifying it over `x`
 gives a formula closed relative to the rest of the stack. -/
-theorem closedIn_cons_quant {f : Frame} {k : QBF.Kind} {x : ℕ} (hk : k = .ex ∨ k = .all)
+private theorem closedIn_cons_quant {f : Frame} {k : QBF.Kind} {x : ℕ} (hk : k = .ex ∨ k = .all)
     (hf : f.token = (k, x)) (stack : List Frame) (φ : QBF ℕ) :
     closedIn (f :: stack) φ = closedIn stack (.ex x φ) := by
   simp only [closedIn, lookup_cons_quant hk hf, QBF.freeVars_ex]
@@ -210,7 +210,7 @@ theorem closedIn_cons_quant {f : Frame} {k : QBF.Kind} {x : ℕ} (hk : k = .ex �
     · simpa [hvx] using h v (Finset.mem_erase.mpr ⟨hvx, hv⟩)
 
 /-- Closedness of a variable. -/
-theorem closedIn_var (stack : List Frame) (v : ℕ) :
+private theorem closedIn_var (stack : List Frame) (v : ℕ) :
     closedIn stack (.var v) = (lookup stack v).isSome := by
   simp [closedIn]
 
@@ -219,24 +219,24 @@ theorem closedIn_not (stack : List Frame) (φ : QBF ℕ) :
     closedIn stack φ.not = closedIn stack φ := rfl
 
 /-- Closedness of a conjunction. -/
-theorem closedIn_and (stack : List Frame) (φ ψ : QBF ℕ) :
+private theorem closedIn_and (stack : List Frame) (φ ψ : QBF ℕ) :
     closedIn stack (φ.and ψ) = (closedIn stack φ && closedIn stack ψ) := by
   simp only [closedIn, QBF.freeVars_and, Finset.mem_union, or_imp, forall_and, Bool.decide_and]
 
 /-- Closedness of a disjunction. -/
-theorem closedIn_or (stack : List Frame) (φ ψ : QBF ℕ) :
+private theorem closedIn_or (stack : List Frame) (φ ψ : QBF ℕ) :
     closedIn stack (φ.or ψ) = (closedIn stack φ && closedIn stack ψ) := by
   simp only [closedIn, QBF.freeVars_or, Finset.mem_union, or_imp, forall_and, Bool.decide_and]
 
 /-- A universal quantifier and an existential one have the same free variables. -/
-theorem closedIn_all (stack : List Frame) (x : ℕ) (φ : QBF ℕ) :
+private theorem closedIn_all (stack : List Frame) (x : ℕ) (φ : QBF ℕ) :
     closedIn stack (.all x φ) = closedIn stack (.ex x φ) := rfl
 
 /-- The empty stack gives every variable the value `false`. -/
-theorem assignment_nil : assignment [] = fun _ => false := rfl
+private theorem assignment_nil : assignment [] = fun _ => false := rfl
 
 /-- Relative to the empty stack, closedness is closedness. -/
-theorem closedIn_nil (φ : QBF ℕ) : closedIn [] φ = decide φ.Closed := by
+private theorem closedIn_nil (φ : QBF ℕ) : closedIn [] φ = decide φ.Closed := by
   simp only [closedIn, lookup, List.find?_nil, Option.map_none, Option.isSome_none,
     Bool.false_eq_true, imp_false, QBF.Closed]
   exact Bool.decide_congr ⟨fun h => Finset.eq_empty_of_forall_notMem h,
@@ -315,12 +315,12 @@ theorem exists_iterate_step_call (φ : QBF ℕ) (input : List (QBF.Kind × ℕ))
     simp [step, closedIn_all]
 
 /-- An empty stack holding a value is a fixed point. -/
-theorem iterate_step_done (input : List (QBF.Kind × ℕ)) (b ok : Bool) (n : ℕ) :
+private theorem iterate_step_done (input : List (QBF.Kind × ℕ)) (b ok : Bool) (n : ℕ) :
     step^[n] ⟨input, [], some b, ok⟩ = ⟨input, [], some b, ok⟩ :=
   Function.iterate_fixed rfl n
 
 /-- The number of steps of a call is less than `4` to the number of tokens. -/
-theorem callSteps_lt (φ : QBF ℕ) : callSteps φ < 4 ^ φ.tokens.length := by
+private theorem callSteps_lt (φ : QBF ℕ) : callSteps φ < 4 ^ φ.tokens.length := by
   induction φ with
   | var v => simp [callSteps, QBF.tokens]
   | top => simp [callSteps, QBF.tokens]
@@ -397,7 +397,7 @@ theorem Nested.mono {n : ℕ} : ∀ {r r' : ℕ} {stack : List Frame}, Nested n 
   | _, _, _ :: _, h, hr => ⟨le_trans hr h.1, h.2⟩
 
 /-- A nested stack holds at most `n - r` frames. -/
-theorem Nested.length_le {n : ℕ} : ∀ {r : ℕ} {stack : List Frame}, Nested n r stack →
+private theorem Nested.length_le {n : ℕ} : ∀ {r : ℕ} {stack : List Frame}, Nested n r stack →
     r + stack.length ≤ n
   | _, [], h => h
   | _, _ :: _, h => by
@@ -418,11 +418,11 @@ structure Good (φ : QBF ℕ) (s : State) : Prop where
   nested : Nested φ.tokens.length s.input.length s.stack
 
 /-- The initial state satisfies the invariant. -/
-theorem good_init (φ : QBF ℕ) : Good φ (init φ) :=
+private theorem good_init (φ : QBF ℕ) : Good φ (init φ) :=
   ⟨List.suffix_refl _, fun _ hf => by simp [init] at hf, le_refl _⟩
 
 /-- The step preserves the invariant. -/
-theorem Good.step {φ : QBF ℕ} {s : State} (h : Good φ s) : Good φ (step s) := by
+private theorem Good.step {φ : QBF ℕ} {s : State} (h : Good φ s) : Good φ (step s) := by
   obtain ⟨input, stack, value, ok⟩ := s
   obtain ⟨hin, hframes, hnest⟩ := h
   dsimp only at hin hframes hnest

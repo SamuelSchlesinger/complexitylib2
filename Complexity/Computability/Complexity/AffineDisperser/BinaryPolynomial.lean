@@ -71,7 +71,7 @@ theorem polyOfBits_nil : polyOfBits [] = 0 := rfl
 theorem polyOfBits_cons (b : Bool) (l : List Bool) :
     polyOfBits (b :: l) = C (bitEquiv.symm b) + X * polyOfBits l := rfl
 
-theorem polyOfBits_append (l l' : List Bool) :
+private theorem polyOfBits_append (l l' : List Bool) :
     polyOfBits (l ++ l') = polyOfBits l + X ^ l.length * polyOfBits l' := by
   induction l with
   | nil => simp
@@ -86,11 +86,11 @@ theorem polyOfBits_replicate_false (k : ℕ) : polyOfBits (List.replicate k fals
   | succ k ih => simp [List.replicate_succ, ih, bitEquiv_symm_false]
 
 /-- The coefficient list of the monomial `X ^ k`. -/
-theorem polyOfBits_replicate_append_true (k : ℕ) :
+private theorem polyOfBits_replicate_append_true (k : ℕ) :
     polyOfBits (List.replicate k false ++ [true]) = X ^ k := by
   simp [polyOfBits_append, bitEquiv_symm_true]
 
-theorem polyOfBits_zipWith_xor {l l' : List Bool} (h : l.length = l'.length) :
+private theorem polyOfBits_zipWith_xor {l l' : List Bool} (h : l.length = l'.length) :
     polyOfBits (l.zipWith xor l') = polyOfBits l + polyOfBits l' := by
   induction l generalizing l' with
   | nil => cases l' <;> simp_all
@@ -121,7 +121,7 @@ theorem polyOfBits_eq_zero_iff {l : List Bool} : polyOfBits l = 0 ↔ ∀ b ∈ 
       rw [h, bitEquiv_symm_false]
       simp
 
-theorem degree_polyOfBits_lt (l : List Bool) : (polyOfBits l).degree < l.length := by
+private theorem degree_polyOfBits_lt (l : List Bool) : (polyOfBits l).degree < l.length := by
   induction l with
   | nil => simp
   | cons b l ih =>
@@ -138,7 +138,7 @@ theorem degree_polyOfBits_lt (l : List Bool) : (polyOfBits l).degree < l.length 
         omega
 
 /-- Dropping a top coefficient that is zero does not change the polynomial. -/
-theorem polyOfBits_take_of_getD {l : List Bool} {m : ℕ} (hl : l.length = m + 1)
+private theorem polyOfBits_take_of_getD {l : List Bool} {m : ℕ} (hl : l.length = m + 1)
     (htop : l.getD m false = false) : polyOfBits (l.take m) = polyOfBits l := by
   conv_rhs => rw [← List.take_append_drop m l]
   have hdrop : l.drop m = [false] := by
@@ -148,7 +148,7 @@ theorem polyOfBits_take_of_getD {l : List Bool} {m : ℕ} (hl : l.length = m + 1
   rw [hdrop, polyOfBits_append]
   simp [bitEquiv_symm_false]
 
-theorem aeval_polyOfBits {A : Type*} [CommSemiring A] [Algebra (ZMod 2) A] (α : A)
+private theorem aeval_polyOfBits {A : Type*} [CommSemiring A] [Algebra (ZMod 2) A] (α : A)
     (l : List Bool) :
     aeval α (polyOfBits l) =
       ∑ d ∈ Finset.range l.length, bitEquiv.symm (l.getD d false) • α ^ d := by
@@ -204,12 +204,12 @@ def mulXMod (g r : List Bool) : List Bool :=
   (if (false :: r).getD (g.length - 1) false then (false :: r).zipWith xor g
     else false :: r).take (g.length - 1)
 
-theorem length_mulXMod (l r : List Bool) (h : r.length = l.length) :
+private theorem length_mulXMod (l r : List Bool) (h : r.length = l.length) :
     (mulXMod (l ++ [true]) r).length = l.length := by
   unfold mulXMod
   split_ifs <;> simp [h]
 
-theorem mk_polyOfBits_mulXMod (l r : List Bool) (h : r.length = l.length) :
+private theorem mk_polyOfBits_mulXMod (l r : List Bool) (h : r.length = l.length) :
     AdjoinRoot.mk (polyOfBits (l ++ [true])) (polyOfBits (mulXMod (l ++ [true]) r)) =
       AdjoinRoot.mk (polyOfBits (l ++ [true])) (X * polyOfBits r) := by
   have hlen : (l ++ [true]).length - 1 = l.length := by simp
@@ -276,7 +276,7 @@ private theorem modStep_foldl (l f p a : List Bool) (hp : p.length = l.length)
         simp only [map_add, map_mul, map_zero]
         ring
 
-theorem length_modBits (l f : List Bool) : (modBits (l ++ [true]) f).length = l.length := by
+private theorem length_modBits (l f : List Bool) : (modBits (l ++ [true]) f).length = l.length := by
   have hlen : (l ++ [true]).length - 1 = l.length := by simp
   unfold modBits
   rw [hlen]
@@ -303,7 +303,7 @@ theorem mk_polyOfBits_modBits (l f : List Bool) :
   simp
 
 
-theorem polyOfBits_append_true_ne_zero (l : List Bool) : polyOfBits (l ++ [true]) ≠ 0 := by
+private theorem polyOfBits_append_true_ne_zero (l : List Bool) : polyOfBits (l ++ [true]) ≠ 0 := by
   rw [Ne, polyOfBits_eq_zero_iff]
   intro h
   exact Bool.true_eq_false.mp (h true (by simp))
@@ -323,12 +323,12 @@ theorem modBits_all_false_iff (l f : List Bool) :
 private theorem monic_of_ne_zero {q : (ZMod 2)[X]} (hq : q ≠ 0) : q.Monic :=
   (by decide : ∀ c : ZMod 2, c ≠ 0 → c = 1) _ (leadingCoeff_ne_zero.2 hq)
 
-theorem natDegree_polyOfCode_eq_log (m : ℕ) : (polyOfCode m).natDegree = Nat.log 2 m := by
+private theorem natDegree_polyOfCode_eq_log (m : ℕ) : (polyOfCode m).natDegree = Nat.log 2 m := by
   rcases eq_or_ne m 0 with rfl | hm
   · simp
   · exact natDegree_polyOfCode hm
 
-theorem polyOfCode_one : polyOfCode 1 = 1 := by
+private theorem polyOfCode_one : polyOfCode 1 = 1 := by
   rw [← polyOfBits_bits, Nat.one_bits]
   simp [bitEquiv_symm_true]
 
@@ -436,7 +436,7 @@ polynomial with coefficient list `g`. -/
 def powerTable (g : List Bool) : List (List Bool) :=
   (List.range (2 * (g.length - 1))).map fun e => modBits g (List.replicate e false ++ [true])
 
-theorem length_powerTable (g : List Bool) : (powerTable g).length = 2 * (g.length - 1) := by
+private theorem length_powerTable (g : List Bool) : (powerTable g).length = 2 * (g.length - 1) := by
   simp [powerTable]
 
 /-- At a root `α` of the polynomial with coefficient list `l ++ [true]`, the power `α ^ e`,

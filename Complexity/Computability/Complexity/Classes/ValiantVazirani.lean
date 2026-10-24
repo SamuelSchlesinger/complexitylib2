@@ -153,7 +153,7 @@ private theorem interpret_queryAnyStep (s : List (List Bool) × Bool) :
 
 /-- **Asking every word is strict oracle PPT**: each step copies one word onto the query buffer
 and reads one reply bit, and the list shrinks. -/
-theorem isOraclePPTOn_queryAny :
+private theorem isOraclePPTOn_queryAny :
     IsOraclePPTOn (encList encBits) encBool
       (fun words => OracleComp.interpret ProbOracleComp.query (queryAny words)) := by
   simp only [queryAny, OracleComp.interpret_map, OracleComp.interpret_iterate]

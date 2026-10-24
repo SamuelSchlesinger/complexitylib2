@@ -82,7 +82,8 @@ open Finset BitString
 variable {n : ℕ}
 
 /-- Flipping the coordinates on which `y` differs from `x` turns `x` into `y`. -/
-theorem BitString.flipBlock_filter_ne (x y : BitString n) : flipBlock {i | y i ≠ x i} x = y := by
+private theorem BitString.flipBlock_filter_ne (x y : BitString n) : flipBlock
+    {i | y i ≠ x i} x = y := by
   funext i
   by_cases h : y i = x i
   · rw [flipBlock_apply_of_notMem (by simpa using h), h]
@@ -236,7 +237,8 @@ theorem certificateComplexityFor_le_sensitivityFor_mul_blockSensitivityFor
 /-! ### Restricting by the answers to a certificate -/
 
 /-- Restricting by answers on `S` does not raise `C_b(f)`. -/
-theorem certificateComplexityFor_comp_piecewise_le (f : BooleanFunction n) (S : Finset (Fin n))
+private theorem certificateComplexityFor_comp_piecewise_le (f : BooleanFunction n)
+    (S : Finset (Fin n))
     (a : BitString n) (b : Bool) :
     certificateComplexityFor (fun y => f (S.piecewise a y)) b ≤ certificateComplexityFor f b :=
   Finset.sup_le fun z hz => by
@@ -255,7 +257,7 @@ private theorem piecewise_flipBlock (S B : Finset (Fin n)) (a z : BitString n) :
 /-- After restricting by the answers `a` to a certificate `S` of an input `w` of value `1`, every
 input `z` of value `0` has one sensitive block fewer than the filled input in the original
 function: the coordinates of `S` on which the filled input differs from `w`. -/
-theorem blockSensitivityAt_comp_piecewise_add_one_le {w : BitString n} {S : Finset (Fin n)}
+private theorem blockSensitivityAt_comp_piecewise_add_one_le {w : BitString n} {S : Finset (Fin n)}
     (hS : IsCertificate f w S) (hw : f w = true) (a z : BitString n)
     (hz : f (S.piecewise a z) = false) :
     blockSensitivityAt (fun y => f (S.piecewise a y)) z + 1 ≤
@@ -307,7 +309,7 @@ theorem blockSensitivityAt_comp_piecewise_add_one_le {w : BitString n} {S : Fins
   rwa [card_insert_of_notMem hB₀F, card_image_of_injOn hinj, ← hFcard] at this
 
 /-- Restricting by the answers to a certificate of an input of value `1` lowers `bs₀(f)`. -/
-theorem blockSensitivityFor_comp_piecewise_false_le {w : BitString n} {S : Finset (Fin n)}
+private theorem blockSensitivityFor_comp_piecewise_false_le {w : BitString n} {S : Finset (Fin n)}
     (hS : IsCertificate f w S) (hw : f w = true) (a : BitString n) {m : ℕ}
     (hm : blockSensitivityFor f false ≤ m + 1) :
     blockSensitivityFor (fun y => f (S.piecewise a y)) false ≤ m :=

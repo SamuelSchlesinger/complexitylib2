@@ -149,7 +149,7 @@ def equationRhs : (Fin 2 × α) × (Fin 2 × α) ⊕ Fin 2 → Bool :=
 
 open Classical in
 /-- The equation of a pair of variables, read on the tensor square of `x`. -/
-theorem hadamardCode_tensor_equationCoeff_inl (C : α → α → Prop) (x : Fin 2 × α → Bool)
+private theorem hadamardCode_tensor_equationCoeff_inl (C : α → α → Prop) (x : Fin 2 × α → Bool)
     (p p' : Fin 2 × α) :
     hadamardCode (tensor x x) (equationCoeff C (.inl (p, p'))) =
       if Compatible C p p' then false else (x p && x p') := by
@@ -160,7 +160,7 @@ theorem hadamardCode_tensor_equationCoeff_inl (C : α → α → Prop) (x : Fin 
 
 /-- The equation of an end, read on the tensor square of `x`: the sum of the variables of the
 end. -/
-theorem hadamardCode_tensor_equationCoeff_inr (C : α → α → Prop) (x : Fin 2 × α → Bool)
+private theorem hadamardCode_tensor_equationCoeff_inr (C : α → α → Prop) (x : Fin 2 × α → Bool)
     (b : Fin 2) :
     hadamardCode (tensor x x) (equationCoeff C (.inr b)) = ∑ a, x (b, a) := by
   rw [equationCoeff, Sum.elim_inr, hadamardCode_apply, dotProduct_sum]
@@ -235,7 +235,7 @@ def endEmbed (b : Fin 2) (r : α → Bool) : Fin 2 × α → Bool :=
 omit [DecidableEq α] in
 /-- The Hadamard encoding of the variables `x`, read at `endEmbed b r`, is that of the variables of
 the end `b`, read at `r`. -/
-theorem hadamardCode_endEmbed (x : Fin 2 × α → Bool) (b : Fin 2) (r : α → Bool) :
+private theorem hadamardCode_endEmbed (x : Fin 2 × α → Bool) (b : Fin 2) (r : α → Bool) :
     hadamardCode x (endEmbed b r) = hadamardCode (fun a ↦ x (b, a)) r := by
   rw [hadamardCode_apply, hadamardCode_apply, dotProduct, dotProduct, Fintype.sum_prod_type,
     sum_eq_single b]
@@ -247,7 +247,7 @@ theorem hadamardCode_endEmbed (x : Fin 2 × α → Bool) (b : Fin 2) (r : α →
 
 /-- The Hadamard encoding of the one-hot encoding of the labels `σ`, read at `endEmbed b r`, is the
 long code of the label of the end `b`, read at `r`. -/
-theorem hadamardCode_oneHot_endEmbed (σ : Fin 2 → α) (b : Fin 2) (r : α → Bool) :
+private theorem hadamardCode_oneHot_endEmbed (σ : Fin 2 → α) (b : Fin 2) (r : α → Bool) :
     hadamardCode (oneHot σ) (endEmbed b r) = longCode (σ b) r := by
   rw [hadamardCode_endEmbed, longCode_eq_hadamardCode]
   congr 1
@@ -268,7 +268,7 @@ def blrTest : LocalTest (ι → Bool) ((ι → Bool) × (ι → Bool)) (Fin 3) B
   Accepts _ a := (a 0 ^^ a 1) = a 2
 
 /-- The linearity test accepts with the probability `blrAcceptance`. -/
-theorem acceptProb_blrTest [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool) :
+private theorem acceptProb_blrTest [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool) :
     (blrTest ι).acceptProb f = blrAcceptance f := by
   simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, blrTest,
     blrAcceptance, Matrix.cons_val]
@@ -287,7 +287,7 @@ def tensorTest : LocalTest ((ι → Bool) ⊕ (ι × ι → Bool))
   Accepts _ a := (a 0 ^^ a 1) = ((a 2 ^^ a 3) && (a 4 ^^ a 5))
 
 /-- The tensor test accepts with the probability `tensorTestAcceptance`. -/
-theorem acceptProb_tensorTest [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool)
+private theorem acceptProb_tensorTest [Fintype ι] [DecidableEq ι] (f : (ι → Bool) → Bool)
     (g : (ι × ι → Bool) → Bool) :
     (tensorTest ι).acceptProb (Sum.elim f g) = tensorTestAcceptance f g := by
   simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, tensorTest,
@@ -306,7 +306,7 @@ def equationTest [Fintype κ] (A : κ → ι → Bool) (b : κ → Bool) :
   Accepts ω a := (a 0 ^^ a 1) = hadamardCode ω.1 b
 
 /-- The equation test accepts with the probability `equationTestAcceptance`. -/
-theorem acceptProb_equationTest [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
+private theorem acceptProb_equationTest [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
     (g : (ι → Bool) → Bool) (A : κ → ι → Bool) (b : κ → Bool) :
     (equationTest A b).acceptProb g = equationTestAcceptance g A b := by
   simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, equationTest,
@@ -325,7 +325,8 @@ def inputTest : LocalTest ((Fin 2 × (α → Bool)) ⊕ (Fin 2 × α → Bool))
 
 /-- The input test accepts when the bit of the table of a random end at a random point is the
 self-corrected read of the linear table at the corresponding vector. -/
-theorem acceptProb_inputTest (T : Fin 2 → (α → Bool) → Bool) (f : (Fin 2 × α → Bool) → Bool) :
+private theorem acceptProb_inputTest (T : Fin 2 → (α → Bool) → Bool)
+    (f : (Fin 2 × α → Bool) → Bool) :
     (inputTest α).acceptProb (Sum.elim (fun p ↦ T p.1 p.2) f) =
       𝔼 b, 𝔼 r, 𝔼 y, if T b r = selfCorrect f (endEmbed b r) y then 1 else 0 := by
   simp only [LocalTest.acceptProb, Fintype.expect_prod_type, LocalTest.Passes, inputTest,
@@ -344,7 +345,8 @@ private theorem one_sub_boole_le {A B F : Prop} [Decidable A] [Decidable B] [Dec
 Hadamard encoding of `x`, then on average over the ends `b`, the table `T b` is within relative
 distance `1 - p + 2ε` of `r ↦ hadamardCode x (endEmbed b r)`, where `p` is the acceptance
 probability of the input test. -/
-theorem expect_hammingDist_div_le_one_sub_acceptProb_inputTest {T : Fin 2 → (α → Bool) → Bool}
+private theorem expect_hammingDist_div_le_one_sub_acceptProb_inputTest
+    {T : Fin 2 → (α → Bool) → Bool}
     {f : (Fin 2 × α → Bool) → Bool} {x : Fin 2 × α → Bool} {ε : ℝ}
     (hf : (hammingDist f (hadamardCode x) : ℝ) / 2 ^ Fintype.card (Fin 2 × α) ≤ ε) :
     𝔼 b, (hammingDist (T b) (fun r ↦ hadamardCode x (endEmbed b r)) : ℝ) / 2 ^ Fintype.card α ≤
@@ -453,11 +455,11 @@ def inputTable (π : Pos α → Bool) (b : Fin 2) : (α → Bool) → Bool :=
   fun r ↦ π (.inl (b, r))
 
 /-- The linear table carried by the proof `π`. -/
-def linTable (π : Pos α → Bool) : (Fin 2 × α → Bool) → Bool :=
+private def linTable (π : Pos α → Bool) : (Fin 2 × α → Bool) → Bool :=
   fun y ↦ π (.inr (.inl y))
 
 /-- The quadratic table carried by the proof `π`. -/
-def quadTable (π : Pos α → Bool) : ((Fin 2 × α) × (Fin 2 × α) → Bool) → Bool :=
+private def quadTable (π : Pos α → Bool) : ((Fin 2 × α) × (Fin 2 × α) → Bool) → Bool :=
   fun z ↦ π (.inr (.inr z))
 
 end HadamardTester
@@ -483,7 +485,7 @@ namespace HadamardTester
 variable {C : α → α → Prop}
 
 /-- The tester accepts at most as often as each of its five checks. -/
-theorem acceptProb_le (π : Pos α → Bool) :
+private theorem acceptProb_le (π : Pos α → Bool) :
     (hadamardTester C).acceptProb π ≤ blrAcceptance (linTable π) ∧
       (hadamardTester C).acceptProb π ≤ blrAcceptance (quadTable π) ∧
       (hadamardTester C).acceptProb π ≤ tensorTestAcceptance (linTable π) (quadTable π) ∧
@@ -523,7 +525,7 @@ noncomputable def inputDist (π : Pos α → Bool) (σ : Fin 2 → α) : ℝ :=
 
 /-- The distance of the tables of `π` from the long codes of `σ` is the average of the distances
 of the two tables. -/
-theorem inputDist_eq (π : Pos α → Bool) (σ : Fin 2 → α) :
+private theorem inputDist_eq (π : Pos α → Bool) (σ : Fin 2 → α) :
     inputDist π σ =
       ((hammingDist (inputTable π 0) (longCode (σ 0)) : ℝ) / 2 ^ Fintype.card α +
         (hammingDist (inputTable π 1) (longCode (σ 1)) : ℝ) / 2 ^ Fintype.card α) / 2 := by

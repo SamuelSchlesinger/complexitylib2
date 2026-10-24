@@ -87,7 +87,7 @@ theorem WellFormed.composeSelectedEnumerated {g : Graph (α → α → Bool)} (h
   SelectedHadamardTester.implementation.wellFormed_composeEnumerated hg
 
 /-- Complete enumeration realizes the exact selected-composition value. -/
-theorem unsatVal_composeSelectedEnumerated_eq (g : Graph (α → α → Bool)) :
+private theorem unsatVal_composeSelectedEnumerated_eq (g : Graph (α → α → Bool)) :
     (g.composeSelectedEnumerated.toGraph id).unsatVal = (g.toGraph id).composeSelected.unsatVal :=
   SelectedHadamardTester.implementation.unsatVal_composeEnumerated_eq
     SelectedHadamardTester.realizes_implementation g

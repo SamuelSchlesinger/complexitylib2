@@ -66,7 +66,7 @@ abbrev State (K : Type*) (d ℓ : ℕ) := Fin (d + 1) → Fin ℓ → K
 /-- The register of child `j` when the target register is `t`. -/
 def reg (t : Fin (d + 1)) (j : Fin d) : Fin (d + 1) := t + j.succ
 
-theorem reg_ne (t : Fin (d + 1)) (j : Fin d) : reg t j ≠ t := by
+private theorem reg_ne (t : Fin (d + 1)) (j : Fin d) : reg t j ≠ t := by
   simp [reg, Fin.succ_ne_zero]
 
 theorem reg_injective (t : Fin (d + 1)) : Function.Injective (reg t) := by
@@ -74,7 +74,7 @@ theorem reg_injective (t : Fin (d + 1)) : Function.Injective (reg t) := by
   simpa [reg] using h
 
 /-- The children's registers are exactly the registers other than the target. -/
-theorem mem_map_reg_finRange {t r : Fin (d + 1)} :
+private theorem mem_map_reg_finRange {t r : Fin (d + 1)} :
     r ∈ (List.finRange d).map (reg t) ↔ r ≠ t := by
   refine ⟨?_, fun hr => ?_⟩
   · simp only [List.mem_map, List.mem_finRange, true_and]
@@ -126,7 +126,7 @@ noncomputable def proc (us : List Kˣ) :
 omit [Field K] in
 /-- Updating each child register in turn, as a function of its previous content, updates all
 registers other than the target. -/
-theorem foldl_update_reg (t : Fin (d + 1)) (g : Fin (d + 1) → (Fin ℓ → K) → Fin ℓ → K)
+private theorem foldl_update_reg (t : Fin (d + 1)) (g : Fin (d + 1) → (Fin ℓ → K) → Fin ℓ → K)
     (l : List (Fin d)) (hl : l.Nodup) (S : State K d ℓ) :
     l.foldl (fun S j => Function.update S (reg t j) (g (reg t j) (S (reg t j)))) S =
       fun r => if r ∈ l.map (reg t) then g r (S r) else S r := by
@@ -147,7 +147,7 @@ theorem foldl_update_reg (t : Fin (d + 1)) (g : Fin (d + 1) → (Fin ℓ → K) 
 
 /-- A round, when all subtree procedures meet their specification, changes only the target
 register, subtracting `c` times the gate's extension at the masked children's values. -/
-theorem gateRound_eq {p : Fin d → K → Fin (d + 1) → State K d ℓ → State K d ℓ}
+private theorem gateRound_eq {p : Fin d → K → Fin (d + 1) → State K d ℓ → State K d ℓ}
     {v : Fin d → Fin ℓ → K} (hp : ∀ j c t S, p j c t S = Function.update S t (S t + c • v j))
     (f : Gate d ℓ) (c : K) (t : Fin (d + 1)) (u : Kˣ) (S : State K d ℓ) :
     gateRound p f c t u S = Function.update S t fun i =>
@@ -184,7 +184,7 @@ theorem gateRound_eq {p : Fin d → K → Fin (d + 1) → State K d ℓ → Stat
 
 /-- The rounds for all units in `us` change only the target register, subtracting `c` times the
 sum of the gate's extension at the masked children's values. -/
-theorem foldl_gateRound_eq {p : Fin d → K → Fin (d + 1) → State K d ℓ → State K d ℓ}
+private theorem foldl_gateRound_eq {p : Fin d → K → Fin (d + 1) → State K d ℓ → State K d ℓ}
     {v : Fin d → Fin ℓ → K} (hp : ∀ j c t S, p j c t S = Function.update S t (S t + c • v j))
     (f : Gate d ℓ) (c : K) (t : Fin (d + 1)) (us : List Kˣ) (S : State K d ℓ) :
     us.foldl (fun S u => gateRound p f c t u S) S = Function.update S t fun i =>

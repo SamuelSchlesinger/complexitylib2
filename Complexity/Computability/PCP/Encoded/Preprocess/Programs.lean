@@ -60,7 +60,7 @@ theorem halfEdgeOfNumber_halfEdgeNumber (p : ℕ × Bool) :
   cases b <;> simp [halfEdgeOfNumber, halfEdgeNumber, Nat.add_div, Nat.add_mod]
 
 /-- The executable inverse agrees with the finite half-edge numbering. -/
-theorem halfEdgeOfNumber_eq (edges : ℕ) (v : Fin (2 * edges)) :
+private theorem halfEdgeOfNumber_eq (edges : ℕ) (v : Fin (2 * edges)) :
     halfEdgeOfNumber v.val = ((halfEdgeEquiv edges).symm v |>.1.val,
       ((halfEdgeEquiv edges).symm v).2) := by
   rw [← Equiv.apply_symm_apply (halfEdgeEquiv edges) v, halfEdgeEquiv_val,

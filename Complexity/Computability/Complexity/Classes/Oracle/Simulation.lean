@@ -108,7 +108,7 @@ theorem _root_.Cslib.OracleComp.interpret_id_iterate {State Query : Type}
     rfl
 
 /-- The interpreted native instruction, with every coin `false`, is `answerStep`. -/
-theorem interpret_finiteStep (answer : Operation × List Bool → List Bool)
+private theorem interpret_finiteStep (answer : Operation × List Bool → List Bool)
     (cfg : FiniteConfig k Bool Control Operation) :
     OracleComp.interpret (m := Id) answer (MultiTapeMachine.finiteStep machine
       (fun choices => choices <$> (pure false : OracleComp _ Bool))

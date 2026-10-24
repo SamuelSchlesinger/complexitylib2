@@ -142,7 +142,7 @@ theorem abs_sum_mul_signVal_le [Fintype X] [Fintype Y] (p : Protocol X Y Bool) (
 
 /-- The correlation under `ν` of `f` with the output of a protocol is `1 - 2 ε`, where `ε` is the
 probability that the protocol errs on inputs drawn from `ν`. -/
-theorem sum_mul_signVal_eq [Fintype X] [Fintype Y] (p : Protocol X Y Bool) (ν : PMF (X × Y))
+private theorem sum_mul_signVal_eq [Fintype X] [Fintype Y] (p : Protocol X Y Bool) (ν : PMF (X × Y))
     (f : X → Y → Bool) :
     ∑ x, ∑ y, (ν (x, y)).toReal * signVal (f x y) * signVal (p.run x y) =
       1 - 2 * p.distributionalError ν (fun x y b => f x y = b) := by

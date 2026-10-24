@@ -104,7 +104,7 @@ theorem alternation_splitAlternatingBlocks (ns : List (ℕ × ℕ)) (q : Bool)
 
 /-- Splitting paired blocks is polynomial-time when their lengths are fixed polynomials of a
 computed unary size. -/
-theorem computableTidilyInPolyTime_splitAlternatingBlocks {γ : Type}
+private theorem computableTidilyInPolyTime_splitAlternatingBlocks {γ : Type}
     {encIn : γ ↪ List Bool} (ps : List (Polynomial ℕ × Polynomial ℕ)) {N : γ → ℕ}
     (hN : ComputableTidilyInPolyTime N encIn encUnary) {W : γ → List Bool}
     (hW : ComputableTidilyInPolyTime W encIn encBits) :

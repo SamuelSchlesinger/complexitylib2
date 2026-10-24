@@ -95,7 +95,7 @@ section Family
 
 variable {N s : ℕ} {C : ∀ m, Circuit signature m 1}
 
-theorem length_familyAdvice_block (hs : ∀ m ≤ N, (C m).size ≤ s) {m : ℕ} (hm : m ≤ N) :
+private theorem length_familyAdvice_block (hs : ∀ m ≤ N, (C m).size ≤ s) {m : ℕ} (hm : m ≤ N) :
     (certificate m s (C m).code.1 ((C m).outputs 0).toNat ++
       List.replicate (certLength N s - certLength m s) false).length = certLength N s := by
   rw [List.length_append, length_certificate_code _ (hs m hm), List.length_replicate,
@@ -110,7 +110,7 @@ theorem length_familyAdvice (hs : ∀ m ≤ N, (C m).size ≤ s) :
     List.length_range, List.sum_replicate, smul_eq_mul]
 
 /-- Block `m` of the advice string of a family starts with the certificate of `C m`. -/
-theorem drop_familyAdvice (hs : ∀ m ≤ N, (C m).size ≤ s) {m : ℕ} (hm : m ≤ N) :
+private theorem drop_familyAdvice (hs : ∀ m ≤ N, (C m).size ≤ s) {m : ℕ} (hm : m ≤ N) :
     ∃ rest, (familyAdvice N s C).drop (m * certLength N s) =
       certificate m s (C m).code.1 ((C m).outputs 0).toNat ++ rest := by
   obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le hm
@@ -172,21 +172,21 @@ namespace KarpLipton
 `w₁` has `P (enc a).length` bits, it runs the self-reduction of `f (a, u)` with the circuits read
 from the advice string `w₁` (with at most `S (enc a).length` gates, in blocks of
 `W (enc a).length` bits), and checks the assignment it finds. -/
-def verifier (enc : α ↪ List Bool) (f : α × List Bool → CNF ℕ) (S W P : Polynomial ℕ)
+private def verifier (enc : α ↪ List Bool) (f : α × List Bool → CNF ℕ) (S W P : Polynomial ℕ)
     (x : α × List Bool) : Bool :=
   SAT.verifier (f (x.1, x.2.drop (P.eval (enc x.1).length)),
     SAT.search (fun ψ => evalAdvice (S.eval (enc x.1).length) (W.eval (enc x.1).length)
       (x.2.take (P.eval (enc x.1).length)) (encCNF ψ))
       (f (x.1, x.2.drop (P.eval (enc x.1).length))))
 
-theorem verifier_append {f : α × List Bool → CNF ℕ} {S W P : Polynomial ℕ} (a : α)
+private theorem verifier_append {f : α × List Bool → CNF ℕ} {S W P : Polynomial ℕ} (a : α)
     {w₁ : List Bool} (hw₁ : w₁.length = P.eval (enc a).length) (u : List Bool) :
     verifier enc f S W P (a, w₁ ++ u) = SAT.verifier (f (a, u),
       SAT.search (fun ψ => evalAdvice (S.eval (enc a).length) (W.eval (enc a).length) w₁
         (encCNF ψ)) (f (a, u))) := by
   rw [verifier, ← hw₁, List.drop_left, List.take_left]
 
-theorem computableTidilyInPolyTime_verifier {f : α × List Bool → CNF ℕ}
+private theorem computableTidilyInPolyTime_verifier {f : α × List Bool → CNF ℕ}
     (hf : ComputableTidilyInPolyTime f (encPair enc encBits) encCNF) (S W P : Polynomial ℕ) :
     ComputableTidilyInPolyTime (verifier enc f S W P) (encPair enc encBits) encBool := by
   have hn : ComputableTidilyInPolyTime (fun x : α × List Bool => (enc x.1).length)

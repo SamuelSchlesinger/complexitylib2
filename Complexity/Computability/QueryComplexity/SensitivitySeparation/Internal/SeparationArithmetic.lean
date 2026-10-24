@@ -56,7 +56,7 @@ namespace Internal
 
 /-- For `L ≠ 0` and `M ≠ 0`,
 `(M ^ 2 * k ^ d) / (2 * L * M ^ (d + 1)) ^ 2 = (k / M ^ 2) ^ d / (4 * L ^ 2)`. -/
-theorem seed_ratio_identity (d : ℕ) {L M k : ℝ} (hL : L ≠ 0) (hM : M ≠ 0) :
+private theorem seed_ratio_identity (d : ℕ) {L M k : ℝ} (hL : L ≠ 0) (hM : M ≠ 0) :
     (M ^ 2 * k ^ d) / (2 * L * M ^ (d + 1)) ^ 2 =
       (k / M ^ 2) ^ d / (4 * L ^ 2) := by
   have hp : (M ^ 2) ^ d = (M ^ d) ^ 2 := by
@@ -67,7 +67,7 @@ theorem seed_ratio_identity (d : ℕ) {L M k : ℝ} (hL : L ≠ 0) (hM : M ≠ 0
 
 /-- For `0 < M`,
 `2 ^ d / (4 * (d + 2) ^ 2) ≤ (M ^ 2 * (2 * M ^ 2 + 1) ^ d) / (2 * (d + 2) * M ^ (d + 1)) ^ 2`. -/
-theorem seed_ratio_lower (d : ℕ) {M : ℝ} (hM : 0 < M) :
+private theorem seed_ratio_lower (d : ℕ) {M : ℝ} (hM : 0 < M) :
     (2 : ℝ) ^ d / (4 * ((d : ℝ) + 2) ^ 2) ≤
       (M ^ 2 * (2 * M ^ 2 + 1) ^ d) /
         (2 * ((d : ℝ) + 2) * M ^ (d + 1)) ^ 2 := by
@@ -79,7 +79,7 @@ theorem seed_ratio_lower (d : ℕ) {M : ℝ} (hM : 0 < M) :
 
 /-- If `0 < sensitivity f ≤ s` and `0 ≤ b ≤ blockSensitivityAt f (fun _ => false)`, then
 `b / s ^ 2 ≤ blockSensitivityAt f (fun _ => false) / sensitivity f ^ 2`. -/
-theorem ratio_of_bounds {I : Type} [Fintype I] (f : (I → Bool) → Bool)
+private theorem ratio_of_bounds {I : Type} [Fintype I] (f : (I → Bool) → Bool)
     (s b : ℝ) (hpos : 0 < (sensitivity f : ℝ))
     (hs : (sensitivity f : ℝ) ≤ s) (hb : b ≤ (blockSensitivityAt f (fun _ => false) : ℝ))
     (hb0 : 0 ≤ b) :

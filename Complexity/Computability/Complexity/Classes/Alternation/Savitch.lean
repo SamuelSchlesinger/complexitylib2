@@ -115,16 +115,16 @@ def midpointMoves (w : ℕ) (z : List Bool) : List Bool :=
   (List.range w).map fun j => z.getD (2 * j) false
 
 /-- A midpoint has width `w`. -/
-theorem length_midpointMoves (w : ℕ) (z : List Bool) : (midpointMoves w z).length = w := by
+private theorem length_midpointMoves (w : ℕ) (z : List Bool) : (midpointMoves w z).length = w := by
   simp [midpointMoves]
 
 /-- The first round of a level writes the first bit of the midpoint. -/
-theorem midpointMoves_cons_cons (w : ℕ) (x y : Bool) (z : List Bool) :
+private theorem midpointMoves_cons_cons (w : ℕ) (x y : Bool) (z : List Bool) :
     midpointMoves (w + 1) (x :: y :: z) = x :: midpointMoves w z := by
   simp [midpointMoves, List.range_succ_eq_map, Nat.mul_succ]
 
 /-- The midpoint only reads the first `2 * w` moves. -/
-theorem midpointMoves_take {w n : ℕ} (hn : 2 * w ≤ n) (z : List Bool) :
+private theorem midpointMoves_take {w n : ℕ} (hn : 2 * w ≤ n) (z : List Bool) :
     midpointMoves w (z.take n) = midpointMoves w z := by
   refine List.map_congr_left fun j hj => ?_
   rw [List.mem_range] at hj
@@ -147,7 +147,7 @@ def midpointGame (edge : List Bool → List Bool → Bool) (w : ℕ) :
 variable {edge : List Bool → List Bool → Bool} {w : ℕ}
 
 /-- The game at level `i` reads only its first `2 * ((w + 1) * i)` moves. -/
-theorem midpointGame_take (i : ℕ) (u v z : List Bool) :
+private theorem midpointGame_take (i : ℕ) (u v z : List Bool) :
     midpointGame edge w i u v (z.take (2 * ((w + 1) * i))) = midpointGame edge w i u v z := by
   induction i generalizing u v z with
   | zero => rfl
@@ -167,7 +167,7 @@ theorem midpointGame_take (i : ℕ) (u v z : List Bool) :
     simp only [midpointGame, hget, hmid, hdrop, ih]
 
 /-- The existential player chooses a midpoint in `w` rounds. -/
-theorem alternation_midpointMoves (j : ℕ) {ns : List ℕ} :
+private theorem alternation_midpointMoves (j : ℕ) {ns : List ℕ} :
     ∀ R : List Bool → List Bool → Prop,
       Alternation true (List.replicate (2 * j) 1 ++ ns)
         (fun z => R (midpointMoves j z) (z.drop (2 * j))) ↔
@@ -191,7 +191,7 @@ theorem alternation_midpointMoves (j : ℕ) {ns : List ℕ} :
       · exact ⟨x, fun _ => ⟨m, by simpa using hm, h⟩⟩
 
 /-- The universal player chooses a half in one round. -/
-theorem alternation_half {ns : List ℕ} (S : Bool → List Bool → Prop) :
+private theorem alternation_half {ns : List ℕ} (S : Bool → List Bool → Prop) :
     Alternation true (1 :: 1 :: ns) (fun z => S (z.getD 1 false) (z.drop 2)) ↔
       ∀ d, Alternation true ns (S d) := by
   rw [alternation_true_one_cons]

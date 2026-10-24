@@ -67,7 +67,7 @@ theorem mem_freeVarList {φ : QBF ℕ} {x : ℕ} : x ∈ φ.freeVarList ↔ x �
   | all v φ ih => simp [freeVarList, ih, and_comm]
 
 /-- A formula is closed exactly when its list of free variables is empty. -/
-theorem closed_iff_freeVarList_eq_nil {φ : QBF ℕ} : φ.Closed ↔ φ.freeVarList = [] := by
+private theorem closed_iff_freeVarList_eq_nil {φ : QBF ℕ} : φ.Closed ↔ φ.freeVarList = [] := by
   rw [Closed, Finset.eq_empty_iff_forall_notMem, List.eq_nil_iff_forall_not_mem]
   exact forall_congr' fun x => not_congr mem_freeVarList.symm
 

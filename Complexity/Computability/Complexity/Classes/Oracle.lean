@@ -95,7 +95,7 @@ def queriesWith (answer : (q : ι) → spec q) : OracleComp spec α → List ι
 
 /-- A sequence makes the requests of its first part, then those of the continuation selected by
 the first result. -/
-theorem queriesWith_bind (answer : (q : ι) → spec q) (program : OracleComp spec α)
+private theorem queriesWith_bind (answer : (q : ι) → spec q) (program : OracleComp spec α)
     (next : α → OracleComp spec β) :
     queriesWith answer (program >>= next) = queriesWith answer program ++
       queriesWith answer (next (interpret (m := Id) answer program)) := by

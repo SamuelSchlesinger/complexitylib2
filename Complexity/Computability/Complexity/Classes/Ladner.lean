@@ -119,7 +119,7 @@ theorem universal_desc_of_halted {k : ℕ} {State : Type} [Fintype State] (eS : 
   rfl
 
 /-- Every description is the description of machines with arbitrarily large indices. -/
-theorem exists_index_ge (d : Desc) (B : ℕ) :
+private theorem exists_index_ge (d : Desc) (B : ℕ) :
     ∃ i, B ≤ i ∧ decodeDesc (unframe (word i)) = d := by
   refine ⟨index (frame (eDesc d) ++ List.replicate B false), ?_, by
     rw [word_index, decodeDesc_unframe_frame_append]⟩
@@ -131,7 +131,7 @@ theorem exists_index_ge (d : Desc) (B : ℕ) :
 
 /-- From some point on, the clock of the machine with index `i` on the words with indices below
 `n` is at most `n`. -/
-theorem eventually_clock_le (i : ℕ) :
+private theorem eventually_clock_le (i : ℕ) :
     ∀ᶠ n in Filter.atTop, ∀ j < n, clock i (word j).length ≤ n := by
   have hpoly : PolynomiallyBounded fun l => (2 * l + 2) ^ i := by fun_prop
   obtain ⟨L, hL⟩ := Filter.eventually_atTop.mp (PolynomiallyBounded.eventually_lt_two_pow hpoly)
@@ -178,7 +178,7 @@ of the encoded formula. -/
 noncomputable def padBounded (C : ℕ) (φ : CNF ℕ) : List Bool :=
   pad (encCNF φ) (capPow (encCNF φ).length (H (encCNF φ).length) (((encCNF φ).length + 1) ^ C))
 
-theorem computableTidilyInPolyTime_padBounded (C : ℕ) :
+private theorem computableTidilyInPolyTime_padBounded (C : ℕ) :
     ComputableTidilyInPolyTime (padBounded C) encCNF encBits := by
   have henc : ComputableTidilyInPolyTime (fun φ => encCNF φ) encCNF encBits :=
     ComputableTidilyInPolyTime.encode encCNF
@@ -271,7 +271,7 @@ theorem shrink_mem_SAT_iff {R : CNF ℕ → List Bool} (hR : ∀ φ, φ ∈ SAT 
 `c * (n + 1) ^ d` on formulas of length `n`, and let `H` exceed `d` from `M` on. If `R φ` padded a
 formula at least as long as `φ`, with `φ` of length at least `N`, its padding would be longer than
 `R φ`. -/
-theorem length_shrink_lt {R : CNF ℕ → List Bool} {c d M N : ℕ}
+private theorem length_shrink_lt {R : CNF ℕ → List Bool} {c d M N : ℕ}
     (hRlen : ∀ φ, (R φ).length ≤ c * ((encCNF φ).length + 1) ^ d) (hM : ∀ m ≥ M, d + 1 ≤ H m)
     (hN₁ : (encCNF falseCNF).length < N) (hN₂ : M ≤ N) (hN₃ : c * 2 ^ d < N) {φ : CNF ℕ}
     (hφ : N ≤ (encCNF φ).length) : (encCNF (shrink R N φ)).length < (encCNF φ).length := by

@@ -41,19 +41,19 @@ theorem pairFalse_inSpace :
   ReadMachine.pairFalse_inSpace fun x => by simp only [stepBudget, encStepInT]; omega
 
 /-- A function of the tuple with the bit `false` within the budget of the step. -/
-theorem onTuple {β : Type} {encB : β ↪ List Bool} {f : Tuple × Bool → β}
+private theorem onTuple {β : Type} {encB : β ↪ List Bool} {f : Tuple × Bool → β}
     (h : ComputableTidilyInSpace f encStepInT encB stepBudget) :
     ComputableTidilyInSpace (fun x : Tuple => f (x, false)) encTuple encB
       fun x => stepBudget (x, false) :=
   ReadMachine.comp_pairFalse_inSpace (fun x => by simp only [stepBudget, encStepInT]; omega) h
 
 /-- **The halting test** on tuples. -/
-theorem haltT_inSpace :
+private theorem haltT_inSpace :
     ComputableTidilyInSpace haltT encTuple encBool fun x => stepBudget (x, false) :=
   onTuple (budget_finite (encC := encBool) (fun t : Fin 7 => decide (t = 6)) hTag)
 
 /-- The offset of the node at the path of a stack. -/
-theorem offsetT_inSpace {st : Tuple × Bool → List Frame}
+private theorem offsetT_inSpace {st : Tuple × Bool → List Frame}
     (hst : ComputableTidilyInSpace st encStepInT (encList encFrame) stepBudget) :
     ComputableTidilyInSpace (fun y => offsetT y.1 (st y)) encStepInT encNat stepBudget := by
   have hdirs := budget_comp dirs_inSpace hst (.const_mul 64 ((length_le hst).add (.const 1 _)))
@@ -65,7 +65,7 @@ theorem offsetT_inSpace {st : Tuple × Bool → List Frame}
   simp only [offsetT, path_eq_reverse, foldl_cons_dir, List.append_nil]
 
 /-- **The address** on tuples. -/
-theorem addrT_inSpace :
+private theorem addrT_inSpace :
     ComputableTidilyInSpace addrT encTuple (encOption encNat) fun x => stepBudget (x, false) := by
   have hsome {n : Tuple × Bool → ℕ} (hn : ComputableTidilyInSpace n encStepInT encNat stepBudget) :
       ComputableTidilyInSpace (fun y => some (n y)) encStepInT (encOption encNat) stepBudget :=
@@ -87,19 +87,20 @@ theorem addrT_inSpace :
 /-- **The space budget of a state.** -/
 noncomputable def stateBudget (s : State) : ℕ := stepBudget (s.toTuple, false)
 
-theorem stepBudget_bool (x : Tuple) (b : Bool) : stepBudget (x, b) = stepBudget (x, false) := by
+private theorem stepBudget_bool (x : Tuple) (b : Bool) : stepBudget (x, b) = stepBudget
+    (x, false) := by
   simp [stepBudget, encBool_apply]
 
-theorem halt_inSpace : ComputableTidilyInSpace machine.halt encState encBool stateBudget :=
+private theorem halt_inSpace : ComputableTidilyInSpace machine.halt encState encBool stateBudget :=
   (haltT_inSpace.of_encIn_eq State.toTuple fun _ => rfl).of_enc_eq fun s => by
     rw [haltT_toTuple]
 
-theorem addr_inSpace : ComputableTidilyInSpace machine.addr encState (encOption encNat)
+private theorem addr_inSpace : ComputableTidilyInSpace machine.addr encState (encOption encNat)
     stateBudget :=
   (addrT_inSpace.of_encIn_eq State.toTuple fun _ => rfl).of_enc_eq fun s => by
     rw [addrT_toTuple]; rfl
 
-theorem step_inSpace :
+private theorem step_inSpace :
     ComputableTidilyInSpace (fun p : State × Bool => machine.step p.1 p.2)
       (encPair encState encBool) (encPair encState encBits) fun p => stateBudget p.1 := by
   have h := stepT_inSpace.of_encIn_eq (fun p : State × Bool => (p.1.toTuple, p.2)) fun p => by

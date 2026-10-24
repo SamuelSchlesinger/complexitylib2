@@ -112,7 +112,7 @@ variable [DecidableEq α] (g : Graph C) (eval : C → α → α → Bool) (fallb
 
 include hrotate in
 /-- The executable destination is the numbered endpoint of the mathematical killed walk. -/
-theorem dst_powerPreprocessEdge
+private theorem dst_powerPreprocessEdge
     (dart : (Fin g.edges.length × Bool) × PowerLabel D T q) :
     (g.powerPreprocessEdge eval fallback rotate T q
       ((dart.1.1.val, dart.1.2), dart.2)).dst =
@@ -127,7 +127,7 @@ theorem dst_powerPreprocessEdge
 
 include hrotate in
 /-- Each computed Boolean table is exactly the mathematical powered relation. -/
-theorem rel_powerPreprocessEdge
+private theorem rel_powerPreprocessEdge
     (dart : (Fin g.edges.length × Bool) × PowerLabel D T q) (a b : PowerAlphabet D α T) :
     (g.powerPreprocessEdge eval fallback rotate T q
       ((dart.1.1.val, dart.1.2), dart.2)).constraint a b = true ↔

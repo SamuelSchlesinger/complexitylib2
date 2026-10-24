@@ -64,7 +64,7 @@ theorem ceil_sqrt_max_le_two_sqrt {M : ℕ} (hM : 81 ≤ M) :
   exact max_le (by linarith) (by linarith)
 
 /-- If `9 ^ (d + 1) ≤ M`, then `3 ^ (d + 1) ≤ Real.sqrt M`. -/
-theorem parameter_sqrt_lower {d M : ℕ} (hM : 9 ^ (d + 1) ≤ M) :
+private theorem parameter_sqrt_lower {d M : ℕ} (hM : 9 ^ (d + 1) ≤ M) :
     (3 : ℝ) ^ (d + 1) ≤ Real.sqrt (M : ℝ) := by
   apply Real.le_sqrt_of_sq_le
   calc

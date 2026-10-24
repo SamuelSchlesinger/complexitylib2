@@ -96,7 +96,7 @@ theorem odd_one_add_prod_one_add {ι : Type*} [Fintype ι] (c : ι → ℕ) :
 
 /-- The functions `s : ι → X` whose values at the `t` distinct points `f i` lie in `F`: `F` is
 chosen at those points and anything elsewhere. -/
-theorem card_filter_forall_apply_mem {ι X : Type*} [Fintype ι] [DecidableEq ι] [Fintype X]
+private theorem card_filter_forall_apply_mem {ι X : Type*} [Fintype ι] [DecidableEq ι] [Fintype X]
     [DecidableEq X] {t : ℕ} (f : Fin t → ι) (hf : Function.Injective f) (F : Finset X) :
     (univ.filter fun s : ι → X => ∀ i, s (f i) ∈ F).card =
       #F ^ t * Fintype.card X ^ (Fintype.card ι - t) := by
@@ -147,7 +147,7 @@ theorem computableTidilyInPolyTime_hashesToZero {γ : Type} {input : γ ↪ List
 
 /-- The offsets of the Valiant–Vazirani equations are the row of `k` bits after the `k` rows of
 `M` coefficients. -/
-theorem listRow_eq_ofFn_offset (k M : ℕ) (seed : List Bool) :
+private theorem listRow_eq_ofFn_offset (k M : ℕ) (seed : List Bool) :
     BitString.listRow k M seed = List.ofFn (ValiantVazirani.offset k M seed) := by
   rw [BitString.listRow, Nat.mul_comm M k]
   apply List.ext_getElem (by simp)
@@ -242,14 +242,14 @@ theorem three_mul_two_pow_le_card_filter_card_eq_one {M B : ℕ} {S : Finset (Bi
 
 /-- `2 ^ (E + 1) * 13 ^ (4 (E + 1)) ≤ 16 ^ (4 (E + 1))`: `4 (E + 1)` rounds failing with
 probability at most `13 / 16` each all fail with probability at most `2 ^ (-(E + 1))`. -/
-theorem two_pow_mul_thirteen_pow_le (E : ℕ) :
+private theorem two_pow_mul_thirteen_pow_le (E : ℕ) :
     2 ^ (E + 1) * 13 ^ (4 * (E + 1)) ≤ 16 ^ (4 * (E + 1)) := by
   rw [pow_mul, pow_mul, ← mul_pow]
   exact Nat.pow_le_pow_left (by norm_num) _
 
 /-- **The union bound for random strings**: if each `x` is bad for at most a `2 ^ (-e')` fraction
 of the random strings, some `x` of length `M` is bad for at most a `2 ^ (M - e')` fraction. -/
-theorem two_pow_mul_card_filter_exists_le {R M e' : ℕ}
+private theorem two_pow_mul_card_filter_exists_le {R M e' : ℕ}
     {Bad : (Fin R → Bool) → (Fin M → Bool) → Prop}
     [∀ r x, Decidable (Bad r x)]
     (h : ∀ x, 2 ^ e' * (univ.filter fun r => Bad r x).card ≤ 2 ^ R) :
