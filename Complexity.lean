@@ -634,6 +634,7 @@ public import Complexity.Computability.Complexity.Classes.ParityP
 public import Complexity.Computability.Complexity.Classes.ParityP.Closure
 public import Complexity.Computability.Complexity.Classes.Promise.Basic
 public import Complexity.Computability.Complexity.Classes.Promise.Circuit
+public import Complexity.Computability.Complexity.Classes.Promise.Reduction
 public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Complexity.Classes.RP.Closure
 public import Complexity.Computability.Complexity.Classes.RepeatedTrials
@@ -1075,7 +1076,6 @@ public import Complexity.Computability.PCP.Amplification
 public import Complexity.Computability.PCP.Amplification.Arithmetic
 public import Complexity.Computability.PCP.Amplification.Family
 public import Complexity.Computability.PCP.Amplifier
-public import Complexity.Computability.PCP.Approximation
 public import Complexity.Computability.PCP.Approximation.Hastad
 public import Complexity.Computability.PCP.Approximation.Hastad.LinearTest
 public import Complexity.Computability.PCP.Approximation.IndependentSet

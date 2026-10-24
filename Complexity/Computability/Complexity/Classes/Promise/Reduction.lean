@@ -14,7 +14,7 @@ public import Mathlib.Basic.Real.Basic
 import Complexity.Computability.Complexity.CookLevin.Completeness
 
 /-!
-# Gap problems and hardness of approximation
+# Reductions of promise problems, and gap problems
 
 Hardness of approximation is stated through **gap problems** [Arora and Barak, Chapter
 11][AroraBarak09]. For a maximization objective `val`, the gap problem `gapMax val c s` is the
