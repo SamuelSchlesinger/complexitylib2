@@ -145,6 +145,7 @@ import ComplexityTests.ElementDistinctnessRAM
 import ComplexityTests.EmpiricalProbability
 import ComplexityTests.Encodings
 import ComplexityTests.EntropyPseudoentropy
+import ComplexityTests.Expander
 import ComplexityTests.ExpanderContraction
 import ComplexityTests.ExpanderFamily
 import ComplexityTests.ExpanderHitting

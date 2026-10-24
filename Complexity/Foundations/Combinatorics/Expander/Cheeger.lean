@@ -96,9 +96,12 @@ section SecondEigenvalue
 `𝔼 v, f v * G.walk f v / 𝔼 v, f v ^ 2` over the nonzero functions `f` of expectation zero, that
 is over the nonzero functions orthogonal to the constants. When `V` has at most one vertex there
 is no such function, and `λ₂(G) = 0` by convention. Otherwise, as the walk operator is
-self-adjoint and fixes the constants, this is its second largest eigenvalue counted with
-multiplicity, but nothing here depends on that: `λ₂(G)` is used through
-`expect_mul_walk_le_secondEigenvalue_mul` and `secondEigenvalue_le_iff`. -/
+self-adjoint and fixes the constants, this is the largest eigenvalue of its restriction to the
+functions of expectation zero (`secondEigenvalue_eq_orthogonalWalk_eigenvalues_zero`) and its
+second largest eigenvalue on the full space counted with multiplicity
+(`secondEigenvalue_eq_walkEuclidean_eigenvalues_one`), but nothing here depends on spectral
+theory: `λ₂(G)` is used through `expect_mul_walk_le_secondEigenvalue_mul` and
+`secondEigenvalue_le_iff`. -/
 noncomputable def secondEigenvalue : ℝ :=
   ⨆ f : {f : V → ℝ // 𝔼 v, f v = 0 ∧ f ≠ 0}, (𝔼 v, f.1 v * G.walk f.1 v) / 𝔼 v, f.1 v ^ 2
 
