@@ -14,15 +14,11 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 
 Numerical estimates showing that the union bound over sixteen-vertex labeling events succeeds. For
 `3 ≤ M` and `M ≤ r ^ 2`, a tournament on `k = 2 * M ^ 2 + 1` vertices satisfies `k ^ 16 < r ^ 104`,
-which is exactly what is needed to beat the number of bad labelings. Real-valued forms record the
-chain `k ^ 16 / r ^ 104 ≤ 3 ^ 16 / M ^ 20 < 1`, in particular for `r = Nat.ceil (Real.sqrt M)`.
+which is exactly what is needed to beat the number of bad labelings.
 
 ## Main results
 
 * `labeling_power_bound`: `(2 * M ^ 2 + 1) ^ 16 < r ^ 104` whenever `3 ≤ M ≤ r ^ 2`.
-* `labeling_union_bound_real`: `(2 * M ^ 2 + 1) ^ 16 / r ^ 104 ≤ 3 ^ 16 / M ^ 20 < 1` in `ℝ`.
-* `labeling_source_estimate`: the same chain of estimates with `r = Nat.ceil (Real.sqrt M)`, passing
-  through `(3 * M ^ 2) ^ 16 / (Real.sqrt M) ^ 104`.
 
 ## References
 
@@ -70,43 +66,6 @@ theorem labeling_power_bound {M r : ℕ} (hM : 3 ≤ M) (hMr : M ≤ r ^ 2) :
     _ < M ^ 20 * r ^ 104 := Nat.mul_lt_mul_of_pos_right (labeling_union_bound_constant hM)
       (pow_pos hr 104)
     _ = r ^ 104 * M ^ 20 := Nat.mul_comm _ _
-
-/-- If `3 ≤ M` and `M ≤ r ^ 2`, then in `ℝ` one has
-`(2 * M ^ 2 + 1) ^ 16 / r ^ 104 ≤ 3 ^ 16 / M ^ 20` and `3 ^ 16 / M ^ 20 < 1`. -/
-theorem labeling_union_bound_real {M r : ℕ} (hM : 3 ≤ M) (hMr : M ≤ r ^ 2) :
-    (((2 * M ^ 2 + 1) ^ 16 : ℕ) : ℝ) / (r : ℝ) ^ 104 ≤ 3 ^ 16 / (M : ℝ) ^ 20 ∧
-      3 ^ 16 / (M : ℝ) ^ 20 < 1 := by
-  have hMp : (0 : ℝ) < M := by exact_mod_cast (show 0 < M by omega)
-  have hrp : (0 : ℝ) < r := by
-    have hr : 0 < r := (Nat.pow_pos_iff.mp
-      (lt_of_lt_of_le (show 0 < M by omega) hMr)).resolve_right (by omega)
-    exact_mod_cast hr
-  constructor
-  · apply (div_le_div_iff₀ (pow_pos hrp 104) (pow_pos hMp 20)).mpr
-    exact_mod_cast labeling_union_bound_numerator hM hMr
-  · apply (div_lt_one (pow_pos hMp 20)).mpr
-    exact_mod_cast labeling_union_bound_constant hM
-
-/-- For `0 < M`, `(3 * M ^ 2) ^ 16 / (Real.sqrt M) ^ 104 = 3 ^ 16 / M ^ 20`. -/
-private theorem labeling_sqrt_expression {M : ℕ} (hM : 0 < M) :
-    (3 * (M : ℝ) ^ 2) ^ 16 / (Real.sqrt M) ^ 104 = 3 ^ 16 / (M : ℝ) ^ 20 := by
-  have hp : (0 : ℝ) < M := by exact_mod_cast hM
-  have hd : (Real.sqrt M) ^ 104 = (M : ℝ) ^ 52 := by
-    rw [show 104 = 2 * 52 from rfl, pow_mul, Real.sq_sqrt hp.le]
-  rw [hd, div_eq_div_iff (pow_ne_zero _ hp.ne') (pow_ne_zero _ hp.ne'),
-    mul_pow, ← pow_mul, mul_assoc, ← pow_add]
-
-/-- For `3 ≤ M`, with `r = Nat.ceil (Real.sqrt M)`:
-`(2 * M ^ 2 + 1) ^ 16 / r ^ 104 ≤ (3 * M ^ 2) ^ 16 / (Real.sqrt M) ^ 104`, the latter equals
-`3 ^ 16 / M ^ 20`, and `3 ^ 16 / M ^ 20 < 1`. -/
-theorem labeling_source_estimate {M : ℕ} (hM : 3 ≤ M) :
-    (((2 * M ^ 2 + 1) ^ 16 : ℕ) : ℝ) / (Nat.ceil (Real.sqrt M) : ℝ) ^ 104 ≤
-        (3 * (M : ℝ) ^ 2) ^ 16 / (Real.sqrt M) ^ 104 ∧
-      (3 * (M : ℝ) ^ 2) ^ 16 / (Real.sqrt M) ^ 104 = 3 ^ 16 / (M : ℝ) ^ 20 ∧
-      3 ^ 16 / (M : ℝ) ^ 20 < 1 := by
-  have h := labeling_union_bound_real hM (le_ceil_sqrt_sq M)
-  have he := labeling_sqrt_expression (show 0 < M by omega)
-  exact ⟨he.symm ▸ h.1, he, h.2⟩
 
 end Internal
 

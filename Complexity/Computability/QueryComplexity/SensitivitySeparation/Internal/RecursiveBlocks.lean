@@ -24,8 +24,6 @@ disjointness, which yields the block sensitivity lower bound.
 
 ## Main results
 
-* `mem_rowLift`: `p ∈ rowLift i B` iff `p` lies in row `i` and `p.2 ∈ B`.
-* `rowLift_card`: `rowLift i B` has `r * B.card` elements.
 * `rowLift_family_disjoint`: pairwise disjoint child blocks lift to pairwise disjoint blocks indexed
   by `Fin k × K`.
 * `recursiveFamily_rowLift`: flipping a lifted block in the all-false input makes every next-level
@@ -58,7 +56,7 @@ def rowLift {k r : ℕ} {I : Type} (i : Fin k) (B : Finset I) :
 
 /-- A coordinate `p` lies in `rowLift i B` iff its row is `i` and its child coordinate lies in `B`.
 -/
-@[simp] theorem mem_rowLift {k r : ℕ} {I : Type} (i : Fin k) (B : Finset I)
+@[simp] private theorem mem_rowLift {k r : ℕ} {I : Type} (i : Fin k) (B : Finset I)
     (p : (Fin k × Fin r) × I) : p ∈ rowLift (r := r) i B ↔ p.1.1 = i ∧ p.2 ∈ B := by
   rcases p with ⟨⟨j, c⟩, a⟩
   unfold rowLift
@@ -70,11 +68,6 @@ def rowLift {k r : ℕ} {I : Type} (i : Fin k) (B : Finset I) :
     exact ⟨rfl, (Finset.mem_product.mp hb).2⟩
   · rintro ⟨rfl, ha⟩
     exact ⟨(c, a), Finset.mem_product.mpr ⟨Finset.mem_univ _, ha⟩, rfl⟩
-
-/-- The lifted block `rowLift i B` has `r * B.card` elements. -/
-theorem rowLift_card {k r : ℕ} {I : Type} (i : Fin k) (B : Finset I) :
-    (rowLift (r := r) i B).card = r * B.card := by
-  simp [rowLift]
 
 /-- If `0 < r` and `B` is nonempty, then `rowLift i B` is nonempty. -/
 theorem rowLift_nonempty {k r : ℕ} {I : Type} (i : Fin k) (B : Finset I)
