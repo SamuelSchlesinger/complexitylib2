@@ -66,7 +66,7 @@ private meta def pptFunProp : TacticM Unit :=
       throwError "expected an encoded-input PPT goal"
     if target.getAppArgs[2]!.hasExprMVar then
       throwError "input encoding is not yet determined"
-    evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 128 })))
+    Cslib.Tactic.PolyTime.Internal.funPropWithPlainBoundary 128
 
 attribute [program_certificate]
   Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn
@@ -87,7 +87,23 @@ private meta def pptCaptured : TacticM Unit :=
       throwError "expected probabilistic sequencing"
     liftMetaTactic fun goal => goal.applyConst rule
 
-attribute [aesop unsafe 80% apply (rule_sets := [PPT])] IsPPTOn.cond IsPPTOn.ite
+/-- Only a syntactic conditional can use branch selection. Trying these theorems on arbitrary
+named programs can unfold their implementations during unification before certificate children
+are explored. Named calls retain their existing alternative search. -/
+@[aesop unsafe 80% tactic (rule_sets := [PPT])]
+private meta def pptConditional : TacticM Unit :=
+  withMainContext <| Term.withoutErrToSorry <| withoutRecover do
+    let target := (← instantiateMVars (← getMainTarget)).consumeMData
+    unless target.isAppOf ``IsPPTOn do throwError "expected an encoded-input PPT goal"
+    let program ← Core.betaReduce (← etaExpand target.getAppArgs.back!)
+    let conditional ← lambdaTelescope program fun _ body => pure (body.isAppOf ``ite)
+    unless conditional do throwError "expected a conditional program"
+    let saved ← saveState
+    try
+      liftMetaTactic fun goal => goal.applyConst ``IsPPTOn.cond
+    catch _ =>
+      saved.restore
+      liftMetaTactic fun goal => goal.applyConst ``IsPPTOn.ite
 
 attribute [aesop unsafe 80% apply (rule_sets := [PPT])]
   IsPPTOn.iterate_of_length_le IsPPTOn.iterate_of_bounded_growth
