@@ -83,15 +83,17 @@ theorem degree {f : α → β} {d e : ℕ}
     k + k, _, inferInstance, tidy false true tm,
     fun a => (htm a).computesTidily_tidy Bool.false_ne_true⟩
 
-/-- Normalize independent charged bounds without deriving workspace from the time budget. -/
-theorem inO {f : α → β} {T S : α → ℕ}
-    (h : ComputableInO f encIn encMid T S) :
-    ∃ c, (∃ (k : ℕ) (State : Type) (_ : Finite State) (tm : MultiTapeTM k Bool State),
-      ∀ a, tm.ComputesTidilyInTimeAndSpace (encIn a) (encMid (f a)) (c * (T a + 1))
-        (c * (S a + 1))) ∧ ∀ a, (encMid (f a)).length ≤ c * (S a + 1) := by
-  obtain ⟨c, ⟨k, State, hfin, tm, htm⟩, hl⟩ := h
+/-- Normalize one machine at independent time/workspace bounds, preserving both bounds. -/
+private theorem independentBounds {f : α → β} {T S : α → ℕ}
+    (c : ℕ)
+    (h : ComputableInTimeAndSpace f encIn encMid
+      (fun a => c * (T a + 1)) (fun a => c * (S a + 1))) :
+    ∃ C, (c ≤ C) ∧ (∃ (k : ℕ) (State : Type) (_ : Finite State) (tm : MultiTapeTM k Bool State),
+      ∀ a, tm.ComputesTidilyInTimeAndSpace (encIn a) (encMid (f a)) (C * (T a + 1))
+        (C * (S a + 1))) := by
+  obtain ⟨k, State, hfin, tm, htm⟩ := h
   refine ⟨(2 + 3 * k) * c + (5 * k + 4) + ((2 + 6 * k) * c + 2 * k * (2 * k + 3)) + c,
-    ⟨k + k, _, inferInstance, tidy false true tm, fun a => ?_⟩, fun a => ?_⟩
+    by omega, ⟨k + k, _, inferInstance, tidy false true tm, fun a => ?_⟩⟩
   · -- the space of the run is at most the smaller of the two space bounds
     set t := c * (T a + 1) with ht
     set s := min (c * (S a + 1)) (k * t + k) with hs
@@ -110,6 +112,31 @@ theorem inO {f : α → β} {T S : α → ℕ}
       have e₂ : (2 + 6 * k) * c * (S a + 1) = 2 * (c * (S a + 1)) + 6 * (k * (c * (S a + 1))) := by
         ring
       exact le_mul_succ (A := (2 + 6 * k) * c) (B := 2 * k * (2 * k + 3)) (by omega) (by omega)
-  · exact (hl a).trans (Nat.mul_le_mul_right _ (by omega))
+
+/-- Independent asymptotic time/workspace bounds normalize without an output-length premise. -/
+theorem bigO {f : α → β} {T S : α → ℕ}
+    (h : ComputableInBigO f encIn encMid T S) :
+    ∃ c, ∃ (k : ℕ) (State : Type) (_ : Finite State) (tm : MultiTapeTM k Bool State),
+      ∀ a, tm.ComputesTidilyInTimeAndSpace (encIn a) (encMid (f a)) (c * (T a + 1))
+        (c * (S a + 1)) := by
+  obtain ⟨c, hc⟩ := h
+  obtain ⟨C, _, hC⟩ := independentBounds c hc
+  exact ⟨C, hC⟩
+
+/-- Normalize charged bounds, retaining their existing encoded-output bound. -/
+theorem inO {f : α → β} {T S : α → ℕ}
+    (h : ComputableInO f encIn encMid T S) :
+    ∃ c, (∃ (k : ℕ) (State : Type) (_ : Finite State) (tm : MultiTapeTM k Bool State),
+      ∀ a, tm.ComputesTidilyInTimeAndSpace (encIn a) (encMid (f a)) (c * (T a + 1))
+        (c * (S a + 1))) ∧ ∀ a, (encMid (f a)).length ≤ c * (S a + 1) := by
+  obtain ⟨c, hc, hl⟩ := h
+  obtain ⟨C, hle, hC⟩ := independentBounds c hc
+  exact ⟨C, hC, fun a => (hl a).trans (Nat.mul_le_mul_right _ hle)⟩
+
+/-- Linear certificates normalize at a common linear bound without changing the encoding. -/
+theorem linear {f : α → β} (h : ComputableInLinearTimeAndSpace f encIn encMid) :
+    ∃ c, ∃ (k : ℕ) (State : Type) (_ : Finite State) (tm : MultiTapeTM k Bool State),
+      ∀ a, tm.ComputesTidilyInTimeAndSpace (encIn a) (encMid (f a))
+        (c * ((encIn a).length + 1)) (c * ((encIn a).length + 1)) := bigO h
 
 end Turing.MultiTapeTM.Internal.NormalForm

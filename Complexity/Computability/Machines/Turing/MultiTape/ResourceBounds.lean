@@ -114,6 +114,18 @@ def ComputableInPolySpace (f : α → β) (encIn : α ↪ List Bool) (encOut : �
     ComputableInTimeAndSpace f encIn encOut t (fun a => s (encIn a).length) ∧
     ∀ a, (encOut (f a)).length ≤ s (encIn a).length
 
+/-- Linear-time and linear-work-space computability, with one existential constant and no
+clean-tape requirement. The encoded output length is bounded by the time of the computation. -/
+def ComputableInLinearTimeAndSpace (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) : Prop :=
+  ∃ c, ComputableInTimeAndSpace f encIn encOut
+    (fun a => c * ((encIn a).length + 1)) (fun a => c * ((encIn a).length + 1))
+
+/-- `f` is computable within time `O(T a)` and space `O(S a)` on the input `a`. -/
+def ComputableInBigO {α β : Type*} (f : α → β) (encIn : α ↪ List Bool)
+    (encOut : β ↪ List Bool) (T S : α → ℕ) : Prop :=
+  ∃ c, ComputableInTimeAndSpace f encIn encOut (fun a => c * (T a + 1)) fun a => c * (S a + 1)
+
 /-- Polynomial time and work space of degree `d`, and encoded output growth of degree `e`.
 The realization is one machine for all inputs. Both degrees may be zero. -/
 def ComputableInDegree (f : α → β) (encIn : α ↪ List Bool) (encOut : β ↪ List Bool)
