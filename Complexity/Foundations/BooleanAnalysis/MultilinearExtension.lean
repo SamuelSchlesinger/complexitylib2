@@ -30,6 +30,8 @@ Its total degree is at most the dimension.
 * `Cslib.BitString.eval_multilinearExtension`: the extension agrees with the function on the cube.
 * `Cslib.BitString.totalDegree_multilinearExtension_le`: its total degree is at most the
   dimension.
+* `Cslib.BitString.rename_multilinearExtension`: renaming the coordinates along an equivalence
+  gives the multilinear extension of the function read through the equivalence.
 
 ## References
 
@@ -43,7 +45,7 @@ open MvPolynomial
 
 namespace Cslib.BitString
 
-variable {ι R : Type*} [CommRing R]
+variable {ι κ R : Type*} [CommRing R]
 
 /-- The indicator polynomial of a point `a` of the cube: the product of `X i` where `a i` is true
 and of `1 - X i` where it is false. -/
@@ -95,5 +97,17 @@ theorem totalDegree_multilinearExtension_le [Fintype ι] [DecidableEq ι] (g : (
   refine (totalDegree_finsetSum _ _).trans <| Finset.sup_le fun a _ => ?_
   exact (totalDegree_mul _ _).trans <| by
     simpa using totalDegree_indicatorPoly_le (R := R) a
+
+/-- Renaming the coordinates along an equivalence `e` turns the multilinear extension of `g` into
+the multilinear extension of `g` read through `e`. -/
+theorem rename_multilinearExtension [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
+    (e : ι ≃ κ) (g : (ι → Bool) → R) :
+    rename e (multilinearExtension g) = multilinearExtension fun z => g (z ∘ e) := by
+  simp only [multilinearExtension, indicatorPoly, map_sum, map_mul, rename_C, map_prod,
+    apply_ite (rename e), rename_X, map_sub, map_one]
+  refine Fintype.sum_equiv (e.arrowCongr (Equiv.refl Bool)) _ _ fun a => ?_
+  congr 1
+  · simp [Equiv.arrowCongr, Function.comp_assoc]
+  · exact Fintype.prod_equiv e _ _ fun i => by simp [Equiv.arrowCongr]
 
 end Cslib.BitString
