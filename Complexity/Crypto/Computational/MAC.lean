@@ -10,7 +10,7 @@ module
 public import Complexity.Crypto.Computational.PseudorandomFunction
 public import Complexity.Crypto.Computational.Signature
 import Complexity.Probability.PMF.Bind
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.Oracle.Tidy
@@ -30,25 +30,36 @@ on an `n`-bit message under a secret key sampled at security parameter `n`. Unli
 signatures (`SignatureScheme`), verification uses the same secret key as tag generation, and the
 adversary receives no public key.
 
-We formalize fresh-message existential unforgeability under adaptive chosen-message attack
+We formalize both strong (fresh-pair) existential unforgeability under adaptive chosen-message
+attack (`sufCmaGame`, `SUFCMA`) as in
+[Boneh and Shoup, Attack Game 6.1 / Definition 6.2][BonehShoup2023],
+and ordinary fresh-message existential unforgeability under adaptive chosen-message attack
 (`eufCmaGame`, `EUFCMA`) and under one-time adaptive chosen-message attack (`eufOneTimeGame`,
-`OneTimeEUFCMA`) against uniform strict oracle-PPT forgers (`IsOraclePPT`). As in
-`SignatureScheme.eufCmaGame`, the experiment logs queried messages and rejects any candidate
-forgery on a previously queried message (`!queried.contains msg`), whereas [Boneh and Shoup,
-Attack Game 6.1 / Definition 6.2][BonehShoup2023] forbids only previously returned `(message, tag)`
-pairs (strong / fresh-pair unforgeability). For randomized `MACScheme.sign` algorithms the two
-notions differ (a randomized signer could issue multiple valid tags on the same message); for
-deterministic canonical MACs with a unique valid tag per message (such as `prfMAC`), fresh-message
-and fresh-pair unforgeability coincide.
+`OneTimeEUFCMA`) against uniform strict oracle-PPT forgers (`IsOraclePPT`). Both adaptive games
+share the pair-logging execution core `signingPairOracle`: `sufCmaGame` records returned
+`(msg, tag)` pairs and accepts any valid `n`-bit forgery pair `(msg, tag)` that was never returned
+(`!queriedPairs.contains (msg, tag)`), even on a previously queried message, whereas `eufCmaGame`
+rejects any candidate forgery whose message was previously queried (`!queried.contains msg`).
+We prove the quantitative bound
+$$\Pr[\text{EUF-CMA}] \le \Pr[\text{SUF-CMA}]$$
+(`succProbability_eufCmaGame_le_sufCmaGame`) and the security implication `SUFCMA → EUFCMA`
+(`SUFCMA.eufCma`). For randomized `MACScheme.sign` algorithms the two notions differ; for MACs with
+a unique valid tag per `(sk, msg)` (`eval_sufCmaGame_eq_eufCmaGame_of_unique_tag`,
+`sufCma_iff_eufCma_of_unique_tag`), including `prfMAC`, fresh-message and fresh-pair
+unforgeability coincide.
 
-We then prove that any uniform `PseudorandomFunction` yields an `EUFCMA`-secure deterministic MAC
-(`prfMAC`, `PseudorandomFunction.eufCma_prfMAC`), with the quantitative security reduction of
+We then prove that any uniform `PseudorandomFunction` yields a `SUFCMA`- and `EUFCMA`-secure
+deterministic MAC (`prfMAC`, `PseudorandomFunction.sufCma_prfMAC`,
+`PseudorandomFunction.eufCma_prfMAC`), with the quantitative security reduction of
 [Boneh and Shoup, Section 6.3, Theorem 6.2][BonehShoup2023]:
 $$\Pr[\text{Forge}] \le \mathrm{Adv}_{\mathrm{PRF}}(B(\mathcal{A}), n) + 2^{-n}.$$
 
 ## Main definitions
 
 * `Cslib.Crypto.MACScheme`: uniform symmetric message authentication code on `n`-bit messages.
+* `Cslib.Crypto.MACScheme.signingPairOracle`, `sufCmaGame`, `SUFCMA`: pair-logging tagging oracle
+  and strong (fresh-pair) adaptive SUF-CMA experiment and security predicate
+  ([Boneh and Shoup, Attack Game 6.1 / Definition 6.2][BonehShoup2023]).
 * `Cslib.Crypto.MACScheme.signingOracle`, `eufCmaGame`, `EUFCMA`: fresh-message adaptive EUF-CMA
   experiment and security predicate.
 * `Cslib.Crypto.MACScheme.oneTimeSigningOracle`, `eufOneTimeGame`, `OneTimeEUFCMA`: one-time
@@ -60,20 +71,31 @@ $$\Pr[\text{Forge}] \le \mathrm{Adv}_{\mathrm{PRF}}(B(\mathcal{A}), n) + 2^{-n}.
 
 ## Main results
 
-* `Cslib.Crypto.MACScheme.isPPTOn_eufCmaGame`, `isPPT_eufCmaGame`: strict PPT certificates for the
-  MAC EUF-CMA experiment.
+* `Cslib.Crypto.MACScheme.isPPTOn_sufCmaGame`, `isPPT_sufCmaGame`, `isPPTOn_eufCmaGame`,
+  `isPPT_eufCmaGame`: strict PPT certificates for the MAC SUF-CMA and EUF-CMA experiments.
+* `Cslib.Crypto.MACScheme.eval_run_signingOracle_eq_map_fst_signingPairOracle`,
+  `eval_eufCmaGame_eq_signingPairOracle`, `succProbability_eufCmaGame_le_sufCmaGame`,
+  `SUFCMA.eufCma`, `SUFCMA.oneTimeEUFCMA`: shared pair-history representation and quantitative /
+  asymptotic implication from strong to ordinary unforgeability.
+* `Cslib.Crypto.MACScheme.eval_sufCmaGame_eq_eufCmaGame_of_unique_tag`,
+  `sufCma_iff_eufCma_of_unique_tag`: equivalence of SUF-CMA and EUF-CMA for MACs with a unique
+  valid tag per message.
 * `Cslib.Crypto.MACScheme.isPPTOn_eufOneTimeGame`, `isPPT_eufOneTimeGame`: strict PPT certificates
   for the one-time MAC EUF-CMA experiment.
 * `Cslib.Crypto.MACScheme.EUFCMA.oneTimeEUFCMA`: full EUF-CMA security implies one-time EUF-CMA
   security.
-* `Cslib.Crypto.isOraclePPT_macToPrfDistinguisher`,
+* `Cslib.Crypto.eval_sufCmaGame_prfMAC`, `Cslib.Crypto.sufCma_prfMAC_iff_eufCma`,
+  `Cslib.Crypto.isOraclePPT_macToPrfDistinguisher`,
   `Cslib.Crypto.eval_prfRealGame_macToPrfDistinguisher`,
+  `Cslib.Crypto.eval_prfRealGame_macToPrfDistinguisher_eq_sufCmaGame`,
   `Cslib.Crypto.succProbability_prfIdealGame_macToPrfDistinguisher_le`,
-  `Cslib.Crypto.succProbability_eufCmaGame_prfMAC_le`: quantitative PRF-to-MAC forgery reduction
+  `Cslib.Crypto.succProbability_eufCmaGame_prfMAC_le`,
+  `Cslib.Crypto.succProbability_sufCmaGame_prfMAC_le`: quantitative PRF-to-MAC forgery reduction
   ([Boneh and Shoup, Theorem 6.2][BonehShoup2023]).
-* `Cslib.Crypto.PseudorandomFunction.eufCma_prfMAC`,
+* `Cslib.Crypto.PseudorandomFunction.sufCma_prfMAC`,
+  `Cslib.Crypto.PseudorandomFunction.eufCma_prfMAC`,
   `Cslib.Crypto.PseudorandomFunction.oneTimeEUFCMA_prfMAC`: any secure uniform
-  `PseudorandomFunction` yields an `EUFCMA`-secure (and `OneTimeEUFCMA`-secure) `MACScheme`.
+  `PseudorandomFunction` yields a `SUFCMA`-, `EUFCMA`-, and `OneTimeEUFCMA`-secure `MACScheme`.
 
 ## References
 
@@ -534,6 +556,306 @@ theorem EUFCMA.oneTimeEUFCMA {M : MACScheme} (h : M.EUFCMA) : M.OneTimeEUFCMA :=
     p.bind fun x => PMF.pure
       ((x.1.1.length == n) && !x.2.contains x.1.1 && M.verify sk x.1.1 x.1.2)) hrun
 
+/-! ### Strong adaptive chosen-message security (`SUFCMA`, Boneh–Shoup Attack Game 6.1) -/
+
+/-- Stateful MAC tagging oracle that tags the requested message under `sk` and prepends the
+returned `(msg, tag)` pair to the transcript of queried message/tag pairs
+([Boneh and Shoup, Attack Game 6.1][BonehShoup2023]). -/
+noncomputable def signingPairOracle (M : MACScheme) (sk : List Bool)
+    (request : Unit × List Bool) : StateT (List (List Bool × List Bool)) ProbComp (List Bool) :=
+  fun queriedPairs => do
+    let tag ← M.sign sk request.2
+    return (tag, (request.2, tag) :: queriedPairs)
+
+/-- The strong (fresh-pair) MAC SUF-CMA experiment
+([Boneh and Shoup, Attack Game 6.1 / Definition 6.2][BonehShoup2023]): sample `sk ← M.keyGen n`,
+run the adaptive forger on `(n, [])` with oracle access to `M.signingPairOracle sk`, and accept when
+the forger outputs a valid `(msg, tag)` pair on an `n`-bit message `msg` such that `(msg, tag)` was
+never returned by the tagging oracle (`!out.2.contains out.1`). -/
+noncomputable def sufCmaGame (M : MACScheme) (adversary : Forger) (n : ℕ) :
+    ProbComp Bool := do
+  let sk ← M.keyGen n
+  let out ← (OracleComp.interpret
+    (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifFin k))
+      (M.signingPairOracle sk)) (adversary n [])).run []
+  return (out.1.1.length == n) && !out.2.contains out.1 &&
+    M.verify sk out.1.1 out.1.2
+
+/-- Running an oracle-PPT forger against `signingPairOracle` is uniformly strict PPT in the unary
+security parameter and secret key. -/
+@[program_certificate]
+theorem isPPTOn_run_signingPairOracle (M : MACScheme) {adversary : Forger}
+    (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
+    IsPPTOn (encPair encUnary encBits)
+      (encPair (encPair encBits encBits) (encList (encPair encBits encBits)))
+      (fun caller : ℕ × List Bool =>
+        (OracleComp.interpret
+          (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifFin k))
+            (M.signingPairOracle caller.2)) (adversary caller.1 [])).run []) := by
+  obtain ⟨c, d, hlen⟩ := M.sign_ppt.length_le
+  have hhandler : IsPPTOn
+      (encPair (encPair encUnary encBits)
+        (encPair (encPair (encFinite Unit) encBits) (encList (encPair encBits encBits))))
+      (encPair encBits (encList (encPair encBits encBits)))
+      (fun pair : (ℕ × List Bool) × ((Unit × List Bool) × List (List Bool × List Bool)) =>
+        M.signingPairOracle pair.1.2 pair.2.1 pair.2.2) := by
+    unfold signingPairOracle
+    ppt
+  apply hadversary.run_interpret_preprocess
+    (prepare := fun caller : ℕ × List Bool => (caller.1, ([] : List Bool)))
+    (initial := fun _ => ([] : List (List Bool × List Bool)))
+    (resources := fun caller query =>
+      2 * (c * (2 * caller.2.length + query.length + 2) ^ d) + 4 * query.length + 6)
+    (by fun_prop) hhandler (by fun_prop)
+    (fun _ _ => True) (fun _ => trivial) (by fun_prop)
+  intro caller request queriedPairs _ result hresult
+  simp only [signingPairOracle, ProbComp.eval_bind, ProbComp.eval_pure,
+    PMF.mem_support_bind_iff, PMF.mem_support_pure_iff] at hresult
+  obtain ⟨tag, htag, rfl⟩ := hresult
+  have htagLen := hlen (caller.2, request.2) tag htag
+  simp only [encBits_apply, length_encPair] at htagLen
+  refine ⟨trivial, by lia, ?_⟩
+  simp only [encList_cons, List.length_append, length_frame, length_encPair, encBits_apply]
+  lia
+
+/-- Run the complete MAC SUF-CMA experiment on its unary security parameter for any oracle-PPT
+forger. -/
+@[program_certificate]
+theorem isPPTOn_sufCmaGame (M : MACScheme) {adversary : Forger}
+    (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
+    IsPPTOn encUnary encBool (M.sufCmaGame adversary) := by
+  have hrun := M.isPPTOn_run_signingPairOracle hadversary
+  have hcontains : ComputableTidilyInPolyTime
+      (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
+        pair.2.2.contains pair.2.1)
+      (encPair (encPair encUnary encBits)
+        (encPair (encPair encBits encBits) (encList (encPair encBits encBits)))) encBool := by
+    have hlist : ComputableTidilyInPolyTime
+        (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
+          pair.2.2)
+        (encPair (encPair encUnary encBits)
+          (encPair (encPair encBits encBits) (encList (encPair encBits encBits))))
+        (encList (encPair encBits encBits)) := by polytime
+    have helem : ComputableTidilyInPolyTime
+        (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
+          pair.2.1)
+        (encPair (encPair encUnary encBits)
+          (encPair (encPair encBits encBits) (encList (encPair encBits encBits))))
+        (encPair encBits encBits) := by polytime
+    classical
+    convert ComputableTidilyInPolyTime.decide_mem hlist helem using 1
+    funext a
+    rw [Bool.eq_iff_iff, List.contains_iff_mem, decide_eq_true_eq]
+  have hpost : ComputableTidilyInPolyTime
+      (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
+        (pair.2.1.1.length == pair.1.1) && !pair.2.2.contains pair.2.1 &&
+          M.verify pair.1.2 pair.2.1.1 pair.2.1.2)
+      (encPair (encPair encUnary encBits)
+        (encPair (encPair encBits encBits) (encList (encPair encBits encBits)))) encBool := by
+    polytime
+  exact M.keyGen_ppt.bind_with (hrun.bind_with hpost.isPPTOn)
+
+/-- The MAC SUF-CMA experiment is uniformly strict PPT, independently of unused auxiliary input. -/
+@[program_certificate]
+theorem isPPT_sufCmaGame (M : MACScheme) {adversary : Forger}
+    (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
+    IsPPT encBool (fun n _ => M.sufCmaGame adversary n) :=
+  ((M.isPPTOn_sufCmaGame hadversary).preprocess (ComputableTidilyInPolyTime.fst _ _)).isPPT
+
+/-- Strong (fresh-pair) existential unforgeability under adaptive chosen-message attack (`SUFCMA`)
+for a symmetric MAC against uniform strict oracle-PPT adversaries
+([Boneh and Shoup, Attack Game 6.1 / Definition 6.2][BonehShoup2023]). -/
+def SUFCMA (M : MACScheme) : Prop :=
+  Game.Indistinguishable
+    (fun adversary n => ProbComp.eval (M.sufCmaGame adversary n))
+    (fun _ _ => PMF.pure false)
+    (IsOraclePPT (encPair encBits encBits))
+
+/-- Strong unforgeability gives negligible SUF-CMA forgery probability for every oracle-PPT
+forger. -/
+theorem SUFCMA.negligible {M : MACScheme} (h : M.SUFCMA)
+    (adversary : Forger) (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
+    Negligible (fun n => Game.succProbability (ProbComp.eval (M.sufCmaGame adversary n))) := by
+  simpa only [Game.advantage_pure_false] using h adversary hadversary
+
+/-- Establish SUF-CMA security by bounding every oracle-PPT forger's success probability. -/
+theorem SUFCMA.of_negligible {M : MACScheme}
+    (h : ∀ adversary, IsOraclePPT (encPair encBits encBits) adversary →
+      Negligible (fun n => Game.succProbability (ProbComp.eval (M.sufCmaGame adversary n)))) :
+    M.SUFCMA := by
+  intro adversary hadversary
+  simpa only [Game.advantage_pure_false] using h adversary hadversary
+
+/-- Running an adaptive program against `signingOracle` produces the exact same distribution as
+running it against `signingPairOracle` and projecting the pair transcript to its queried
+messages. -/
+theorem eval_run_signingOracle_eq_map_fst_signingPairOracle (M : MACScheme)
+    (sk : List Bool) (prog : WordOracleComp Unit (List Bool × List Bool)) :
+    ProbComp.eval ((OracleComp.interpret
+      (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifFin k))
+        (M.signingOracle sk)) prog).run []) =
+    (ProbComp.eval ((OracleComp.interpret
+      (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifFin k))
+        (M.signingPairOracle sk)) prog).run [])).map
+      (fun (a, s') => (a, s'.map Prod.fst)) := by
+  rw [ProbOracleComp.eval_run_interpret, ProbOracleComp.eval_run_interpret]
+  exact (ProbOracleComp.run_interpret_map_state
+    (oracle := fun q s => ProbComp.eval (M.signingPairOracle sk q s))
+    (oracle' := fun q s => ProbComp.eval (M.signingOracle sk q s))
+    (represent := List.map Prod.fst)
+    (step := by
+      intro ⟨⟨⟩, msg⟩ queriedPairs
+      simp [signingPairOracle, signingOracle, PMF.map_comp, Function.comp_def])
+    prog []).symm
+
+/-- `eufCmaGame` evaluates the same pair-logging execution `signingPairOracle` as `sufCmaGame`,
+checking message freshness `!(out.2.map Prod.fst).contains out.1.1` on the projected message log. -/
+theorem eval_eufCmaGame_eq_signingPairOracle (M : MACScheme)
+    (adversary : Forger) (n : ℕ) :
+    ProbComp.eval (M.eufCmaGame adversary n) =
+      ProbComp.eval (do
+        let sk ← M.keyGen n
+        let out ← (OracleComp.interpret
+          (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifFin k))
+            (M.signingPairOracle sk)) (adversary n [])).run []
+        return (out.1.1.length == n) && !(out.2.map Prod.fst).contains out.1.1 &&
+          M.verify sk out.1.1 out.1.2) := by
+  simp only [eufCmaGame, ProbComp.eval_bind, ProbComp.eval_pure]
+  refine PMF.bind_congr_on_support _ _ _ fun sk _ => ?_
+  rw [M.eval_run_signingOracle_eq_map_fst_signingPairOracle sk (adversary n []), PMF.bind_map]
+  rfl
+
+private theorem pmf_bind_pure_bool_le {α : Type} (p : PMF α) (f g : α → Bool)
+    (hfg : ∀ a ∈ p.support, f a = true → g a = true) :
+    (p.bind (fun a => PMF.pure (f a))) true ≤
+      (p.bind (fun a => PMF.pure (g a))) true := by
+  rw [PMF.bind_apply, PMF.bind_apply]
+  refine ENNReal.tsum_le_tsum fun a => ?_
+  by_cases ha : a ∈ p.support
+  · refine mul_le_mul_of_nonneg_left ?_ zero_le
+    cases hf : f a
+    · simp
+    · rw [hfg a ha hf]
+  · simp [(p.apply_eq_zero_iff a).mpr ha]
+
+/-- **Quantitative EUF-CMA vs. SUF-CMA bound**: for every `MACScheme`, adaptive forger, and
+security parameter `n`, the fresh-message EUF-CMA forgery probability is at most the strong
+fresh-pair SUF-CMA forgery probability. -/
+theorem succProbability_eufCmaGame_le_sufCmaGame (M : MACScheme)
+    (adversary : Forger) (n : ℕ) :
+    Game.succProbability (ProbComp.eval (M.eufCmaGame adversary n)) ≤
+      Game.succProbability (ProbComp.eval (M.sufCmaGame adversary n)) := by
+  rw [M.eval_eufCmaGame_eq_signingPairOracle adversary n]
+  simp only [Game.succProbability, sufCmaGame, ProbComp.eval_bind, ProbComp.eval_pure]
+  refine ENNReal.toNNReal_mono (PMF.apply_ne_top _ true) ?_
+  rw [PMF.bind_apply, PMF.bind_apply]
+  refine ENNReal.tsum_le_tsum fun sk => ?_
+  refine mul_le_mul_of_nonneg_left (pmf_bind_pure_bool_le _ _ _ fun out _ hout => ?_) zero_le
+  simp only [Bool.and_eq_true, Bool.not_eq_true'] at hout ⊢
+  refine ⟨⟨hout.1.1, ?_⟩, hout.2⟩
+  rw [Bool.eq_false_iff]
+  intro hmemPair
+  have hmemFst : out.1.1 ∈ out.2.map Prod.fst :=
+    List.mem_map_of_mem (List.contains_iff_mem.mp hmemPair)
+  have hcontainsFst : (out.2.map Prod.fst).contains out.1.1 = true :=
+    List.contains_iff_mem.mpr hmemFst
+  rw [hout.1.2] at hcontainsFst
+  contradiction
+
+/-- Strong unforgeability (`SUFCMA`) implies ordinary fresh-message unforgeability (`EUFCMA`) for
+every `MACScheme`. -/
+theorem SUFCMA.eufCma {M : MACScheme} (h : M.SUFCMA) : M.EUFCMA := by
+  apply EUFCMA.of_negligible
+  intro adversary hadversary
+  exact negligible_of_le (h.negligible adversary hadversary)
+    (M.succProbability_eufCmaGame_le_sufCmaGame adversary)
+
+/-- Strong unforgeability (`SUFCMA`) implies one-time unforgeability (`OneTimeEUFCMA`) for every
+`MACScheme`. -/
+theorem SUFCMA.oneTimeEUFCMA {M : MACScheme} (h : M.SUFCMA) : M.OneTimeEUFCMA :=
+  h.eufCma.oneTimeEUFCMA
+
+private theorem mem_support_signingPairOracle (M : MACScheme) (sk : List Bool)
+    (prog : WordOracleComp Unit (List Bool × List Bool))
+    (result : List Bool × List Bool) (queriedPairs : List (List Bool × List Bool))
+    (hmem : (result, queriedPairs) ∈ (ProbComp.eval ((OracleComp.interpret
+      (ProbOracleComp.handler (fun k => StateT.lift (ProbComp.unifFin k))
+        (M.signingPairOracle sk)) prog).run [])).support) :
+    ∀ pair ∈ queriedPairs, pair.2 ∈ (ProbComp.eval (M.sign sk pair.1)).support := by
+  rw [ProbOracleComp.eval_run_interpret] at hmem
+  refine ProbOracleComp.run_interpret_invariant
+    (fun q s => ProbComp.eval (M.signingPairOracle sk q s))
+    (fun s => ∀ pair ∈ s, pair.2 ∈ (ProbComp.eval (M.sign sk pair.1)).support)
+    ?_ prog [] (by simp) result queriedPairs hmem
+  intro ⟨⟨⟩, msg⟩ s hs a s' hstep pair hpair
+  simp only [signingPairOracle, ProbComp.eval_bind, ProbComp.eval_pure,
+    PMF.mem_support_bind_iff, PMF.mem_support_pure_iff] at hstep
+  obtain ⟨tag, htag, hpairEq⟩ := hstep
+  cases hpairEq
+  rw [List.mem_cons] at hpair
+  rcases hpair with rfl | htail
+  · exact htag
+  · exact hs pair htail
+
+/-- For any `MACScheme` whose valid tags on `n`-bit messages under supported secret keys agree with
+every tag in the support of `M.sign`, the `sufCmaGame` and `eufCmaGame` distributions are
+identical. -/
+theorem eval_sufCmaGame_eq_eufCmaGame_of_unique_tag (M : MACScheme)
+    (huniq : ∀ n sk, sk ∈ (ProbComp.eval (M.keyGen n)).support →
+      ∀ msg, msg.length = n → ∀ tag tag',
+      M.verify sk msg tag = true →
+      tag' ∈ (ProbComp.eval (M.sign sk msg)).support → tag' = tag)
+    (adversary : Forger) (n : ℕ) :
+    ProbComp.eval (M.sufCmaGame adversary n) =
+      ProbComp.eval (M.eufCmaGame adversary n) := by
+  rw [M.eval_eufCmaGame_eq_signingPairOracle adversary n]
+  simp only [sufCmaGame, ProbComp.eval_bind, ProbComp.eval_pure]
+  refine PMF.bind_congr_on_support _ _ _ fun sk hsk => ?_
+  refine PMF.bind_congr_on_support _ _ _ fun ⟨⟨msg, tag⟩, queriedPairs⟩ hout => ?_
+  have hinv := M.mem_support_signingPairOracle sk (adversary n []) (msg, tag) queriedPairs hout
+  congr 1
+  by_cases hlen : (msg.length == n) = true
+  · by_cases hver : M.verify sk msg tag = true
+    · have hmsgLen : msg.length = n := beq_iff_eq.mp hlen
+      have hmem_iff : (msg, tag) ∈ queriedPairs ↔ ∃ x, (msg, x) ∈ queriedPairs := by
+        refine ⟨fun h => ⟨tag, h⟩, ?_⟩
+        rintro ⟨qtag, hmemPair⟩
+        have hqtag := hinv (msg, qtag) hmemPair
+        have heq := huniq n sk hsk msg hmsgLen tag qtag hver hqtag
+        subst heq
+        exact hmemPair
+      simp [hlen, hver, hmem_iff]
+    · have hverF : M.verify sk msg tag = false := Bool.eq_false_iff.mpr hver
+      simp [hverF]
+  · have hlenF : (msg.length == n) = false := Bool.eq_false_iff.mpr hlen
+    simp [hlenF]
+
+/-- For a `MACScheme` with unique valid tags per `(sk, msg)`, the SUF-CMA and EUF-CMA forgery
+probabilities are equal for every forger and security parameter `n`. -/
+theorem succProbability_sufCmaGame_eq_eufCmaGame_of_unique_tag (M : MACScheme)
+    (huniq : ∀ n sk, sk ∈ (ProbComp.eval (M.keyGen n)).support →
+      ∀ msg, msg.length = n → ∀ tag tag',
+      M.verify sk msg tag = true →
+      tag' ∈ (ProbComp.eval (M.sign sk msg)).support → tag' = tag)
+    (adversary : Forger) (n : ℕ) :
+    Game.succProbability (ProbComp.eval (M.sufCmaGame adversary n)) =
+      Game.succProbability (ProbComp.eval (M.eufCmaGame adversary n)) := by
+  rw [M.eval_sufCmaGame_eq_eufCmaGame_of_unique_tag huniq adversary n]
+
+/-- For a `MACScheme` with unique valid tags per `(sk, msg)`, strong unforgeability (`SUFCMA`) is
+equivalent to ordinary fresh-message unforgeability (`EUFCMA`). -/
+theorem sufCma_iff_eufCma_of_unique_tag (M : MACScheme)
+    (huniq : ∀ n sk, sk ∈ (ProbComp.eval (M.keyGen n)).support →
+      ∀ msg, msg.length = n → ∀ tag tag',
+      M.verify sk msg tag = true →
+      tag' ∈ (ProbComp.eval (M.sign sk msg)).support → tag' = tag) :
+    M.SUFCMA ↔ M.EUFCMA := by
+  refine ⟨SUFCMA.eufCma, fun h => ?_⟩
+  apply SUFCMA.of_negligible
+  intro adversary hadversary
+  refine (h.negligible adversary hadversary).congr fun n => ?_
+  exact (M.succProbability_sufCmaGame_eq_eufCmaGame_of_unique_tag huniq adversary n).symm
+
 end MACScheme
 
 /-! ### Canonical PRF-based MAC (`prfMAC`, Boneh–Shoup Section 6.3 & Theorem 6.2) -/
@@ -931,6 +1253,58 @@ theorem succProbability_prfIdealGame_macToPrfDistinguisher_le (adversary : Forge
     rw [ENNReal.toNNReal_div, ENNReal.toNNReal_one, ENNReal.toNNReal_pow, ENNReal.toNNReal_ofNat]
   rwa [hrhs] at hmono
 
+private theorem unique_tag_prfMAC
+    {family : List Bool → List Bool → List Bool}
+    (hpoly : ComputableInPolyTime (fun pair : List Bool × List Bool => family pair.1 pair.2)
+      (encPair encBits encBits) encBits) :
+    ∀ n sk, sk ∈ (ProbComp.eval ((prfMAC family hpoly).keyGen n)).support →
+      ∀ msg, msg.length = n → ∀ tag tag',
+      (prfMAC family hpoly).verify sk msg tag = true →
+      tag' ∈ (ProbComp.eval ((prfMAC family hpoly).sign sk msg)).support →
+      tag' = tag := by
+  intro n sk hsk msg hmsg tag tag' hver htag'
+  dsimp [prfMAC] at hsk hver htag'
+  rw [BitString.eval_sampleList] at hsk
+  have hskLen : sk.length = n := BitString.length_of_mem_support_uniformList hsk
+  simp only [Bool.and_eq_true, beq_iff_eq] at hver
+  simp only [PMF.mem_support_pure_iff, prfOracle, hskLen, hmsg, ↓reduceIte] at htag'
+  exact htag'.trans hver.2
+
+/-- Because `prfMAC` is deterministic with a unique valid tag per `(sk, msg)`, its strong
+fresh-pair `sufCmaGame` distribution is identical to its fresh-message `eufCmaGame`
+distribution. -/
+theorem eval_sufCmaGame_prfMAC
+    {family : List Bool → List Bool → List Bool}
+    (hpoly : ComputableInPolyTime (fun pair : List Bool × List Bool => family pair.1 pair.2)
+      (encPair encBits encBits) encBits)
+    (adversary : Forger) (n : ℕ) :
+    ProbComp.eval ((prfMAC family hpoly).sufCmaGame adversary n) =
+      ProbComp.eval ((prfMAC family hpoly).eufCmaGame adversary n) :=
+  (prfMAC family hpoly).eval_sufCmaGame_eq_eufCmaGame_of_unique_tag
+    (unique_tag_prfMAC hpoly) adversary n
+
+/-- For `prfMAC`, strong unforgeability (`SUFCMA`) and fresh-message unforgeability (`EUFCMA`)
+coincide. -/
+theorem sufCma_prfMAC_iff_eufCma
+    {family : List Bool → List Bool → List Bool}
+    (hpoly : ComputableInPolyTime (fun pair : List Bool × List Bool => family pair.1 pair.2)
+      (encPair encBits encBits) encBits) :
+    (prfMAC family hpoly).SUFCMA ↔ (prfMAC family hpoly).EUFCMA :=
+  (prfMAC family hpoly).sufCma_iff_eufCma_of_unique_tag (unique_tag_prfMAC hpoly)
+
+/-- Running `macToPrfDistinguisher adversary` in `prfRealGame family` produces the exact same
+Boolean distribution as the strong SUF-CMA experiment for `prfMAC family`. -/
+theorem eval_prfRealGame_macToPrfDistinguisher_eq_sufCmaGame
+    {family : List Bool → List Bool → List Bool}
+    (hpoly : ComputableInPolyTime (fun pair : List Bool × List Bool => family pair.1 pair.2)
+      (encPair encBits encBits) encBits)
+    (hlen : ∀ key query, query.length = key.length → (family key query).length = key.length)
+    (adversary : Forger) (n : ℕ) :
+    ProbComp.eval (prfRealGame family (macToPrfDistinguisher adversary) n) =
+      ProbComp.eval ((prfMAC family hpoly).sufCmaGame adversary n) := by
+  rw [eval_sufCmaGame_prfMAC hpoly adversary n]
+  exact eval_prfRealGame_macToPrfDistinguisher hpoly hlen adversary n
+
 /-- **Quantitative PRF-to-MAC forgery bound** [Boneh and Shoup, Theorem 6.2][BonehShoup2023]:
 for every adaptive MAC forger `adversary` and every security parameter `n`, the EUF-CMA forgery
 probability against `prfMAC family` is at most the PRF distinguishing advantage of
@@ -955,6 +1329,24 @@ theorem succProbability_eufCmaGame_prfMAC_le
   exact htri.trans (add_le_add_right
     (succProbability_prfIdealGame_macToPrfDistinguisher_le adversary n) _)
 
+/-- **Quantitative PRF-to-SUF-CMA forgery bound** [Boneh and Shoup, Theorem 6.2][BonehShoup2023]:
+for every adaptive MAC forger `adversary` and every security parameter `n`, the strong SUF-CMA
+forgery probability against `prfMAC family` is at most the PRF distinguishing advantage of
+`macToPrfDistinguisher adversary` plus `1 / 2 ^ n`. -/
+theorem succProbability_sufCmaGame_prfMAC_le
+    {family : List Bool → List Bool → List Bool}
+    (hpoly : ComputableInPolyTime (fun pair : List Bool × List Bool => family pair.1 pair.2)
+      (encPair encBits encBits) encBits)
+    (hlen : ∀ key query, query.length = key.length → (family key query).length = key.length)
+    (adversary : Forger) (n : ℕ) :
+    Game.succProbability (ProbComp.eval ((prfMAC family hpoly).sufCmaGame adversary n)) ≤
+      Game.advantage
+        (ProbComp.eval (prfRealGame family (macToPrfDistinguisher adversary) n))
+        (ProbComp.eval (prfIdealGame (macToPrfDistinguisher adversary) n)) +
+      (1 : ℝ≥0) / 2 ^ n := by
+  rw [eval_sufCmaGame_prfMAC hpoly adversary n]
+  exact succProbability_eufCmaGame_prfMAC_le hpoly hlen adversary n
+
 /-- **PRF-to-MAC security theorem** [Boneh and Shoup, Theorem 6.2][BonehShoup2023]:
 every uniform `PseudorandomFunction` yields an `EUFCMA`-secure `MACScheme`. -/
 theorem PseudorandomFunction.eufCma_prfMAC
@@ -970,6 +1362,14 @@ theorem PseudorandomFunction.eufCma_prfMAC
       negligible_geometric (ratio := (1 / 2 : ℝ≥0)) (by norm_num)
   exact negligible_of_le (hdist.add hgeom)
     (succProbability_eufCmaGame_prfMAC_le hprf.polyTime hprf.length_eq adversary)
+
+/-- **PRF-to-SUF-CMA security theorem** [Boneh and Shoup, Theorem 6.2][BonehShoup2023]:
+every uniform `PseudorandomFunction` yields a strongly unforgeable (`SUFCMA`) `MACScheme`. -/
+theorem PseudorandomFunction.sufCma_prfMAC
+    {family : List Bool → List Bool → List Bool}
+    (hprf : PseudorandomFunction family) :
+    (prfMAC family hprf.polyTime).SUFCMA :=
+  (sufCma_prfMAC_iff_eufCma hprf.polyTime).mpr hprf.eufCma_prfMAC
 
 /-- Every uniform `PseudorandomFunction` also yields a `OneTimeEUFCMA`-secure `MACScheme`. -/
 theorem PseudorandomFunction.oneTimeEUFCMA_prfMAC
