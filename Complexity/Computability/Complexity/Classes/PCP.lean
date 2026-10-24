@@ -43,7 +43,7 @@ The PCP theorem, `NP = PCP(log n, 1)`, is proved as `Cslib.Complexity.NP_eq_PCP_
 
 ## Main definitions
 
-* `Cslib.Complexity.PCPVerifier`, with `PCPVerifier.Accepts` and `PCPVerifier.PolyTime`.
+* `Cslib.Complexity.PCPVerifier`, with `PCPVerifier.accepts` and `PCPVerifier.PolyTime`.
 * `Cslib.Complexity.IsPCPVerifier`: completeness, soundness and the bound on queries.
 * `Cslib.Complexity.PCP`.
 
@@ -88,7 +88,7 @@ theorem answers_range_length (π : List Bool) : answers π (List.range π.length
   simp [answers, List.getElem?_eq_getElem h]
 
 /-- The verdict of `V` on the instance `a` with the proof `π` and the random string `ρ`. -/
-def Accepts (V : PCPVerifier α) (a : α) (π ρ : List Bool) : Bool :=
+def accepts (V : PCPVerifier α) (a : α) (π ρ : List Bool) : Bool :=
   V.verdict ((a, ρ), answers π (V.queries (a, ρ)))
 
 /-- A verifier is polynomial-time, with respect to the encoding `enc` of instances, when its
@@ -108,9 +108,9 @@ The random strings on an instance `a` are those of length `V.coins a`. -/
 def IsPCPVerifier (enc : α ↪ List Bool) (r q : ℕ → ℕ) (V : PCPVerifier α) (A : Set α) : Prop :=
   (∀ a, V.coins a ≤ r (enc a).length) ∧
     (∀ a (ρ : List Bool), ρ.length = V.coins a → (V.queries (a, ρ)).length ≤ q (enc a).length) ∧
-    (∀ a ∈ A, ∃ π : List Bool, ∀ ρ : List Bool, ρ.length = V.coins a → V.Accepts a π ρ = true) ∧
+    (∀ a ∈ A, ∃ π : List Bool, ∀ ρ : List Bool, ρ.length = V.coins a → V.accepts a π ρ = true) ∧
     ∀ a ∉ A, ∀ π : List Bool,
-      2 * acceptCount (fun x => V.Accepts x.1 π x.2) a (V.coins a) ≤ 2 ^ V.coins a
+      2 * acceptCount (fun x => V.accepts x.1 π x.2) a (V.coins a) ≤ 2 ^ V.coins a
 
 /-- The class `PCP(r, q)` with respect to the encoding `enc` of instances: the problems with a
 polynomial-time verifier using `O(r n)` random bits and `O(q n)` queries on instances whose

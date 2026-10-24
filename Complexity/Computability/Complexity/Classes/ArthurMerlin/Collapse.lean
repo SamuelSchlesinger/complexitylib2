@@ -40,7 +40,7 @@ The proof:
 * `Cslib.Complexity.PH_eq_SigmaP_two_of_coNP_subset_AM`: **Boppana–Håstad–Zachos**.
 * `Cslib.Complexity.SigmaP_two_eq_AM_of_coNP_subset_AM`,
   `Cslib.Complexity.PiP_two_eq_SigmaP_two_of_coNP_subset_AM`: `Σ₂ = Π₂ = AM`.
-* `Cslib.Complexity.PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism`: if graph isomorphism is
+* `Cslib.Complexity.PH_eq_SigmaP_two_of_npComplete_GraphIsomorphism`: if graph isomorphism is
   `NP`-complete, then `PH = Σ₂`.
 
 ## References
@@ -104,7 +104,7 @@ theorem PiP_two_eq_SigmaP_two_of_coNP_subset_AM
 /-- **If graph isomorphism is `NP`-complete, then `PH = Σ₂`** [BoppanaHastadZachos1987],
 [Arora and Barak, Section 8.2][AroraBarak09]: graph non-isomorphism is then `coNP`-hard, and it
 is in `AM`, which is closed under reductions, so `coNP ⊆ AM`. -/
-theorem PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism
+theorem PH_eq_SigmaP_two_of_npComplete_GraphIsomorphism
     (hGI : NPComplete (encPair encGraph encGraph) GraphIsomorphism) : PH enc = SigmaP 2 enc :=
   PH_eq_SigmaP_two_of_coNP_subset_AM fun encB A hA =>
     (NPHard.compl hGI.2 encB A hA).mem_AM GraphNonIsomorphism.mem_AM

@@ -169,12 +169,12 @@ example : encCNF falseCNF ∉ smallSAT 10 := fun h =>
 `NP`-complete only if `P = NP`. -/
 example : SATH ∈ NP encBits ∧ (SATH ∈ P encBits → SAT ∈ P encCNF) ∧
     (NPComplete encBits SATH → P encBits = NP encBits) :=
-  ⟨SATH_mem_NP, SAT_mem_P_of_SATH_mem_P, fun h => P_eq_NP_of_NPComplete_SATH h encBits⟩
+  ⟨SATH_mem_NP, SAT_mem_P_of_SATH_mem_P, fun h => P_eq_NP_of_npComplete_SATH h encBits⟩
 
 /-- Ladner's theorem for the canonical encoding of languages. -/
 example (h : P encBits ≠ NP encBits) :
     ∃ L : Set (List Bool), L ∈ NP encBits ∧ L ∉ P encBits ∧ ¬NPComplete encBits L :=
-  exists_NP_not_P_not_NPComplete h
+  exists_NP_not_P_not_npComplete h
 
 /-! ### Axioms -/
 
@@ -207,11 +207,11 @@ info: 'Cslib.Complexity.Ladner.SAT_mem_P_of_SATH_mem_P' depends on axioms:
 #print axioms Cslib.Complexity.Ladner.SAT_mem_P_of_SATH_mem_P
 
 /--
-info: 'Cslib.Complexity.Ladner.SAT_mem_P_of_NPHard_SATH' depends on axioms:
+info: 'Cslib.Complexity.Ladner.SAT_mem_P_of_npHard_SATH' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.SAT_mem_P_of_NPHard_SATH
+#print axioms Cslib.Complexity.Ladner.SAT_mem_P_of_npHard_SATH
 
 /--
 info: 'Cslib.Complexity.Ladner.SAT_mem_P_of_reducible_of_tendsto' depends on axioms:
@@ -228,17 +228,17 @@ info: 'Cslib.Complexity.Ladner.P_eq_NP_of_SATH_mem_P' depends on axioms:
 #print axioms Cslib.Complexity.Ladner.P_eq_NP_of_SATH_mem_P
 
 /--
-info: 'Cslib.Complexity.Ladner.P_eq_NP_of_NPComplete_SATH' depends on axioms:
+info: 'Cslib.Complexity.Ladner.P_eq_NP_of_npComplete_SATH' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.P_eq_NP_of_NPComplete_SATH
+#print axioms Cslib.Complexity.Ladner.P_eq_NP_of_npComplete_SATH
 
 /--
-info: 'Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete' depends on axioms:
+info: 'Cslib.Complexity.Ladner.exists_NP_not_P_not_npComplete' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.Ladner.exists_NP_not_P_not_NPComplete
+#print axioms Cslib.Complexity.Ladner.exists_NP_not_P_not_npComplete
 
 end ComplexityTests.Ladner

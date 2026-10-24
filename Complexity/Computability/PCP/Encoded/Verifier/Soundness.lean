@@ -80,12 +80,12 @@ private theorem card_reject_indexVerdict (g : Graph C) (eval : C → α → α �
 theorem rejectProb_edgeVerifier (width : ℕ) (decode : (Fin width → Bool) → α)
     (eval : C → α → α → Bool) (g : Graph C) (proof : List Bool) :
     ((BitString.uniformList (Nat.clog 2 g.edges.length)).map
-      (fun random => (edgeVerifier width decode eval).Accepts g proof random)) false =
+      (fun random => (edgeVerifier width decode eval).accepts g proof random)) false =
       (↑((g.toGraph eval).unsatEdges (proofLabels width decode proof)).card : ENNReal) /
         2 ^ Nat.clog 2 g.edges.length := by
   let labels := proofLabels width decode proof
   have hmap : (BitString.uniformList (Nat.clog 2 g.edges.length)).map
-      (fun random => (edgeVerifier width decode eval).Accepts g proof random) =
+      (fun random => (edgeVerifier width decode eval).accepts g proof random) =
       (PMF.uniformOfFintype (Fin (2 ^ Nat.clog 2 g.edges.length))).map
         (fun i => indexVerdict g eval labels i.val) := by
     calc
@@ -110,7 +110,7 @@ private theorem unsatFrac_div_two_le_rejectProb (width : ℕ) (decode : (Fin wid
     (eval : C → α → α → Bool) (g : Graph C) (proof : List Bool) :
     (g.toGraph eval).unsatFrac (proofLabels width decode proof) / 2 ≤
       (((BitString.uniformList (Nat.clog 2 g.edges.length)).map
-        (fun random => (edgeVerifier width decode eval).Accepts g proof random)) false).toReal := by
+        (fun random => (edgeVerifier width decode eval).accepts g proof random)) false).toReal := by
   rcases g.edges.length.eq_zero_or_pos with hzero | hpos
   · simp only [ConstraintGraph.unsatFrac, Fintype.card_fin, hzero, Nat.cast_zero, div_zero,
       zero_div]
@@ -127,7 +127,7 @@ theorem unsatVal_div_two_le_rejectProb (width : ℕ) (decode : (Fin width → Bo
     (eval : C → α → α → Bool) (g : Graph C) (proof : List Bool) :
     (g.toGraph eval).unsatVal / 2 ≤
       (((BitString.uniformList (Nat.clog 2 g.edges.length)).map
-        (fun random => (edgeVerifier width decode eval).Accepts g proof random)) false).toReal :=
+        (fun random => (edgeVerifier width decode eval).accepts g proof random)) false).toReal :=
   (div_le_div_of_nonneg_right ((g.toGraph eval).unsatVal_le _) (by norm_num)).trans
     (unsatFrac_div_two_le_rejectProb width decode eval g proof)
 
@@ -135,12 +135,12 @@ theorem unsatVal_div_two_le_rejectProb (width : ℕ) (decode : (Fin width → Bo
 theorem acceptProb_edgeVerifier_le (width : ℕ) (decode : (Fin width → Bool) → α)
     (eval : C → α → α → Bool) (g : Graph C) (proof : List Bool) :
     (((BitString.uniformList (Nat.clog 2 g.edges.length)).map
-      (fun random => (edgeVerifier width decode eval).Accepts g proof random)) true).toReal ≤
+      (fun random => (edgeVerifier width decode eval).accepts g proof random)) true).toReal ≤
         1 - (g.toGraph eval).unsatVal / 2 := by
   have h := unsatVal_div_two_le_rejectProb width decode eval g proof
   have hsum := PMF.toReal_true_add_toReal_false
     ((BitString.uniformList (Nat.clog 2 g.edges.length)).map
-      (fun random => (edgeVerifier width decode eval).Accepts g proof random))
+      (fun random => (edgeVerifier width decode eval).accepts g proof random))
   linarith
 
 end Cslib.PCP.Encoded.Graph

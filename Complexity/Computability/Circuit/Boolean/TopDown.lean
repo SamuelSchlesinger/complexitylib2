@@ -256,7 +256,7 @@ theorem two_rpow_lt_add_size_of_computes_parity {d : ℕ} (hd : 2 ≤ d) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
       C.Computes interpretation (single (parity n)) → C.depthWith andOrCost ≤ d →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
-  obtain ⟨ε, hε, N, hN⟩ := parity_communication_lower_bound.{0} d hd
+  obtain ⟨ε, hε, N, hN⟩ := not_solvesKW_parity.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn C hC hCd => ?_⟩
   obtain ⟨P, hP⟩ := exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd
   exact two_rpow_lt_add_size (fun P h => hN n (le_of_max_le_left hn) h P) hP
@@ -268,7 +268,7 @@ theorem two_rpow_lt_add_size_of_computes_strictMajority {d : ℕ} (hd : 2 ≤ d)
       C.Computes interpretation (single (strictMajority n)) →
       C.depthWith andOrCost ≤ d →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
-  obtain ⟨ε, hε, N, hN⟩ := strictMajority_communication_lower_bound.{0} d hd
+  obtain ⟨ε, hε, N, hN⟩ := not_solvesKW_strictMajority.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn C hC hCd => ?_⟩
   obtain ⟨P, hP⟩ := exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd
   exact two_rpow_lt_add_size (fun P h => hN n (le_of_max_le_left hn) h P) hP
@@ -280,7 +280,7 @@ theorem two_rpow_lt_add_size_of_computes_majority {d : ℕ} (hd : 2 ≤ d) :
     ∃ ε : ℝ, 0 < ε ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → ∀ C : Circuit signature n 1,
       C.Computes interpretation (single (majority n)) → C.depthWith andOrCost ≤ d →
       (2 : ℝ) ^ (ε * (n : ℝ) ^ (((d - 1 : ℕ) : ℝ)⁻¹)) < n + C.size := by
-  obtain ⟨ε, hε, N, hN⟩ := strictMajority_communication_lower_bound.{0} d hd
+  obtain ⟨ε, hε, N, hN⟩ := not_solvesKW_strictMajority.{0} d hd
   refine ⟨ε, hε, max N 1, fun n hn C hC hCd => ?_⟩
   obtain ⟨P, hP⟩ := exists_roundProtocol_of_computes hC ⟨0, le_of_max_le_right hn⟩ hCd
   have hneg (z : BitString n) : (!majority n zᶜ) = strictMajority n z := by

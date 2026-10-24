@@ -139,7 +139,7 @@ theorem SolvesSearch.rel (h : SolvesSearch R f) {a : α} {w : List Bool} (ha : f
     R a w :=
   (h a).1 w ha
 
-theorem SolvesSearch.not_mem (h : SolvesSearch R f) {a : α} (ha : f a = none) :
+theorem SolvesSearch.notMem (h : SolvesSearch R f) {a : α} (ha : f a = none) :
     a ∉ searchDomain R :=
   (h a).2 ha
 
@@ -147,7 +147,7 @@ theorem SolvesSearch.not_mem (h : SolvesSearch R f) {a : α} (ha : f a = none) :
 theorem SolvesSearch.isSome_iff (h : SolvesSearch R f) {a : α} :
     (f a).isSome ↔ a ∈ searchDomain R := by
   cases ha : f a with
-  | none => simpa using h.not_mem ha
+  | none => simpa using h.notMem ha
   | some w => simpa using ⟨w, h.rel ha⟩
 
 /-- A function that always returns a solution solves the search problem. -/
@@ -159,7 +159,7 @@ theorem solvesSearch_some {g : α → List Bool} (hg : ∀ a, R a (g a)) :
 theorem SolvesSearch.rel_getD (h : SolvesSearch R f) (htot : IsTotalSearch R) (a : α)
     (d : List Bool) : R a ((f a).getD d) := by
   cases ha : f a with
-  | none => exact (h.not_mem ha (htot a)).elim
+  | none => exact (h.notMem ha (htot a)).elim
   | some w => exact h.rel ha
 
 end Basic
@@ -379,7 +379,7 @@ theorem searchDomain_mem_P_of_searchSum_mem_FPSearch (hRS : searchSum R S ∈ FP
   · change a ∈ searchDomain R ↔ ((f a).getD []).headD false = true
     cases ha : f a with
     | none =>
-      have := hsolve.not_mem ha
+      have := hsolve.notMem ha
       rw [searchDomain_searchSum] at this
       exact ⟨fun h => (this (.inl h)).elim, fun h => by simp at h⟩
     | some w =>
@@ -504,7 +504,7 @@ theorem SearchReducible.mem_FPSearch (h : SearchReducible encA encB R T) (hR : R
       simp only [hsa, Option.elim_some, Option.some.injEq] at ha
       exact ha ▸ hsol a v (hsolve.rel hsa)
   · cases hsa : s (f a) with
-    | none => exact hsolve.not_mem hsa (hdom a hR)
+    | none => exact hsolve.notMem hsa (hdom a hR)
     | some v => simp [hsa] at ha
 
 section Hardness

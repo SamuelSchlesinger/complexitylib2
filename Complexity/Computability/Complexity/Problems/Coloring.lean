@@ -597,7 +597,7 @@ private theorem mem_kColoringEdges {m : ℕ} {φ : CNF ℕ} {e : ℕ × ℕ} :
     · exact Or.inr ⟨r, hr, Or.inr ⟨r', hr', rfl⟩⟩
 
 /-- The rank of `x` among the natural numbers outside `S`. -/
-private theorem card_filter_not_mem_lt {S : Finset ℕ} {n x : ℕ}
+private theorem card_filter_notMem_lt {S : Finset ℕ} {n x : ℕ}
     (hS : S ⊆ Finset.range (n + 3)) (hcard : S.card = n) (hx : x ∉ S) (hxlt : x < n + 3) :
     ((Finset.range x).filter (· ∉ S)).card < 3 := by
   have htot := Finset.card_filter_add_card_filter_not (s := Finset.range (n + 3)) (· ∈ S)
@@ -613,7 +613,7 @@ private theorem card_filter_not_mem_lt {S : Finset ℕ} {n x : ℕ}
   rw [Finset.card_insert_of_notMem (by simp)] at this
   omega
 
-private theorem card_filter_not_mem_strictMono {S : Finset ℕ} {x y : ℕ} (hx : x ∉ S)
+private theorem card_filter_notMem_strictMono {S : Finset ℕ} {x y : ℕ} (hx : x ∉ S)
     (hxy : x < y) :
     ((Finset.range x).filter (· ∉ S)).card < ((Finset.range y).filter (· ∉ S)).card := by
   refine Finset.card_lt_card ((Finset.ssubset_iff_of_subset
@@ -675,11 +675,11 @@ theorem toKColoring_mem_iff (m : ℕ) (φ : CNF ℕ) :
     obtain ⟨h₁, h₂⟩ := mem_endpoints he
     obtain ⟨hne, hlt₁, hlt₂⟩ := hE e (mem_kColoringEdges.2 (Or.inl he))
       (ne_of_mem_coloringEdges he)
-    refine ⟨fun h => ?_, card_filter_not_mem_lt hSsub hcard (hnot h₁) hlt₁,
-      card_filter_not_mem_lt hSsub hcard (hnot h₂) hlt₂⟩
+    refine ⟨fun h => ?_, card_filter_notMem_lt hSsub hcard (hnot h₁) hlt₁,
+      card_filter_notMem_lt hSsub hcard (hnot h₂) hlt₂⟩
     rcases Nat.lt_or_gt_of_ne hne with h' | h'
-    · exact (card_filter_not_mem_strictMono (hnot h₁) h').ne h
-    · exact (card_filter_not_mem_strictMono (hnot h₂) h').ne h.symm
+    · exact (card_filter_notMem_strictMono (hnot h₁) h').ne h
+    · exact (card_filter_notMem_strictMono (hnot h₂) h').ne h.symm
   · rintro ⟨σ, hσ⟩
     let c : ℕ → ℕ := fun v => if v.unpair.1 = 3 then 3 + v.unpair.2 else gadgetColoring φ σ v
     have hcU : ∀ r, c (universalVertex r) = 3 + r := fun r => by simp [c, universalVertex]

@@ -64,10 +64,10 @@ theorem PCP_zero_zero : PCP (fun _ => 0) (fun _ => 0) enc = P enc := by
     · exact .of_tidy <|
         hv.comp (g := fun a : α => ((a, ([] : List Bool)), ([] : List Bool))) (by fun_prop)
     · -- with no random bits there are no queries, so the verdict ignores the proof
-      have key (π : List Bool) : V.Accepts a π [] = V.verdict ((a, []), []) := by
+      have key (π : List Bool) : V.accepts a π [] = V.verdict ((a, []), []) := by
         have h0 : V.queries (a, []) = [] :=
           List.eq_nil_of_length_eq_zero (hqs a [] (by simp [hcoins a]))
-        simp [PCPVerifier.Accepts, h0, PCPVerifier.answers]
+        simp [PCPVerifier.accepts, h0, PCPVerifier.answers]
       constructor
       · intro ha
         obtain ⟨π, hπ⟩ := hcomp a ha
@@ -91,11 +91,11 @@ theorem PCP_zero_zero : PCP (fun _ => 0) (fun _ => 0) enc = P enc := by
       simp
     · intro a ha
       refine ⟨[], fun ρ _ => ?_⟩
-      simpa [PCPVerifier.Accepts] using (hA a).mp ha
+      simpa [PCPVerifier.accepts] using (hA a).mp ha
     · intro a ha π
       have hfa : f a = false := by simpa [hA a] using ha
       rw [acceptCount_zero]
-      simp [PCPVerifier.Accepts, hfa]
+      simp [PCPVerifier.accepts, hfa]
 
 /-- **`P ⊆ PCP(r, q)`** for all `r` and `q`. -/
 theorem P_subset_PCP (r q : ℕ → ℕ) : P enc ⊆ PCP r q enc :=
@@ -131,7 +131,7 @@ theorem exists_mem_PCP_zero_of_mem_NP {A : Set α} (hA : A ∈ NP enc) :
   · intro a ha
     obtain ⟨w, hw, hVw⟩ := (hver a).mp ha
     refine ⟨w, fun ρ _ => ?_⟩
-    simp only [PCPVerifier.Accepts]
+    simp only [PCPVerifier.accepts]
     rw [← hw, PCPVerifier.answers_range_length]
     exact hVw
   · intro a ha π
@@ -140,7 +140,7 @@ theorem exists_mem_PCP_zero_of_mem_NP {A : Set α} (hA : A ∈ NP enc) :
       exact ha ((hver a).mpr ⟨PCPVerifier.answers π (List.range (p.eval (enc a).length)),
         by simp [PCPVerifier.answers], Bool.not_eq_false _ ▸ h⟩)
     rw [acceptCount_zero]
-    simp [PCPVerifier.Accepts, hrej]
+    simp [PCPVerifier.accepts, hrej]
 
 /-- **`NP = PCP(0, poly)`**: a problem is in `NP` exactly when it has a polynomial-time PCP
 verifier using no random bits and polynomially many queries. -/

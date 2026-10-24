@@ -56,17 +56,18 @@ private theorem onTuple {β : Type} {encB : β ↪ List Bool} {f : Tuple × Bool
 /-- **The halting test** on tuples. -/
 private theorem haltT_inSpace :
     ComputableTidilyInSpace haltT encTuple encBool fun x => stepBudget (x, false) :=
-  onTuple (budget_finite (encC := encBool) (fun t : Fin 7 => decide (t = 6)) hTag)
+  onTuple (budget_finite (encC := encBool) (fun t : Fin 7 => decide (t = 6)) tag_inSpace)
 
 /-- The offset of the node at the path of a stack. -/
 private theorem offsetT_inSpace {st : Tuple × Bool → List Frame}
     (hst : ComputableTidilyInSpace st encStepInT (encList encFrame) stepBudget) :
     ComputableTidilyInSpace (fun y => offsetT y.1 (st y)) encStepInT encNat stepBudget := by
   have hdirs := budget_comp dirs_inSpace hst (.const_mul 64 ((length_le hst).add (.const 1 _)))
-  have harg := budget_prod (budget_prod hEll hHeight) hdirs
+  have harg := budget_prod (budget_prod ell_inSpace height_inSpace) hdirs
   have hpo := budget_comp pathOffset_inSpace harg (.const_mul (2 ^ 30)
     (((ell_le_stepBudget.add height_le_stepBudget).add (length_le harg)).add (.const 1 _)))
-  have h₂ := hSucc (hSucc (budget_comp_lin natAdd linear_succ (budget_prod hEll hHeight)))
+  have h₂ := succ_inSpace (succ_inSpace
+    (budget_comp_lin natAdd linear_succ (budget_prod ell_inSpace height_inSpace)))
   refine (budget_comp_lin natAdd linear_succ (budget_prod h₂ hpo)).of_enc_eq fun y => ?_
   simp only [offsetT, path_eq_reverse, foldl_cons_dir, List.append_nil]
 
@@ -76,15 +77,17 @@ private theorem addrT_inSpace :
   have hsome {n : Tuple × Bool → ℕ} (hn : ComputableTidilyInSpace n encStepInT encNat stepBudget) :
       ComputableTidilyInSpace (fun y => some (n y)) encStepInT (encOption encNat) stepBudget :=
     budget_comp_linear (of_inO (ComputableTidilyInDegree.optionSome (enc₁ := encNat)).inO_one) hn
-  have ht (k : Fin 7) := budget_finite (encC := encBool) (fun t : Fin 7 => decide (t = k)) hTag
+  have ht (k : Fin 7) :=
+    budget_finite (encC := encBool) (fun t : Fin 7 => decide (t = k)) tag_inSpace
   have hadd {a b : Tuple × Bool → ℕ} (ha : ComputableTidilyInSpace a encStepInT encNat stepBudget)
       (hb : ComputableTidilyInSpace b encStepInT encNat stepBudget) :
       ComputableTidilyInSpace (fun y => a y + b y) encStepInT encNat stepBudget :=
     budget_comp_lin natAdd linear_succ (budget_prod ha hb)
-  have h := budget_ite (ht 0) (hsome hN₁) (budget_ite (ht 1) (hsome (hadd (hSucc hEll) hN₁))
-    (budget_ite (ht 4) (hsome (hadd (offsetT_inSpace hStack) hN₁))
-      (budget_ite (ht 5) (hsome (hadd (offsetT_inSpace hRest) hN₁))
-        (budget_const (encB := encOption encNat) none len_le_stepBudget))))
+  have h := budget_ite (ht 0) (hsome n₁_inSpace)
+    (budget_ite (ht 1) (hsome (hadd (succ_inSpace ell_inSpace) n₁_inSpace))
+      (budget_ite (ht 4) (hsome (hadd (offsetT_inSpace stack_inSpace) n₁_inSpace))
+        (budget_ite (ht 5) (hsome (hadd (offsetT_inSpace rest_inSpace) n₁_inSpace))
+          (budget_const (encB := encOption encNat) none len_le_stepBudget))))
   refine (onTuple h).of_enc_eq fun x => ?_
   simp only [addrT, decide_eq_true_eq]
 

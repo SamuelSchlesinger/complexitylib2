@@ -298,8 +298,8 @@ Proof hygiene). This list records earlier changes that had no mechanical success
     `NEXP_eq_EXP_of_NEXP_subset_SigmaP`.
   - `Hastad.lean`: `hastadSATProb` and its three lemmas, `hastadGraphSATProb`, and
     `hastadGraphSATProb_eq_add_hastadGraphLinearCorr`. The SAT conjuncts were dropped from
-    `hastadGraphProb_longCode_of_satisfies` and `hastad_gapLabelCover_dichotomy`, keeping their
-    names.
+    `hastadGraphProb_longCode_of_satisfies` (now `graphLinearProb_longCode_of_satisfies`) and
+    `hastad_gapLabelCover_dichotomy` (now `gapLabelCover_dichotomy`).
   - The conditional sumset-extractor frontier layer (#391), whose extractor-family hypothesis was
     never discharged: `Circuit/Frontier/Extractor.lean` and `Complexity/FrontierExtractor.lean`
     (whole modules), and the decimal restatements
@@ -317,8 +317,8 @@ Proof hygiene). This list records earlier changes that had no mechanical success
     lemmas moved to `Cslib.BitString` in `Foundations/BooleanAnalysis/LongCode` (`IsFolded`
     became `IsOdd`), and `Hastad/ExactThreeDistinct` merged into
     `PCP/Approximation/MaxExactThreeSAT`, keeping its declaration names; imports of the deleted
-    module path must be updated. `hastad_gapLabelCover_dichotomy` now chooses `η` before the label
-    sets, keeping its name.
+    module path must be updated. `hastad_gapLabelCover_dichotomy` (now `gapLabelCover_dichotomy`)
+    now chooses `η` before the label sets.
   - Follow-up #390 (same date and policy): the rest of the `ACC0.lean` Williams scaffolding,
     `SymPlusCircuit` and its API, `evalMask` and its lemmas, `zetaTransform`, `fastZeta`,
     `fastZeta_eq_zetaTransform`, `parity_mem_EXP`, `parity_mem_NEXP`,

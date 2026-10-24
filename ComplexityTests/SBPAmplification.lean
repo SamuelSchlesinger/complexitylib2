@@ -25,7 +25,7 @@ def language : Set (List Bool) := {w | w.headD false = true}
 private def count (w : List Bool) : ℕ := if w.headD false then 3 else 1
 
 private theorem count_mem : count ∈ SharpP encBits :=
-  SharpP.of_polyTime (f := count) (by unfold count; fun_prop)
+  mem_SharpP_of_polyTime (f := count) (by unfold count; fun_prop)
 
 private theorem language_mem : language ∈ SBP encBits := by
   refine ⟨count, count_mem, fun _ => 3, .const 3, fun w => ?_⟩

@@ -24,19 +24,19 @@ The Long Code, folding and the mod-2 projection `Cslib.BitString.projectSet` liv
 
 ## Main definitions
 
-* `Cslib.PCP.Hastad.hastadLinearCorr`, `Cslib.PCP.Hastad.hastadLinearProb`: correlation and
+* `Cslib.PCP.Hastad.linearCorr`, `Cslib.PCP.Hastad.linearProb`: correlation and
   acceptance probability of Håstad's 3-bit linear test on an edge `π : β → γ`.
 * `Cslib.PCP.Hastad.spectralWeight`: low-degree Fourier decoding weights on `α`.
 
 ## Main results
 
-* `Cslib.PCP.Hastad.hastadLinearCorr_longCode`, `Cslib.PCP.Hastad.hastadLinearProb_longCode`:
+* `Cslib.PCP.Hastad.linearCorr_longCode`, `Cslib.PCP.Hastad.linearProb_longCode`:
   completeness `1 - δ` for 3-bit linear tests on valid Long Code tables.
-* `Cslib.PCP.Hastad.hastadLinearCorr_eq_sum`: exact Walsh–Fourier expansion of Håstad's 3-bit test
+* `Cslib.PCP.Hastad.linearCorr_eq_sum`: exact Walsh–Fourier expansion of Håstad's 3-bit test
   correlation.
 * `Cslib.PCP.Hastad.sum_spectralWeight_le_one`: Parseval bound showing that `spectralWeight k B` is
   a sub-probability distribution on `γ`.
-* `Cslib.PCP.Hastad.hastadLinearCorr_sq_le`: single-edge Cauchy–Schwarz + Parseval soundness bound.
+* `Cslib.PCP.Hastad.linearCorr_sq_le`: single-edge Cauchy–Schwarz + Parseval soundness bound.
 
 ## References
 
@@ -66,7 +66,7 @@ variable [Fintype β] [DecidableEq β] [Fintype γ] [DecidableEq γ]
 between tables `B : (γ → Bool) → Bool` and `A : (β → Bool) → Bool` [Håstad, Section 5][Hastad2001]:
 the expected product of the `±1` signs of `B f`, `A g`, and `A ((f ∘ π) + g + μ)` over uniform
 `f : γ → Bool`, uniform `g : β → Bool`, and `δ`-biased Bernoulli noise `μ : β → Bool`. -/
-noncomputable def hastadLinearCorr (π : β → γ) (δ : ℝ) (B : (γ → Bool) → Bool)
+noncomputable def linearCorr (π : β → γ) (δ : ℝ) (B : (γ → Bool) → Bool)
     (A : (β → Bool) → Bool) : ℝ :=
   𝔼 f : γ → Bool, 𝔼 g : β → Bool,
     bernoulliAverage δ fun μ =>
@@ -74,50 +74,50 @@ noncomputable def hastadLinearCorr (π : β → γ) (δ : ℝ) (B : (γ → Bool
 
 /-- The **acceptance probability** of Håstad's 3-bit linear test: the probability that
 `(B f ^^ A g ^^ A ((f ∘ π) + g + μ)) = false` under uniform `f, g` and `δ`-biased noise `μ`. -/
-noncomputable def hastadLinearProb (π : β → γ) (δ : ℝ) (B : (γ → Bool) → Bool)
+noncomputable def linearProb (π : β → γ) (δ : ℝ) (B : (γ → Bool) → Bool)
     (A : (β → Bool) → Bool) : ℝ :=
   𝔼 f : γ → Bool, 𝔼 g : β → Bool,
     bernoulliAverage δ fun μ =>
       if (B f ^^ A g ^^ A ((f ∘ π) + g + μ)) = false then 1 else 0
 
 /-- The acceptance probability of Håstad's 3-bit linear test is
-`1 / 2 + 1 / 2 * hastadLinearCorr π δ B A`. -/
-theorem hastadLinearProb_eq_add_hastadLinearCorr (π : β → γ) (δ : ℝ)
+`1 / 2 + 1 / 2 * linearCorr π δ B A`. -/
+theorem linearProb_eq_add_linearCorr (π : β → γ) (δ : ℝ)
     (B : (γ → Bool) → Bool) (A : (β → Bool) → Bool) :
-    hastadLinearProb π δ B A = 1 / 2 + 1 / 2 * hastadLinearCorr π δ B A := by
+    linearProb π δ B A = 1 / 2 + 1 / 2 * linearCorr π δ B A := by
   have h (b₁ b₂ b₃ : Bool) :
       (if (b₁ ^^ b₂ ^^ b₃) = false then (1 : ℝ) else 0) =
         1 / 2 + 1 / 2 * (signVal b₁ * signVal b₂ * signVal b₃) := by
     cases b₁ <;> cases b₂ <;> cases b₃ <;> simp only [signVal] <;> norm_num
-  simp only [hastadLinearProb, hastadLinearCorr, h, bernoulliAverage_add, bernoulliAverage_const,
+  simp only [linearProb, linearCorr, h, bernoulliAverage_add, bernoulliAverage_const,
     bernoulliAverage_const_mul, expect_add_distrib, Fintype.expect_const, mul_expect]
 
 /-- **Completeness of Håstad's 3-bit linear test (correlation)**: on matching Long Code tables
 `longCode (π x)` and `longCode x`, the correlation is `1 - 2 * δ`. -/
-theorem hastadLinearCorr_longCode (π : β → γ) (δ : ℝ) (x : β) :
-    hastadLinearCorr π δ (longCode (π x)) (longCode x) = 1 - 2 * δ := by
+theorem linearCorr_longCode (π : β → γ) (δ : ℝ) (x : β) :
+    linearCorr π δ (longCode (π x)) (longCode x) = 1 - 2 * δ := by
   have hsign (f : γ → Bool) (g μ : β → Bool) :
       signVal (longCode (π x) f) * signVal (longCode x g) *
         signVal (longCode x ((f ∘ π) + g + μ)) = chi ℝ {x} μ := by
     rw [chi_singleton]
     change signVal (f (π x)) * signVal (g x) * signVal (f (π x) + g x + μ x) = signVal (μ x)
     cases f (π x) <;> cases g x <;> cases μ x <;> simp [signVal, Bool.add_eq_xor]
-  simp only [hastadLinearCorr, hsign, bernoulliAverage_chi, card_singleton, pow_one,
+  simp only [linearCorr, hsign, bernoulliAverage_chi, card_singleton, pow_one,
     Fintype.expect_const]
 
 /-- **Completeness of Håstad's 3-bit linear test (probability)**: matching Long Code tables
 `longCode (π x)` and `longCode x` pass the test with probability `1 - δ`. -/
-theorem hastadLinearProb_longCode (π : β → γ) (δ : ℝ) (x : β) :
-    hastadLinearProb π δ (longCode (π x)) (longCode x) = 1 - δ := by
-  rw [hastadLinearProb_eq_add_hastadLinearCorr, hastadLinearCorr_longCode]
+theorem linearProb_longCode (π : β → γ) (δ : ℝ) (x : β) :
+    linearProb π δ (longCode (π x)) (longCode x) = 1 - δ := by
+  rw [linearProb_eq_add_linearCorr, linearCorr_longCode]
   ring
 
 /-- **Walsh–Fourier expansion of Håstad's 3-bit linear test** [Håstad, Lemma 5.1][Hastad2001]:
 the correlation equals
 `∑ T : Finset β, (1 - 2 * δ) ^ #T * fourierCoeff F_A T ^ 2 * fourierCoeff F_B (projectSet π T)`. -/
-theorem hastadLinearCorr_eq_sum (π : β → γ) (δ : ℝ) (B : (γ → Bool) → Bool)
+theorem linearCorr_eq_sum (π : β → γ) (δ : ℝ) (B : (γ → Bool) → Bool)
     (A : (β → Bool) → Bool) :
-    hastadLinearCorr π δ B A =
+    linearCorr π δ B A =
       ∑ T : Finset β,
         (1 - 2 * δ) ^ #T * fourierCoeff (fun g => signVal (A g)) T ^ 2 *
           fourierCoeff (fun f => signVal (B f)) (projectSet π T) := by
@@ -145,7 +145,7 @@ theorem hastadLinearCorr_eq_sum (π : β → γ) (δ : ℝ) (B : (γ → Bool) �
     refine sum_congr rfl fun T _ => ?_
     rw [fourierCoeff_convolution, fourierCoeff_noiseOp, chi_comp_eq_chi_projectSet]
     ring
-  simp only [hastadLinearCorr, hinner, hconv, mul_sum]
+  simp only [linearCorr, hinner, hconv, mul_sum]
   rw [expect_sum_comm]
   refine sum_congr rfl fun T _ => ?_
   have hterm (f : γ → Bool) :
@@ -307,19 +307,19 @@ private theorem sum_lowDegree_fourierCoeff_sq_le (π : β → γ) (k : ℕ)
 
 /-- **Cauchy–Schwarz and Parseval soundness bound for Håstad's 3-bit linear test**
 [Håstad, Lemma 5.2][Hastad2001]: for any folded (odd) table `B`, any table `A`, noise rate
-`0 ≤ δ ≤ 1 / 2`, and degree cutoff `k`, the squared correlation `hastadLinearCorr π δ B A ^ 2` is
+`0 ≤ δ ≤ 1 / 2`, and degree cutoff `k`, the squared correlation `linearCorr π δ B A ^ 2` is
 at most `(1 - 2 * δ) ^ (2 * k) + k ^ 2 * ∑ x, spectralWeight k A x * spectralWeight k B (π x)`. -/
-theorem hastadLinearCorr_sq_le (π : β → γ) {δ : ℝ} (hδ0 : 0 ≤ δ) (hδ1 : δ ≤ 1 / 2)
+theorem linearCorr_sq_le (π : β → γ) {δ : ℝ} (hδ0 : 0 ≤ δ) (hδ1 : δ ≤ 1 / 2)
     (k : ℕ) {B : (γ → Bool) → Bool} (hB : IsOdd B) (A : (β → Bool) → Bool) :
-    hastadLinearCorr π δ B A ^ 2 ≤
+    linearCorr π δ B A ^ 2 ≤
       (1 - 2 * δ) ^ (2 * k) +
         (k : ℝ) ^ 2 * ∑ x : β, spectralWeight k A x * spectralWeight k B (π x) := by
   have hcs :
-      hastadLinearCorr π δ B A ^ 2 ≤
+      linearCorr π δ B A ^ 2 ≤
         ∑ T : Finset β,
           fourierCoeff (fun g => signVal (A g)) T ^ 2 *
             ((1 - 2 * δ) ^ #T * fourierCoeff (fun f => signVal (B f)) (projectSet π T)) ^ 2 := by
-    rw [hastadLinearCorr_eq_sum]
+    rw [linearCorr_eq_sum]
     have hrewrite :
         (∑ T : Finset β,
           (1 - 2 * δ) ^ #T * fourierCoeff (fun g => signVal (A g)) T ^ 2 *

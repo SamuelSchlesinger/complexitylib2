@@ -102,7 +102,7 @@ example : ComputableTidilyInPolyTime (fun n : ℕ => 2 * n.factorial) encUnary e
 isomorphism. -/
 example (h : PolyTimeReducible encCNF (encPair encGraph encGraph) SAT GraphIsomorphism) :
     PH encBits = SigmaP 2 encBits :=
-  PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism
+  PH_eq_SigmaP_two_of_npComplete_GraphIsomorphism
     ⟨GraphIsomorphism.mem_NP, CookLevin.SAT_npHard.trans h⟩
 
 /-! ### Axiom guards -/
@@ -224,12 +224,12 @@ info: 'Cslib.Complexity.SigmaP_two_eq_AM_of_coNP_subset_AM' depends on axioms: [
 #print axioms Cslib.Complexity.SigmaP_two_eq_AM_of_coNP_subset_AM
 
 /--
-info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism' depends on axioms: [propext,
+info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_npComplete_GraphIsomorphism' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_NPComplete_GraphIsomorphism
+#print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_npComplete_GraphIsomorphism
 
 /--
 info: 'Cslib.Complexity.PiP_two_subset_SigmaP_two_of_coNP_subset_AM' depends on axioms: [propext,

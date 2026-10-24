@@ -104,7 +104,7 @@ theorem GapP.prod_sub_mem {α : Type} {enc : α ↪ List Bool}
     (hf : ComputableInPolyTime f enc (encList encIntBin)) (hg : g ∈ GapP enc) :
     (fun a => ((f a).map (fun z => z - g a)).prod) ∈ GapP enc := by
   have hf := hf.tidy
-  have hc := GapP.of_polyTime (polyTime_selectedProduct hf)
+  have hc := mem_GapP_of_polyTime (polyTime_selectedProduct hf)
   have hp := GapP.pow_mem_polyTime
     (GapP.comp_mem (GapP.neg_mem hg) (ComputableTidilyInPolyTime.fst enc encBits))
     (show ComputableTidilyInPolyTime (fun x : α × List Bool => x.2.countP id)
@@ -133,7 +133,7 @@ private theorem targetWitness {α : Type} {enc : α ↪ List Bool} {A : Set α}
     exact List.mem_map.mpr ⟨g a, hy a ha, sub_self _⟩
   have hnon (a : α) (ha : a ∉ A) : P a = F a := by
     simp [P, F, hno a ha]
-  refine ⟨F - P, GapP.sub_mem' (GapP.of_polyTime hF) hP,
+  refine ⟨F - P, GapP.sub_mem' (mem_GapP_of_polyTime hF) hP,
     fun a => ?_, fun a => ?_⟩
   · change (F - P) a = 0 ∨ (F - P) a = F a
     by_cases ha : a ∈ A

@@ -119,7 +119,7 @@ theorem mk_mem_of_subset {samples samples' : Finset (BitString n × Bool)}
   ⟨c, hc, fun p hpx => hp p (hsub hpx)⟩
 
 /-- Contradictory samples make a no-instance. -/
-theorem not_mem_of_mem_samples {x : Instance} {y : BitString x.arity}
+theorem notMem_of_mem_samples {x : Instance} {y : BitString x.arity}
     (htrue : (y, true) ∈ x.samples) (hfalse : (y, false) ∈ x.samples) : x ∉ SuccinctMCSP :=
   fun ⟨_, _, hp⟩ => Bool.true_eq_false_eq_False ((hp _ htrue).symm.trans (hp _ hfalse))
 
