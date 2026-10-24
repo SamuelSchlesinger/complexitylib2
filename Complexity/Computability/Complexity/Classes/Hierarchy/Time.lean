@@ -225,15 +225,16 @@ theorem computableTidilyInO_timeDiagonal {J : ℕ → ℕ} (hJ : TimeConstructib
     ComputableTidilyInO (timeDiagonal J) encBits encBool
       (fun x => (x.length + 1) ^ 5 * (J x.length + 1) ^ 3)
       fun x => (x.length + 1) ^ 5 * (J x.length + 1) ^ 3 := by
+  apply Internal.normalizeO
   obtain ⟨dd, ed, hdec⟩ := exists_computableInDegree_decodeDesc
-  have hu : ComputableTidilyInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
-    ComputableTidilyInO.of_linear (.of_unframe fun _ => rfl)
-  have hdesc := hdec.inO.tidy.comp hu
-  have hsym := Universal.computableTidilyInDegree_map_eBit.inO_one
-  have hclock := hJ.computableTidilyInO
-  have hU := computableTidilyInO_universal.comp (hdesc.prod (hsym.prod hclock))
-  have h := computableTidilyInO_shortDesc.ite (computableTidilyInO_verdict.comp hU)
-    (ComputableTidilyInO.const (encMid := encBool) false)
+  have hu : ComputableInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
+    ComputableInO.of_linear (.of_unframe fun _ => rfl)
+  have hdesc := hdec.inO.comp hu
+  have hsym := Universal.computableInDegree_map_eBit.inO_one
+  have hclock := Internal.forgetO hJ.computableTidilyInO
+  have hU := computableInO_universal.comp (hdesc.prod (hsym.prod hclock))
+  have h := (Internal.forgetO computableTidilyInO_shortDesc).ite ((Internal.forgetO computableTidilyInO_verdict).comp hU)
+    (ComputableInO.const (encMid := encBool) false)
   obtain ⟨cD, hcD⟩ := hdesc.length_le
   obtain ⟨cO, hcO⟩ := hU.length_le
   obtain ⟨cA, hcA⟩ := PolynomiallyBounded.exists_le_mul_two_pow (p := fun u => (u + 1) ^ dd)

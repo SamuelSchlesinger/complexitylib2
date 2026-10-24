@@ -176,12 +176,13 @@ namespace Diagonal
 theorem computableTidilyInO_verdict :
     ComputableTidilyInO verdict eOut encBool (fun r => ((eOut r).length + 1) ^ 2)
       fun r => (eOut r).length := by
-  have heq := (ComputableTidilyInO.eq (encList encUnary)).comp
-    ((ComputableTidilyInO.fst (encList encUnary) encBool).prod
-      (ComputableTidilyInO.const (encMid := encList encUnary) [eBit true]))
-  have hfin := (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool)
+  apply Internal.normalizeO
+  have heq := (ComputableInO.eq (encList encUnary)).comp
+    ((ComputableInO.fst (encList encUnary) encBool).prod
+      (ComputableInO.const (encMid := encList encUnary) [eBit true]))
+  have hfin := (ComputableInDegree.of_finite (encIn := encPair encBool encBool)
     (encMid := encBool) fun q : Bool × Bool => !(q.1 && q.2)).inO_one
-  refine (hfin.comp ((ComputableTidilyInO.snd (encList encUnary) encBool).prod heq)).mono 64
+  refine (hfin.comp ((ComputableInO.snd (encList encUnary) encBool).prod heq)).mono 64
     (fun r => ?_) fun r => ?_
   all_goals
     have h₁ := length_le_encPair_left (encList encUnary) encBool r
@@ -262,9 +263,10 @@ run and the test. -/
 theorem computableTidilyInO_diagonal :
     ComputableTidilyInO diagonal encBits encBool (fun x => 2 ^ (4 * x.length))
       fun x => 2 ^ (2 * x.length) := by
+  apply Internal.normalizeO
   obtain ⟨dd, ed, hdec⟩ := exists_computableInDegree_decodeDesc
-  have hu : ComputableTidilyInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
-    ComputableTidilyInO.of_linear (.of_unframe fun _ => rfl)
+  have hu : ComputableInO unframe encBits encBits (fun x => x.length) fun x => x.length :=
+    ComputableInO.of_linear (.of_unframe fun _ => rfl)
   -- the framed description is no longer than the input
   have hle (x : List Bool) :
       x.length + ((unframe x).length + 1) ^ dd ≤ 2 * ((x.length + 1) ^ max 1 dd + 1) := by
@@ -274,14 +276,14 @@ theorem computableTidilyInO_diagonal :
     have h₂ : x.length ≤ (x.length + 1) ^ max 1 dd :=
       (Nat.le_succ _).trans (Nat.le_self_pow (by omega) _)
     omega
-  have hdesc : ComputableTidilyInO (decodeDesc ∘ unframe) encBits eDesc
+  have hdesc : ComputableInO (decodeDesc ∘ unframe) encBits eDesc
       (fun x => (x.length + 1) ^ max 1 dd) fun x => (x.length + 1) ^ max 1 dd :=
-    (hdec.inO.tidy.comp hu).mono 2 hle hle
-  have hsym := Universal.computableTidilyInDegree_map_eBit.inO_one
-  have hclock := (ComputableTidilyInDegree.two_pow_length encBits).inO_one
+    (hdec.inO.comp hu).mono 2 hle hle
+  have hsym := Universal.computableInDegree_map_eBit.inO_one
+  have hclock := (Internal.forgetDegree (ComputableTidilyInDegree.two_pow_length encBits)).inO_one
   have hpre := hdesc.prod (hsym.prod hclock)
-  have hU := computableTidilyInO_universal.comp hpre
-  have h := computableTidilyInO_verdict.comp hU
+  have hU := computableInO_universal.comp hpre
+  have h := (Internal.forgetO computableTidilyInO_verdict).comp hU
   -- the sizes of the decoded description and of the result
   obtain ⟨cD, hcD⟩ := hdesc.length_le
   obtain ⟨cO, hcO⟩ := hU.length_le
