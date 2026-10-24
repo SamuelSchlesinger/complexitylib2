@@ -125,7 +125,7 @@ example : ProbComp.eval (GGM.expansionGame List.tail (BitString.sampleList 2) si
 
 -- Every certified sampler and adaptive adversary compose through the complete-game contract.
 example {generator : List Bool → List Bool} {sample : ℕ → ProbComp (List Bool)}
-    (hg : ComputableTidilyInPolyTime generator encBits encBits)
+    (hg : ComputableInPolyTime generator encBits encBits)
     (hs : IsPPTOn encUnary encBits sample) {adversary : OracleDistinguisher}
     (ha : IsOraclePPT encBool adversary) : IsPPTOn encUnary encBool
       (fun n => GGM.expansionGame generator (sample n) adversary n (n + 1)) :=

@@ -24,7 +24,7 @@ example : PRGStretch.stretch expand (fun _ => 2) [] = [false, false] := by decid
 example (seed : List Bool) : PRGStretch.stretch expand (fun _ => 0) seed = seed := rfl
 
 -- Efficiency works uniformly on arbitrary initial words, with the generator capturing a bit.
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : (ℕ × Bool) × List Bool =>
       PRGStretch.iterate (fun seed => seed ++ [p.1.2]) p.1.1 (p.1.1 ^ 2 + 1) p.2)
     (encPair (encPair encUnary encBool) encBits) encBits := by polytime
@@ -60,19 +60,19 @@ example (generator : List Bool → List Bool) (adversary : Distinguisher) (n : �
     PRGStretch.advantage_eq generator (fun _ => 2) adversary n
 
 -- A captured loop may add an input-dependent block at each iteration.
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun word : List Bool => (fun state => state ++ word)^[word.length] []) encBits encBits := by
-  apply ComputableTidilyInPolyTime.iterateWith_of_bounded_growth
+  apply ComputableInPolyTime.iterateWith_of_bounded_growth
     (par := id) (step := fun word state => state ++ word) (growth := List.length)
     (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
-    (by simpa using ComputableTidilyInPolyTime.id'.polyBounded_length (encIn := encBits))
+    (by simpa using ComputableInPolyTime.id'.polyBounded_length (encIn := encBits))
   intro word state
   simp
 
 -- Arbitrary iteration is deliberately not inferred from the step's polynomial-time certificate.
 example : True := by
   fail_if_success
-    have : ComputableTidilyInPolyTime
+    have : ComputableInPolyTime
         (fun word : List Bool => (fun state => state ++ state)^[word.length] [true])
         encBits encBits := by polytime
   trivial
@@ -131,11 +131,13 @@ example : (PRGStretch.forwardIterate shiftIn 3 [false, false, true]).reverse =
 
 private theorem expand_degree :
     ComputableTidilyInDegree expand encBits encBits 1 1 := by
+  apply Internal.normalizeDegree
   unfold expand
   fun_prop (disch := first | apply le_refl | lia)
 
 private theorem shiftIn_degree :
     ComputableTidilyInDegree shiftIn encBits encBits 1 1 := by
+  apply Internal.normalizeDegree
   unfold shiftIn
   fun_prop (disch := first | apply le_refl | lia)
 
@@ -182,6 +184,7 @@ example : ∃ (tGen : List Bool → ℕ) (tCount sCount : ℕ → ℕ) (csG c : 
         (seed.length + seed.length + 1) + 1)) := by
   obtain ⟨⟨tGen, sGen, _, ⟨csG, hcsG⟩, hgen⟩, -⟩ := shiftIn_degree
   have hcount_deg : ComputableTidilyInDegree (fun n : ℕ => n + n + 1) encUnary encUnary 1 1 := by
+    apply Internal.normalizeDegree
     fun_prop (disch := first | apply le_refl | lia)
   obtain ⟨⟨tCount, sCount, _, _, hcount⟩, -⟩ := hcount_deg
   refine ⟨tGen, tCount, sCount, csG, ?_⟩
@@ -199,7 +202,7 @@ example : ∃ (tCount sCount : ℕ → ℕ) (c : ℕ),
       (fun seed => c * (sCount seed.length + seed.length + 1)) := by
   obtain ⟨⟨tGen, sGen, _, _, hgen⟩, -⟩ := shiftIn_degree
   obtain ⟨⟨tCount, sCount, _, _, hcount⟩, -⟩ :=
-    ComputableTidilyInDegree.const (encIn := encUnary) (encMid := encUnary) 0
+    Internal.normalizeDegree (ComputableInDegree.const (encIn := encUnary) (encMid := encUnary) 0)
   obtain ⟨c, h⟩ := PRGStretch.computableTidilyInTimeAndSpace_stretch length_shiftIn hgen hcount
     (Q := fun _ => 0) (fun _ i hi => absurd hi (Nat.not_lt_zero i))
   exact ⟨tCount, sCount, c, h.mono (fun seed => by simp) (fun seed => by simp)⟩
@@ -210,29 +213,33 @@ example : ∃ (tCount sCount : ℕ → ℕ) (c : ℕ),
 example : ComputableTidilyInDegree
     (PRGStretch.stretch expand (fun n => n + n + 1)) encBits encBits 2 1 := by
   have hcount : ComputableTidilyInDegree (fun n : ℕ => n + n + 1) encUnary encUnary 1 1 := by
+    apply Internal.normalizeDegree
     fun_prop (disch := first | apply le_refl | lia)
   have h := PRGStretch.computableTidilyInDegree_stretch length_expand expand_degree hcount
+  have hplain := Internal.forgetDegree h
   fail_if_success
-    have : ComputableTidilyInDegree
-        (PRGStretch.stretch expand (fun n => n + n + 1)) encBits encBits 1 1 := h.mono
-  exact h.mono
+    have : ComputableInDegree
+        (PRGStretch.stretch expand (fun n => n + n + 1)) encBits encBits 1 1 := hplain.mono
+  exact Internal.normalizeDegree hplain.mono
 
 -- A linear-time generator stretched for a quadratic round count `(dCount = 2, eCount = 2)` has
 -- time/space degree `max 2 (2 + max 1 1) = 3` and output degree `max 1 2 = 2`.
 example (count : ℕ → ℕ) (hcount : ComputableTidilyInDegree count encUnary encUnary 2 2) :
     ComputableTidilyInDegree (PRGStretch.stretch expand count) encBits encBits 3 2 := by
   have h := PRGStretch.computableTidilyInDegree_stretch length_expand expand_degree hcount
+  have hplain := Internal.forgetDegree h
   fail_if_success
-    have : ComputableTidilyInDegree (PRGStretch.stretch expand count) encBits encBits 2 2 := h.mono
+    have : ComputableInDegree (PRGStretch.stretch expand count) encBits encBits 2 2 := hplain.mono
   fail_if_success
-    have : ComputableTidilyInDegree (PRGStretch.stretch expand count) encBits encBits 3 1 := h.mono
-  exact h.mono
+    have : ComputableInDegree (PRGStretch.stretch expand count) encBits encBits 3 1 := hplain.mono
+  exact Internal.normalizeDegree hplain.mono
 
 -- Recover `ComputableTidilyInPolyTime` directly from the quantitative stretch theorem.
 example : ComputableTidilyInPolyTime
     (PRGStretch.stretch expand (fun n => n * n + 1)) encBits encBits :=
   PRGStretch.polyTime_stretch_of_length_eq length_expand
-    (by unfold expand; fun_prop) (by fun_prop)
+    (ComputableInPolyTime.tidy (by unfold expand; fun_prop))
+    (ComputableInPolyTime.tidy (by fun_prop))
 
 -- Quantitative captured-parameter certificate for `PRGStretch.iterate`.
 example : ∃ (tGen : Bool × List Bool → ℕ) (csG c : ℕ),
@@ -248,11 +255,12 @@ example : ∃ (tGen : Bool × List Bool → ℕ) (csG c : ℕ),
         (encBool x.1.1).length + x.1.2.length + x.2 + 1)) := by
   have hgen_deg : ComputableTidilyInDegree
       (fun p : Bool × List Bool => p.2 ++ [p.1]) (encPair encBool encBits) encBits 1 1 := by
-    have hsingleton : ComputableTidilyInDegree
+    apply Internal.normalizeDegree
+    have hsingleton : ComputableInDegree
         (fun p : Bool × List Bool => [p.1]) (encPair encBool encBits) encBits 1 0 :=
-      (ComputableTidilyInDegree.of_finite (fun b : Bool => [b])).comp
-        (ComputableTidilyInDegree.fst encBool encBits) |>.mono
-    exact (ComputableTidilyInDegree.snd encBool encBits).append hsingleton (fun _ => rfl) |>.mono
+      (ComputableInDegree.of_finite (fun b : Bool => [b])).comp
+        (ComputableInDegree.fst encBool encBits) |>.mono
+    exact (ComputableInDegree.snd encBool encBits).append hsingleton (fun _ => rfl) |>.mono
   obtain ⟨⟨tGen, sGen, _, ⟨csG, hcsG⟩, hgen⟩, -⟩ := hgen_deg
   refine ⟨tGen, csG, ?_⟩
   refine PRGStretch.computableTidilyInTimeAndSpace_iterate_captured

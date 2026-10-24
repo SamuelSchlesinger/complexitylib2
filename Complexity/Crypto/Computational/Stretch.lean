@@ -125,8 +125,8 @@ noncomputable def reduction (generator : List Bool → List Bool) (count : ℕ �
 /-- The reduction's complete efficiency proof uses the public programming interface. -/
 @[program_certificate]
 theorem isPPT_reduction {generator : List Bool → List Bool} {count : ℕ → ℕ}
-    {adversary : Distinguisher} (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary)
+    {adversary : Distinguisher} (hgenerator : ComputableInPolyTime generator encBits encBits)
+    (hcount : ComputableInPolyTime count encUnary encUnary)
     (hadversary : IsPPT encBool adversary) :
     IsPPT encBool (reduction generator count adversary) := by
   unfold reduction hop
@@ -142,13 +142,13 @@ noncomputable def test (generator : List Bool → List Bool) (seedBits count : �
 theorem isPPT_test {α : Type} {input : α ↪ List Bool}
     {generator : α → List Bool → List Bool} {seedBits count : α → ℕ}
     {adversary : α → List Bool → ProbComp Bool} {challenge : α → List Bool}
-    (hgenerator : ComputableTidilyInPolyTime (fun pair => generator pair.1 pair.2)
+    (hgenerator : ComputableInPolyTime (fun pair => generator pair.1 pair.2)
       (encPair input encBits) encBits)
-    (hseedBits : ComputableTidilyInPolyTime seedBits input encUnary)
-    (hcount : ComputableTidilyInPolyTime count input encUnary)
+    (hseedBits : ComputableInPolyTime seedBits input encUnary)
+    (hcount : ComputableInPolyTime count input encUnary)
     (hadversary : IsPPTOn (encPair input encBits) encBool
       (fun pair => adversary pair.1 pair.2))
-    (hchallenge : ComputableTidilyInPolyTime challenge input encBits) :
+    (hchallenge : ComputableInPolyTime challenge input encBits) :
     IsPPTOn input encBool
       (fun a => test (generator a) (seedBits a) (count a) (adversary a) (challenge a)) := by
   unfold test reduction hop
@@ -293,7 +293,7 @@ theorem advantage_le (generator : List Bool → List Bool) (count : ℕ → ℕ)
 
 /-- Efficient unary counts give a polynomial bound on the reduction's dyadic loss. -/
 theorem loss_polynomial {count : ℕ → ℕ}
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary) :
+    (hcount : ComputableInPolyTime count encUnary encUnary) :
     PolynomiallyBounded (fun n => 2 ^ (Nat.log 2 (count n) + 1)) :=
   dyadicSize_polynomiallyBounded.comp hcount.polynomiallyBounded
 
@@ -301,11 +301,11 @@ theorem loss_polynomial {count : ℕ → ℕ}
 The choice is supplied only in the proof; each reduction receives its index as ordinary input. -/
 theorem indexed_indistinguishable {generator : ℕ → ℕ → List Bool → List Bool}
     {seedBits count choose : ℕ → ℕ}
-    (hgenerator : ComputableTidilyInPolyTime
+    (hgenerator : ComputableInPolyTime
       (fun input => generator input.1.1 input.1.2 input.2)
       (encPair (encPair encUnary encUnary) encBits) encBits)
-    (hseedBits : ComputableTidilyInPolyTime seedBits encUnary encUnary)
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary)
+    (hseedBits : ComputableInPolyTime seedBits encUnary encUnary)
+    (hcount : ComputableInPolyTime count encUnary encUnary)
     (hsecure : ∀ adversary : ℕ → ℕ → List Bool → ProbComp Bool,
       IsPPTOn (encPair (encPair encUnary encUnary) encBits)
         encBool (fun input => adversary input.1.1 input.1.2 input.2) →
@@ -326,7 +326,7 @@ theorem indexed_indistinguishable {generator : ℕ → ℕ → List Bool → Lis
   intro adversary hadversary
   let reduction := fun n index =>
     test (generator n index) (seedBits n) (count n) (adversary n index)
-  have hprepare : ComputableTidilyInPolyTime
+  have hprepare : ComputableInPolyTime
       (fun p : ((ℕ × ℕ) × List Bool) × List Bool => (p.1.1, p.2))
       (encPair (encPair (encPair encUnary encUnary) encBits) encBits)
       (encPair (encPair encUnary encUnary) encBits) := by fun_prop
@@ -341,11 +341,11 @@ theorem indexed_indistinguishable {generator : ℕ → ℕ → List Bool → Lis
 /-- Polynomially many seed expansions preserve computational indistinguishability. -/
 theorem indistinguishable {generator : List Bool → List Bool} {count : ℕ → ℕ}
     (hgenerator : PseudorandomGenerator generator (fun n => n + 1))
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary) :
+    (hcount : ComputableInPolyTime count encUnary encUnary) :
     ComputationallyIndistinguishable (generatorEnsemble (stretch generator count))
       (fun n => uniformList (n + count n)) := by
   intro adversary hadversary
-  have hreduce := isPPT_reduction hgenerator.polyTime.tidy hcount hadversary
+  have hreduce := isPPT_reduction hgenerator.polyTime hcount hadversary
   have hnegligible := hgenerator.indistinguishable _ hreduce
   have hloss := hnegligible.polynomiallyBounded_mul (loss_polynomial hcount)
   convert hloss using 1
@@ -356,11 +356,11 @@ theorem indistinguishable {generator : List Bool → List Bool} {count : ℕ →
 /-- A positive efficiently computed number of one-bit expansions is a secure PRG. -/
 theorem pseudorandomGenerator {generator : List Bool → List Bool} {count : ℕ → ℕ}
     (hgenerator : PseudorandomGenerator generator (fun n => n + 1))
-    (hcount : ComputableTidilyInPolyTime count encUnary encUnary)
+    (hcount : ComputableInPolyTime count encUnary encUnary)
     (hpositive : ∀ n, 0 < count n) :
     PseudorandomGenerator (stretch generator count) (fun n => n + count n) := by
   refine PseudorandomGenerator.of_indistinguishable
-    (polyTime_stretch hgenerator.polyTime.tidy hcount) ?_ ?_
+    (polyTime_stretch hgenerator.polyTime.tidy hcount.tidy) ?_ ?_
     (indistinguishable hgenerator hcount)
   · intro seed
     exact length_iterate hgenerator.length_eq _ _ _
@@ -376,10 +376,10 @@ open Probability BitString Turing.MultiTapeTM
 /-- Amplify a one-bit PRG to any efficiently computed, strictly larger output length. -/
 theorem PseudorandomGenerator.amplify {generator : List Bool → List Bool}
     (hgenerator : PseudorandomGenerator generator (fun n => n + 1))
-    (target : ℕ → ℕ) (htarget : ComputableTidilyInPolyTime target encUnary encUnary)
+    (target : ℕ → ℕ) (htarget : ComputableInPolyTime target encUnary encUnary)
     (hstretch : ∀ n, n < target n) :
     PseudorandomGenerator (PRGStretch.stretch generator (fun n => target n - n)) target := by
-  have hcount : ComputableTidilyInPolyTime (fun n => target n - n) encUnary encUnary := by polytime
+  have hcount : ComputableInPolyTime (fun n => target n - n) encUnary encUnary := by polytime
   have h := PRGStretch.pseudorandomGenerator hgenerator hcount (fun n => by
     have := hstretch n
     lia)
@@ -392,11 +392,12 @@ theorem PseudorandomGenerator.amplify {generator : List Bool → List Bool}
 theorem PseudorandomGenerator.truncate {generator : List Bool → List Bool} {length : ℕ → ℕ}
     (hgenerator : PseudorandomGenerator generator length)
     (target : ℕ → ℕ)
-    (htarget : ComputableTidilyInPolyTime target encUnary encUnary)
+    (htarget : ComputableInPolyTime target encUnary encUnary)
     (hle : ∀ n, target n ≤ length n) (hstretch : ∀ n, n < target n) :
     PseudorandomGenerator (fun seed => (generator seed).take (target seed.length)) target := by
-  have hpoly := hgenerator.polyTime.tidy
-  refine PseudorandomGenerator.of_indistinguishable (by polytime) ?_ hstretch ?_
+  have hpoly := hgenerator.polyTime
+  refine PseudorandomGenerator.of_indistinguishable
+    (ComputableInPolyTime.tidy (by polytime)) ?_ hstretch ?_
   · intro seed
     simp only [List.length_take, hgenerator.length_eq, Nat.min_eq_left (hle _)]
   · have h := hgenerator.indistinguishable.map

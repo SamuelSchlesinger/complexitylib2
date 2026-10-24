@@ -154,21 +154,21 @@ theorem frontierOracle_bounds (generator : List Bool → List Bool) (n depth : �
 theorem isPPTOn_frontierOracle {α : Type} {input : α ↪ List Bool}
     {generator : List Bool → List Bool} {parameter depth : α → ℕ}
     {query : α → List Bool} {cache : α → Cache}
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
+    (hgenerator : ComputableInPolyTime generator encBits encBits)
     (hparameter : ComputableInPolyTime parameter input encUnary)
     (hdepth : ComputableInPolyTime depth input encUnary)
     (hquery : ComputableInPolyTime query input encBits)
     (hcache : ComputableInPolyTime cache input cacheEncoding) :
     IsPPTOn input (encPair encBits cacheEncoding)
       (fun a => frontierOracle generator (parameter a) (depth a) (query a) (cache a)) := by
-  have heval := computableInPolyTime_eval (.of_tidy hgenerator)
+  have heval := computableInPolyTime_eval hgenerator
   unfold frontierOracle cacheEncoding
   fun_prop
 
 /-- A uniform adversary's complete adaptive prefix game is strict PPT, uniformly over the chosen
 level. The local invariant accounts for every reply and all added encoded storage. -/
 theorem isPPTOn_hybridGame {generator : List Bool → List Bool}
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits)
+    (hgenerator : ComputableInPolyTime generator encBits encBits)
     {adversary : OracleDistinguisher} (hadversary : IsOraclePPT encBool adversary) :
     IsPPTOn (encPair encUnary encUnary) encBool
       (fun pair => hybridGame generator adversary pair.1 pair.2) := by
