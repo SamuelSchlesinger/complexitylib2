@@ -28,16 +28,20 @@ def andTree : DecisionTree (Fin 3) Bool :=
 example : andTree.depth = 2 ∧ andTree.leafCount = 3 := ⟨rfl, rfl⟩
 
 /-- The degree hypothesis of the low-degree results, discharged by the depth of a tree. -/
+theorem andTree_mem_lowDegree :
+    (fun x => signVal (andTree.eval x)) ∈ lowDegree ℝ (Fin 3) 2 :=
+  DecisionTree.comp_eval_mem_lowDegree (fun b => signVal b) andTree
+
 theorem fourierCoeff_andTree_eq_zero (S : Finset (Fin 3)) (hS : 2 < #S) :
     fourierCoeff (fun x => signVal (andTree.eval x)) S = 0 :=
   DecisionTree.fourierCoeff_eq_zero_of_depth_lt (fun b => signVal b) andTree hS
 
 -- The degree hypothesis is satisfiable: the Nisan–Szegedy bound for a concrete tree.
 example : #{i | ∃ x, andTree.eval (update x i !x i) ≠ andTree.eval x} ≤ 2 * 2 ^ (2 - 1) :=
-  card_filter_exists_update_ne_le (fun x => andTree.eval x) fourierCoeff_andTree_eq_zero
+  card_filter_exists_update_ne_le (fun x => andTree.eval x) andTree_mem_lowDegree
 
 example : totalInfluence (fun x => signVal (andTree.eval x)) ≤ 2 :=
-  totalInfluence_signVal_le_of_degree (fun x => andTree.eval x) fourierCoeff_andTree_eq_zero
+  totalInfluence_signVal_le_of_degree (fun x => andTree.eval x) andTree_mem_lowDegree
 
 -- The tree reads only bits `0` and `1`, and the count of relevant coordinates is exact.
 example : #{i | ∃ x, andTree.eval (update x i !x i) ≠ andTree.eval x} = 2 := by decide
@@ -48,16 +52,15 @@ example : influence 2 (fun x => signVal (andTree.eval x)) = 0 :=
 
 -- Bit `0` is relevant, so it has nonzero influence, at least `2 ^ (1 - 2)`.
 example : 1 ≤ 2 ^ (2 - 1) * influence 0 (fun x => signVal (andTree.eval x)) :=
-  one_le_two_pow_mul_influence_of_degree (fun x => andTree.eval x) fourierCoeff_andTree_eq_zero 0
+  one_le_two_pow_mul_influence_of_degree (fun x => andTree.eval x) andTree_mem_lowDegree 0
     ((influence_signVal_ne_zero_iff (fun x => andTree.eval x) 0).2 ⟨fun _ => true, by decide⟩)
 
 -- The degree hypothesis also holds with `d = deg(f)` for every Boolean function.
 example {n : ℕ} (f : BooleanFunction n) :
     #{i | ∃ x, f (update x i !x i) ≠ f x} ≤
       QueryComplexity.degree f * 2 ^ (QueryComplexity.degree f - 1) :=
-  card_filter_exists_update_ne_le f fun _ hS => by
-    by_contra h
-    exact hS.not_ge (QueryComplexity.card_le_degree_of_fourierCoeff_ne_zero h)
+  card_filter_exists_update_ne_le f
+    (signVal_comp_mem_lowDegree_iff.2 (QueryComplexity.degree_le_iff_mem_lowDegree.1 le_rfl))
 
 -- Granularity, spectral norm and sparsity of the conjunction of two bits.
 example (S : Finset (Fin 3)) :

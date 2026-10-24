@@ -5,7 +5,6 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Foundations.BooleanAnalysis.Bonami
-import Complexity.Computability.QueryComplexity.Degree
 
 /-! Instances, non-vacuity witnesses and axiom guards for hypercontractivity and the Bonami
 Lemma. -/
@@ -64,7 +63,7 @@ example (f : (ι → Bool) → ℝ) : lpNorm 4 (noiseOp (1 / 3) f) ≤ lpNorm (4
 -- The Bonami Lemma for the library's notion of degree, `lowDegree ℝ ι k`.
 example {k : ℕ} {f : (ι → Bool) → ℝ} (hf : f ∈ lowDegree ℝ ι k) :
     𝔼 x, f x ^ 4 ≤ 9 ^ k * (𝔼 x, f x ^ 2) ^ 2 :=
-  expect_pow_four_le (mem_lowDegree_iff_fourierCoeff_eq_zero.1 hf)
+  expect_pow_four_le hf
 
 -- The degree hypothesis is satisfiable: a character of `S` has degree `|S|`.
 theorem fourierCoeff_chi_eq_zero_of_card_lt (S : Finset ι) {T : Finset ι} (hT : #S < #T) :
@@ -76,11 +75,19 @@ theorem fourierCoeff_chi_eq_zero_of_card_lt (S : Finset ι) {T : Finset ι} (hT 
   · rfl
 
 example (S : Finset ι) : 𝔼 x, chi ℝ S x ^ 4 ≤ 9 ^ #S * (𝔼 x, chi ℝ S x ^ 2) ^ 2 :=
-  expect_pow_four_le fun _ hT => fourierCoeff_chi_eq_zero_of_card_lt S hT
+  expect_pow_four_le (chi_mem_lowDegree S)
+
+example (S : Finset ι) : 𝔼 x, chi ℝ S x ^ 4 ≤ 9 ^ #S * (𝔼 x, chi ℝ S x ^ 2) ^ 2 :=
+  expect_pow_four_le_of_fourierCoeff_eq_zero fun _ hT => fourierCoeff_chi_eq_zero_of_card_lt S hT
 
 example (S : Finset ι) {q : ℝ} (hq : 2 ≤ q) :
     lpNorm q (chi ℝ S) ≤ √(q - 1) ^ #S * lpNorm 2 (chi ℝ S) :=
-  lpNorm_le_sqrt_pow_mul_lpNorm_two hq fun _ hT => fourierCoeff_chi_eq_zero_of_card_lt S hT
+  lpNorm_le_sqrt_pow_mul_lpNorm_two hq (chi_mem_lowDegree S)
+
+example (S : Finset ι) {q : ℝ} (hq : 2 ≤ q) :
+    lpNorm q (chi ℝ S) ≤ √(q - 1) ^ #S * lpNorm 2 (chi ℝ S) :=
+  lpNorm_le_sqrt_pow_mul_lpNorm_two_of_fourierCoeff_eq_zero hq fun _ hT =>
+    fourierCoeff_chi_eq_zero_of_card_lt S hT
 
 -- A concrete instance of the `(2, 4)` theorem on one coordinate: the dictator.
 example : 𝔼 x : Fin 1 → Bool, noiseOp (√3)⁻¹ (chi ℝ {0}) x ^ 4 ≤

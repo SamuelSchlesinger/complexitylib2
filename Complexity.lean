@@ -1494,6 +1494,7 @@ public import Complexity.Foundations.BooleanAnalysis.BucketWeight
 public import Complexity.Foundations.BooleanAnalysis.Convolution
 public import Complexity.Foundations.BooleanAnalysis.CoordinateSampling
 public import Complexity.Foundations.BooleanAnalysis.Decomposition
+public import Complexity.Foundations.BooleanAnalysis.Degree
 public import Complexity.Foundations.BooleanAnalysis.Fibers
 public import Complexity.Foundations.BooleanAnalysis.Fourier
 public import Complexity.Foundations.BooleanAnalysis.FourierDegree

@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.BooleanAnalysis.Degree
 public import Complexity.Foundations.BooleanAnalysis.Influence
 public import Mathlib.Data.Finset.Density
 import Complexity.Foundations.BooleanAnalysis.Decomposition
@@ -16,11 +17,12 @@ import Mathlib.Data.Finset.Max
 import Mathlib.Data.Fintype.BigOperators
 
 /-!
-# Functions of low Fourier degree
+# Functions of low degree: influence and Schwartz–Zippel on the cube
 
-A real function `g` on the cube has *Fourier degree at most `d`* when its coefficients vanish on
-the sets of more than `d` coordinates; here this is the hypothesis
-`∀ S, d < #S → fourierCoeff g S = 0`, as in `DecisionTree.fourierCoeff_eq_zero_of_depth_lt`.
+A real function `g` on the cube has *degree at most `d`* when `g ∈ BitString.lowDegree ℝ ι d`,
+equivalently when its Fourier coefficients vanish on the sets of more than `d` coordinates
+(`BitString.mem_lowDegree_iff_fourierCoeff_eq_zero`), as in
+`DecisionTree.comp_eval_mem_lowDegree` and `DecisionTree.fourierCoeff_eq_zero_of_depth_lt`.
 
 By the spectral formula for the total influence, such a function has total influence at most `d`
 times its mean square (`BitString.totalInfluence_le_mul_expect_sq_of_degree`), so a Boolean
@@ -38,12 +40,17 @@ differentiating in every coordinate of `S`, the derivative is a nonzero constant
 ## Main results
 
 * `Cslib.BitString.totalInfluence_le_mul_expect_sq_of_degree`,
-  `Cslib.BitString.totalInfluence_signVal_le_of_degree`: the total influence is at most the degree
-  times the mean square; a Boolean function has total influence at most its degree.
+  `Cslib.BitString.totalInfluence_le_mul_expect_sq_of_fourierCoeff_eq_zero`,
+  `Cslib.BitString.totalInfluence_signVal_le_of_degree`,
+  `Cslib.BitString.totalInfluence_signVal_le_of_fourierCoeff_eq_zero`: the total influence is at
+  most the degree times the mean square; a Boolean function has total influence at most its degree.
 * `Cslib.BitString.dens_derivative_ne_zero_le`: a derivative is nonzero at most twice as often as
   the function.
 * `Cslib.BitString.one_le_two_pow_mul_dens_ne_zero`,
-  `Cslib.BitString.two_pow_card_le_two_pow_mul_card_ne_zero`: Schwartz–Zippel on the cube.
+  `Cslib.BitString.one_le_two_pow_mul_dens_ne_zero_of_fourierCoeff_eq_zero`,
+  `Cslib.BitString.two_pow_card_le_two_pow_mul_card_ne_zero`,
+  `Cslib.BitString.two_pow_card_le_two_pow_mul_card_ne_zero_of_fourierCoeff_eq_zero`:
+  Schwartz–Zippel on the cube.
 
 ## References
 
@@ -59,9 +66,10 @@ open scoped BigOperators
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-/-- **Total influence at most the degree times the mean square**: a real function of Fourier
-degree at most `d` has total influence at most `d` times its mean square. -/
-theorem totalInfluence_le_mul_expect_sq_of_degree (g : (ι → Bool) → ℝ) {d : ℕ}
+/-- **Total influence at most the degree times the mean square**, Fourier-coefficient form: a real
+function whose Fourier coefficients vanish above degree `d` has total influence at most `d` times
+its mean square. -/
+theorem totalInfluence_le_mul_expect_sq_of_fourierCoeff_eq_zero (g : (ι → Bool) → ℝ) {d : ℕ}
     (hdeg : ∀ S : Finset ι, d < #S → fourierCoeff g S = 0) :
     totalInfluence g ≤ d * 𝔼 x, g x ^ 2 := by
   rw [totalInfluence_eq_sum_card_mul_fourierCoeff_sq, expect_sq_eq_sum_fourierCoeff_sq, mul_sum]
@@ -71,13 +79,30 @@ theorem totalInfluence_le_mul_expect_sq_of_degree (g : (ι → Bool) → ℝ) {d
   · rw [hdeg S h]
     simp
 
-/-- **Total influence at most the degree**: a Boolean function of Fourier degree at most `d`, read
-as signs, has total influence at most `d` [O'Donnell, Chapter 3][ODonnell2014]. -/
-theorem totalInfluence_signVal_le_of_degree (f : (ι → Bool) → Bool) {d : ℕ}
+/-- **Total influence at most the degree times the mean square**: a real function of degree at most
+`d` has total influence at most `d` times its mean square. -/
+theorem totalInfluence_le_mul_expect_sq_of_degree (g : (ι → Bool) → ℝ) {d : ℕ}
+    (hdeg : g ∈ lowDegree ℝ ι d) :
+    totalInfluence g ≤ d * 𝔼 x, g x ^ 2 :=
+  totalInfluence_le_mul_expect_sq_of_fourierCoeff_eq_zero g
+    (mem_lowDegree_iff_fourierCoeff_eq_zero.1 hdeg)
+
+/-- **Total influence at most the degree**, Fourier-coefficient form: a Boolean function whose
+Fourier coefficients, read as signs, vanish above degree `d` has total influence at most `d`
+[O'Donnell, Chapter 3][ODonnell2014]. -/
+theorem totalInfluence_signVal_le_of_fourierCoeff_eq_zero (f : (ι → Bool) → Bool) {d : ℕ}
     (hdeg : ∀ S : Finset ι, d < #S → fourierCoeff (fun x => signVal (f x)) S = 0) :
     totalInfluence (fun x => signVal (f x)) ≤ d := by
-  have h := totalInfluence_le_mul_expect_sq_of_degree _ hdeg
+  have h := totalInfluence_le_mul_expect_sq_of_fourierCoeff_eq_zero _ hdeg
   rwa [expect_sq_eq_sum_fourierCoeff_sq, sum_fourierCoeff_sq_signVal, mul_one] at h
+
+/-- **Total influence at most the degree**: a Boolean function of degree at most `d`, read as
+signs, has total influence at most `d` [O'Donnell, Chapter 3][ODonnell2014]. -/
+theorem totalInfluence_signVal_le_of_degree (f : (ι → Bool) → Bool) {d : ℕ}
+    (hdeg : (fun x => signVal (f x)) ∈ lowDegree ℝ ι d) :
+    totalInfluence (fun x => signVal (f x)) ≤ d :=
+  totalInfluence_signVal_le_of_fourierCoeff_eq_zero f
+    (mem_lowDegree_iff_fourierCoeff_eq_zero.1 hdeg)
 
 /-- Half a difference is nonzero only where one of the two terms is nonzero. -/
 private theorem indicator_half_sub_ne_zero_le (a b : ℝ) :
@@ -135,9 +160,10 @@ private theorem one_le_two_pow_card_mul_dens_ne_zero (S : Finset ι) :
       _ = 2 ^ #(insert i S) * (dens {x | h x ≠ 0} : ℝ) := by
           rw [card_insert_of_notMem hi, pow_succ, mul_assoc]
 
-/-- **Schwartz–Zippel on the cube**: a nonzero real function of Fourier degree at most `k` is
-nonzero on at least a `2 ^ (-k)` fraction of the cube. -/
-theorem one_le_two_pow_mul_dens_ne_zero (g : (ι → Bool) → ℝ) {k : ℕ}
+/-- **Schwartz–Zippel on the cube**, Fourier-coefficient form: a nonzero real function whose
+Fourier coefficients vanish above degree `k` is nonzero on at least a `2 ^ (-k)` fraction of the
+cube. -/
+theorem one_le_two_pow_mul_dens_ne_zero_of_fourierCoeff_eq_zero (g : (ι → Bool) → ℝ) {k : ℕ}
     (hdeg : ∀ S : Finset ι, k < #S → fourierCoeff g S = 0) (hg : g ≠ 0) :
     1 ≤ 2 ^ k * (dens {x | g x ≠ 0} : ℝ) := by
   set A : Finset (Finset ι) := {S | fourierCoeff g S ≠ 0}
@@ -161,14 +187,31 @@ theorem one_le_two_pow_mul_dens_ne_zero (g : (ι → Bool) → ℝ) {k : ℕ}
     _ ≤ 2 ^ k * (dens {x | g x ≠ 0} : ℝ) :=
         mul_le_mul_of_nonneg_right (pow_le_pow_right₀ one_le_two hSk) (NNRat.cast_nonneg _)
 
-/-- **Schwartz–Zippel on the cube**, counting form: a nonzero real function of Fourier degree at
-most `k` on `n` coordinates is nonzero on at least `2 ^ (n - k)` points of the cube. -/
-theorem two_pow_card_le_two_pow_mul_card_ne_zero (g : (ι → Bool) → ℝ) {k : ℕ}
-    (hdeg : ∀ S : Finset ι, k < #S → fourierCoeff g S = 0) (hg : g ≠ 0) :
+/-- **Schwartz–Zippel on the cube**: a nonzero real function of degree at most `k` is nonzero on at
+least a `2 ^ (-k)` fraction of the cube. -/
+theorem one_le_two_pow_mul_dens_ne_zero (g : (ι → Bool) → ℝ) {k : ℕ}
+    (hdeg : g ∈ lowDegree ℝ ι k) (hg : g ≠ 0) :
+    1 ≤ 2 ^ k * (dens {x | g x ≠ 0} : ℝ) :=
+  one_le_two_pow_mul_dens_ne_zero_of_fourierCoeff_eq_zero g
+    (mem_lowDegree_iff_fourierCoeff_eq_zero.1 hdeg) hg
+
+/-- **Schwartz–Zippel on the cube**, counting and Fourier-coefficient form: a nonzero real function
+whose Fourier coefficients vanish above degree `k` on `n` coordinates is nonzero on at least
+`2 ^ (n - k)` points of the cube. -/
+theorem two_pow_card_le_two_pow_mul_card_ne_zero_of_fourierCoeff_eq_zero (g : (ι → Bool) → ℝ)
+    {k : ℕ} (hdeg : ∀ S : Finset ι, k < #S → fourierCoeff g S = 0) (hg : g ≠ 0) :
     2 ^ Fintype.card ι ≤ 2 ^ k * #{x | g x ≠ 0} := by
-  have h := one_le_two_pow_mul_dens_ne_zero g hdeg hg
+  have h := one_le_two_pow_mul_dens_ne_zero_of_fourierCoeff_eq_zero g hdeg hg
   rw [nnratCast_dens, Fintype.card_fun, Fintype.card_bool, mul_div_assoc',
     le_div_iff₀ (by positivity), one_mul] at h
   exact_mod_cast h
+
+/-- **Schwartz–Zippel on the cube**, counting form: a nonzero real function of degree at most `k`
+on `n` coordinates is nonzero on at least `2 ^ (n - k)` points of the cube. -/
+theorem two_pow_card_le_two_pow_mul_card_ne_zero (g : (ι → Bool) → ℝ) {k : ℕ}
+    (hdeg : g ∈ lowDegree ℝ ι k) (hg : g ≠ 0) :
+    2 ^ Fintype.card ι ≤ 2 ^ k * #{x | g x ≠ 0} :=
+  two_pow_card_le_two_pow_mul_card_ne_zero_of_fourierCoeff_eq_zero g
+    (mem_lowDegree_iff_fourierCoeff_eq_zero.1 hdeg) hg
 
 end Cslib.BitString

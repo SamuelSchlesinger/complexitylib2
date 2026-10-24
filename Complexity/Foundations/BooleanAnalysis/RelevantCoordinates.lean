@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Foundations.BooleanAnalysis.Degree
 public import Complexity.Foundations.BooleanAnalysis.Influence
 import Complexity.Foundations.BooleanAnalysis.FourierDegree
 
@@ -15,16 +16,18 @@ import Complexity.Foundations.BooleanAnalysis.FourierDegree
 
 A coordinate `i` is *relevant* to a Boolean function `f` when flipping bit `i` changes the value of
 `f` on some input; read as signs, this is exactly when the influence of `i` on `f` is nonzero
-(`BitString.influence_signVal_ne_zero_iff`). A Boolean function of Fourier degree at most `d` has
-at most `d * 2 ^ (d - 1)` relevant coordinates (`BitString.card_filter_influence_ne_zero_le`,
+(`BitString.influence_signVal_ne_zero_iff`). A Boolean function of degree at most `d` has at most
+`d * 2 ^ (d - 1)` relevant coordinates (`BitString.card_filter_influence_ne_zero_le`,
 `BitString.card_filter_exists_update_ne_le`) [NisanSzegedy1994]
 [O'Donnell, Chapter 3][ODonnell2014]. The other bound of the same paper, `bs(f) ≤ 2 deg(f)²`, is
 `QueryComplexity.blockSensitivity_le_two_mul_degree_sq`.
 
-The degree hypothesis is that the coefficients of `f`, read as signs, vanish on the sets of more
-than `d` coordinates. For `f : BooleanFunction n` it holds with `d = QueryComplexity.degree f`
-(`QueryComplexity.card_le_degree_of_fourierCoeff_ne_zero`), and for a function computed by a
-decision tree of depth `d` (`DecisionTree.fourierCoeff_eq_zero_of_depth_lt`).
+The degree hypothesis is that `f`, read as signs, lies in `BitString.lowDegree ℝ ι d`, equivalently
+that its Fourier coefficients vanish on the sets of more than `d` coordinates
+(`BitString.mem_lowDegree_iff_fourierCoeff_eq_zero`). For `f : BooleanFunction n` it holds with
+`d = QueryComplexity.degree f` (`QueryComplexity.degree_le_iff_mem_lowDegree`,
+`BitString.signVal_comp_mem_lowDegree_iff`), and for a function computed by a decision tree of
+depth `d` (`DecisionTree.comp_eval_mem_lowDegree`).
 
 The influence of `i` is the density of the points where the derivative in `i` is nonzero
 (`BitString.influence_signVal_eq_dens`), and this derivative has degree at most `d - 1`. By
@@ -34,11 +37,14 @@ Schwartz–Zippel on the cube, a nonzero influence is therefore at least `2 ^ (1
 
 ## Main results
 
-* `Cslib.BitString.one_le_two_pow_mul_influence_of_degree`: granularity of the influences of a
-  low-degree Boolean function.
+* `Cslib.BitString.one_le_two_pow_mul_influence_of_degree`,
+  `Cslib.BitString.one_le_two_pow_mul_influence_of_fourierCoeff_eq_zero`: granularity of the
+  influences of a low-degree Boolean function.
 * `Cslib.BitString.card_filter_influence_ne_zero_le`,
-  `Cslib.BitString.card_filter_exists_update_ne_le`: the Nisan–Szegedy bound on the number of
-  relevant coordinates.
+  `Cslib.BitString.card_filter_influence_ne_zero_le_of_fourierCoeff_eq_zero`,
+  `Cslib.BitString.card_filter_exists_update_ne_le`,
+  `Cslib.BitString.card_filter_exists_update_ne_le_of_fourierCoeff_eq_zero`: the Nisan–Szegedy bound
+  on the number of relevant coordinates.
 
 ## References
 
@@ -56,9 +62,10 @@ open scoped BigOperators
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-/-- **Granularity of influences**: a nonzero influence of a Boolean function of Fourier degree at
-most `d`, read as signs, is at least `2 ^ (1 - d)`. -/
-theorem one_le_two_pow_mul_influence_of_degree (f : (ι → Bool) → Bool) {d : ℕ}
+/-- **Granularity of influences**, Fourier-coefficient form: a nonzero influence of a Boolean
+function whose Fourier coefficients, read as signs, vanish above degree `d` is at least
+`2 ^ (1 - d)`. -/
+theorem one_le_two_pow_mul_influence_of_fourierCoeff_eq_zero (f : (ι → Bool) → Bool) {d : ℕ}
     (hdeg : ∀ S : Finset ι, d < #S → fourierCoeff (fun x => signVal (f x)) S = 0) (i : ι)
     (hi : influence i (fun x => signVal (f x)) ≠ 0) :
     1 ≤ 2 ^ (d - 1) * influence i (fun x => signVal (f x)) := by
@@ -73,13 +80,21 @@ theorem one_le_two_pow_mul_influence_of_degree (f : (ι → Bool) → Bool) {d :
     apply hi
     simp [influence, h0]
   rw [influence_signVal_eq_dens]
-  exact one_le_two_pow_mul_dens_ne_zero _ hdeg' hne
+  exact one_le_two_pow_mul_dens_ne_zero_of_fourierCoeff_eq_zero _ hdeg' hne
 
-/-- **The Nisan–Szegedy bound**, in terms of influences: a Boolean function of Fourier degree at
-most `d`, read as signs, has at most `d * 2 ^ (d - 1)` coordinates of nonzero influence
-[NisanSzegedy1994]. -/
+/-- **Granularity of influences**: a nonzero influence of a Boolean function of degree at most `d`,
+read as signs, is at least `2 ^ (1 - d)`. -/
+theorem one_le_two_pow_mul_influence_of_degree (f : (ι → Bool) → Bool) {d : ℕ}
+    (hdeg : (fun x => signVal (f x)) ∈ lowDegree ℝ ι d) (i : ι)
+    (hi : influence i (fun x => signVal (f x)) ≠ 0) :
+    1 ≤ 2 ^ (d - 1) * influence i (fun x => signVal (f x)) :=
+  one_le_two_pow_mul_influence_of_fourierCoeff_eq_zero f
+    (mem_lowDegree_iff_fourierCoeff_eq_zero.1 hdeg) i hi
+
+/-- **The Nisan–Szegedy bound**, in terms of influences: a Boolean function of degree at most `d`,
+read as signs, has at most `d * 2 ^ (d - 1)` coordinates of nonzero influence [NisanSzegedy1994]. -/
 theorem card_filter_influence_ne_zero_le (f : (ι → Bool) → Bool) {d : ℕ}
-    (hdeg : ∀ S : Finset ι, d < #S → fourierCoeff (fun x => signVal (f x)) S = 0) :
+    (hdeg : (fun x => signVal (f x)) ∈ lowDegree ℝ ι d) :
     #{i | influence i (fun x => signVal (f x)) ≠ 0} ≤ d * 2 ^ (d - 1) := by
   set F : (ι → Bool) → ℝ := fun x => signVal (f x)
   set R : Finset ι := {i | influence i F ≠ 0}
@@ -97,13 +112,29 @@ theorem card_filter_influence_ne_zero_le (f : (ι → Bool) → Bool) {d : ℕ}
       _ = d * 2 ^ (d - 1) := mul_comm _ _
   exact_mod_cast h
 
-/-- **The Nisan–Szegedy bound on relevant coordinates**: a Boolean function of Fourier degree at
-most `d`, read as signs, has at most `d * 2 ^ (d - 1)` coordinates whose flip changes its value on
-some input [NisanSzegedy1994]. -/
-theorem card_filter_exists_update_ne_le (f : (ι → Bool) → Bool) {d : ℕ}
+/-- **The Nisan–Szegedy bound**, in terms of influences and Fourier coefficients: a Boolean
+function whose Fourier coefficients, read as signs, vanish above degree `d` has at most
+`d * 2 ^ (d - 1)` coordinates of nonzero influence [NisanSzegedy1994]. -/
+theorem card_filter_influence_ne_zero_le_of_fourierCoeff_eq_zero (f : (ι → Bool) → Bool) {d : ℕ}
     (hdeg : ∀ S : Finset ι, d < #S → fourierCoeff (fun x => signVal (f x)) S = 0) :
+    #{i | influence i (fun x => signVal (f x)) ≠ 0} ≤ d * 2 ^ (d - 1) :=
+  card_filter_influence_ne_zero_le f (mem_lowDegree_iff_fourierCoeff_eq_zero.2 hdeg)
+
+/-- **The Nisan–Szegedy bound on relevant coordinates**: a Boolean function of degree at most `d`,
+read as signs, has at most `d * 2 ^ (d - 1)` coordinates whose flip changes its value on some input
+[NisanSzegedy1994]. -/
+theorem card_filter_exists_update_ne_le (f : (ι → Bool) → Bool) {d : ℕ}
+    (hdeg : (fun x => signVal (f x)) ∈ lowDegree ℝ ι d) :
     #{i | ∃ x, f (update x i !x i) ≠ f x} ≤ d * 2 ^ (d - 1) := by
   rw [filter_congr fun i _ => (influence_signVal_ne_zero_iff f i).symm]
   exact card_filter_influence_ne_zero_le f hdeg
+
+/-- **The Nisan–Szegedy bound on relevant coordinates**, Fourier-coefficient form: a Boolean
+function whose Fourier coefficients, read as signs, vanish above degree `d` has at most
+`d * 2 ^ (d - 1)` coordinates whose flip changes its value on some input [NisanSzegedy1994]. -/
+theorem card_filter_exists_update_ne_le_of_fourierCoeff_eq_zero (f : (ι → Bool) → Bool) {d : ℕ}
+    (hdeg : ∀ S : Finset ι, d < #S → fourierCoeff (fun x => signVal (f x)) S = 0) :
+    #{i | ∃ x, f (update x i !x i) ≠ f x} ≤ d * 2 ^ (d - 1) :=
+  card_filter_exists_update_ne_le f (mem_lowDegree_iff_fourierCoeff_eq_zero.2 hdeg)
 
 end Cslib.BitString

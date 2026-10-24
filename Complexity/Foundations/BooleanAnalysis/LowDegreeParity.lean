@@ -7,11 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.BooleanAnalysis.Fourier
-public import Complexity.Foundations.BooleanAnalysis.LowDegree
-import Complexity.Foundations.LinearAlgebra.Interpolation
-import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Tactic.Ring
+public import Complexity.Foundations.BooleanAnalysis.Degree
+import Mathlib.LinearAlgebra.Dimension.Finrank
 
 /-!
 # Parity is far from low-degree functions
@@ -26,15 +23,13 @@ function `P` of degree `D` agrees with parity, a character of more than `|ι| / 
 equals `1 - 2 P` times the character of the other coordinates, of degree at most `|ι| / 2 + D`.
 Every function on these inputs therefore agrees with one of degree at most `|ι| / 2 + D`
 (`BitString.exists_agree_of_parity`), and comparing dimensions bounds the number of inputs
-(`BitString.card_le_of_forall_exists_agree`, an instance of
-`LinearAlgebra.card_le_of_forall_exists_mem_span_eq`).
-
-## Main definitions
-
-* `Cslib.BitString.signSpan`: the span of the characters of at most `H` coordinates.
+(`BitString.card_le_of_forall_exists_agree`).
 
 ## Main results
 
+* `Cslib.BitString.exists_agree_of_parity`, `Cslib.BitString.card_le_of_forall_exists_agree`:
+  if `Q` of degree `D` agrees with the full character on `G`, every function on `G` agrees with one
+  of degree at most `|ι| / 2 + D`, bounding `#G`.
 * `Cslib.BitString.card_agree_parityOn_univ_le`, `Cslib.BitString.card_agree_parity_le`: parity
   is far from low-degree functions.
 
@@ -50,58 +45,7 @@ namespace Cslib.BitString
 
 open Finset
 
-variable {F : Type*} [Field F] {ι : Type*}
-
-variable (F ι) in
-/-- The span of the characters of the sets of at most `H` coordinates. -/
-def signSpan (H : ℕ) : Submodule F ((ι → Bool) → F) :=
-  Submodule.span F (chi F '' {S | #S ≤ H})
-
-/-- The character of `S` has degree at most `|S|`. -/
-theorem chi_mem_lowDegree (S : Finset ι) : chi F S ∈ lowDegree F ι #S := by
-  have hfun : chi F S = ∏ i ∈ S, (1 - 2 * fun x : ι → Bool => bitVal F (x i)) := by
-    funext x
-    simp [chi, Finset.prod_apply, neg_one_pow_toNat_eq_one_sub_two_mul_bitVal]
-  rw [hfun]
-  simpa using prod_mem_lowDegree S (a := 1) fun i _ =>
-    Submodule.sub_mem _ (one_mem_lowDegree 1) (by
-      simpa [two_mul] using Submodule.add_mem _ (bitVal_mem_lowDegree (R := F) i)
-        (bitVal_mem_lowDegree (R := F) i))
-
-/-- The span of the characters of at most `H` coordinates grows with `H`. -/
-theorem signSpan_mono {H K : ℕ} (hHK : H ≤ K) : signSpan F ι H ≤ signSpan F ι K :=
-  Submodule.span_mono (Set.image_mono fun _ hS => le_trans hS hHK)
-
-/-- Each monomial expands into characters of its subsets. -/
-theorem monomial_mem_signSpan [Invertible (2 : F)] (S : Finset ι) :
-    monomial F S ∈ signSpan F ι #S := by
-  classical
-  have hfun : monomial F S = ∑ T ∈ S.powerset,
-      (⅟2 ^ #S * (-1) ^ #T : F) • chi F T := by
-    funext x
-    simp only [monomial, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, chi,
-      neg_one_pow_toNat_eq_one_sub_two_mul_bitVal]
-    have hsplit : ∏ i ∈ S, bitVal F (x i) = ∏ i ∈ S, (⅟2 * (-(1 - 2 * bitVal F (x i)) + 1)) :=
-      Finset.prod_congr rfl fun i _ => by
-        rw [show -(1 - 2 * bitVal F (x i)) + 1 = 2 * bitVal F (x i) by ring, ← mul_assoc,
-          invOf_mul_self, one_mul]
-    rw [hsplit, Finset.prod_mul_distrib, Finset.prod_const, Finset.prod_add, Finset.mul_sum]
-    refine Finset.sum_congr rfl fun T hT => ?_
-    rw [Finset.prod_const_one, mul_one, Finset.prod_neg]
-    ring
-  rw [hfun]
-  exact Submodule.sum_mem _ fun T hT => Submodule.smul_mem _ _
-    (Submodule.subset_span ⟨T, Finset.card_le_card (Finset.mem_powerset.mp hT), rfl⟩)
-
-/-- When `2` is invertible in `F`, every function of degree at most `H` lies in the span of the
-characters of at most `H` coordinates. -/
-theorem lowDegree_le_signSpan [Invertible (2 : F)] (H : ℕ) :
-    lowDegree F ι H ≤ signSpan F ι H := by
-  rw [lowDegree, Submodule.span_le]
-  rintro _ ⟨S, hS, rfl⟩
-  exact signSpan_mono hS (monomial_mem_signSpan S)
-
-variable [Fintype ι]
+variable {F : Type*} [Field F] {ι : Type*} [Fintype ι]
 
 /-- If `Q` has degree at most `D` and agrees with the character of all coordinates on `G`, every
 function agrees on `G` with a function of degree at most `|ι| / 2 + D`. -/
@@ -137,9 +81,22 @@ theorem exists_agree_of_parity [Invertible (2 : F)] {D : ℕ} {Q : (ι → Bool)
 many points as there are sets of at most `H` coordinates. -/
 theorem card_le_of_forall_exists_agree {H : ℕ} (G : Finset (ι → Bool))
     (hG : ∀ f : (ι → Bool) → F, ∃ p ∈ lowDegree F ι H, ∀ x ∈ G, p x = f x) :
-    #G ≤ #{S : Finset ι | #S ≤ H} :=
-  LinearAlgebra.card_le_of_forall_exists_mem_span_eq G _ (monomial F) fun f => by
-    simpa only [lowDegree, coe_filter, mem_univ, true_and] using hG f
+    #G ≤ #{S : Finset ι | #S ≤ H} := by
+  classical
+  -- restricting to `G` is onto
+  let restrict : lowDegree F ι H →ₗ[F] (G → F) :=
+    { toFun := fun p x => p.1 x.1
+      map_add' := fun _ _ => rfl
+      map_smul' := fun _ _ => rfl }
+  have hsurj : Function.Surjective restrict := fun g => by
+    obtain ⟨p, hp, hpx⟩ := hG fun x => if hx : x ∈ G then g ⟨x, hx⟩ else 0
+    refine ⟨⟨p, hp⟩, funext fun x => ?_⟩
+    change p x.1 = g x
+    simpa using hpx x.1 x.2
+  have h := LinearMap.finrank_range_le restrict
+  rw [LinearMap.range_eq_top.2 hsurj, finrank_top, Module.finrank_fintype_fun_eq_card,
+    Fintype.card_coe] at h
+  exact h.trans (finrank_lowDegree_le H)
 
 /-- **Parity is far from low-degree functions.** A function of degree at most `D` agrees with the
 parity of all coordinates on at most as many inputs as there are sets of at most `|ι| / 2 + D`
