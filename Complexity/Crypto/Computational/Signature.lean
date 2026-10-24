@@ -207,10 +207,10 @@ theorem isPPTOn_eufCmaGame (S : SignatureScheme) {adversary : Forger}
       (initial := fun _ => ([] : List (List Bool)))
       (resources := fun caller query =>
         c * (2 * caller.2.2.length + query.length + 2) ^ d + 2 * query.length + 2)
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy) hhandler
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+      (by fun_prop) hhandler
+      (by fun_prop)
       (fun _ _ => True) (fun _ => trivial)
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+      (by fun_prop)
     intro caller request queried _ result hresult
     simp only [signingOracle, ProbComp.eval_bind, ProbComp.eval_pure,
       PMF.mem_support_bind_iff, PMF.mem_support_pure_iff] at hresult
@@ -320,10 +320,10 @@ theorem isPPTOn_run_oneTimeSigningOracle (S : SignatureScheme) {adversary : Forg
     (initial := fun _ => ([] : List (List Bool)))
     (resources := fun caller query =>
       c * (2 * caller.2.2.length + query.length + 2) ^ d + 2 * query.length + 2)
-    (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy) hhandler
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+    (by fun_prop) hhandler
+      (by fun_prop)
     (fun _ _ => True) (fun _ => trivial)
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+      (by fun_prop)
   intro caller request queried _ result hresult
   unfold oneTimeSigningOracle at hresult
   split_ifs at hresult with hempty
@@ -580,17 +580,17 @@ theorem isOraclePPT_limitToOneQuery {bound : ℕ → ℕ → ℕ}
       (prepare := id)
       (initial := fun _ => false)
       (resources := fun caller query => bound caller.1 query.length + 1)
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy) hhandler
-      (by exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+      (by fun_prop) hhandler
+      (by fun_prop)
       (fun _ _ => True) (fun _ => trivial)
       (by
-        have hprep2 : ComputableTidilyInPolyTime
+        have hprep2 : ComputableInPolyTime
             (fun pair : (ℕ × List Bool) × List Bool => (pair.1.1, pair.2.length))
             (encPair (encPair encUnary encBits) encBits)
             (encPair encUnary encUnary) := by
-          exact (by fun_prop : ComputableInPolyTime _ _ _).tidy
-        have hb := ((ComputableInPolyTime.of_tidy hbound).comp (.of_tidy hprep2)).tidy
-        exact (by fun_prop : ComputableInPolyTime _ _ _).tidy)
+          fun_prop
+        have hb := (ComputableInPolyTime.of_tidy hbound).comp hprep2
+        fun_prop)
     intro caller request state _ result hresult
     unfold oneTimeFilterHandler at hresult
     split_ifs at hresult with hstate
