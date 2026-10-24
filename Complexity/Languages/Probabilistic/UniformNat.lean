@@ -9,6 +9,7 @@ module
 
 public import Complexity.Languages.Probabilistic.BitString
 public import Complexity.Probability.UniformNat
+public import Complexity.Probability.StatisticalDistance.UniformMod
 
 /-!
 # Sampling bounded indices
@@ -20,6 +21,10 @@ uniform distribution below `2 ^ width`. Its runtime certificate uses binary outp
 has the same probability; the remaining probability is assigned to the sentinel `bound`.
 There is no unbounded rejection loop.
 
+`sampleModNat width modulus` reduces such a value modulo `modulus`. Read in `ZMod q`, it is within
+statistical distance `q / 2 ^ width` of uniform (`dist_map_natCast_eval_sampleModNat_le`): strict
+PPT machines sample `ZMod q` only approximately, and enough extra bits make the error small.
+
 `sampleDyadicIndex bound` instead samples exactly uniformly below the next power of two, whose
 range is at most `2 * (bound + 1)`. `sampleDyadicCoin bound numerator` compares such an index with
 `numerator`, sampling the exact capped fraction `numerator / dyadicSize bound`.
@@ -27,6 +32,7 @@ range is at most `2 * (bound + 1)`. `sampleDyadicCoin bound numerator` compares 
 ## Main definitions
 
 * `sampleBinaryNat`: exact uniform sampling from a specified bit width.
+* `sampleModNat`: approximately uniform sampling of residues modulo a given modulus.
 * `sampleDyadicIndex`: exact uniform sampling in the power-of-two range.
 * `sampleBoundedIndex`: a capped uniform index with a rejection sentinel.
 * `sampleDyadicCoin`: an exact capped dyadic acceptance probability.
@@ -34,6 +40,8 @@ range is at most `2 * (bound + 1)`. `sampleDyadicCoin bound numerator` compares 
 ## Main results
 
 * `eval_sampleBinaryNat`, `mem_support_sampleBinaryNat_iff`: the exact law and support.
+* `eval_sampleModNat`, `dist_map_natCast_eval_sampleModNat_le`: the law of the residue sampler
+  and its distance from uniform on `ZMod q`.
 * `eval_sampleDyadicIndex`, `eval_sampleBoundedIndex`: exact distribution laws.
 * `eval_sampleDyadicCoin_true`: exact acceptance mass, including zero and one.
 
@@ -62,6 +70,29 @@ theorem eval_sampleBinaryNat (width : ℕ) :
       (PMF.uniformOfFintype (Fin (2 ^ width))).map Fin.val := by
   simp only [sampleBinaryNat, ProbComp.eval_map, BitString.eval_sampleList,
     uniformList_binaryValue]
+
+/-- Reduce `width` fair bits, read as a binary natural number, modulo `modulus`. -/
+noncomputable def sampleModNat (width modulus : ℕ) : ProbComp ℕ :=
+  (· % modulus) <$> sampleBinaryNat width
+
+/-- The residue sampler reduces a uniform value below `2 ^ width`. -/
+theorem eval_sampleModNat (width modulus : ℕ) :
+    ProbComp.eval (sampleModNat width modulus) =
+      (PMF.uniformOfFintype (Fin (2 ^ width))).map fun x => x.val % modulus := by
+  simp only [sampleModNat, ProbComp.eval_map, eval_sampleBinaryNat, PMF.map_comp]
+  rfl
+
+open scoped Cslib.Probability.PMF in
+/-- **Approximately uniform residues.** Read in `ZMod q`, the residue of `width` fair bits is
+within statistical distance `q / 2 ^ width` of the uniform distribution on `ZMod q`. -/
+theorem dist_map_natCast_eval_sampleModNat_le (width q : ℕ) [NeZero q] :
+    dist ((ProbComp.eval (sampleModNat width q)).map (Nat.cast : ℕ → ZMod q))
+      (PMF.uniformOfFintype (ZMod q)) ≤ q / 2 ^ width := by
+  rw [eval_sampleModNat, PMF.map_comp]
+  have hcast : ((Nat.cast : ℕ → ZMod q) ∘ fun x : Fin (2 ^ width) => x.val % q) =
+      fun x => (x.val : ZMod q) := funext fun x => ZMod.natCast_mod _ _
+  rw [hcast]
+  exact_mod_cast PMF.dist_map_natCast_uniformOfFintype_le_div (2 ^ width) q
 
 /-- Every value below `2 ^ width` can occur, and no other value can occur. -/
 theorem mem_support_sampleBinaryNat_iff (width value : ℕ) :

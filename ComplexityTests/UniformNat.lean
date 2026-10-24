@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Probabilistic.UniformNat
 import Complexity.Tactic.PPT
+import Mathlib.Data.ZMod.Basic
 
 /-! Strict fair-bit samplers: exact boundary laws and closed compositional certificates. -/
 
@@ -57,5 +58,24 @@ example : True := by
   fail_if_success
     have : ComputableTidilyInPolyTime BitString.binaryValue encBits encUnary := by polytime
   trivial
+
+-- Residues of a uniform value below a multiple of the modulus are exactly uniform.
+example : (PMF.uniformOfFintype (Fin 6)).map (fun x => (x.val : ZMod 3)) =
+    PMF.uniformOfFintype (ZMod 3) := by
+  have h := PMF.dist_map_natCast_uniformOfFintype_le 6 3
+  norm_num at h
+  exact h
+
+-- Otherwise the distance is at most the leftover fraction: one extra preimage among four values.
+open scoped Cslib.Probability.PMF in
+example : dist ((PMF.uniformOfFintype (Fin 4)).map fun x => (x.val : ZMod 3))
+    (PMF.uniformOfFintype (ZMod 3)) ≤ 1 / 4 := by
+  have h := PMF.dist_map_natCast_uniformOfFintype_le 4 3
+  norm_num at h
+  exact h
+
+-- Residues of `n + 8` fair bits modulo a computed modulus are strict PPT.
+example : IsPPTOn encUnary encNat (fun n => sampleModNat (n + 8) (2 * n + 3)) :=
+  isPPTOn_sampleModNat (by fun_prop) (by fun_prop)
 
 end ComplexityTests.UniformNat
