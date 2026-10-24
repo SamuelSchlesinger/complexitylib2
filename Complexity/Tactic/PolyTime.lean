@@ -257,18 +257,29 @@ private meta def rawTransitionPremise (type : Expr) : MetaM Bool := do
   return (← inspect.run false).2
 
 open Lean in
-private meta initialize rawPremiseCache : EnvExtension (Std.HashMap Name Bool) ←
+private meta structure PlainRuleCache where
+  premises : Std.HashMap Name Bool := {}
+  rawProperties : Option (Std.HashSet Name) := none
+  deriving Inhabited
+
+open Lean in
+private meta initialize rawPremiseCache : EnvExtension PlainRuleCache ←
   registerEnvExtension (pure {}) (asyncMode := .local)
+
+open Lean Meta in
+/-- Inspect premises under their data parameters; a complete certificate has no raw premise. -/
+private meta def typeHasRawPremise (type : Expr) : MetaM Bool :=
+  forallTelescope type fun xs _ =>
+    xs.anyM fun x => do
+      let premise ← inferType x
+      if ← isProp premise then rawTransitionPremise premise else pure false
 
 open Lean Meta in
 /-- Inspect a registered rule's hypotheses, including reducible proposition aliases. -/
 private meta def hasRawPremise (name : Name) : MetaM Bool := do
-  if let some result := (rawPremiseCache.getState (← getEnv)).get? name then return result
+  if let some result := (rawPremiseCache.getState (← getEnv)).premises.get? name then return result
   let some info := (← getEnv).find? name | return true
-  forallTelescope info.type fun xs _ => do
-    xs.anyM fun x => do
-      let premise ← inferType x
-      if ← isProp premise then rawTransitionPremise premise else pure false
+  typeHasRawPremise info.type
 
 open Lean in
 /-- Modify only the search's environment copy, including during asynchronous proof elaboration.
@@ -280,6 +291,13 @@ private meta def searchRuleState {α β σ : Type} (ext : ScopedEnvExtension α 
     | top :: stack =>
       { s with stateStack := { top with state := f top.state } :: stack }
     | [] => s
+
+open Lean Meta in
+/-- Recognize raw properties themselves, including full-arity reducible aliases. -/
+private meta def isRawProperty (name : Name) : MetaM Bool := do
+  let some info := (← getEnv).find? name | return true
+  forallTelescope info.type fun xs _ => do
+    rawTransitionPremise (mkAppN (← mkConstWithLevelParams name) xs)
 
 open Lean Meta Mathlib.Meta.FunProp in
 /-- Shadow global function and composition rules only during public search. Local proof entries
@@ -304,9 +322,21 @@ private meta def plainRuleEnvironment (env : Environment) : MetaM Environment :=
       rules.filter fun rule => match rule.thmOrigin with
         | .decl name => !blocked.contains name
         | .fvar _ => true }
-  return searchRuleState lambdaTheoremsExt env fun s =>
+  let env := searchRuleState lambdaTheoremsExt env fun s =>
     { s with theorems := s.theorems.map fun _ rules =>
         rules.filter fun rule => !blocked.contains rule.thmName }
+  let rawProperties ← match (rawPremiseCache.getState env).rawProperties with
+    | some names => pure names
+    | none => do
+      let decls := (funPropDeclsExt.getState env).decls
+      decls.foldValuesM (init := ({} : Std.HashSet Name)) fun names decl => do
+        return if ← isRawProperty decl.funPropName then names.insert decl.funPropName else names
+  -- Local implications are enumerated independently of the theorem tables. Their raw premises
+  -- may use supplied assumptions, but cannot initiate raw function-property proof search.
+  return searchRuleState funPropDeclsExt env fun s =>
+    { s with decls := s.decls.fold (init := {}) fun tree _ decl =>
+        if rawProperties.contains decl.funPropName then tree
+        else tree.insertKeyValue decl.path decl }
 
 open Lean Meta Mathlib.Meta.FunProp in
 /-- Retain ordinary general rules while excluding raw construction premises.
@@ -359,8 +389,56 @@ meta def Internal.withPlainRuleCache (action : TacticM Unit) : TacticM Unit := d
       | some i => rawModules.getD env.header.moduleNames[i.toNat]! true
       | none => true
     cache := cache.insert name (← if mayUseRaw then hasRawPremise name else pure false)
+  let rawProperties ← (funPropDeclsExt.getState env).decls.foldValuesM
+    (init := ({} : Std.HashSet Name)) fun names decl => do
+      let mayUseRaw := match env.getModuleIdxFor? decl.funPropName with
+        | some i => rawModules.getD env.header.moduleNames[i.toNat]! true
+        | none => true
+      return if mayUseRaw && (← isRawProperty decl.funPropName) then
+        names.insert decl.funPropName else names
   -- The cache is confined to this `withEnv`; unrelated tactics and later declarations see none.
-  withEnv (rawPremiseCache.setState env cache) action
+  withEnv (rawPremiseCache.setState env { premises := cache, rawProperties := some rawProperties })
+    action
+
+open Lean Meta in
+/-- Retain Aesop's local application alternatives and priority, excluding only rules which would
+start raw search from a plain goal. Adapted from `Aesop.BuiltinRules.applyHyps` (Jannis Limperg). -/
+meta def Internal.applyLocalCertificates : Aesop.RuleTac := fun input => input.goal.withContext do
+  let rawGoal ← try
+    pure ((← polytimePredicate (← input.goal.getType)) == ``ComputableTidilyInPolyTime)
+  catch _ => pure false
+  if rawGoal then return ← Aesop.BuiltinRules.applyHyps input
+  let mut applications := #[]
+  for decl in ← getLCtx do
+    if decl.isImplementationDetail || (← typeHasRawPremise decl.type) then continue
+    let saved ← saveState
+    try
+      applications := applications.push (← Aesop.BuiltinRules.applyHyp decl.fvarId input.goal
+        input.options.applyHypsTransparency)
+    catch _ => pure ()
+    finally saved.restore
+  return ⟨applications⟩
+
+open Lean Meta in
+/-- Apply an existing fact only when matching its conclusion determines every argument. -/
+private meta def matchLocalCertificate (fact : Expr) (target : Expr) : MetaM (Option Expr) := do
+  let (xs, _, conclusion) ← forallMetaTelescope (← inferType fact)
+  unless ← isDefEq conclusion target do return none
+  let args ← xs.mapM instantiateMVars
+  if args.any Expr.hasExprMVar then return none
+  return some (mkAppN fact args)
+
+open Lean Meta in
+/-- Instantiate a supplied local certificate family without proving any new premise. Every
+argument must be determined by the requested type; implications with missing evidence fail. -/
+private meta def knownLocalCertificate (target : Expr) : MetaM (Option Expr) := do
+  for decl in ← getLCtx do
+    unless decl.isImplementationDetail do
+      let saved ← saveState
+      let proof? ← matchLocalCertificate decl.toExpr target
+      if proof?.isSome then return proof?
+      saved.restore
+  return none
 
 open Lean Meta Elab Tactic Mathlib.Meta.FunProp in
 /-- Shared compositional backend with a fresh alias-aware raw-premise boundary. The standard
@@ -370,7 +448,9 @@ meta def Internal.funPropWithPlainBoundary (maxSteps : Nat) : TacticM Unit := wi
   let goal ← getMainGoal
   let target ← goal.getType
   let disch : Expr → MetaM (Option Expr) := fun e => do
-    tacticToDischarge (← `(tactic| first | with_reducible assumption | infer_param)) e
+    if let some proof ← tacticToDischarge
+        (← `(tactic| first | with_reducible assumption | infer_param)) e then return some proof
+    if ← rawTransitionPremise e then knownLocalCertificate e else pure none
   let ctx : Mathlib.Meta.FunProp.Context := { config := { maxSteps }, disch }
   let env ← getEnv
   let state : Mathlib.Meta.FunProp.State := {
@@ -601,6 +681,7 @@ private meta def polytimeIterateAlternative : Lean.Elab.Tactic.TacticM Unit :=
 elab "polytime" : tactic => Internal.withPlainRuleCache do
   Lean.Elab.Tactic.evalTactic (← `(tactic| solve |
     aesop (config := { terminal := true, assumptionTransparency := .reducible })
-      (rule_sets := [PolyTime])))
+      (add unsafe 75% tactic Internal.applyLocalCertificates)
+      (erase Aesop.BuiltinRules.applyHyps) (rule_sets := [PolyTime])))
 
 end Cslib.Tactic.PolyTime

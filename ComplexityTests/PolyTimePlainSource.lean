@@ -136,6 +136,74 @@ example : ComputableInPolyTime (aliasRoutine rawOnlyReverseProbe) encBits encBit
 example : ComputableInPolyTime (aliasRoutine rawOnlyReverseProbe) encBits encBits := by
   fun_prop
 
+/-- A distinct opaque result makes implication consumption, rather than fact conversion, decisive. -/
+@[irreducible] def localImplicationResult (word : List Bool) : List Bool := word
+
+-- Without the raw fact, a local implication cannot launch global raw search. Ordinary
+-- `fun_prop` still uses the same implication and existing global construction proof afterward.
+example (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits →
+    ComputableInPolyTime localImplicationResult encBits encBits) :
+    ComputableInPolyTime localImplicationResult encBits encBits := by
+  fail_if_success polytime
+  fun_prop
+
+example (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits →
+    ComputableInPolyTime localImplicationResult encBits encBits)
+    (hf : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits) :
+    ComputableInPolyTime localImplicationResult encBits encBits := by
+  fail_if_success (clear hf; polytime)
+  polytime
+
+-- The original reported statement, with its explicit closing proof using the supplied rule.
+example (h : ComputableTidilyInPolyTime rawOnlyReverseProbe encBits encBits →
+    ComputableInPolyTime rawOnlyReverseProbe encBits encBits) :
+    ComputableInPolyTime rawOnlyReverseProbe encBits encBits := by
+  fail_if_success polytime
+  exact h rawOnlyReverseProbe_tidy
+
+example (h : RawAliasFull rawOnlyReverseProbe encBits encBits →
+    ComputableInPolyTime localImplicationResult encBits encBits) :
+    ComputableInPolyTime localImplicationResult encBits encBits := by
+  fail_if_success polytime
+  fun_prop
+
+/-- The index is visible to local theorem matching, rather than an unconstrained parameter. -/
+@[irreducible] def indexedRawOnly (_index : ℕ) (word : List Bool) : List Bool := word.reverse
+
+/-- Global raw evidence exists for every index, so the quantified negative is not vacuous. -/
+@[fun_prop] theorem indexedRawOnly_tidy (index : ℕ) :
+    ComputableTidilyInPolyTime (indexedRawOnly index) encBits encBits := by
+  unfold indexedRawOnly
+  fun_prop
+
+/-- The corresponding result has no public global certificate. -/
+@[irreducible] def indexedLocalResult (_index : ℕ) (word : List Bool) : List Bool := word
+
+example (h : ∀ index, RawAliasFull (indexedRawOnly index) encBits encBits →
+    ComputableInPolyTime (indexedLocalResult index) encBits encBits) :
+    ComputableInPolyTime (indexedLocalResult 0) encBits encBits := by
+  fail_if_success polytime
+  fun_prop
+
+example (h : ∀ index, RawAliasFull (indexedRawOnly index) encBits encBits →
+    ComputableInPolyTime (indexedLocalResult index) encBits encBits)
+    (hf : ∀ index, RawAliasFull (indexedRawOnly index) encBits encBits) :
+    ComputableInPolyTime (indexedLocalResult 0) encBits encBits := by
+  fail_if_success (clear hf; polytime)
+  polytime
+
+example (routine : ℕ → List Bool → List Bool)
+    (hf : ∀ index, ComputableInPolyTime (routine index) encBits encBits) (index : ℕ) :
+    ComputableInPolyTime (routine index) encBits encBits := by
+  fail_if_success (clear hf; polytime)
+  polytime
+
+example (routine : ℕ → List Bool → List Bool)
+    (hf : ∀ index, ComputableTidilyInPolyTime (routine index) encBits encBits) (index : ℕ) :
+    ComputableTidilyInPolyTime (routine index) encBits encBits := by
+  fail_if_success (clear hf; polytime)
+  polytime
+
 -- An already supplied alias certificate is evidence, not a raw search request.
 example (routine : List Bool → List Bool) (h : RawAliasFull routine encBits encBits) :
     ComputableInPolyTime routine encBits encBits := by
@@ -169,6 +237,13 @@ attribute [fun_prop] RoutineContract
 
 example (routine : List Bool → List Bool) (h : RoutineContract routine) :
     ComputableInPolyTime routine encBits encBits := by
+  polytime
+
+-- A genuine plain contract implication and its supplied premise remain usable local rules.
+example (routine : List Bool → List Bool) (hc : RoutineContract routine)
+    (h : RoutineContract routine → ComputableInPolyTime localImplicationResult encBits encBits) :
+    ComputableInPolyTime localImplicationResult encBits encBits := by
+  fail_if_success (clear hc; polytime)
   polytime
 
 end ComplexityTests.PolyTimePlainSource
