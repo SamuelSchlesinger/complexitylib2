@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Tactic.PolyTime
 
 /-!
@@ -433,7 +434,7 @@ theorem computableTidilyInTimeAndSpace_stretch
           (tGen (seedAt generator seed i) + seed.length + 1)) + 1))
       (fun seed => c * (sCount seed.length + Q seed + seed.length + count seed.length + 1)) := by
   obtain ⟨c₁, hcnt_seed⟩ := hcount.comp ComputableTidilyInTimeAndSpace.length_bits
-  obtain ⟨c₂, hpair⟩ := PairEncoding.pair_mono
+  obtain ⟨c₂, hpair⟩ := ComputableTidilyInTimeAndSpace.pair
     (enc := encPair encBits encUnary) computableTidilyInTimeAndSpace_id hcnt_seed
   obtain ⟨c₃, hiter⟩ := computableTidilyInTimeAndSpace_iterate_pair hlen hgen
     (Q := fun p => Finset.sup (Finset.range p.2) (fun i => sGen (seedAt generator p.1 i)))
@@ -571,10 +572,12 @@ theorem computableTidilyInTimeAndSpace_forwardIterate_captured {α : Type}
             (encParam x.1.1).length + x.1.2.length + 1)) + 1))
       (fun x => c * (Q x + (encParam x.1.1).length + x.1.2.length + 1)) := by
   let encS := encPair encParam encBits
-  obtain ⟨cpar, hpar⟩ := PairEncoding.fst (enc₁ := encParam) (enc₂ := encBits) (enc := encS)
-  obtain ⟨csnd, hsnd⟩ := PairEncoding.snd (enc₁ := encParam) (enc₂ := encBits) (enc := encS)
+  obtain ⟨cpar, hpar⟩ := Internal.normalizeLinear
+    (PairEncoding.fst (enc₁ := encParam) (enc₂ := encBits) (enc := encS))
+  obtain ⟨csnd, hsnd⟩ := Internal.normalizeLinear
+    (PairEncoding.snd (enc₁ := encParam) (enc₂ := encBits) (enc := encS))
   obtain ⟨c₁, hdrop⟩ := ComputableTidilyInTimeAndSpace.dropLast_bits.comp hgen
-  obtain ⟨cpair, hnext₀⟩ := PairEncoding.pair_mono (enc := encS) hpar hdrop
+  obtain ⟨cpair, hnext₀⟩ := ComputableTidilyInTimeAndSpace.pair (enc := encS) hpar hdrop
   obtain ⟨c₂, hemit₀⟩ := ComputableTidilyInTimeAndSpace.getLast?_toList_bits.comp hgen
   obtain ⟨c₃, hfin₀⟩ := ComputableTidilyInTimeAndSpace.reverse_bits.comp hsnd
   obtain ⟨K, hK⟩ : ∃ K, K = cpair * (cpar + c₁ + 30) + c₂ + c₃ + csnd + 30 := ⟨_, rfl⟩
