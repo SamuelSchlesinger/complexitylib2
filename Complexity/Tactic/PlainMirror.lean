@@ -17,12 +17,21 @@ public import Complexity.Tactic.PolyTime.Init
 `@[plain_mirror]` transports an elaborated theorem along the established plain/tidy equivalences,
 including hypotheses under binders. It does not invent an equivalence for exact resource bounds.
 The generated proof is checked by Lean, and registered function-property rules retain their search
-priority. Apply the attribute after the source rule's registrations.
+priority and relative registration order. Apply the attribute after the source rule's registrations.
+
+`plain_mirror_sources` derives counterparts from an explicit generic source-module list.
+`plain_mirror_registrations` refreshes annotations added after derivation, including eager routine
+premises. `#mirror_pairs` emits deterministic JSON with each original, plain name and source module
+for coordinated migration; it does not exempt retained originals from the internal-layer policy.
 
 ## Main definitions
 
+* `Cslib.Tactic.PlainMirror.equivalences`: the supported proved predicate equivalences.
 * `Cslib.Tactic.PlainMirror.plainType`: the supported transformation of elaborated statements.
+* `Cslib.Tactic.PlainMirror.mirrorName`: the conventional counterpart name.
+* `Cslib.Tactic.PlainMirror.mirrorPairs`: the deterministic migration registry.
 * `Cslib.Tactic.PlainMirror.getMirror?`: find the generated counterpart of a source certificate.
+* `Cslib.Tactic.PlainMirror.mirrorDeclaration`: transport and register one certificate.
 * `plain_mirror`: derive a named plain counterpart of an existing certificate.
 -/
 
