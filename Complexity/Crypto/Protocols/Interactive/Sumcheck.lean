@@ -8,6 +8,7 @@ module
 -- upstream: local-only (design prototype for #643; not for merge)
 
 public import Complexity.Crypto.Protocols.Interactive.Sequential
+import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Algebra.MvPolynomial.Degrees
 public import Mathlib.Algebra.Polynomial.Eval.Defs
 
@@ -122,11 +123,25 @@ theorem finalCheck_complete :
     (finalCheck P).Complete World.plain (rel P n) Accept 0 := by
   sorry
 
-omit [Fintype F] in
+/-- At round `n` all coordinates are fixed: the partial sum is the evaluation. -/
+theorem partialSum_self (r : Fin n → F) : partialSum P n r = MvPolynomial.eval r P := by
+  rw [partialSum, Finset.sum_eq_single (fun _ => false)]
+  · have : splice n r (fun _ => false) = r := funext fun j => by simp [splice, j.isLt]
+    simp [this]
+  · intro b _ hb
+    have : ¬ ∀ j : Fin n, j.val < n → b j = false :=
+      fun h => hb (funext fun j => h j j.isLt)
+    simp only [this, ite_false]
+  · exact fun h => absurd (Finset.mem_univ _) h
+
 /-- The final check is round-by-round sound without error. -/
 theorem finalCheck_rbrSound :
     (finalCheck P).verifier.RbrSound (language (rel P n)) Set.univ () := by
-  sorry
+  refine ⟨fun x _ => MvPolynomial.eval x.1 P = x.2,
+    fun x hx h => hx ⟨(), by rw [rel, partialSum_self]; exact h⟩,
+    fun x hS ⟨x', _, hout⟩ => hS ?_⟩
+  by_contra h
+  simp [Verifier.outputOn, finalCheck, h] at hout
 
 /-! ### End-to-end theorems, by composition -/
 

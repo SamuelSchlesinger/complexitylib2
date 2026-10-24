@@ -129,13 +129,6 @@ def Verifier.RbrSound (V : Verifier emptySpec s StmtIn StmtOut) (langIn : Set St
   ∃ S : StmtIn → Prefix s → Prop, (∀ x ∉ langIn, ¬ S x (Prefix.empty s)) ∧
     ∀ x, RbrFrom s V.samplers ε (S x) fun τ => ∃ x' ∈ langOut, V.outputOn x τ = some x'
 
-/-- **Round-by-round soundness implies soundness**, with the sum of the per-round errors. -/
-theorem Verifier.RbrSound.sound {V : Verifier emptySpec s StmtIn StmtOut} {langIn : Set StmtIn}
-    {langOut : Set StmtOut} {ε : PerChallenge (fun _ => ℝ≥0∞) s}
-    (h : V.RbrSound langIn langOut ε) :
-    V.Sound (oP := emptySpec) World.plain langIn langOut (PerChallenge.sum s ε) := by
-  sorry
-
 /-! ### Zero knowledge -/
 
 /-- Honest-verifier zero knowledge with statistical error `ε` (perfect for `ε = 0`): on every

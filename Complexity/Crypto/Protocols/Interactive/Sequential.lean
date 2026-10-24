@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: local-only (design prototype for #643; not for merge)
 
-public import Complexity.Crypto.Protocols.Interactive.Security
+public import Complexity.Crypto.Protocols.Interactive.Plain
 
 /-!
 # Sequential composition of interactive reductions (design prototype)
@@ -230,7 +230,11 @@ variable {s : Spec} {S W : Type} {R : ℕ → Reduction emptySpec emptySpec s S 
 /-- The reduction without rounds is perfectly complete. -/
 theorem Reduction.id_complete (rel : S → W → Prop) :
     (Reduction.id (oP := emptySpec) (oV := emptySpec)).Complete World.plain rel rel 0 := by
-  sorry
+  intro x w hxw
+  rw [plain_eval]
+  simp [Reduction.run, Verifier.execute, Reduction.id, lawOf₂_liftProver, runStrategy,
+    lawOf₂_output, Verifier.outputOn, hxw]
+  rfl
 
 /-- The reduction without rounds is round-by-round sound without error. -/
 theorem Reduction.id_rbrSound (L : Set S) :
