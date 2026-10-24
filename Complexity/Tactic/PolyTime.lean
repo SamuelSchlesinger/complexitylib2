@@ -122,8 +122,10 @@ attribute [program_certificate]
 -- Each contract keeps the evidence that must agree on a bound or an encoding in one search.
 attribute [program_certificate hbound hcompute]
   ComputableTidilyInPolyTime.foldlWithInput_of_bounded_growth
+  ComputableInPolyTime.foldlWithInput_of_bounded_growth
 attribute [program_certificate hbound]
   ComputableTidilyInPolyTime.iterateWithInput_of_bounded_growth
+  ComputableInPolyTime.iterateWithInput_of_bounded_growth
 
 open Lean Meta Elab Tactic in
 /-- Synthesize a list interface once the list and element encodings are determined. -/
@@ -280,28 +282,31 @@ open Lean Meta Elab Tactic in
 /-- An explicit raw construction goal may use a plain certificate and its existing PT normal
 form. The nested search stays in the plain calculus; this rule never applies to a plain goal. -/
 @[aesop unsafe 70% tactic (rule_sets := [PolyTime])]
-private meta def polytimeRawFromPlain : TacticM Unit := withMainContext do
-  let goal ← getMainGoal
-  let target := (← instantiateMVars (← goal.getType)).consumeMData
-  unless target.isAppOf ``ComputableTidilyInPolyTime do
-    throwError "expected an internal raw polynomial-time goal"
-  -- Do not launch a second search for every unresolved construction atom. A real plain
-  -- certificate for this program head must be indexed before entering the plain backend.
-  let key ← Cslib.Tactic.efficiencyKey target
-  let plainKey := (``ComputableInPolyTime, key.2.1, key.2.2)
-  let named := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD plainKey #[]
-  let functions ← Mathlib.Meta.FunProp.getTheoremsForFunction key.2.1 ``ComputableInPolyTime
-  unless !named.isEmpty || !functions.isEmpty do
-    throwError "no indexed plain certificate for this internal raw goal"
-  let rawNamed := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD key #[]
-  let rawFunctions ← Mathlib.Meta.FunProp.getTheoremsForFunction key.2.1
-    ``ComputableTidilyInPolyTime
-  unless rawNamed.isEmpty && rawFunctions.isEmpty do
-    throwError "an existing raw certificate family already handles this program"
-  replaceMainGoal (← goal.applyConst ``ComputableInPolyTime.tidy)
-  evalTactic (← `(tactic| solve |
-    aesop (config := { terminal := true, assumptionTransparency := .reducible })
-      (rule_sets := [PolyTime])))
+private meta def polytimeRawFromPlain : TacticM Unit :=
+  withMainContext <| Term.withoutErrToSorry <| withoutRecover do
+    let goal ← getMainGoal
+    let target := (← instantiateMVars (← goal.getType)).consumeMData
+    unless target.isAppOf ``ComputableTidilyInPolyTime do
+      throwError "expected an internal raw polynomial-time goal"
+    -- Do not launch a second search for every unresolved construction atom. A real plain
+    -- certificate for this program head must be indexed before entering the plain backend.
+    let key ← Cslib.Tactic.efficiencyKey target
+    let plainKey := (``ComputableInPolyTime, key.2.1, key.2.2)
+    let named := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD plainKey #[]
+    let functions ← Mathlib.Meta.FunProp.getTheoremsForFunction key.2.1 ``ComputableInPolyTime
+    unless !named.isEmpty || !functions.isEmpty do
+      throwError "no indexed plain certificate for this internal raw goal"
+    let rawNamed := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD key #[]
+    let rawFunctions ← Mathlib.Meta.FunProp.getTheoremsForFunction key.2.1
+      ``ComputableTidilyInPolyTime
+    unless rawNamed.isEmpty && rawFunctions.isEmpty do
+      throwError "an existing raw certificate family already handles this program"
+    replaceMainGoal (← goal.applyConst ``ComputableInPolyTime.tidy)
+    evalTactic (← `(tactic| solve |
+      aesop (config := { terminal := true, assumptionTransparency := .reducible })
+        (rule_sets := [PolyTime])))
+    if ← Aesop.hasSorry (mkMVar goal) then
+      throwError "plain certificate search admitted a premise"
 
 open Lean Meta Elab Tactic in
 /-- Let compositional certificates finish a goal before trying loop specifications. -/
