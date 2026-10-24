@@ -14,6 +14,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fi
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain.Calculus
 import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 
 /-!
@@ -188,10 +189,9 @@ def kindDecoder : Decoder encKind where
   decode w := kindOfIndex w.length
   decode_enc k := by cases k <;> rfl
   computable := by
-    have h : ComputableTidilyInPolyTime (fun w : List Bool => min w.length 7) encBits encUnary :=
-      ComputableTidilyInPolyTime.unary_min.comp ((by fun_prop :
-        ComputableTidilyInPolyTime (fun w : List Bool => w.length) encBits encUnary).prod
-        (ComputableTidilyInPolyTime.const 7))
+    have h : ComputableInPolyTime (fun w : List Bool => min w.length 7) encBits encUnary :=
+      ComputableInPolyTime.unary_min.comp' (ComputableInPolyTime.length_bits.prod
+        (ComputableInPolyTime.const 7))
     exact (h.of_enc_eq fun w => by
       change encUnary (kindIndex (kindOfIndex w.length)) = _
       rw [kindIndex_kindOfIndex]).exists_degree
@@ -272,8 +272,7 @@ theorem isCode_iff (w : List Bool) : isCode w = true ↔ ∃ φ, encQBF φ = w :
     exact ⟨⟨φ, rfl⟩, rfl⟩
 
 theorem isCode_pt : ComputableTidilyInPolyTime isCode encBits encBool := by
-  obtain ⟨d, e, hD⟩ := tokensDecoder.computable
-  have hD := hD.computableTidilyInPolyTime
+  have hD := tokensDecoder.computableInPolyTime.tidy
   have hre : ComputableTidilyInPolyTime (fun w => encList encToken (tokensDecoder.decode w))
       encBits encBits := hD.of_enc_eq fun _ => rfl
   exact (ComputableTidilyInPolyTime.of_finite (fun q : Bool × Bool => q.1 && q.2)).comp
