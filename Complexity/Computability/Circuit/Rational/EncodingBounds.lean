@@ -9,7 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.IntegralLift
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Counting
 import Mathlib.Data.Nat.Digits.Lemmas
 import Mathlib.LinearAlgebra.Matrix.AbsoluteValue
 

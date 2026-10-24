@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Complexity.Problems.IndependentSet
 public import Complexity.Computability.Complexity.Problems.SubsetSum
 import Complexity.Computability.Complexity.FineGrained.Assignment
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Counting
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 

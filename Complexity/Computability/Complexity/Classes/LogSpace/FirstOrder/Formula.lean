@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram
 public import Complexity.Logics.FirstOrder.Basic
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Lookup
 
 /-!
 # Shared first-order counter-program control

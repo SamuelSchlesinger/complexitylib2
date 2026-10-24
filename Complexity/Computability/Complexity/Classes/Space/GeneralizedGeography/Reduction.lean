@@ -12,6 +12,7 @@ public import Complexity.Computability.Complexity.Classes.Space.TQBF.Prenex
 import Complexity.Computability.Complexity.Classes.Space.TQBF.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Foundations.Data.List.Counting
 
 /-!
 # Generalized Geography is `PSPACE`-hard

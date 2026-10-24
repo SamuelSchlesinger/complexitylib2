@@ -12,7 +12,7 @@ public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 public import Mathlib.Data.List.OfFn
 public import Mathlib.Data.List.GetD
 public import Mathlib.Data.Nat.Size
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Append
 
 /-!
 # Undirected s–t connectivity

@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Reverse
-import Complexity.Foundations.Data.List.Basic
+import Complexity.Foundations.Data.List.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
 import Mathlib.Tactic.Linarith
 
