@@ -23,3 +23,16 @@ example {α : Type} {input : α ↪ List Bool} {cols width row col : α → ℕ}
 run_meta do
   if (← Lean.getEnv).contains `Turing.MultiTapeTM.ComputableTidilyInPolyTime.matrixBinaryEntry then
     throwError "the superseded matrix construction export remains"
+
+-- All dimensions and coordinates vary with the runtime input; entries stay binary encoded.
+example : ComputableInPolyTime
+    (fun p : ℕ × List Bool => Cslib.Matrix.binaryEntry p.1 p.1 p.2 p.1 p.1)
+    (encPair encUnary encBits) encNat := by fun_prop
+
+example : Cslib.Matrix.binaryEntry 2 0 [true, true] 9 9 = 0 := by decide
+example : Cslib.Matrix.binaryEntry 2 3 [] 4 1 = 0 := by decide
+example : Cslib.Matrix.binaryEntry 2 3 [true] 0 0 = 1 := by decide
+example : Cslib.Matrix.binaryEntry 2 2 [false, true, true, false] 0 1 = 1 := by decide
+
+-- Zero columns means zero row stride for this total accessor, not an invented emptiness guard.
+example : Cslib.Matrix.binaryEntry 0 3 [true, true, true] 7 0 = 7 := by decide

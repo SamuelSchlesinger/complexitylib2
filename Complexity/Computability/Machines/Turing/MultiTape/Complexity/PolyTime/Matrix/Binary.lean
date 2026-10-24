@@ -43,11 +43,8 @@ theorem matrixBinaryEntry {α : Type} {input : α ↪ List Bool}
     ComputableInPolyTime
       (fun a => Cslib.Matrix.binaryEntry (cols a) (width a) (word a) (row a) (col a))
       input encNat := by
-  apply ComputableInPolyTime.of_tidy
-  exact ComputableTidilyInPolyTime.bitsToNat.comp
-    (ComputableTidilyInPolyTime.bitsRowWithInput hwidth.tidy
-      (ComputableTidilyInPolyTime.unary_add.comp
-        ((ComputableTidilyInPolyTime.unary_mul.comp
-          (hrow.tidy.prod hcols.tidy)).prod hcol.tidy)) hword.tidy)
+  exact bitsToNat.comp
+    (bitsRowWithInput hwidth
+      (unary_add.comp ((unary_mul.comp (hrow.prod hcols)).prod hcol)) hword)
 
 end Turing.MultiTapeTM.ComputableInPolyTime

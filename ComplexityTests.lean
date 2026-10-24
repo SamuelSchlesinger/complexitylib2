@@ -458,6 +458,7 @@ import ComplexityTests.WPPTwoSided
 import ComplexityTests.WaringCompilation
 import ComplexityTests.WeightedThreshold
 import ComplexityTests.WeightedThresholdBounds
+import ComplexityTests.WindowPlainCutover
 import ComplexityTests.WordRAM
 import ComplexityTests.WordRAMBasis
 import ComplexityTests.WordRAMController
