@@ -17,14 +17,14 @@ public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Int
 Bounds the joint sensitivity of two indices `q < q'` of the recursive family at an input where both
 are `false`. A bit changing both outputs makes some row clause true at the stronger index `q'`,
 hence also at the weaker index `q`, so it repairs a failed condition with respect to the candidate
-lists of `q`: either of a target candidate (fewer than `16`) or of a gate candidate (at most `3`),
+lists of `q`: either of a target candidate (at most `15`) or of a gate candidate (at most `3`),
 in which case the flip changes both gate predicates `F (gateIndex q')` and `F (gateIndex q)` on a
 single child.
 
 ## Main results
 
 * `recursive_joint_zero_at`: at an input where both indices give `false`, the joint sensitivity is
-  at most `16 * sideSensitivity F false + 3 * jointSensitivity F true`.
+  at most `15 * sideSensitivity F false + 3 * jointSensitivity F true`.
 * `recursive_joint_zero`: the same bound for the `false`-side joint sensitivity of the recursive
   family.
 
@@ -47,7 +47,7 @@ namespace Internal
 open scoped Classical in
 /-- For a good labeling `A`, a nested family `F`, `0 < r` and indices `q < q'` at which
 `recursiveFamily T A.label F` is `false` on `x`, the joint sensitivity of the two predicates at `x`
-is at most `16 * sideSensitivity F false + 3 * jointSensitivity F true`. -/
+is at most `15 * sideSensitivity F false + 3 * jointSensitivity F true`. -/
 theorem recursive_joint_zero_at {k r h : ℕ} {I : Type} [Fintype I]
     (T : Tournament k) (A : GoodLabeling T r)
     (F : Fin (h + 1) → (I → Bool) → Bool) (hF : NestedFamily F) (hr : 0 < r)
@@ -55,7 +55,7 @@ theorem recursive_joint_zero_at {k r h : ℕ} {I : Type} [Fintype I]
     (hx : recursiveFamily T A.label F q x = false)
     (hx' : recursiveFamily T A.label F q' x = false) :
     jointSensitivityAt (recursiveFamily T A.label F q) (recursiveFamily T A.label F q') x ≤
-      16 * sideSensitivity F false + 3 * jointSensitivity F true := by
+      15 * sideSensitivity F false + 3 * jointSensitivity F true := by
   let TC := targetCandidates T A.label F q x
   let GC := gateCandidates T A.label F q x
   let w := gateWitness T A.label F q x
@@ -98,15 +98,8 @@ theorem recursive_joint_zero_at {k r h : ℕ} {I : Type} [Fintype I]
             F (gateIndex q) (recursiveChild x j (A.label i j)) := by
         simp [hgon, hgoff, hgon', hgoff']
       simpa [childJointChanges, w, hj] using hn
-  have hU : U.card ≤ 16 * sideSensitivity F false := by
-    calc
-      U.card ≤ TC.card * sideSensitivity F false :=
-        card_biUnion_le_mul TC _ _ (fun i hi => by
-          rw [childChanges_card]
-          exact sensitivityAt_le_sideSensitivity F false _ _
-            (targetWitness_false T A.label F q x hr i hi))
-      _ ≤ 16 * sideSensitivity F false := Nat.mul_le_mul_right _
-        (Nat.le_of_lt (targetCandidates_card T A F hF q x hr))
+  have hU : U.card ≤ 15 * sideSensitivity F false :=
+    targetCandidates_biUnion_card_le T A F hF hr q x
   have hV : V.card ≤ 3 * jointSensitivity F true := by
     calc
       V.card ≤ GC.card * jointSensitivity F true :=
@@ -125,12 +118,12 @@ theorem recursive_joint_zero_at {k r h : ℕ} {I : Type} [Fintype I]
 
 /-- Joint zero-side recurrence: for a good labeling, a nested family `F` and `0 < r`,
 `jointSensitivity (recursiveFamily T A.label F) false` is at most
-`16 * sideSensitivity F false + 3 * jointSensitivity F true`. -/
+`15 * sideSensitivity F false + 3 * jointSensitivity F true`. -/
 theorem recursive_joint_zero {k r h : ℕ} {I : Type} [Fintype I]
     (T : Tournament k) (A : GoodLabeling T r)
     (F : Fin (h + 1) → (I → Bool) → Bool) (hF : NestedFamily F) (hr : 0 < r) :
     jointSensitivity (recursiveFamily T A.label F) false ≤
-      16 * sideSensitivity F false + 3 * jointSensitivity F true := by
+      15 * sideSensitivity F false + 3 * jointSensitivity F true := by
   apply jointSensitivity_le
   exact fun q q' x hqq hx hx' => recursive_joint_zero_at T A F hF hr q q' hqq x hx hx'
 

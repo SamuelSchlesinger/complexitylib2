@@ -45,8 +45,8 @@ namespace Internal
 nested family `F`, the next-level family `P` satisfies: `sideSensitivity P true` is at most
 `M ^ 2 * sideSensitivity F false + r * sideSensitivity F true`; `jointSensitivity P true` is at most
 `M ^ 2 * jointSensitivity F false + r * sideSensitivity F true`; `sideSensitivity P false` is at
-most `16 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true`; and
-`jointSensitivity P false` is at most `16 * sideSensitivity F false + 3 * jointSensitivity F true`.
+most `15 * sideSensitivity F false + sideSensitivity F true + 3 * jointSensitivity F true`; and
+`jointSensitivity P false` is at most `15 * sideSensitivity F false + 3 * jointSensitivity F true`.
 -/
 theorem recursive_four_recurrences {M r h : ℕ} {I : Type} [Fintype I]
     (T : RegularTournament M) (A : GoodLabeling T.toTournament r)
@@ -54,9 +54,9 @@ theorem recursive_four_recurrences {M r h : ℕ} {I : Type} [Fintype I]
     let P := recursiveFamily T.toTournament A.label F
     (sideSensitivity P true ≤ M ^ 2 * sideSensitivity F false + r * sideSensitivity F true) ∧
     (jointSensitivity P true ≤ M ^ 2 * jointSensitivity F false + r * sideSensitivity F true) ∧
-    (sideSensitivity P false ≤ 16 * sideSensitivity F false + sideSensitivity F true +
+    (sideSensitivity P false ≤ 15 * sideSensitivity F false + sideSensitivity F true +
       3 * jointSensitivity F true) ∧
-    (jointSensitivity P false ≤ 16 * sideSensitivity F false + 3 * jointSensitivity F true) := by
+    (jointSensitivity P false ≤ 15 * sideSensitivity F false + 3 * jointSensitivity F true) := by
   exact ⟨recursive_side_one T.toTournament A.label F (M ^ 2) T.outdegree,
     recursive_joint_one T.toTournament A.label F hF (M ^ 2) T.outdegree,
     recursive_side_zero T.toTournament A F hF hr,
