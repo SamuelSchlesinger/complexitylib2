@@ -46,7 +46,7 @@ for batched lookup are separate clients.
 
 ## References
 
-Adapts `MassProduction/Nonuniform/BatchRouting.lean` from
+Adapts MassProduction/Nonuniform/BatchRouting.lean from
 [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 The computed-key sorting API preserves the original headers without a separate complementing pass.
 -/

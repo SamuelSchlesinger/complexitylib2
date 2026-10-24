@@ -34,7 +34,7 @@ of efficient handlers or finite control. Efficient encoded realization remains s
 
 ## References
 
-Generalizes `Computability/Machines/Turing/MultiTape/Probabilistic/Finite.lean` on the cslib
+Generalizes Computability/Machines/Turing/MultiTape/Probabilistic/Finite.lean on the cslib
 `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8` to the common choice mechanism.
 -/
 

@@ -35,7 +35,7 @@ challenge reduction. Cached replies ignore the extra draw, preserving repeated-q
 * [O. Goldreich, S. Goldwasser, S. Micali, *How to Construct Random Functions*][GGM1986],
   Section 3.3, the simulation used in the proof of Theorem 3.
 
-Adapted from `Crypto/Computational/GGM/Reduction.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/GGM/Reduction.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, reusing the shared stateful interpreter and game API.
 
 -/

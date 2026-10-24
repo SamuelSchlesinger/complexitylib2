@@ -43,7 +43,7 @@ an AND/XOR fold. It reuses the existing block representation and ordinary list o
   Any Hardness*][Holenstein2006], Section 3.3, Lemma 1. Matrix hashing uses more seed bits than
   the cited field-multiplication family, while retaining polynomial seed length.
 
-Adapted from `Probability/LinearHash.lean` on the cslib `crypto` branch at
+Adapted from Probability/LinearHash.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, in the shared bit-string namespace.
 -/
 

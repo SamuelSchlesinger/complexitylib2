@@ -35,7 +35,7 @@ Witnesses and predicates use the existing Fusion API; no separate model wrapper 
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Comap.lean` in
+* Adapted from LowerBound/Fusion/Comap.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

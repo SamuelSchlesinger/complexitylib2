@@ -30,7 +30,7 @@ distributions, not equality of programs with different numbers of coin queries.
 
 ## References
 
-Adapted from `Cslib/Computability/Probabilistic/Sampling.lean` on the cslib `crypto` branch at
+Adapted from Cslib/Computability/Probabilistic/Sampling.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the common machine and input length.
 -/
 

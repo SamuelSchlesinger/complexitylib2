@@ -34,7 +34,7 @@ neither its code nor its choice of saved randomness depends on a nonuniform advi
   We use the public matrix and dyadic-range variant proved in `HashReduction`. This module
   discharges the inversion hypothesis using uniform strict PPT one-wayness.
 
-Adapted from `Crypto/Computational/Pseudoentropy/OneWay.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Pseudoentropy/OneWay.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using typed saved seeds and nonnegative security games.
 -/
 

@@ -35,7 +35,7 @@ adjacent pair for a collision and selecting one costs linearly in the array
 
 ## References
 
-* Adapted from `lean/Proofs/{RecordCircuits,Construction}.lean` in
+* Adapted from lean/Proofs/{RecordCircuits,Construction}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

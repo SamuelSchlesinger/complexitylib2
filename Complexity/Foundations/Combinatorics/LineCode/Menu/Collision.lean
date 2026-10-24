@@ -40,7 +40,7 @@ occupied set.
 ## References
 
 * Adapted, with nonzero vectors in place of projective directions, from
-  `MassProduction/Nonuniform/CollisionTail.lean` and `MassProduction/Nonuniform/PhaseMenu.lean` in
+  MassProduction/Nonuniform/CollisionTail.lean and MassProduction/Nonuniform/PhaseMenu.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

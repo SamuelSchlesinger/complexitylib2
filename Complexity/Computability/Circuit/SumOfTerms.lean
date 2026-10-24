@@ -26,7 +26,7 @@ their features vanish. The signature and its costs are re-exported from `SumOfTe
 
 ## References
 
-* Adapted from `LowerBound/Fusion/SumOfTerms/Rank.lean` in
+* Adapted from LowerBound/Fusion/SumOfTerms/Rank.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

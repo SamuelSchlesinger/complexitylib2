@@ -41,7 +41,7 @@ for circuit generation or evaluation.
 
 ## References
 
-* Ported from `Basis/Arithmetic/Power.lean` in [S. Schlesinger, *Algebraic circuit
+* Ported from Basis/Arithmetic/Power.lean in [S. Schlesinger, *Algebraic circuit
   formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

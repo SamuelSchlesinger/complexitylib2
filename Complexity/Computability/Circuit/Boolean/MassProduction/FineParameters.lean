@@ -41,8 +41,8 @@ budget of the scheduler. The field width leaves `3 log₂ (n + 2)` prefix bits u
 
 ## References
 
-* Simplifies `MassProduction/Nonuniform/{GeometricSlopes,BlockParameters,
-  CoefficientParameters}.lean` in
+* Simplifies MassProduction/Nonuniform/{GeometricSlopes,BlockParameters,
+  CoefficientParameters}.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

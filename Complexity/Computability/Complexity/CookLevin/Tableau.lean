@@ -17,9 +17,11 @@ Given a deterministic multi-tape machine `tm` over the binary alphabet, a fixed 
 a certificate length `L` and a number of steps `T`, `tableau tm u L T` is a formula in
 conjunctive normal form that is satisfiable exactly when some certificate `w` of length `L`
 makes `tm`, started on `u ++ w`, halt within `T` steps with output `[true]`
-(`Cslib.Complexity.CookLevin.tableau_satisfiable_iff`, in `CookLevin/Correctness.lean`). It has
+(`Cslib.Complexity.CookLevin.tableau_satisfiable_iff`, in
+`Complexity/Computability/Complexity/CookLevin/Correctness.lean`). It has
 exactly one satisfying assignment (of its variables) for each such certificate
-(`Cslib.Complexity.CookLevin.modelCount_tableau`, in `CookLevin/Parsimonious.lean`).
+(`Cslib.Complexity.CookLevin.modelCount_tableau`, in
+`Complexity/Computability/Complexity/CookLevin/Parsimonious.lean`).
 
 The formula describes the first `T + 1` configurations of the run directly, in the model of
 `Turing.MultiTapeTM`: a read-only input tape, `k` two-way infinite work tapes, and a write-only
@@ -38,7 +40,8 @@ situations occur only positively in the terms
 converse: each head reads at most one symbol, and a true situation has its state and symbols read
 true. Every variable of the tableau is then determined by the certificate bits, which makes the
 reduction parsimonious (`Cslib.Complexity.CookLevin.modelCount_tableau`, in
-`CookLevin/Parsimonious.lean`). No conversion to a single-tape or oblivious machine is needed: the
+`Complexity/Computability/Complexity/CookLevin/Parsimonious.lean`). No conversion to a single-tape
+or oblivious machine is needed: the
 action of a step depends on the situation only, and every tape applies its part of the action
 locally.
 

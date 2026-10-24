@@ -31,7 +31,7 @@ negation (`DNF.not_forall_eval_eq_parity_fill_bne`); this ends Håstad's argumen
 constant depth.
 
 ORs of formulas in conjunctive normal form for parity, of depth three, are in
-`Parity/DepthThree.lean`.
+`Complexity/Logics/Propositional/Parity/DepthThree.lean`.
 
 ## Main results
 

@@ -45,7 +45,7 @@ The saved evaluator returns a Boolean directly, without decoding arbitrary outpu
   `HashReduction` supplies the finite bound for our public matrix family and enlarged dyadic
   range. This module implements its inverter using the word and saved-coin interfaces.
 
-Adapted from `Crypto/Computational/Pseudoentropy/WordReduction.lean` on the cslib `crypto` branch
+Adapted from Crypto/Computational/Pseudoentropy/WordReduction.lean on the cslib `crypto` branch
 at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using typed saved seeds and the tidy TM calculus.
 -/
 

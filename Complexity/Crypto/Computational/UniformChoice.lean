@@ -42,7 +42,7 @@ include the unary index, reference sample and challenge.
 This uniform sampling argument supplies the parameter conversion used with
 [T. Holenstein, *Pseudorandom Generators from One-Way Functions*][Holenstein2006], Section 5.
 
-Adapted from `Crypto/Computational/UniformChoice.lean`
+Adapted from Crypto/Computational/UniformChoice.lean
 on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using typed machine certificates and the
 nonnegative game API.

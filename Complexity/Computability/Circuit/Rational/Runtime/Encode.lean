@@ -17,7 +17,8 @@ import Mathlib.Data.Nat.Digits.Lemmas
 # Polynomial-time canonical binary encodings of naturals and rationals
 
 This module bridges the self-delimiting binary encodings `Cslib.Circuits.Rational.encodeNat` and
-`Cslib.Circuits.Rational.encodeRat` from `Circuit/Rational/Defs.lean` to the `fun_prop`
+`Cslib.Circuits.Rational.encodeRat` from `Complexity/Computability/Circuit/Rational/Defs.lean` to
+the `fun_prop`
 polynomial-time calculus over `Turing.MultiTapeTM.encNat` and `Turing.MultiTapeTM.encIntBin`.
 
 First, `encodeNat a` is shown to equal `List.replicate a.bits.length true ++ false :: a.bits`

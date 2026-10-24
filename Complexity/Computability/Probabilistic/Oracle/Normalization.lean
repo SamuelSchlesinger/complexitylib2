@@ -35,7 +35,7 @@ identical requests, and preserves the complete joint law of the output and exter
 
 ## References
 
-Adapts the closed interpreter `Computability/Probabilistic/Realization/OracleSimulation.lean` of
+Adapts the closed interpreter Computability/Probabilistic/Realization/OracleSimulation.lean of
 the cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8` to open oracles, using the
 reply truncation lemma `Turing.MultiTapePTM.finiteRunFrom_take_runOracle`.
 -/

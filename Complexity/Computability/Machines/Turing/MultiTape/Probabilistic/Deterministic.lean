@@ -16,7 +16,7 @@ The embedding ignores each coin and never submits a query. With a stateless coin
 it preserves the entire communication state and every oracle's private state. The number of
 instructions, ordinary tapes and output agree exactly with the upstream deterministic run.
 
-Adapted from the cslib `crypto` branch's `Oracle/Deterministic.lean` at
+Adapted from the cslib `crypto` branch's Oracle/Deterministic.lean at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, for the common machine and typed program interface.
 
 ## Main definitions

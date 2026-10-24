@@ -42,7 +42,7 @@ are free.
 
 ## References
 
-* Adapted from `lean/Proofs/ScanSelection.lean` in
+* Adapted from lean/Proofs/ScanSelection.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

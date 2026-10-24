@@ -32,7 +32,7 @@ The budget tape must already be prepared. Its construction and runtime are a sep
 ## References
 
 The common proof in `MultiTape.Machine.Clock` adapts the cslib `crypto` branch's
-`MultiTape/Oracle/Clock.lean` at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
+MultiTape/Oracle/Clock.lean at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 
 @[expose] public section

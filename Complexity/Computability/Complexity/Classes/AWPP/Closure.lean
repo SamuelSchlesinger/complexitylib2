@@ -17,7 +17,8 @@ Three fixed rounds of the majority-of-three polynomial `t²(3 - 2t)` reduce the
 error from one third to at most one eighth. Products then give intersection,
 and complement gives the remaining Boolean operations. This is a constant-size
 specialization of the gap amplification method of [Fenner][Fenner2003]. Uniform error
-reduction to a polynomially bounded input-dependent exponent is proved in `AWPP/Amplification.lean`.
+reduction to a polynomially bounded input-dependent exponent is proved in
+`Complexity/Computability/Complexity/Classes/AWPP/Amplification.lean`.
 
 ## Main results
 

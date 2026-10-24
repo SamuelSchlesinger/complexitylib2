@@ -30,7 +30,7 @@ The coefficients are chosen at the given point, not uniformly over all points.
 
 ## References
 
-* Ported from `LowerBound/Fusion/Arithmetic/Interaction/Hessian/Relative.lean` in
+* Ported from LowerBound/Fusion/Arithmetic/Interaction/Hessian/Relative.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

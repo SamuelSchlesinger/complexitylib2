@@ -36,7 +36,7 @@ machine implementing replay from an encoded input and coin tape needs a separate
 ## References
 
 Adapted from the cslib `crypto` branch's
-`Computability/Machines/Turing/MultiTape/Probabilistic/CoinTape.lean` at
+Computability/Machines/Turing/MultiTape/Probabilistic/CoinTape.lean at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the common interpreter and typed program API.
 -/
 

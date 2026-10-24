@@ -43,7 +43,7 @@ The code is stated for sequences indexed by `ℕ`; only the value at `M` must va
 
 * [D. Uhlig, *Networks computing Boolean functions for multiple input values*][Uhlig1992].
 * [I. Wegener, *The Complexity of Boolean Functions*][Wegener1987], proof of Theorem 10.2.3.
-* Adapted from `MassProduction/Uhlig.lean` in
+* Adapted from MassProduction/Uhlig.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

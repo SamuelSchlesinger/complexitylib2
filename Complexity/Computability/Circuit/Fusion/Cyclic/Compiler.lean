@@ -45,7 +45,7 @@ the forward lower bound also allows restricted witness classes.
 ## References
 
 * Reworks the finite compiler, binary lowering and completeness argument in
-  `LowerBound/Fusion/Cyclic/{Compiler,LowerJoinMeet,Complete}.lean` of
+  LowerBound/Fusion/Cyclic/{Compiler,LowerJoinMeet,Complete}.lean of
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
   The finite presentation here uses only pair values, instead of all complement subsets.
 -/

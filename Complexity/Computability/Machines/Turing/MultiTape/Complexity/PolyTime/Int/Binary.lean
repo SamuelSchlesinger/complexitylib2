@@ -17,7 +17,9 @@ import Mathlib.Algebra.BigOperators.Group.List.Basic
 Polynomial-time certificates for arithmetic on the binary sign-magnitude integers
 `Turing.MultiTapeTM.encIntBin`. The sign bit and the magnitude are read off the code directly. Every
 other operation is an ordinary functional program over the sign and the magnitude, by cases on
-the signs, built from the binary natural arithmetic of `PolyTime/Nat/Binary.lean`; no new machine
+the signs, built from the binary natural arithmetic of
+`Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Binary.lean`; no new
+machine
 is involved. A result is assembled from a sign and a magnitude by
 `Turing.MultiTapeTM.ComputableTidilyInPolyTime.intBin_signMagnitude`, which clears the sign of a
 zero magnitude. Integers of equal sign add their magnitudes; otherwise the smaller magnitude is

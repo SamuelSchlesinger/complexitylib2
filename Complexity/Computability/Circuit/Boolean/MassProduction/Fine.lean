@@ -69,8 +69,8 @@ are bounds on circuit size, not on the running time of any circuit constructor.
 
 ## References
 
-* Simplifies `MassProduction/Nonuniform/{FiniteBound,LupanovRuntime,EventualParameters,
-  OverheadPolynomial,LeadingCost,CodeQuantitative,SharpTheorem}.lean` in
+* Simplifies MassProduction/Nonuniform/{FiniteBound,LupanovRuntime,EventualParameters,
+  OverheadPolynomial,LeadingCost,CodeQuantitative,SharpTheorem}.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

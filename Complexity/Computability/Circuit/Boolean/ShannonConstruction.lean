@@ -36,7 +36,7 @@ finite gate bound counts constants and negations, as well as binary gates. The c
 ## References
 
 * [C. E. Shannon, *The Synthesis of Two-Terminal Switching Circuits*][Shannon1949].
-* Adapted from `MassProduction/ShannonCircuit.lean` in
+* Adapted from MassProduction/ShannonCircuit.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

@@ -33,7 +33,7 @@ interface is adapted from `IsPolyTime.iterate_spec` in the cslib `crypto` branch
 
 ## References
 
-Adapted from `Computability/Probabilistic/Iteration.lean` on the cslib `crypto` branch at
+Adapted from Computability/Probabilistic/Iteration.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the tidy fold calculus and its
 captured-input rules.
 -/

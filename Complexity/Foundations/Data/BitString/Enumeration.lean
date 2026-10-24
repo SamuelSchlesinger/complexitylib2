@@ -31,7 +31,7 @@ be polynomial in `n`.
 
 ## References
 
-Adapted from `Crypto/Computational/GoldreichLevin/{Reduction,WordDecoder}.lean` on the cslib
+Adapted from Crypto/Computational/GoldreichLevin/{Reduction,WordDecoder}.lean on the cslib
 `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 

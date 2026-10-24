@@ -28,7 +28,7 @@ have unbounded encodings, such as words or tapes. Every entry and its framing co
 
 ## References
 
-Adapts `Computability/Probabilistic/Pi.lean` on the cslib `crypto` branch at
+Adapts Computability/Probabilistic/Pi.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing framed list encoding.
 -/
 

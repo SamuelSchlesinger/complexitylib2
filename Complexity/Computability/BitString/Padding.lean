@@ -16,7 +16,8 @@ public import Complexity.Foundations.Data.BitString.List
 The machine calculus's existing frame encoding makes bounded words equally long without
 identifying distinct words. Words longer than the bound retain their complete frame. This
 representation bridge is separate from the pure bit-string foundations and from its
-polynomial-time certificate in `MultiTape/Complexity/PolyTime/BitString.lean`.
+polynomial-time certificate in
+`Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/BitString.lean`.
 
 ## Main definitions
 
@@ -30,7 +31,7 @@ polynomial-time certificate in `MultiTape/Complexity/PolyTime/BitString.lean`.
 
 ## References
 
-Adapted from `Computability/Probabilistic/BitString.lean` on the cslib `crypto` branch at
+Adapted from Computability/Probabilistic/BitString.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing tidy machine frame encoding.
 -/
 

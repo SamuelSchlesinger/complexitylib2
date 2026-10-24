@@ -27,7 +27,7 @@ The index type is fixed independently of the input; values need not be finite or
 
 ## References
 
-Adapts `Computability/Probabilistic/Pi.lean` on the cslib `crypto` branch at
+Adapts Computability/Probabilistic/Pi.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the tidy deterministic calculus.
 -/
 

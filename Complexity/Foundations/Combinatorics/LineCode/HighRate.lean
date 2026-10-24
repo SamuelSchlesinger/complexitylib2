@@ -51,8 +51,8 @@ finding them is claimed.
 ## References
 
 * [A. Guo, S. Kopparty, M. Sudan, *New affine-invariant codes from lifting*][GuoKoppartySudan2013]
-* Adapted from `MassProduction/HighRate/Code.lean`, `MassProduction/HighRate/DigitMonomials.lean`,
-  `MassProduction/HighRate/Residue.lean` and `MassProduction/HighRate/LineParity.lean` in
+* Adapted from MassProduction/HighRate/Code.lean, MassProduction/HighRate/DigitMonomials.lean,
+  MassProduction/HighRate/Residue.lean and MassProduction/HighRate/LineParity.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

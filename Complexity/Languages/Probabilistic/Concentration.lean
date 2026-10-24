@@ -32,7 +32,7 @@ the trial program and its unary repetition count are efficient.
 
 ## References
 
-Adapted from `Languages/Probabilistic/Concentration.lean` on the cslib `crypto` branch at
+Adapted from Languages/Probabilistic/Concentration.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`. The concentration estimate is the finite-product
 bound from `Probability.Concentration`, following [Hoeffding][Hoeffding1963].
 -/

@@ -42,7 +42,7 @@ Native acyclic circuits embed with exactly the same gate values, outputs and wei
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Cyclic.lean` in
+* Adapted from LowerBound/Fusion/Cyclic.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
   The least-solution semantics uses Mathlib's Knaster–Tarski fixed-point API.
 -/

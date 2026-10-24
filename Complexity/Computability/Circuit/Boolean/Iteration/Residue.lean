@@ -39,7 +39,7 @@ fixed exponent `T` only through its residues, and then adds the period while the
 
 ## References
 
-* Adapted from `lean/Proofs/Residues.lean` in
+* Adapted from lean/Proofs/Residues.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

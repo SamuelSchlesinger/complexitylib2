@@ -15,7 +15,8 @@ import Mathlib.Data.List.GetD
 /-!
 # Correctness of the uniform tableau circuit
 
-The tableau circuit of a multi-tape machine (`Tableau/Basic.lean`) computes the run: on an input
+The tableau circuit of a multi-tape machine
+(`Complexity/Computability/Circuit/Boolean/Tableau/Basic.lean`) computes the run: on an input
 `x` of length `n`, for `T` steps with `n < 2 T`, the wire of each feature at time `t ≤ T` carries
 the value of that feature in the configuration after `t` steps
 (`Cslib.Circuits.Boolean.Tableau.invariant_le`). In particular the output wire is true exactly when

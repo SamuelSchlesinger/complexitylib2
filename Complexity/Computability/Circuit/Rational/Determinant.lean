@@ -39,7 +39,8 @@ operations is proved here; the result is proved equal to `Matrix.det`.
   adc7f1241b42e322a6451854ab7e4b4c146bf78a (file
   lean/OAI/Computability/RationalHitting/Determinant.lean), via the complexitylib port
   [Schlesinger2026RationalHitting] at revision add0aca8ee0d71e68969f2cb45cf91554a50f787.
-* The shared bridge lemmas in `Circuit/Bird.lean` restate lemmas private in Mathlib's development
+* The shared bridge lemmas in `Complexity/Computability/Circuit/Bird.lean` restate lemmas private in
+  Mathlib's development
   (`Mathlib/LinearAlgebra/Matrix/Determinant/Bird/Correctness.lean`, Copyright (c) 2026 Paul
   Cadman, Apache 2.0).
 -/

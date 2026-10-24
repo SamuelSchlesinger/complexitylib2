@@ -42,7 +42,7 @@ to repeated membership queries; this program alone is not such a stateful oracle
 ## References
 
 [Holenstein, Section 2.2, Figure 1 and Claims 2.6–2.8][Holenstein2005]. Adapted from
-`Crypto/Computational/Pseudoentropy/Boosting/Sampling.lean` on the cslib `crypto` branch at
+Crypto/Computational/Pseudoentropy/Boosting/Sampling.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, with typed tidy-machine certificates.
 -/
 

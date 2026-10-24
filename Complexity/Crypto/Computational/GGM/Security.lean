@@ -36,7 +36,7 @@ evaluation, accommodating the strict PRG convention at seed length zero.
 * [O. Goldreich, S. Goldwasser, S. Micali, *How to Construct Random Functions*][GGM1986],
   Sections 3.2–3.3, construction and Theorem 3.
 
-Adapted from `Crypto/Computational/GGM/Security.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/GGM/Security.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared typed oracle and game calculus.
 -/
 

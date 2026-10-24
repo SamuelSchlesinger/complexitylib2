@@ -30,7 +30,7 @@ linear bound in the number of assignments, including all constants and negations
 
 ## References
 
-* Adapted from `MassProduction/ShannonCircuit.lean` in
+* Adapted from MassProduction/ShannonCircuit.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

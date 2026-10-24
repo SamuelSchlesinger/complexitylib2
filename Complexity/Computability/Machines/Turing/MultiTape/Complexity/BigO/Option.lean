@@ -27,7 +27,8 @@ No inhabitance assumption is imposed on the payload type.
 ## References
 
 Uses Christian Reitwiessner's native tidy degree/resource calculus. The proof adapts
-`Complexity/PolyTime/Option.lean` while preserving arbitrary resource bounds.
+`Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Option.lean` while
+preserving arbitrary resource bounds.
 -/
 
 @[expose] public section

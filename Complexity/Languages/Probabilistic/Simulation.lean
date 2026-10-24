@@ -18,7 +18,7 @@ the oracle's final private state. A simulation may randomly complete hidden stat
 lazy-sampling proof for a random function. The local identity only needs to hold at states
 satisfying a preserved invariant.
 
-These rules adapt `Languages/Probabilistic/Simulation.lean` from the cslib `crypto` branch at
+These rules adapt Languages/Probabilistic/Simulation.lean from the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` to the common `OracleComp.interpret` interface.
 There is one oracle specification and one interpreter; stateful execution uses `StateT`.
 

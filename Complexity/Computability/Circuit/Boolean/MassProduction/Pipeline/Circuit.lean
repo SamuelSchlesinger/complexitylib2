@@ -53,9 +53,9 @@ running time of the circuit constructors.
 
 ## References
 
-* Adapted from `MassProduction/HighRate/{ResourceLayout,PrefixMetadata}.lean` and
-  `MassProduction/Nonuniform/{IncidenceEvaluation,MaskedScatter,ResourceBank,ResourceGather,
-  ScheduledRecovery}.lean` in
+* Adapted from MassProduction/HighRate/{ResourceLayout,PrefixMetadata}.lean and
+  MassProduction/Nonuniform/{IncidenceEvaluation,MaskedScatter,ResourceBank,ResourceGather,
+  ScheduledRecovery}.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

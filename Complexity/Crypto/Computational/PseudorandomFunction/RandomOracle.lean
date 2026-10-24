@@ -35,7 +35,7 @@ with the ideal PRF game for every randomized adaptive adversary.
 
 * [O. Goldreich, S. Goldwasser, S. Micali, *How to Construct Random Functions*][GGM1986].
 
-Adapts `Crypto/Computational/PseudorandomFunction/RandomOracle.lean` on the cslib `crypto`
+Adapts Crypto/Computational/PseudorandomFunction/RandomOracle.lean on the cslib `crypto`
 branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8` to the shared typed interpreter.
 -/
 

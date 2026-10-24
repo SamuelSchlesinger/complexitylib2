@@ -59,7 +59,7 @@ the counting lower bound for `counterStep k`, this yields matching `Ω(2 ^ k / k
 
 ## References
 
-* Adapted from `lean/Proofs/{CounterRemainders,CounterBatch}.lean` in
+* Adapted from lean/Proofs/{CounterRemainders,CounterBatch}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

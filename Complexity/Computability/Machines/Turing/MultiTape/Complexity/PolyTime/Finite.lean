@@ -24,7 +24,7 @@ independently of runtime input; this does not enumerate a family whose size grow
 
 ## References
 
-Adapts `Computability/Probabilistic/Finite.lean` on the cslib `crypto` branch at
+Adapts Computability/Probabilistic/Finite.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing tidy calculus.
 -/
 

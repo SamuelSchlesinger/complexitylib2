@@ -26,7 +26,7 @@ configuration invariance law; writing the prefix remains separate, charged machi
 
 ## References
 
-Adapted from `Computability/Machines/Turing/MultiTape/Oracle/OutputPrefix.lean` on the cslib
+Adapted from Computability/Machines/Turing/MultiTape/Oracle/OutputPrefix.lean on the cslib
 `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using upstream's configuration operation and the
 common one-step program simulation rule.

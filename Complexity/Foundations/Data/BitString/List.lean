@@ -42,7 +42,7 @@ row extraction is ordinary dropping, padding and taking, including on short or e
 
 ## References
 
-Adapted from `Probability/WordBits.lean` on the cslib `crypto` branch at
+Adapted from Probability/WordBits.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, reusing the shared bit-string block equivalence.
 -/
 

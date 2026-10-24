@@ -24,7 +24,8 @@ binary SAT instances.
 The machine, its tape count and its finite state type are fixed. Traversals of tapes and
 situations therefore use fixed lists; the tape-cell window is enumerated from the input bound.
 The step certificate enumerates the original constructor templates, preserving their order and
-multiplicity. These certificates assemble into the complete reduction in `CookLevin/PolyTime.lean`.
+multiplicity. These certificates assemble into the complete reduction in
+`Complexity/Computability/Complexity/CookLevin/PolyTime.lean`.
 
 ## Main results
 

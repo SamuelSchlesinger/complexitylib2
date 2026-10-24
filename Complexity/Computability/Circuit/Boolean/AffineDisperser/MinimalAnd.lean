@@ -26,7 +26,7 @@ child of `G` reading an input of `G` is relabelled to read both inputs instead
 child.
 
 *Elimination* of the minimal AND (Section 4.3, `State.Valid.step_of_minimalAnd`) is in
-`AffineDisperser/Elimination.lean`.
+`Complexity/Computability/Circuit/Boolean/AffineDisperser/Elimination.lean`.
 
 ## Main definitions
 

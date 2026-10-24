@@ -36,7 +36,7 @@ Bernoulli's inequality this is at least a `P / (P + 1)` fraction of all `A ^ m` 
 
 ## References
 
-* Adapted from `MassProduction/HighRate/Rate.lean` and `MassProduction/HighRate/DigitMonomials.lean`
+* Adapted from MassProduction/HighRate/Rate.lean and MassProduction/HighRate/DigitMonomials.lean
   in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/

@@ -42,7 +42,7 @@ visit to the least state give its label directly (`shortLabel_eq_canonicalLabel`
 
 ## References
 
-* Adapted from `lean/Proofs/{ShortCycle,LabelEncoding}.lean` in
+* Adapted from lean/Proofs/{ShortCycle,LabelEncoding}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

@@ -31,7 +31,7 @@ the definition does not permit a separate algorithm or nonuniform advice at each
 
 ## References
 
-Adapted from `Computability/Probabilistic/{PPT,Parameter}.lean` on the cslib `crypto` branch at
+Adapted from Computability/Probabilistic/{PPT,Parameter}.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing tidy pair and unary encodings.
 -/
 

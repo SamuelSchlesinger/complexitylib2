@@ -52,7 +52,7 @@ hull predecessor (`forestPredecessor_unique`).
 
 ## References
 
-* Adapted from `lean/Proofs/CheckpointForest.lean` in
+* Adapted from lean/Proofs/CheckpointForest.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

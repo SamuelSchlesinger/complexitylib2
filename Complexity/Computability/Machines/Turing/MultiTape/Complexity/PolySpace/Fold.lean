@@ -25,7 +25,7 @@ the count itself need not be polynomially bounded.
 
 ## References
 
-Adapted from the lean-canny contributors' `Computation/TidyBoundedFold.lean` at
+Adapted from the lean-canny contributors' Computation/TidyBoundedFold.lean at
 [`2a50a2ee`](https://github.com/SamuelSchlesinger/lean-canny/blob/2a50a2ee00ae0699cc3f0c2bff5100c4687d2d8e/LeanCanny/Computation/TidyBoundedFold.lean).
 The port uses the standard `Nat.fold` and the existing tidy space calculus, with no separate
 machine or computability predicate.

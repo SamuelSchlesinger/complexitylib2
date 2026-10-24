@@ -44,7 +44,7 @@ are executable fair-bit programs; their efficiency follows from the generator an
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Section 9.2.3.
 
-Adapted from `Crypto/Computational/PseudorandomGenerator.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/PseudorandomGenerator.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, retaining the pinned finite PRG API.
 -/
 

@@ -45,7 +45,7 @@ cost is monotone even at zero copies, where a separate empty circuit suffices.
 
 ## References
 
-* Adapted from `MassProduction/DirectProduct.lean` and `MassProduction/InputSplit.lean` in
+* Adapted from MassProduction/DirectProduct.lean and MassProduction/InputSplit.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

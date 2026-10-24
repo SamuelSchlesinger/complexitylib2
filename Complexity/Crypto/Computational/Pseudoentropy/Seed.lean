@@ -50,7 +50,7 @@ concentration bound for independent repetitions of the pair.
   Shared machine replay supplies the uniform-seed presentation; the bounded-information
   concentration estimate depends on the complete seed length.
 
-Adapted from `Crypto/Computational/Pseudoentropy/Seed.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Pseudoentropy/Seed.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing typed saved-coin evaluator and tidy
 machine certificates. Positive pseudoentropy gaps and extraction remain separate developments.
 

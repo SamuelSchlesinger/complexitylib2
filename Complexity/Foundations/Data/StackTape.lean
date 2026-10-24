@@ -34,7 +34,7 @@ one-sided tape `_root_.Turing.ListBlank (Option Symbol)`.
 
 ## References
 
-Ports the additions to `Foundations/Data/StackTape.lean` on the cslib `crypto` branch at
+Ports the additions to Foundations/Data/StackTape.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, retaining the upstream tape representation.
 -/
 

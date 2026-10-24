@@ -32,7 +32,7 @@ using six gates per coordinate and a single true constant.
 
 ## References
 
-* Adapts the equality formulas in `MassProduction/Routing.lean` from
+* Adapts the equality formulas in MassProduction/Routing.lean from
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

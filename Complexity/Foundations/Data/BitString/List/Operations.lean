@@ -38,9 +38,9 @@ Collection XOR has a declared width and treats missing bits as false.
 
 ## References
 
-Adapted from `Probability/WordBits.lean` and `Crypto/Computational/GoldreichLevin/WordDecoder.lean`
-and `Crypto/Computational/Pseudoentropy/Boosting/Vote.lean` and
-`Crypto/Computational/GeneratorXor.lean`
+Adapted from Probability/WordBits.lean and Crypto/Computational/GoldreichLevin/WordDecoder.lean
+and Crypto/Computational/Pseudoentropy/Boosting/Vote.lean and
+Crypto/Computational/GeneratorXor.lean
 on the cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 

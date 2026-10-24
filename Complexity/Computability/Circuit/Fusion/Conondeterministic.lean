@@ -38,7 +38,7 @@ characterization, not its converse.
 
 * [B. P. Cavalar and I. C. Oliveira, *Boolean Circuit Complexity and Two-Dimensional Cover
   Problems*][CavalarOliveira2025], Theorem 45, credited there to Karchmer.
-* Adapted from `LowerBound/Fusion/Conondeterministic.lean` in
+* Adapted from LowerBound/Fusion/Conondeterministic.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

@@ -25,7 +25,8 @@ The circuit value problem is in `P` (`Cslib.Complexity.CircuitValue.mem_P`): the
 evaluates the gate list with the polynomial-time evaluator
 `Cslib.Circuits.Boolean.computableTidilyInPolyTime_evalOutput`. Ladner showed that it is
 `P`-complete under logarithmic-space reductions [Ladner1975]; this is proved in
-`CircuitValue/Completeness.lean` (`Cslib.Complexity.CircuitValue.logSpaceComplete`).
+`Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean`
+(`Cslib.Complexity.CircuitValue.logSpaceComplete`).
 
 ## Main definitions
 

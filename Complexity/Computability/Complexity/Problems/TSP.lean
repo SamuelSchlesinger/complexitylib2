@@ -37,7 +37,8 @@ conventions are the following.
 decoded by `Graph.decodeVertexList` from the list `0, …, D.length - 1` of cities; it has length
 `m ^ 2` for instances of encoded length `m`. The verifier checks that the ordering lists every city
 exactly once, and compares the length of its tour with the budget using the binary arithmetic of
-`PolyTime/Nat/Binary.lean`, so distances and budgets of any size are handled without unary
+`Complexity/Computability/Machines/Turing/MultiTape/Complexity/PolyTime/Nat/Binary.lean`, so
+distances and budgets of any size are handled without unary
 expansion.
 
 The reduction `HamCycle.toTSP` from `HamCycle` takes the distinct declared vertices of a graph as

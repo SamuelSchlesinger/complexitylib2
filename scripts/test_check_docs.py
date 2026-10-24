@@ -200,6 +200,128 @@ class CheckOutputTests(unittest.TestCase):
         self.write(self.page("Complexity.Current"))
         self.assert_failure("Missing theorem anchor: Cslib.Complexity.CookLevin.SAT_npComplete")
 
+    def test_broken_internal_link_in_complexity_page_fails(self):
+        self.write(self.page("Complexity"), '<a href="./Missing/Page.html">bad</a>')
+        self.assert_failure("Broken internal link in Complexity.html: Missing/Page.html")
+
+    def test_broken_internal_link_in_navbar_fails(self):
+        self.write(self.docs / "navbar.html", '<div class="nav_link"><a href="./Lean/Gone.html">Gone</a></div>')
+        self.assert_failure("Broken internal link in navbar.html: Lean/Gone.html")
+
+    def test_broken_internal_link_in_retained_dependency_page_fails(self):
+        self.index["modules"]["Std.Linked"] = {"importedBy": ["Complexity.Current"], "url": "./Std/Linked.html"}
+        self.write(self.page("Std.Linked"), '<a href="./LinkedElsewhere.html">bad</a>')
+        self.assert_failure("Broken internal link in Std/Linked.html: Std/LinkedElsewhere.html")
+
+    def test_outside_root_link_fails_even_when_sibling_file_exists(self):
+        self.write(self.docs.parent / "outside.html", "<div>sibling outside docs root</div>")
+        self.write(self.page("Complexity"), '<a href="../outside.html">escape</a>')
+        self.assert_failure("Broken internal link in Complexity.html: ../outside.html")
+        self.write(self.page("Complexity"), '<a href="/outside.html">root-escape</a>')
+        self.assert_failure("Broken internal link in Complexity.html: /outside.html")
+
+    def test_protocol_relative_external_link_passes(self):
+        self.write(
+            self.page("Complexity"),
+            '<a href="//example.org/documentation.html">protocol-relative</a>',
+        )
+        self.check()
+
+    def test_html_escaped_numeric_entity_in_href_path_resolves(self):
+        self.write(self.docs / "A'B.html", "<div>target</div>")
+        self.write(
+            self.page("Complexity"),
+            '<a href="./A&#39;B.html#frag">entity-link</a>',
+        )
+        self.check()
+
+    def test_trim_prunes_unimported_core_and_filters_index(self):
+        self.index["modules"]["Init.Prelude"] = {"importedBy": ["Complexity.Current"], "url": "./Init/Prelude.html"}
+        self.index["modules"]["Lean"] = {"importedBy": [], "url": "./Lean.html"}
+        self.index["modules"]["Std.Linked"] = {"importedBy": [], "url": "./Std/Linked.html"}
+        self.index["modules"]["Std.LinkedElsewhere"] = {"importedBy": [], "url": "./Std/LinkedElsewhere.html"}
+        self.index["modules"]["Std.FromCslib"] = {"importedBy": [], "url": "./Std/FromCslib.html"}
+        self.index["modules"]["Lake.Unused"] = {"importedBy": [], "url": "./Lake/Unused.html"}
+        self.index["modules"]["Lean.Unused"] = {"importedBy": ["Lake.Unused", "Lean"], "url": "./Lean/Unused.html"}
+        self.index["modules"]["Cslib.Base"] = {"importedBy": ["Complexity.Current"], "url": "./Cslib/Base.html"}
+        self.index["declarations"]["Nat"] = {"docLink": "./Init/Prelude.html#Nat", "kind": "inductive"}
+        self.index["declarations"]["Cslib.Base.foo"] = {"docLink": "./Cslib/Base.html#Cslib.Base.foo", "kind": "def"}
+        self.index["instances"] = {
+            "Inhabited": ["Nat", "Cslib.Base.foo"],
+            "UnusedClass": ["Nat"],
+        }
+        self.index["instancesFor"] = {
+            "Unit": ["Cslib.Base.foo"],
+            "Nat": ["Nat"],
+        }
+        for mod in ("Std.LinkedElsewhere", "Std.FromCslib", "Lake.Unused", "Lean.Unused"):
+            self.write(self.page(mod), "<div>core</div>")
+        self.write(
+            self.page("Init.Prelude"),
+            '<code>import <a href=".././Lean.html">Lean</a></code>',
+        )
+        self.write(
+            self.page("Lean"),
+            '<div class="imports"><details><summary>Imports</summary><ul>'
+            '<li><a href="./Init/Prelude.html">Init.Prelude</a></li>'
+            '<li><a href="./Lean/Unused.html">Lean.Unused</a></li>'
+            '</ul></details></div><main></main>',
+        )
+        self.write(
+            self.page("Std.Linked"),
+            '<a href="./LinkedElsewhere.html#Std.LinkedElsewhere">transitive core</a>',
+        )
+        self.write(
+            self.page("Cslib.Base"),
+            '<code><a href=".././Std/FromCslib.html">Std/FromCslib.lean</a></code> '
+            '<code><a href=".././Cslib/Unimported.html">Cslib/Unimported.lean</a></code>',
+        )
+        self.write(
+            self.page("Complexity"),
+            '<a href="./Std/Linked.html#Std.Linked">linked core</a>',
+        )
+        self.write(
+            self.docs / "navbar.html",
+            '<div class="nav_link"><a href="./">index</a></div>'
+            '<details class="nav_sect" data-path="./Init.html"><summary>Init</summary>'
+            '<div class="nav_link"><a href="./Init/Prelude.html">Prelude</a></div></details>'
+            '<details class="nav_sect" data-path="./Lake.html"><summary>Lake (<a href="./Lake/Unused.html">file</a>)</summary>'
+            '<div class="nav_link"><a href="./Lake/Unused.html">Unused</a></div></details>',
+        )
+        self.write(self.docs / "declarations/declaration-data.bmp", json.dumps(self.index))
+
+        check_docs.trim_output()
+        with redirect_stdout(io.StringIO()):
+            check_docs.check_output()
+
+        self.assertTrue(self.page("Init.Prelude").is_file())
+        self.assertTrue(self.page("Lean").is_file())
+        self.assertTrue(self.page("Std.Linked").is_file())
+        self.assertTrue(self.page("Std.LinkedElsewhere").is_file())
+        self.assertTrue(self.page("Std.FromCslib").is_file())
+        self.assertFalse(self.page("Lake.Unused").exists())
+        self.assertFalse(self.page("Lean.Unused").exists())
+        self.assertEqual(
+            self.page("Cslib.Base").read_text(),
+            '<code><a href=".././Std/FromCslib.html">Std/FromCslib.lean</a></code> '
+            '<code>Cslib/Unimported.lean</code>',
+        )
+        self.assertNotIn("Lean/Unused.html", self.page("Lean").read_text())
+        self.assertIn("Init/Prelude.html", self.page("Lean").read_text())
+        trimmed = json.loads((self.docs / "declarations/declaration-data.bmp").read_text())
+        self.assertNotIn("Lake.Unused", trimmed["modules"])
+        self.assertNotIn("Lean.Unused", trimmed["modules"])
+        self.assertIn("Init.Prelude", trimmed["modules"])
+        self.assertIn("Lean", trimmed["modules"])
+        self.assertIn("Std.Linked", trimmed["modules"])
+        self.assertIn("Std.LinkedElsewhere", trimmed["modules"])
+        self.assertIn("Std.FromCslib", trimmed["modules"])
+        self.assertNotIn("Nat", trimmed["declarations"])
+        self.assertIn("Cslib.Base.foo", trimmed["declarations"])
+        self.assertEqual(trimmed["instances"], {"Inhabited": ["Cslib.Base.foo"]})
+        self.assertEqual(trimmed["instancesFor"], {"Unit": ["Cslib.Base.foo"]})
+        self.assertNotIn("Lake/Unused.html", (self.docs / "navbar.html").read_text())
+
 
 class CheckGuideLinksTests(unittest.TestCase):
     page = "Complexity/Reduction.html"

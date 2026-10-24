@@ -31,7 +31,7 @@ Given a circuit `c` computing `f : BitString n → BitString n`, a depth circuit
 
 ## References
 
-* Adapted from `lean/Proofs/ForestQuerySynthesis.lean` in
+* Adapted from lean/Proofs/ForestQuerySynthesis.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

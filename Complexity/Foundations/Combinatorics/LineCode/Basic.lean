@@ -36,8 +36,8 @@ This module fixes these definitions; constructions are in later modules.
 
 ## References
 
-* Adapted from `MassProduction/Scheduler.lean`, `MassProduction/HighRate/Code.lean` and
-  `MassProduction/Nonuniform/PhaseMenu.lean` in
+* Adapted from MassProduction/Scheduler.lean, MassProduction/HighRate/Code.lean and
+  MassProduction/Nonuniform/PhaseMenu.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

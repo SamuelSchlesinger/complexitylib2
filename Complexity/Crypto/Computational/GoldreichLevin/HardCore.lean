@@ -37,7 +37,7 @@ deterministic polynomial time and security against uniform PPT adversaries.
 * [O. Goldreich, L. Levin, *A Hard-Core Predicate for All One-Way Functions*][GoldreichLevin1989]
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Chapter 9.
 
-Adapted from `Crypto/Computational/GoldreichLevin/HardCore.lean` on the cslib `crypto` branch
+Adapted from Crypto/Computational/GoldreichLevin/HardCore.lean on the cslib `crypto` branch
 at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared game API and tidy TM calculus.
 -/
 

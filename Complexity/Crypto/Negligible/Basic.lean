@@ -32,7 +32,7 @@ negligible.
 ## References
 
 The geometric, constant and inverse-polynomial bounds are adapted from
-`Crypto/Negligible.lean` on the
+Crypto/Negligible.lean on the
 cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the current upstream
 nonnegative API.
 -/

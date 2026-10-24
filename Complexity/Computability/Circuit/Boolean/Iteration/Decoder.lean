@@ -33,7 +33,7 @@ pairs that a detector never produces.
 
 ## References
 
-* Adapted from `lean/Proofs/{Decoder,DecoderCircuits,Reconstruction}.lean` in
+* Adapted from lean/Proofs/{Decoder,DecoderCircuits,Reconstruction}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

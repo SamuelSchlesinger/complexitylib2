@@ -32,7 +32,7 @@ The state type may live in any universe; it is finite.
 
 ## References
 
-* Adapted from `lean/Proofs/ActiveCheckpoints.lean` in
+* Adapted from lean/Proofs/ActiveCheckpoints.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

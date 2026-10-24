@@ -56,7 +56,7 @@ circuits exist for each parameter choice; nothing here bounds the time to constr
 
 ## References
 
-* Adapted from `lean/Proofs/{BatchPowers,BatchVariableTime}.lean` in
+* Adapted from lean/Proofs/{BatchPowers,BatchVariableTime}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

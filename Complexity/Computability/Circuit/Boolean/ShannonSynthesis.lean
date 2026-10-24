@@ -36,8 +36,8 @@ the resulting circuit's size; it does not certify the synthesizer's running time
 ## References
 
 * [C. E. Shannon, *The Synthesis of Two-Terminal Switching Circuits*][Shannon1949].
-* The parameter choice and finite constant follow `MassProduction/ShannonParameters.lean`
-  and `MassProduction/ShannonSynthesis.lean` in
+* The parameter choice and finite constant follow MassProduction/ShannonParameters.lean
+  and MassProduction/ShannonSynthesis.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

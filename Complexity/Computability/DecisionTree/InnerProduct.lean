@@ -23,7 +23,8 @@ rectangle bound. Query scores are arbitrary real functions; the result imposes n
 on their magnitudes or on the tree depth, and does not require a threshold circuit model.
 
 Combining the leaf bound with the structural leaf bounds in `Leaves.lean` and the partial
-binomial-sum estimates in `Choose/Real.lean` yields internal-node, decision-list, bounded-rank,
+binomial-sum estimates in `Complexity/Foundations/Data/Nat/Choose/Real.lean` yields internal-node,
+decision-list, bounded-rank,
 and bounded-energy lower bounds for inner product.
 
 ## Main results

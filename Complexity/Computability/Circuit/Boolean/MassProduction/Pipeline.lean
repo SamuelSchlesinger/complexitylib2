@@ -44,8 +44,8 @@ not certify the running time of a circuit constructor.
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/RuntimeComposition.lean` and
-  `MassProduction/Nonuniform/ScheduledRecovery.lean` in
+* Adapted from MassProduction/Nonuniform/RuntimeComposition.lean and
+  MassProduction/Nonuniform/ScheduledRecovery.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

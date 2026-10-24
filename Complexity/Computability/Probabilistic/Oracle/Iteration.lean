@@ -34,7 +34,7 @@ every shared oracle. Storage growth is controlled by the client's size bound, no
 
 ## References
 
-Adapts `Computability/Probabilistic/Adaptive.lean` on the cslib `crypto` branch at
+Adapts Computability/Probabilistic/Adaptive.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` to open oracles, running the probabilistic oracle
 version of the tidy `iterateWhile` loop instead of presampled coins.
 -/

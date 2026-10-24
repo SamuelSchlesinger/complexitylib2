@@ -40,7 +40,7 @@ versions; the exponential-range theorem requires further constructions.
 
 ## References
 
-* Adapted from `MassProduction/Statement.lean` and `MassProduction/DirectProduct.lean` in
+* Adapted from MassProduction/Statement.lean and MassProduction/DirectProduct.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

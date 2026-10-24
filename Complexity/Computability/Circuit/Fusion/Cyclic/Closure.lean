@@ -39,7 +39,7 @@ Restriction to an arbitrary admissible class of semifilters does not supply the 
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Cyclic/Closure.lean` in
+* Adapted from LowerBound/Fusion/Cyclic/Closure.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

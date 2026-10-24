@@ -41,11 +41,11 @@ state good (`good_next`).
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/MenuClean.lean`,
-  `MassProduction/Nonuniform/MenuSelection.lean`,
-  `MassProduction/Nonuniform/PointConflicts.lean`,
-  `MassProduction/Nonuniform/BufferedPhase.lean` and
-  `MassProduction/Nonuniform/BufferStepCorrectness.lean` in
+* Adapted from MassProduction/Nonuniform/MenuClean.lean,
+  MassProduction/Nonuniform/MenuSelection.lean,
+  MassProduction/Nonuniform/PointConflicts.lean,
+  MassProduction/Nonuniform/BufferedPhase.lean and
+  MassProduction/Nonuniform/BufferStepCorrectness.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction],
   using the sorting network of
   [K. E. Batcher, *Sorting Networks and Their Applications*][Batcher1968].

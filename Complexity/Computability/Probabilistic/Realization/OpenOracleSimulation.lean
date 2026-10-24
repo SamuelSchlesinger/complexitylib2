@@ -34,7 +34,7 @@ retained configuration storage, for every external oracle and every external rep
 
 ## References
 
-Adapts `Computability/Probabilistic/Realization/OracleSimulation.lean` on the cslib `crypto`
+Adapts Computability/Probabilistic/Realization/OracleSimulation.lean on the cslib `crypto`
 branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8` to handlers with external calls, using the
 compositional strict oracle PPT calculus.
 -/

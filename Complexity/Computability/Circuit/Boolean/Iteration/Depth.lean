@@ -48,7 +48,7 @@ circuits exist for each `L`; nothing here bounds the time to construct them.
 
 ## References
 
-* Adapted from `lean/Proofs/CheckpointDepth.lean` in
+* Adapted from lean/Proofs/CheckpointDepth.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions], whose
   bounds have the constants `1000000` and `3000000`. The dictionary here is the library's

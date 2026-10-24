@@ -28,7 +28,7 @@ The source's free identity gates are represented by native wiring.
 
 ## References
 
-* Adapted from `Basis/DeMorgan.lean` in
+* Adapted from Basis/DeMorgan.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

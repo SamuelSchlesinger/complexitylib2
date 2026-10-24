@@ -36,7 +36,7 @@ instruction is charged to the compiled machine's polynomial bound.
 
 ## References
 
-Adapts the role of `MultiTape/Oracle/PolynomialClock.lean` on the cslib `crypto` branch at
+Adapts the role of MultiTape/Oracle/PolynomialClock.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using functional budget generation and the shared
 machine compilers.
 -/

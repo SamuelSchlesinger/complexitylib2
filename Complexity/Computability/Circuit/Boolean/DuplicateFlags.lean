@@ -44,7 +44,7 @@ Costs include constants and negations. Gate counts do not certify construction r
 
 ## References
 
-Simplifies `MassProduction/Nonuniform/AdjacentDuplicates.lean` and the conflict-detection
+Simplifies MassProduction/Nonuniform/AdjacentDuplicates.lean and the conflict-detection
 construction in
 [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction],
 using the saved decisions of

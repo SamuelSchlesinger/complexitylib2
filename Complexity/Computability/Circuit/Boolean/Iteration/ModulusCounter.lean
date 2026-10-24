@@ -15,10 +15,13 @@ import Mathlib.Tactic.Linarith
 /-!
 # The modular-counter permutation: exponential lower bounds and typical powers
 
-`ModulusCounter/Basic.lean` defines the single-step modular-counter permutation `counterStep k` on
+`Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter/Basic.lean` defines the
+single-step modular-counter permutation `counterStep k` on
 `2 k` bits (`ModulusCounter.power 1`), constructs its linear-size De Morgan circuit of size at most
 `50 * k + 20`, and proves that its powers below `ModulusCounter.period k = lcm(1, …, 2 ^ k - 1)` are
-pairwise distinct. `ModulusCounter/Remainders.lean` relates counter powers to integer remainders and
+pairwise distinct.
+`Complexity/Computability/Circuit/Boolean/Iteration/ModulusCounter/Remainders.lean` relates counter
+powers to integer remainders and
 short-exponent circuits.
 
 By Chebyshev's lower bound on `lcmUpto (2 ^ k - 1)` and the ordered-syntax circuit count from
@@ -52,7 +55,7 @@ By Chebyshev's lower bound on `lcmUpto (2 ^ k - 1)` and the ordered-syntax circu
 
 ## References
 
-* Adapted from `lean/Proofs/{LowerBound,TypicalPowers}.lean` in
+* Adapted from lean/Proofs/{LowerBound,TypicalPowers}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

@@ -30,12 +30,12 @@ jobs:
           test: "false"
           lint: "false"
       - name: Generate API documentation
-        run: lake -d docbuild build Complexity:docs
+        run: DISABLE_EQUATIONS=1 lake -d docbuild build Complexity:docs
       # Also catches library changes that break one of the guide's examples.
       - name: Build the guide
         run: scripts/guide.sh
       - name: Check generated documentation and the guide's links into it
-        run: python3 scripts/check_docs.py --guide
+        run: python3 scripts/check_docs.py --trim --guide
       - name: Add the guide to the site
         run: cp -R guide/.lake/build/site/html-multi docbuild/.lake/build/doc/guide
       - if: github.ref != 'refs/heads/main'

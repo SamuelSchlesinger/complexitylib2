@@ -55,7 +55,7 @@ binary length `m = Ω(2 ^ k / k ^ 2)` (`ModulusCounter.hard_power_requires_long_
 
 ## References
 
-* Adapted from `lean/Proofs/{CounterRemainders,ExponentLength}.lean` in
+* Adapted from lean/Proofs/{CounterRemainders,ExponentLength}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

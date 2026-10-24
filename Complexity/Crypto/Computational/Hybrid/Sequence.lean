@@ -39,7 +39,7 @@ tuple-index bookkeeping, and apply to arbitrary discrete sample types.
 * [T. Holenstein, *Pseudorandom Generators from One-Way Functions: A Simple Construction for
   Any Hardness*][Holenstein2006], Section 5, Games 3–5.
 
-Adapted from `Crypto/Computational/Hybrid/Sequence.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Hybrid/Sequence.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the current nonnegative game API.
 
 -/

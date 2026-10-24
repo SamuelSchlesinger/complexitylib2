@@ -133,7 +133,7 @@ noncomputable def SchnorrImpersonator.rewind (k : ℕ → ℕ) (A : F.SchnorrImp
 /-! ### The exact bound -/
 
 /-- Binary digits, least significant first, read as a number (a private copy of the bridge in
-`Classes/Counting/Space.lean`). -/
+`Complexity/Computability/Complexity/Classes/Counting/Space.lean`). -/
 private theorem ofBits_eq_lsbValue (w : List Bool) : ofBits w = BitString.lsbValue w := by
   induction w with
   | nil => rfl

@@ -40,7 +40,7 @@ circuits of polynomial size give fixed powers of polynomial times half-exponenti
 
 ## References
 
-* Adapted from `lean/Proofs/Optimization.lean` in
+* Adapted from lean/Proofs/Optimization.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

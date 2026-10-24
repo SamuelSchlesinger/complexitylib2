@@ -32,7 +32,7 @@ This formalizes [T. Holenstein, *Pseudorandom Generators from One-Way Functions*
 Section 5 and the final proof of Theorem 1. The matrix extractor used here gives polynomial seed
 length without claiming the paper's optimized seed-length exponent.
 
-Adapted from `Crypto/Computational/Pseudoentropy/Generator.lean`
+Adapted from Crypto/Computational/Pseudoentropy/Generator.lean
 on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using typed machine certificates and the
 nonnegative game API.

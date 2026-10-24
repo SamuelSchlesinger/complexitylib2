@@ -57,7 +57,7 @@ characterizing `ForestAnchor` by key lookup and depth comparison (`ForestEdgeTab
 
 ## References
 
-* Adapted from `lean/Proofs/ForestNavigation.lean` in
+* Adapted from lean/Proofs/ForestNavigation.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

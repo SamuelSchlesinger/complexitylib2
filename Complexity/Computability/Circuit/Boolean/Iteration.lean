@@ -50,7 +50,7 @@ the checkpoints are chosen nonconstructively, so nothing here bounds the time to
 
 ## References
 
-* Adapted from `lean/Statement.lean` and `lean/Proofs/{Construction,FixedPower}.lean` in
+* Adapted from lean/Statement.lean and lean/Proofs/{Construction,FixedPower}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

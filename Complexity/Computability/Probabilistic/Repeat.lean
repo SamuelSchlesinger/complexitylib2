@@ -33,7 +33,7 @@ type nor its encoding needs a finite range.
 
 ## References
 
-Adapted from `Computability/Probabilistic/Repeat.lean` on the cslib `crypto` branch at
+Adapted from Computability/Probabilistic/Repeat.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing flat-seed law and tidy list calculus.
 -/
 

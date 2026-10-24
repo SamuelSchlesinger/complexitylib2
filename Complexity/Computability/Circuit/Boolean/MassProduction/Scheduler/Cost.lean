@@ -29,7 +29,7 @@ gate, including constants; the factors are crude.
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/BufferIterationCost.lean` in
+* Adapted from MassProduction/Nonuniform/BufferIterationCost.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction],
   using the sorting network of
   [K. E. Batcher, *Sorting Networks and Their Applications*][Batcher1968].

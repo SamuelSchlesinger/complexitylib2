@@ -26,7 +26,9 @@ and so stand for `true`; they are dropped from a pairwise union rather than join
 (`Cslib.Circuits.Monotone.join`).
 
 The approximate interpretation (`Cslib.Circuits.Monotone.Approximator.interpretation`) makes errors
-on the two kinds of test inputs, counted in `Clique/Positive.lean` and `Clique/Negative.lean`.
+on the two kinds of test inputs, counted in
+`Complexity/Computability/Circuit/Monotone/Clique/Positive.lean` and
+`Complexity/Computability/Circuit/Monotone/Clique/Negative.lean`.
 
 ## Main definitions
 

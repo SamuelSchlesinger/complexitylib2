@@ -27,7 +27,7 @@ atoms. The simulation is CSLib's native gate replacement.
 
 ## References
 
-* Generalizes the transport argument in `LowerBound/Fusion/Contextual.lean` in
+* Generalizes the transport argument in LowerBound/Fusion/Contextual.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

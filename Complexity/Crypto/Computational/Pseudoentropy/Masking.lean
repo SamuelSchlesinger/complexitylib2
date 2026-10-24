@@ -47,7 +47,7 @@ and masks are computed only on fresh surrounding samples.
 * [Holenstein, Section 5, Games 3–5][Holenstein2006]. The fresh soft-mask coin replaces the set
   indicator in that experiment; [Holenstein, Section 2.1.1][Holenstein2005] discusses measures.
 
-Adapted from `Crypto/Computational/Pseudoentropy/Masking.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Pseudoentropy/Masking.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`. These are ingredients of the subsequent extraction
 and learning arguments, not a complete pseudorandomness theorem.
 -/

@@ -35,7 +35,7 @@ counter permutations have circuits of size `O((n + 1) * (r + 1))`.
 
 ## References
 
-* Adapted from `lean/Proofs/SparseNavigation.lean` at revision `c4cfa198`
+* Adapted from lean/Proofs/SparseNavigation.lean at revision `c4cfa198`
   of [S. Schlesinger, *Square-root circuit bounds for iterated functions*]
   [Schlesinger2026IteratedFunctions].
 -/

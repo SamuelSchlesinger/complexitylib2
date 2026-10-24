@@ -19,7 +19,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Run
 under logarithmic-space many-one reductions [Arora and Barak, Section 6.7][AroraBarak09].
 
 A problem `A ∈ P enc` reduces to the circuit value problem by the tableau of its decider
-(`CircuitValue/Completeness.lean`); the dual-rail translation of the tableau
+(`Complexity/Computability/Complexity/Problems/CircuitValue/Completeness.lean`); the dual-rail
+translation of the tableau
 (`Cslib.Circuits.Monotone.dualRail`) is a monotone circuit computing the same function on the
 dual-rail inputs, the constant `true` followed by each input bit and its negation. The reduction
 maps an instance `a` to the dual-rail translation of the tableau for inputs of length

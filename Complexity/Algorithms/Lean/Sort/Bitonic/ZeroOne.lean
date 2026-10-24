@@ -28,8 +28,8 @@ remain bitonic over every linear order.
 
 ## References
 
-* Adapted from `MassProduction/SortingSemantics/Boolean.lean` and the threshold argument in
-  `SortingSemantics/Internal.lean` in
+* Adapted from MassProduction/SortingSemantics/Boolean.lean and the threshold argument in
+  SortingSemantics/Internal.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

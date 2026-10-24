@@ -42,7 +42,7 @@ The scope here is closed machines with no oracle channels.
 ## References
 
 Extracted from `MultiTape.Probabilistic.Composition`, adapted from
-`MultiTape/Oracle/Composition.lean` on the cslib `crypto` branch at
+MultiTape/Oracle/Composition.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`. The native deterministic tape plumbing is by
 Christian Reitwiessner and Samuel Schlesinger.
 -/

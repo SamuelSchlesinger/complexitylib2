@@ -38,7 +38,7 @@ bounded on arbitrary input words; it agrees with capping the full mathematical b
 
 ## References
 
-Adapted from `Probability/UniformNat.lean` on the cslib `crypto` branch at
+Adapted from Probability/UniformNat.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 

@@ -48,9 +48,9 @@ not use Boyack's convention assigning zero to disconnected vertices.
 
 ## References
 
-* Ported from `Complexity/Relative.lean` in
+* Ported from Complexity/Relative.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
-  Homomorphism transport adapts `LowerBound/Fusion/Comap.lean` from the same development.
+  Homomorphism transport adapts LowerBound/Fusion/Comap.lean from the same development.
 * [S. W. Boyack, *The Robustness of Combinatorial Measures of Boolean Matrix
   Complexity*][Boyack1985], Definition 2.1 and Proposition 2.2, pp. 29–30, for computation
   relative to supplied functions and its composition inequality.

@@ -39,8 +39,8 @@ unbounded reply is not oracle PPT (`ComplexityTests.OraclePPT`).
 
 ## References
 
-Adapts the closed composition rules of `Computability/Probabilistic/Composition.lean` and
-`Computability/Probabilistic/Adaptive.lean` on the cslib `crypto` branch at
+Adapts the closed composition rules of Computability/Probabilistic/Composition.lean and
+Computability/Probabilistic/Adaptive.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` to strict oracle PPT.
 -/
 

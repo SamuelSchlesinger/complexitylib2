@@ -39,7 +39,7 @@ returns `true`, so gaps and biases are signed differences.
 * [L. Trevisan, *CS276 Lecture 13: Pseudorandom Generators*][Trevisan2009PRG],
   scribed by Siu-On Chan, the prediction reduction in Theorem 2.
 
-Adapted from `Crypto/Computational/Prediction.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Prediction.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared nonnegative game API.
 -/
 

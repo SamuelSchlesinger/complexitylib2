@@ -41,7 +41,7 @@ These are word-level identities. The circuits that compute depths and labels are
 
 ## References
 
-* Adapted from `lean/Proofs/NavigationEncoding.lean` in
+* Adapted from lean/Proofs/NavigationEncoding.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

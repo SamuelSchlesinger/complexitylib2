@@ -35,7 +35,7 @@ supports requires a separate semantic bridge; cancellation is not silently treat
 
 ## References
 
-* Adapted from `LowerBound/Fusion/SumOfTerms/Coverage.lean` in
+* Adapted from LowerBound/Fusion/SumOfTerms/Coverage.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

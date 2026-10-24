@@ -43,7 +43,7 @@ the usual prefix key is `Fin.castLE h` for `h : k ≤ r`.
 
 ## References
 
-* Adapts the comparator endpoint of `MassProduction/Sorting.lean` in
+* Adapts the comparator endpoint of MassProduction/Sorting.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction],
   using a linear-size comparison and sharing its result between outputs.
 -/

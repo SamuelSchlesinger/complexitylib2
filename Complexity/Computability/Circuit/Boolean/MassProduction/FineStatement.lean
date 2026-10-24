@@ -53,7 +53,7 @@ They are bounds on circuit cost, not on the running time of any circuit construc
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/{SharpTheorem,RealParameters,RealTheorem}.lean` in
+* Adapted from MassProduction/Nonuniform/{SharpTheorem,RealParameters,RealTheorem}.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 * [C. E. Shannon, *The Synthesis of Two-Terminal Switching Circuits*][Shannon1949]
 * [Stasys Jukna, *Boolean Function Complexity: Advances and Frontiers*][Jukna2012], Theorem 1.14

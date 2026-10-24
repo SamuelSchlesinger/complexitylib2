@@ -38,8 +38,8 @@ Three finite counting principles replace probability in the construction of univ
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/CollisionCut.lean`,
-  `MassProduction/Nonuniform/ConditionalCounting.lean` and `MassProduction/Nonuniform/Menu.lean` in
+* Adapted from MassProduction/Nonuniform/CollisionCut.lean,
+  MassProduction/Nonuniform/ConditionalCounting.lean and MassProduction/Nonuniform/Menu.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

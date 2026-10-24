@@ -37,7 +37,7 @@ listed point by point in a fixed order of `s` scalars.
 
 ## References
 
-* Adapted from the vector encodings in `MassProduction/BinaryEncoding.lean` of
+* Adapted from the vector encodings in MassProduction/BinaryEncoding.lean of
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

@@ -33,7 +33,7 @@ captured inputs and efficient conditionals. `Adaptive` certifies bounded probabi
 supported state-size invariants. `Tactic.PPT` automates the closed program rules and constant-growth
 loops; oracle PPT requires further certified constructions.
 
-Adapted from the cslib `crypto` branch's `Computability/Probabilistic/PPT.lean` at
+Adapted from the cslib `crypto` branch's Computability/Probabilistic/PPT.lean at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`. The witness uses the common machine and any finite
 control type, as the upstream tidy calculus does, instead of imposing a separate `Fin` presentation.
 

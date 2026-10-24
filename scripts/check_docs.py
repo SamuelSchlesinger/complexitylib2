@@ -6,6 +6,7 @@ from contextlib import closing
 import html
 import json
 from pathlib import Path
+import posixpath
 import re
 import shutil
 import sqlite3
@@ -15,6 +16,28 @@ from urllib.parse import unquote, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CORE_ROOTS = ("Init", "Std", "Lean", "Lake")
+LOCAL_DECLARATION_PREFIXES = (
+    "./Complexity/",
+    "./Complexity.html",
+    "./Cslib/",
+    "./Cslib.html",
+)
+HREF_RE = re.compile(r'href="([^"]*)"')
+IMPORT_ITEM_RE = re.compile(r'<li><a href="([^"]+)">[^<]*</a></li>')
+EMPTY_IMPORTS_DETAILS_RE = re.compile(r'<details><summary>Imports</summary><ul></ul></details>')
+DEP_BROKEN_LINK_RE = re.compile(
+    r'<code><a href="([^"]+)">([^<]*\.lean)</a></code>'
+    r'|<a href="([^"]+)">(<code>[^<]+</code>)</a>'
+    r'|<a href="([^"]*(?:lean-manual://|\.lean|/fderiv\.html)[^"]*)">([^<]*)</a>'
+)
+NAV_LINK_RE = re.compile(
+    r'<div class="nav_link"><a href="\./([^"]+)">[^<]*</a></div>'
+    r'|\s*\(<a href="\./([^"]+)">file</a>\)'
+)
+EMPTY_NAV_SECT_RE = re.compile(
+    r'<details class="nav_sect"[^>]*><summary>[^<]*</summary></details>'
+)
 
 
 def require(condition, message):
@@ -73,6 +96,251 @@ def check_bibliography_keys(bibliography):
 
 def local_modules(names):
     return {name for name in names if name == "Complexity" or name.startswith("Complexity.")}
+
+
+def resolve_relative_href(rel_page, href):
+    if not href:
+        return None
+    split = urlsplit(html.unescape(href))
+    if split.scheme or split.netloc or not split.path:
+        return None
+    page_dir = posixpath.dirname(rel_page)
+    raw_path = unquote(split.path)
+    joined = posixpath.join(page_dir, raw_path) if page_dir else raw_path
+    return posixpath.normpath(joined)
+
+
+def resolve_doc_target(docs, norm_path):
+    if not norm_path or norm_path == ".." or norm_path.startswith(("/", "../")):
+        return None
+    docs_root = docs.resolve()
+    target = docs_root / ("index.html" if norm_path == "." else norm_path)
+    if target.is_dir():
+        target = target / "index.html"
+    resolved = target.resolve()
+    if not resolved.is_relative_to(docs_root):
+        return None
+    return resolved
+
+
+def is_published_doc_file(docs, norm_path):
+    target = resolve_doc_target(docs, norm_path)
+    return target is not None and target.is_file()
+
+
+def strip_imports_div(text):
+    start = text.find('<div class="imports">')
+    if start == -1:
+        return text
+    end = text.find("</div>", start)
+    return text[:start] + text[end + 6:] if end != -1 else text
+
+
+def imported_module_closure(docs, modules):
+    imports = {}
+    for module, info in modules.items():
+        for importer in info.get("importedBy", ()):
+            imports.setdefault(importer, []).append(module)
+
+    closure = set()
+    stack = [module for module in modules if module.split(".", 1)[0] not in CORE_ROOTS]
+    while stack:
+        module = stack.pop()
+        if module in closure:
+            continue
+        closure.add(module)
+        for imported in imports.get(module, ()):
+            if imported not in closure and imported in modules:
+                stack.append(imported)
+
+    page_to_module = {module.replace(".", "/") + ".html": module for module in modules}
+    non_module_pages = [
+        page.relative_to(docs).as_posix()
+        for page in sorted(docs.rglob("*.html"))
+        if page.is_file()
+        and page.relative_to(docs).as_posix() not in page_to_module
+        and page.relative_to(docs).as_posix() != "navbar.html"
+    ] if docs.is_dir() else []
+    page_queue = [
+        module.replace(".", "/") + ".html" for module in sorted(closure)
+    ] + non_module_pages
+    scanned_pages = set()
+    while page_queue:
+        rel_page = page_queue.pop()
+        if rel_page in scanned_pages:
+            continue
+        scanned_pages.add(rel_page)
+        page = docs / rel_page
+        if not page.is_file():
+            continue
+        text = strip_imports_div(page.read_text())
+        for raw_href in dict.fromkeys(html.unescape(h).partition("#")[0] for h in HREF_RE.findall(text)):
+            norm = resolve_relative_href(rel_page, raw_href)
+            target_module = page_to_module.get(norm) if norm else None
+            if target_module and target_module not in closure:
+                closure.add(target_module)
+                page_queue.append(norm)
+    return closure
+
+
+def remove_empty_parents(path, stop):
+    parent = path.parent
+    while parent != stop and parent.exists():
+        try:
+            parent.rmdir()
+        except OSError:
+            break
+        parent = parent.parent
+
+
+def trim_navbar(navbar_path, pruned_pages):
+    if not navbar_path.is_file() or not pruned_pages:
+        return
+    text = navbar_path.read_text()
+    text = NAV_LINK_RE.sub(
+        lambda m: "" if (m.group(1) or m.group(2)) in pruned_pages else m.group(0),
+        text,
+    )
+    while EMPTY_NAV_SECT_RE.search(text):
+        text = EMPTY_NAV_SECT_RE.sub("", text)
+    navbar_path.write_text(text)
+
+
+def trim_module_imports(docs, pruned_pages):
+    if not docs.is_dir() or not pruned_pages:
+        return
+    for page in sorted(docs.rglob("*.html")):
+        if not page.is_file() or page.name == "navbar.html":
+            continue
+        text = page.read_text()
+        start = text.find('<div class="imports">')
+        if start == -1:
+            continue
+        end = text.find("</div>", start)
+        if end == -1:
+            continue
+        rel_page = page.relative_to(docs).as_posix()
+        block = text[start:end + 6]
+        updated_block = IMPORT_ITEM_RE.sub(
+            lambda m: (
+                "" if resolve_relative_href(rel_page, m.group(1)) in pruned_pages else m.group(0)
+            ),
+            block,
+        )
+        updated_block = EMPTY_IMPORTS_DETAILS_RE.sub("", updated_block)
+        if updated_block != block:
+            page.write_text(text[:start] + updated_block + text[end + 6:])
+
+
+def sanitize_dependency_code_links(docs, modules=()):
+    if not docs.is_dir():
+        return
+    page_to_module = {module.replace(".", "/") + ".html": module for module in modules}
+    for page in sorted(docs.rglob("*.html")):
+        if not page.is_file():
+            continue
+        rel_page = page.relative_to(docs).as_posix()
+        if rel_page in ("Complexity.html", "navbar.html") or rel_page.startswith("Complexity/"):
+            continue
+        text = page.read_text()
+        if (
+            ".lean" not in text
+            and "><code>" not in text
+            and "lean-manual://" not in text
+            and "/fderiv.html" not in text
+        ):
+            continue
+
+        def replace_link(match):
+            href = match.group(1) or match.group(3) or match.group(5)
+            label = (
+                f"<code>{match.group(2)}</code>"
+                if match.group(2) is not None
+                else (match.group(4) or match.group(6))
+            )
+            norm = resolve_relative_href(rel_page, href)
+            if norm and norm not in page_to_module and not is_published_doc_file(docs, norm):
+                return label
+            return match.group(0)
+
+        updated = DEP_BROKEN_LINK_RE.sub(replace_link, text)
+        if updated != text:
+            page.write_text(updated)
+
+
+def trim_output():
+    docs = ROOT / "docbuild/.lake/build/doc"
+    index_path = docs / "declarations/declaration-data.bmp"
+    require(index_path.is_file(), "Missing documentation output: declarations/declaration-data.bmp")
+    index = json.loads(index_path.read_text())
+    modules = index["modules"]
+    closure = imported_module_closure(docs, modules)
+    pruned_modules = {
+        module for module in modules
+        if module.split(".", 1)[0] in CORE_ROOTS and module not in closure
+    }
+    kept_modules = set(modules) - pruned_modules
+    pruned_pages = {module.replace(".", "/") + ".html" for module in pruned_modules}
+
+    for rel_page in sorted(pruned_pages):
+        page = docs / rel_page
+        if page.is_file():
+            page.unlink()
+            remove_empty_parents(page, docs)
+
+    trim_navbar(docs / "navbar.html", pruned_pages)
+    trim_module_imports(docs, pruned_pages)
+    sanitize_dependency_code_links(docs, modules)
+
+    kept_declarations = {
+        name: info for name, info in index.get("declarations", {}).items()
+        if info.get("docLink", "").startswith(LOCAL_DECLARATION_PREFIXES)
+    }
+    kept_instances = {
+        name: [inst for inst in items if inst in kept_declarations]
+        for name, items in index.get("instances", {}).items()
+    }
+    kept_instances = {name: items for name, items in kept_instances.items() if items}
+    kept_instances_for = {
+        name: [inst for inst in items if inst in kept_declarations]
+        for name, items in index.get("instancesFor", {}).items()
+    }
+    kept_instances_for = {name: items for name, items in kept_instances_for.items() if items}
+    kept_modules_dict = {
+        module: {
+            **info,
+            **({"importedBy": [imp for imp in info["importedBy"] if imp in kept_modules]}
+               if "importedBy" in info else {}),
+        }
+        for module, info in modules.items()
+        if module in kept_modules
+    }
+    trimmed_index = {
+        **index,
+        "declarations": kept_declarations,
+        "modules": kept_modules_dict,
+    }
+    if "instances" in index:
+        trimmed_index["instances"] = kept_instances
+    if "instancesFor" in index:
+        trimmed_index["instancesFor"] = kept_instances_for
+    index_path.write_text(json.dumps(trimmed_index, ensure_ascii=False, separators=(",", ":")))
+
+
+def check_internal_links(docs):
+    pages = sorted(page for page in docs.rglob("*.html") if page.is_file())
+    checked_targets = {}
+    for page in pages:
+        rel_page = page.relative_to(docs).as_posix()
+        for raw_href in dict.fromkeys(html.unescape(h).partition("#")[0] for h in HREF_RE.findall(page.read_text())):
+            norm = resolve_relative_href(rel_page, raw_href)
+            if norm is None:
+                continue
+            exists = checked_targets.get(norm)
+            if exists is None:
+                exists = is_published_doc_file(docs, norm)
+                checked_targets[norm] = exists
+            require(exists, f"Broken internal link in {rel_page}: {norm}")
 
 
 def check_module_inventory(names, expected, label):
@@ -141,6 +409,7 @@ def check_output():
         page = docs / unquote(link.path)
         anchor = html.escape(unquote(link.fragment), quote=True)
         require(f'id="{anchor}"' in page.read_text(), f"Missing theorem anchor: {name}")
+    check_internal_links(docs)
     print(f"Documentation covers {len(sources)} modules and representative theorem search entries.")
 
 
@@ -174,6 +443,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config-only", action="store_true",
                         help="check pins before invoking Lake; do not require built documentation")
+    parser.add_argument("--trim", action="store_true",
+                        help="prune unimported core pages and trim declaration data before checking")
     parser.add_argument("--guide", action="store_true",
                         help="also check the built guide's links into the built documentation")
     args = parser.parse_args()
@@ -182,6 +453,8 @@ def main():
         if args.config_only:
             print("Documentation configuration is consistent.")
         else:
+            if args.trim:
+                trim_output()
             check_output()
             if args.guide:
                 check_guide_links()

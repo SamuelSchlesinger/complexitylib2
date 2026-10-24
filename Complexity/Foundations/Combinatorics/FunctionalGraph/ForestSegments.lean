@@ -50,7 +50,7 @@ Because unmarked vertices in the hull have at most one transient hull predecesso
 
 ## References
 
-* Adapted from `lean/Proofs/ForestSegments.lean` in
+* Adapted from lean/Proofs/ForestSegments.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

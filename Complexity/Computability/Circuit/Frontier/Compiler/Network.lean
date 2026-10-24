@@ -59,7 +59,7 @@ and like `y` elsewhere, the outputs held in `P` are those of `x` and the others 
 (`Compiler.eval_splice`).
 
 Graph-theoretic properties (looplessness, degree bounds, connectivity) and cycle-rank / read-count
-inequalities are proved in `Frontier/Compiler.lean`.
+inequalities are proved in `Complexity/Computability/Circuit/Frontier/Compiler.lean`.
 
 ## Main definitions
 

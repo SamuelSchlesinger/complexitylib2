@@ -35,7 +35,7 @@ and `λ` the least common multiple of the cycle lengths (`cyclePeriod`). Two pow
 
 ## References
 
-* Adapted from `lean/Proofs/NumberOfPowers.lean` in
+* Adapted from lean/Proofs/NumberOfPowers.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

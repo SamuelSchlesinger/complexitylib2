@@ -41,7 +41,7 @@ are free.
 
 ## References
 
-* Adapted from `lean/Proofs/{BatchLookup,BatchFinish}.lean` in
+* Adapted from lean/Proofs/{BatchLookup,BatchFinish}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 * The lookup is `batchOrCircuit`, after

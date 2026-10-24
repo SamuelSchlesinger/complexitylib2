@@ -38,8 +38,8 @@ integer-indexed tape to have any absolute head position. We also provide the can
 
 ## References
 
-Ports the additions to `Foundations/Data/BiTape.lean` and the tape action laws from
-`Computability/Machines/Turing/MultiTape/FiniteTape.lean` on the cslib `crypto` branch at
+Ports the additions to Foundations/Data/BiTape.lean and the tape action laws from
+Computability/Machines/Turing/MultiTape/FiniteTape.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 

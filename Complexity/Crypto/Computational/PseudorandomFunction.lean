@@ -45,7 +45,7 @@ with one machine and polynomial for all parameters and auxiliary inputs.
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023], Chapter 4.
 * [O. Goldreich, S. Goldwasser, S. Micali, *How to Construct Random Functions*][GGM1986].
 
-Adapted from `Crypto/Computational/PseudorandomFunction.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/PseudorandomFunction.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared typed interpreter and word channel.
 -/
 

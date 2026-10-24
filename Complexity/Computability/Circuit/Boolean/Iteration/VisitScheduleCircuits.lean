@@ -52,7 +52,7 @@ spacing (`visit_schedule_optimized`).
 
 ## References
 
-* Adapted from `lean/Proofs/VisitScheduleCircuits.lean` in
+* Adapted from lean/Proofs/VisitScheduleCircuits.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

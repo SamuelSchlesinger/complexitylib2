@@ -46,7 +46,7 @@ gate, including constants and negations.
 
 ## References
 
-* Adapted from `lean/Proofs/{Synthesis,Arithmetic,Words}.lean` in
+* Adapted from lean/Proofs/{Synthesis,Arithmetic,Words}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions],
   where each sum bit recomputes its carry chain.

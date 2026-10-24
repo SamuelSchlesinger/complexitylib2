@@ -24,7 +24,8 @@ to either side.
 The Cook–Levin theorem says that `SAT` is `NP`-complete [Arora and Barak, Theorem
 2.10][AroraBarak09]. The verifier's correctness is proved here (`SAT.isVerifier`, through
 `Cslib.Complexity.IsVerifier.of_padding`, which handles the certificate length), its
-polynomial-time bound and `SAT ∈ NP` are proved in `Problems/SAT/PolyTime.lean`, and the tableau
+polynomial-time bound and `SAT ∈ NP` are proved in
+`Complexity/Computability/Complexity/Problems/SAT/PolyTime.lean`, and the tableau
 reduction and `NP`-completeness are proved in `CookLevin/`.
 
 ## Main definitions

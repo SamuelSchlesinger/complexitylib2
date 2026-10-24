@@ -32,7 +32,7 @@ lower bound on unrestricted graph cover complexity.
 
 * [B. P. Cavalar and I. C. Oliveira, *Boolean Circuit Complexity and Two-Dimensional Cover
   Problems*][CavalarOliveira2025], Section 4.2.
-* Adapted from `LowerBound/Fusion/Graph/Canonical.lean` in
+* Adapted from LowerBound/Fusion/Graph/Canonical.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

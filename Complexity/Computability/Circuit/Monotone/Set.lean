@@ -37,10 +37,10 @@ functions are noncomputable for arbitrary sets; this is a semantic correspondenc
 
 ## References
 
-* Adapted from `Basis/AndOr.lean` in
+* Adapted from Basis/AndOr.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic],
   extending its binary AND/OR interpretation to the existing basis with constants.
-  The pointwise interface adapts `LowerBound/Fusion/Boolean.lean` from the same source.
+  The pointwise interface adapts LowerBound/Fusion/Boolean.lean from the same source.
 -/
 
 @[expose] public section

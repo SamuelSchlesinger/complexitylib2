@@ -32,7 +32,7 @@ for cryptographic random-function experiments.
 
 ## References
 
-Adapts the security-parameter interface in `Computability/Probabilistic/Oracle.lean` on the cslib
+Adapts the security-parameter interface in Computability/Probabilistic/Oracle.lean on the cslib
 `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the existing word channels.
 -/
 

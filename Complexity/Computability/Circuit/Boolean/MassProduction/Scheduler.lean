@@ -41,9 +41,9 @@ constructor.
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/SchedulerCircuit.lean`,
-  `MassProduction/Nonuniform/BufferIteration.lean` and
-  `MassProduction/Nonuniform/BufferIterationCost.lean` in
+* Adapted from MassProduction/Nonuniform/SchedulerCircuit.lean,
+  MassProduction/Nonuniform/BufferIteration.lean and
+  MassProduction/Nonuniform/BufferIterationCost.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction],
   using the sorting network of
   [K. E. Batcher, *Sorting Networks and Their Applications*][Batcher1968].

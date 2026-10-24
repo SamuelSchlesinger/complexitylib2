@@ -24,7 +24,7 @@ preparation of its unary budget. Its bound and finite control are uniform over a
 
 ## References
 
-Adapts `Computability/Probabilistic/Clock.lean` on the cslib `crypto` branch at
+Adapts Computability/Probabilistic/Clock.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the common machine compilers and existing
 tidy functional budget generation.
 -/

@@ -37,7 +37,7 @@ case of a sampled closed handler without external channels.
 
 ## References
 
-Extends `Computability/Probabilistic/OracleSimulation.lean` on the cslib `crypto` branch at
+Extends Computability/Probabilistic/OracleSimulation.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` from closed to open handlers.
 -/
 

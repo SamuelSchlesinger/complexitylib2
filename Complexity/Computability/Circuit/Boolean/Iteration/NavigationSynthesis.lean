@@ -34,7 +34,7 @@ This module synthesizes the navigation word `(reaches f x y, hittingTime f x y)`
 
 ## References
 
-* Adapted from `lean/Proofs/NavigationSynthesis.lean` in
+* Adapted from lean/Proofs/NavigationSynthesis.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

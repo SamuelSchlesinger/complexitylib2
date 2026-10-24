@@ -32,7 +32,7 @@ zero and `bound`. Hoeffding's inequality therefore controls the lower tail of it
   Its loss depends on the seed length rather than Proposition 1's sharper alphabet-size bound.
   Smoothing and leftover hashing are separate steps.
 
-Adapted from `Probability/EntropyConcentration.lean` on the cslib `crypto` branch at
+Adapted from Probability/EntropyConcentration.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 
 -/

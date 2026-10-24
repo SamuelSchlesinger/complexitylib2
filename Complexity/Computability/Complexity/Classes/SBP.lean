@@ -181,7 +181,8 @@ theorem union_mem_SBP (hA : A ∈ SBP enc) (hB : B ∈ SBP enc) : A ∪ B ∈ SB
 
 /-- Every fixed positive repetition count strengthens the SBP multiplicative gap.
 The integer `m` is fixed independently of the input; this does not assert uniform
-closure under input-dependent powers; see `SBP/Amplification.lean` for the uniform theorem.
+closure under input-dependent powers; see
+`Complexity/Computability/Complexity/Classes/SBP/Amplification.lean` for the uniform theorem.
 See [Watson, Section 1.1][Watson2012]. -/
 theorem exists_SBP_gap_pow (hA : A ∈ SBP enc) {m : ℕ} (hm : 0 < m) :
     ∃ f ∈ SharpP enc, ∃ k : α → ℕ, ComputableTidilyInPolyTime k enc encNat ∧

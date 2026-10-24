@@ -32,7 +32,7 @@ The final tidy normalization clears the working storage and restores all heads.
 
 ## References
 
-Adapted from the cslib `crypto` branch's `MultiTape/Oracle/ReplayInput.lean` at
+Adapted from the cslib `crypto` branch's MultiTape/Oracle/ReplayInput.lean at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the common machine and the tidy pair calculus.
 -/
 

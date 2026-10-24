@@ -50,7 +50,7 @@ The deterministic iteration and stretch operators (`PRGStretch.step`, `PRGStretc
   We retain the final seed and reverse the order of the emitted bits. The reduction explicitly
   samples its hop to preserve uniformity, with dyadic padding for strict fair-coin sampling.
 
-Adapted from `Crypto/Computational/Stretch.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Stretch.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the tidy calculus and current upstream games.
 -/
 

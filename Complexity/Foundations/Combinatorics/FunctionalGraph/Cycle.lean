@@ -40,7 +40,7 @@ These labels depend only on the map and the order, not on any representation of 
 
 ## References
 
-* Adapted from `lean/Proofs/CycleLabels.lean` in
+* Adapted from lean/Proofs/CycleLabels.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions].
 -/

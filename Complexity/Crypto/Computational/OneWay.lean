@@ -45,7 +45,7 @@ one-way functions or permutations exist.
 
 * [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*][AroraBarak09], Section 9.2.
 
-Adapted from `Crypto/Computational/OneWay.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/OneWay.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using finite fair-bit programs, tidy deterministic
 certificates and the upstream nonnegative game API.
 -/

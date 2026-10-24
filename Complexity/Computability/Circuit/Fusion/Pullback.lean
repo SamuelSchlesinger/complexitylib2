@@ -27,7 +27,7 @@ reference-true inputs must be accepted by the pulled-back observation.
 
 ## References
 
-* Adapted from `LowerBound/Fusion/Pullback.lean` in
+* Adapted from LowerBound/Fusion/Pullback.lean in
   [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*][Schlesinger2026Algebraic].
 -/
 

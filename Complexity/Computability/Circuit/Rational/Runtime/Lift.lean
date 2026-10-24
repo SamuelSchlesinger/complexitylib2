@@ -16,7 +16,8 @@ import Mathlib.Data.List.GetD
 /-!
 # Magnitude bounds and polynomial-time certificates for the integer lift tables
 
-`Rational/Runtime/Lift/Defs.lean` defines the list-level programs `coeffRow`, `testRows`,
+`Complexity/Computability/Circuit/Rational/Runtime/Lift/Defs.lean` defines the list-level programs
+`coeffRow`, `testRows`,
 `liftTable`, and `liftRows` that materialize the integer Taylor test matrices and integer lift
 tables at a grid point. This file bounds the magnitude and bit length of every value those programs
 compute: each coefficient, each shift-and-add intermediate, each power, each partial product and

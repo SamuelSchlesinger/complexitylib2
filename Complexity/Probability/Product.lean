@@ -34,7 +34,7 @@ Replacing one coordinate of a uniform tuple by a fresh uniform sample preserves 
 
 ## References
 
-Adapted from `Probability/Product.lean` on the cslib `crypto` branch at
+Adapted from Probability/Product.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`. The measure and independence results reuse Mathlib.
 -/
 

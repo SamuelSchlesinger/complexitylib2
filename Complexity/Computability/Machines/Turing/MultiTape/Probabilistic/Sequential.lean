@@ -29,7 +29,7 @@ The coin program is explicit: the result also applies to stateful, nonuniform co
 ## References
 
 The common proof in `MultiTape.Machine.Sequential` adapts the cslib `crypto` branch's
-`MultiTape/Oracle/Sequential.lean` at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
+MultiTape/Oracle/Sequential.lean at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 
 @[expose] public section

@@ -16,7 +16,8 @@ import Complexity.Foundations.Data.Nat.Card
 /-!
 # Structural properties and cycle-rank bounds for compiled circuit networks
 
-`Frontier/Compiler/Network.lean` compiles a circuit `c` with `m` outputs into a multigraph
+`Complexity/Computability/Circuit/Frontier/Compiler/Network.lean` compiles a circuit `c` with `m`
+outputs into a multigraph
 (`Compiler.graph c`) and a constraint network (`Compiler.network c I Acc`), proves exactness and
 uniqueness of satisfying assignments, and establishes the cut-splicing lemma `Compiler.eval_splice`.
 

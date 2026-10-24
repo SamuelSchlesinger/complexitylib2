@@ -37,7 +37,7 @@ assumed: supported output words have unique preimages under the declared encodin
 
 ## References
 
-Adapted from `Computability/Probabilistic/CoinTape.lean` on the cslib `crypto` branch at
+Adapted from Computability/Probabilistic/CoinTape.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the common machine, standard pair encoding and
 tidy computability calculus.
 -/

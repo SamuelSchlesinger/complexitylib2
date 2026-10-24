@@ -37,7 +37,7 @@ strict PPT, and no entropy estimate or nonuniform advice is an additional hypoth
 The matrix extractor and uniform length conversion preserve the polynomial guarantees;
 we do not assert the paper's optimized seed-length exponent or practical efficiency.
 
-Adapted from `Crypto/Computational/OneWayToPRG.lean`
+Adapted from Crypto/Computational/OneWayToPRG.lean
 on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using typed machine certificates and the
 nonnegative game API.

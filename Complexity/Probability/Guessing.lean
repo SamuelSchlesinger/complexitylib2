@@ -31,7 +31,7 @@ may be any number in `[0, 1]`, including a decoder's probability of returning a 
   We apply the guessing argument directly to a nonnegative success score, so no separate
   maximization of signed prediction advantage over preimages is needed.
 
-Adapted from `Probability/Guessing.lean` on the cslib `crypto` branch at
+Adapted from Probability/Guessing.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, reusing the pinned finite-PMF distance.
 -/
 

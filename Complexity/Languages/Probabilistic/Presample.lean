@@ -30,7 +30,7 @@ they need not be independent of the final state or the client's stopping time.
 
 ## References
 
-Adapted from `Languages/Probabilistic/Presample.lean` on the cslib `crypto` branch at
+Adapted from Languages/Probabilistic/Presample.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the typed sum of private and external calls.
 -/
 

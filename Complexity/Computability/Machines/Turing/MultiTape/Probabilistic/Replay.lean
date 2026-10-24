@@ -33,7 +33,7 @@ input are separate machine computations, not free initial data in a complexity c
 
 ## References
 
-Adapted from the cslib `crypto` branch's `Oracle/Replay.lean` at
+Adapted from the cslib `crypto` branch's Oracle/Replay.lean at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the common closed machine directly.
 -/
 

@@ -22,7 +22,7 @@ probabilistic specialization of the generic monad-morphism rule for `memoize`.
 
 ## References
 
-Specializes `IsMonadHom.map_memoize`, adapted from `Foundations/Control/Monad/Memoize.lean` on
+Specializes `IsMonadHom.map_memoize`, adapted from Foundations/Control/Monad/Memoize.lean on
 the cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 

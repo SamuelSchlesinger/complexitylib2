@@ -28,7 +28,7 @@ new tape machines.
 
 ## References
 
-Adapts `Computability/Probabilistic/Tape.lean` from the cslib `crypto` branch at
+Adapts Computability/Probabilistic/Tape.lean from the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8` to the tidy calculus, using arbitrary symbol encodings
 instead of fixed finite tags.
 -/

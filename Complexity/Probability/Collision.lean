@@ -37,7 +37,7 @@ The distance-to-uniform estimate is the Cauchy–Schwarz step in the leftover ha
 * [T. Holenstein, *Pseudorandom Generators from One-Way Functions: A Simple Construction for
   Any Hardness*][Holenstein2006], Section 3.3, proof of Lemma 1, equation (2).
 
-Adapted from `Probability/Collision.lean` on the cslib `crypto` branch at
+Adapted from Probability/Collision.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the upstream statistical-distance metric.
 -/
 

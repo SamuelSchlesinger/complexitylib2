@@ -45,7 +45,7 @@ to construct them.
 
 ## References
 
-* Adapted from `lean/Proofs/{BinarySearch,DepthCircuit}.lean` in
+* Adapted from lean/Proofs/{BinarySearch,DepthCircuit}.lean in
   [S. Schlesinger,
   *Square-root circuit bounds for iterated functions*][Schlesinger2026IteratedFunctions], whose
   balanced bound has the constant `3000000`.

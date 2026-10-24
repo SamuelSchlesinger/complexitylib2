@@ -21,7 +21,7 @@ public import Mathlib.Data.List.Basic
 
 ## References
 
-Adapts the selection identity from `Computability/Probabilistic/Finite.lean` on the cslib
+Adapts the selection identity from Computability/Probabilistic/Finite.lean on the cslib
 `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203ccd8`.
 -/
 

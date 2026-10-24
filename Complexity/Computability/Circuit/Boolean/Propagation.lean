@@ -38,7 +38,7 @@ The constructor is executable; these gate counts do not certify its running time
 
 ## References
 
-* Adapted from `MassProduction/Nonuniform/Propagation.lean` in
+* Adapted from MassProduction/Nonuniform/Propagation.lean in
   [S. Schlesinger, *Boolean circuit mass production formalization*][Schlesinger2026MassProduction].
 -/
 

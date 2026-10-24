@@ -35,7 +35,7 @@ and emits nothing. Its polynomial bound charges both generation and rewinding.
 
 ## References
 
-This serves the role of `MultiTape/Plumbing/PrepareClock.lean` on the cslib `crypto` branch at
+This serves the role of MultiTape/Plumbing/PrepareClock.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, reusing Christian Reitwiessner's tidy calculus and
 the existing output-to-word compiler instead of a separate polynomial generator.
 -/

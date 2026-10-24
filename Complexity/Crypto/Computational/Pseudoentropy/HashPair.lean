@@ -46,7 +46,7 @@ implements that reduction, and `OneWay` derives the computational prediction gap
   hash length exactly uniformly in a dyadic range, avoiding the sampling approximation in
   footnote 3. The entropy bound holds for any positive number of possible hash lengths.
 
-Adapted from `Crypto/Computational/Pseudoentropy/HashPair.lean` on the cslib `crypto` branch at
+Adapted from Crypto/Computational/Pseudoentropy/HashPair.lean on the cslib `crypto` branch at
 `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using the shared bit-string and tidy machine APIs.
 -/
 
