@@ -12,6 +12,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pi
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Executable Hadamard assignment testing
 
@@ -123,7 +126,7 @@ theorem isPolyTime_query (coinsEncoding : Rand α ↪ List Bool)
     ComputableTidilyInPolyTime
       (fun p : (α → α → Bool) × Rand α × Query => query p.1 p.2.1 p.2.2)
       (encPair (encPi (encPi encBool)) (encPair coinsEncoding queryEncoding)) positionEncoding :=
-  ComputableTidilyInPolyTime.of_finite _
+  (ComputableInPolyTime.of_finite _).tidy
 
 /-- Fixed-alphabet acceptance charges the supplied constraint, coins, and all query answers. -/
 @[fun_prop]
@@ -131,6 +134,6 @@ theorem isPolyTime_accepts (coinsEncoding : Rand α ↪ List Bool) :
     ComputableTidilyInPolyTime
       (fun p : (α → α → Bool) × Rand α × (Query → Bool) => accepts p.1 p.2.1 p.2.2)
       (encPair (encPi (encPi encBool)) (encPair coinsEncoding (encPi encBool))) encBool :=
-  ComputableTidilyInPolyTime.of_finite _
+  (ComputableInPolyTime.of_finite _).tidy
 
 end Cslib.PCP.Encoded.HadamardTester

@@ -13,6 +13,9 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+
 /-!
 # Polynomial-time CNF construction
 
@@ -48,7 +51,7 @@ needed separately when transferring satisfiability.
 
 namespace Cslib.Logic.PL
 
-open Turing.MultiTapeTM ComputableTidilyInPolyTime
+open Turing.MultiTapeTM ComputableInPolyTime
 
 variable {V W : Type} {encV : V ↪ List Bool} {encW : W ↪ List Bool}
 
@@ -57,6 +60,7 @@ variable {V W : Type} {encV : V ↪ List Bool} {encW : W ↪ List Bool}
 theorem Literal.computableTidilyInPolyTime_negate (enc : V ↪ List Bool) :
     ComputableTidilyInPolyTime Std.Sat.Literal.negate
       (encPair enc encBool) (encPair enc encBool) := by
+  apply ComputableInPolyTime.tidy
   unfold Std.Sat.Literal.negate
   fun_prop
 
@@ -65,6 +69,7 @@ theorem Literal.computableTidilyInPolyTime_negate (enc : V ↪ List Bool) :
 theorem Clause.computableTidilyInPolyTime_impLits (enc : V ↪ List Bool) :
     ComputableTidilyInPolyTime (fun p : List (Literal V) × V => Clause.impLits p.1 p.2)
       (encPair (encList (encPair enc encBool)) enc) (encList (encPair enc encBool)) := by
+  apply ComputableInPolyTime.tidy
   unfold Clause.impLits
   fun_prop
 
@@ -73,6 +78,7 @@ theorem Clause.computableTidilyInPolyTime_impLits (enc : V ↪ List Bool) :
 theorem Clause.computableTidilyInPolyTime_imp (enc : V ↪ List Bool) :
     ComputableTidilyInPolyTime (fun p : List V × V => Clause.imp p.1 p.2)
       (encPair (encList enc) enc) (encList (encPair enc encBool)) := by
+  apply ComputableInPolyTime.tidy
   unfold Clause.imp
   fun_prop
 
@@ -82,7 +88,8 @@ theorem Clause.computableTidilyInPolyTime_relabel {f : V → W}
     (hf : ComputableTidilyInPolyTime f encV encW) :
     ComputableTidilyInPolyTime (Clause.relabel f)
       (encList (encPair encV encBool)) (encList (encPair encW encBool)) :=
-  map ((hf.comp (fst encV encBool)).prod (snd encV encBool))
+  (map (((ComputableInPolyTime.of_tidy hf).comp (fst encV encBool)).prod
+    (snd encV encBool))).tidy
 
 /-- Relabelling a formula is polynomial-time whenever the renaming function is. -/
 @[fun_prop]
@@ -91,28 +98,28 @@ theorem CNF.computableTidilyInPolyTime_relabel {f : V → W}
     ComputableTidilyInPolyTime (CNF.relabel f)
       (encList (encList (encPair encV encBool)))
       (encList (encList (encPair encW encBool))) :=
-  map (Clause.computableTidilyInPolyTime_relabel hf)
+  (map (ComputableInPolyTime.of_tidy (Clause.computableTidilyInPolyTime_relabel hf))).tidy
 
 /-- List the variables of a formula in order, including repetitions. -/
 @[fun_prop]
 theorem CNF.computableTidilyInPolyTime_vars (enc : V ↪ List Bool) :
     ComputableTidilyInPolyTime (CNF.vars (V := V))
       (encList (encList (encPair enc encBool))) (encList enc) :=
-  (map (fst enc encBool)).comp (flatten (encPair enc encBool))
+  ((map (fst enc encBool)).comp (flatten (encPair enc encBool))).tidy
 
 /-- The number of literals in a polynomial-time clause, in unary, is polynomial-time. -/
 theorem Clause.computableTidilyInPolyTime_length {α : Type} {input : α ↪ List Bool}
     {c : α → Clause V}
     (hc : ComputableTidilyInPolyTime c input (encList (encPair encV encBool))) :
     ComputableTidilyInPolyTime (fun a => (c a).length) input encUnary :=
-  (length (encPair encV encBool)).comp hc
+  ((length (encPair encV encBool)).comp (ComputableInPolyTime.of_tidy hc)).tidy
 
 /-- The number of clauses in a polynomial-time formula, in unary, is polynomial-time. -/
 theorem CNF.computableTidilyInPolyTime_length {α : Type} {input : α ↪ List Bool}
     {φ : α → CNF V}
     (hφ : ComputableTidilyInPolyTime φ input (encList (encList (encPair encV encBool)))) :
     ComputableTidilyInPolyTime (fun a => (φ a).length) input encUnary :=
-  (length (encList (encPair encV encBool))).comp hφ
+  ((length (encList (encPair encV encBool))).comp (ComputableInPolyTime.of_tidy hφ)).tidy
 
 /-- The number of variable occurrences in a polynomial-time formula, in unary, is
 polynomial-time. -/
@@ -120,13 +127,15 @@ theorem CNF.computableTidilyInPolyTime_vars_length {α : Type} {input : α ↪ L
     {φ : α → CNF V}
     (hφ : ComputableTidilyInPolyTime φ input (encList (encList (encPair encV encBool)))) :
     ComputableTidilyInPolyTime (fun a => (φ a).vars.length) input encUnary :=
-  (length encV).comp ((CNF.computableTidilyInPolyTime_vars encV).comp hφ)
+  ((length encV).comp ((ComputableInPolyTime.of_tidy
+    (CNF.computableTidilyInPolyTime_vars encV)).comp (ComputableInPolyTime.of_tidy hφ))).tidy
 
 /-- Construct the clause requiring at least one listed variable to hold. -/
 @[fun_prop]
 theorem CNF.computableTidilyInPolyTime_atLeastOne (enc : V ↪ List Bool) :
     ComputableTidilyInPolyTime (CNF.atLeastOne (V := V))
       (encList enc) (encList (encList (encPair enc encBool))) := by
+  apply ComputableInPolyTime.tidy
   unfold CNF.atLeastOne
   fun_prop
 
@@ -136,6 +145,7 @@ The list may contain repeated variables. -/
 theorem CNF.computableTidilyInPolyTime_atMostOne [DecidableEq V] (enc : V ↪ List Bool) :
     ComputableTidilyInPolyTime (CNF.atMostOne (V := V))
       (encList enc) (encList (encList (encPair enc encBool))) := by
+  apply ComputableInPolyTime.tidy
   fun_prop [CNF.atMostOne]
 
 /-- Construct exactly-one constraints in polynomial time, including for empty or repeated lists. -/
@@ -143,6 +153,7 @@ theorem CNF.computableTidilyInPolyTime_atMostOne [DecidableEq V] (enc : V ↪ Li
 theorem CNF.computableTidilyInPolyTime_exactlyOne [DecidableEq V] (enc : V ↪ List Bool) :
     ComputableTidilyInPolyTime (CNF.exactlyOne (V := V))
       (encList enc) (encList (encList (encPair enc encBool))) := by
+  apply ComputableInPolyTime.tidy
   unfold CNF.exactlyOne
   fun_prop
 
@@ -153,6 +164,7 @@ theorem CNF.isPolyTime_compact [DecidableEq V] (enc : V ↪ List Bool) :
     ComputableTidilyInPolyTime (CNF.compact (V := V))
       (encList (encList (encPair enc encBool)))
       (encList (encList (encPair encUnary encBool))) := by
+  apply ComputableInPolyTime.tidy
   unfold CNF.compact CNF.relabel Clause.relabel Prod.map
   fun_prop
 
