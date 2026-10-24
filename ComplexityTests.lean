@@ -335,6 +335,7 @@ import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
 import ComplexityTests.PlainAutomationSupport
 import ComplexityTests.PolySpaceFold
+import ComplexityTests.PolyTimeBinaryWord
 import ComplexityTests.PolyTimeContracts
 import ComplexityTests.PolyTimeMetadata
 import ComplexityTests.PolyTimeMixes
