@@ -335,7 +335,6 @@
  "Complexity/Computability/TreeEval/Space.lean": 2,
  "Complexity/Computability/USTCON/Reader/Cert.lean": 3,
  "Complexity/Computability/USTCON/Space.lean": 1,
- "Complexity/Computability/WordRAM/Native.lean": 1,
  "Complexity/Crypto/Computational/Basic.lean": 1,
  "Complexity/Crypto/Computational/Commitment.lean": 13,
  "Complexity/Crypto/Computational/Encryption/PolyTime.lean": 2,
