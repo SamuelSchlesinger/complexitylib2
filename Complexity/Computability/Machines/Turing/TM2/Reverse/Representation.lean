@@ -21,7 +21,7 @@ holds the current work cells; raw stacks retain blank cells and preserve the two
 * `Turing.MultiTapeTM.ToTM2.encode`: represent a raw configuration at a source-step boundary.
 -/
 
-@[expose] public section
+public section
 
 namespace Turing.MultiTapeTM.ToTM2
 
@@ -30,11 +30,11 @@ noncomputable section
 variable {k : ℕ} {State : Type}
 
 /-- Finite control corresponding to raw simulation data, with arbitrary scratch registers. -/
-def control (d : Data k State) (symbol : Option Bool := none) (busy : Bool := false) :
+@[expose] def control (d : Data k State) (symbol : Option Bool := none) (busy : Bool := false) :
     Control k State := ⟨d.state, d.input.atLeft, fun i => (d.work i).head, symbol, busy⟩
 
 /-- The stack representation keeps output in reverse order until cleanup. -/
-def store (d : Data k State) : (s : Stack k) → List (Alphabet s)
+@[expose] def store (d : Data k State) : (s : Stack k) → List (Alphabet s)
   | .input => d.input.right
   | .before => d.input.left
   | .output => []
@@ -43,7 +43,7 @@ def store (d : Data k State) : (s : Stack k) → List (Alphabet s)
   | .work i true => (d.work i).right
 
 /-- The TM2 configuration at a source-step boundary. -/
-def encode (d : Data k State) : TM2.Cfg (Alphabet (k := k)) Label (Control k State) :=
+@[expose] def encode (d : Data k State) : TM2.Cfg (Alphabet (k := k)) Label (Control k State) :=
   ⟨some .run, control d, store d⟩
 
 end
