@@ -427,6 +427,7 @@ import ComplexityTests.VanEmdeBoasRAM
 import ComplexityTests.VertexCoverKernel
 import ComplexityTests.WPP
 import ComplexityTests.WPPBounded
+import ComplexityTests.WPPLowness
 import ComplexityTests.WPPRobustness
 import ComplexityTests.WPPTruthTable
 import ComplexityTests.WPPTwoSided

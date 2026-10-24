@@ -689,6 +689,7 @@ public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Collap
 public import Complexity.Computability.Complexity.Classes.ValiantVazirani.Reduction
 public import Complexity.Computability.Complexity.Classes.WPP
 public import Complexity.Computability.Complexity.Classes.WPP.Bounded
+public import Complexity.Computability.Complexity.Classes.WPP.Lowness
 public import Complexity.Computability.Complexity.Classes.WPP.Robustness
 public import Complexity.Computability.Complexity.Classes.WPP.TruthTable
 public import Complexity.Computability.Complexity.Classes.WPP.TwoSided
