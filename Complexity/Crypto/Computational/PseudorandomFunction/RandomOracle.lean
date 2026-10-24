@@ -57,9 +57,9 @@ open Turing.MultiTapeTM in
 theorem isPPTOn_cachedRandomFunctionOracle {α : Type} {input : α ↪ List Bool}
     {parameter : α → ℕ} {query : α → List Bool}
     {cache : α → List (List Bool × List Bool)}
-    (hparameter : ComputableTidilyInPolyTime parameter input encUnary)
-    (hquery : ComputableTidilyInPolyTime query input encBits)
-    (hcache : ComputableTidilyInPolyTime cache input (encList (encPair encBits encBits))) :
+    (hparameter : ComputableInPolyTime parameter input encUnary)
+    (hquery : ComputableInPolyTime query input encBits)
+    (hcache : ComputableInPolyTime cache input (encList (encPair encBits encBits))) :
     IsPPTOn input (encPair encBits (encList (encPair encBits encBits)))
       (fun a => cachedRandomFunctionOracle (parameter a) (query a) (cache a)) := by
   unfold cachedRandomFunctionOracle
@@ -137,7 +137,7 @@ theorem isPPT_prfIdealGame {adversary : OracleDistinguisher}
         PMF.mem_support_pure_iff] at hresult
       subst result
       exact ⟨hcache, by simp, by lia⟩
-  exact ((hrun.map (ComputableTidilyInPolyTime.fst _ _)).isPPT).congr
+  exact ((hrun.map (ComputableInPolyTime.fst _ _)).isPPT).congr
     (fun n _ => (prfIdealGame_eq_cached adversary n).symm)
 
 end Cslib.Crypto
