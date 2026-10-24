@@ -69,53 +69,70 @@ example : addressAccepted.IsPolynomial :=
 example : IsComputable (fun p => (model.address p.1 p.2).isSome)
     (encPair encNat encNat) encBool := addressAccepted.isComputable
 
--- Named certificates are reused without unfolding their implementations.
+-- Named certificates are reused without unfolding their implementations (via both `polytime` and
+-- `fun_prop`).
 example : ComputableTidilyInPolyTime (model.checkedOp ())
     (encPair encNat (encPi encNat)) (encOption encNat) := by polytime
 example : ComputableTidilyInPolyTime
     (fun k => (model.checkedConstant 7 k).getD 0) encNat encNat := by polytime
 example : ComputableInPolyTime
     (Cslib.WordRAM.Basis.standard.genericModel.checkedOp (.bin .add))
-    (encPair encUnary (encPi encNat)) (encOption encNat) := by fun_prop
+    (encPair encUnary (encPi encNat)) (encOption encNat) := by polytime
+example (op : Cslib.WordRAM.StandardOp) : ComputableInPolyTime
+    (Cslib.WordRAM.Basis.standard.genericModel.checkedOp op)
+    (encPair encUnary (encPi encNat)) (encOption encNat) := by polytime
+example (op : Cslib.WordRAM.StandardOp) : ComputableInPolyTime
+    (Cslib.WordRAM.Basis.exact.genericModel.checkedOp op)
+    (encPair encUnary (encPi encNat)) (encOption encNat) := by polytime
+example (op : Cslib.WordRAM.Basis.additive.Op) : ComputableInPolyTime
+    (Cslib.WordRAM.Basis.additive.genericModel.checkedOp op)
+    (encPair encUnary (encPi encNat)) (encOption encNat) := by polytime
+example (op : Cslib.WordRAM.Basis.arithmetic.Op) : ComputableInPolyTime
+    (Cslib.WordRAM.Basis.arithmetic.genericModel.checkedOp op)
+    (encPair encUnary (encPi encNat)) (encOption encNat) := by polytime
+example (B : Cslib.WordRAM.Basis) (c : ℕ) : ComputableInPolyTime
+    (B.genericModel.checkedConstant c) encUnary (encOption encNat) := by polytime
+example (B : Cslib.WordRAM.Basis) (c : ℕ) : ComputableInPolyTime
+    (B.genericModel.checkedConstant c) encUnary (encOption encNat) := by fun_prop
+example (B : Cslib.WordRAM.Basis) (t : Bool) : ComputableInPolyTime
+    (fun p => B.genericModel.evalTest p.1 t p.2)
+    (encPair encUnary (encPi encNat)) (encOption encBool) := by polytime
+example (B : Cslib.WordRAM.Basis) : ComputableInPolyTime
+    (fun p => B.genericModel.address p.1 p.2)
+    (encPair encUnary encNat) (encOption encNat) := by polytime
+example (B : Cslib.WordRAM.Basis) : ComputableInPolyTime
+    (fun p => B.genericModel.validMove p.1 p.2)
+    (encPair encUnary encNat) encBool := by polytime
+example (B : Cslib.WordRAM.Basis) : ComputableInPolyTime
+    (fun p => B.genericModel.validPC p.1 p.2)
+    (encPair encUnary encNat) encBool := by polytime
 example (op : Cslib.WordRAM.StandardOp) : ComputableInPolyTime
     (Cslib.WordRAM.Basis.standard.genericModel.checkedOp op)
     (encPair encUnary (encPi encNat)) (encOption encNat) := by fun_prop
 example (op : Cslib.WordRAM.StandardOp) : ComputableInPolyTime
     (Cslib.WordRAM.Basis.exact.genericModel.checkedOp op)
     (encPair encUnary (encPi encNat)) (encOption encNat) := by fun_prop
-example (op : Cslib.WordRAM.Basis.additive.Op) : ComputableInPolyTime
-    (Cslib.WordRAM.Basis.additive.genericModel.checkedOp op)
-    (encPair encUnary (encPi encNat)) (encOption encNat) := by fun_prop
-example (op : Cslib.WordRAM.Basis.arithmetic.Op) : ComputableInPolyTime
-    (Cslib.WordRAM.Basis.arithmetic.genericModel.checkedOp op)
-    (encPair encUnary (encPi encNat)) (encOption encNat) := by fun_prop
-example (B : Cslib.WordRAM.Basis) (c : ℕ) : ComputableInPolyTime
-    (B.genericModel.checkedConstant c) encUnary (encOption encNat) := by fun_prop
-example (B : Cslib.WordRAM.Basis) (t : Bool) : ComputableInPolyTime
-    (fun p => B.genericModel.evalTest p.1 t p.2)
-    (encPair encUnary (encPi encNat)) (encOption encBool) := by fun_prop
-example (B : Cslib.WordRAM.Basis) : ComputableInPolyTime
-    (fun p => B.genericModel.address p.1 p.2)
-    (encPair encUnary encNat) (encOption encNat) := by fun_prop
-example (B : Cslib.WordRAM.Basis) : ComputableInPolyTime
-    (fun p => B.genericModel.validMove p.1 p.2)
-    (encPair encUnary encNat) encBool := by fun_prop
-example (B : Cslib.WordRAM.Basis) : ComputableInPolyTime
-    (fun p => B.genericModel.validPC p.1 p.2)
-    (encPair encUnary encNat) encBool := by fun_prop
 
 -- Binary bitwise, right-shift, bit-length, and unary-capped minimum plain certificates.
 example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 &&& p.2)
+    (encPair encNat encNat) encNat := by polytime
+example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 &&& p.2)
     (encPair encNat encNat) encNat := by fun_prop
 example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ||| p.2)
-    (encPair encNat encNat) encNat := by fun_prop
+    (encPair encNat encNat) encNat := by polytime
 example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ^^^ p.2)
-    (encPair encNat encNat) encNat := by fun_prop
+    (encPair encNat encNat) encNat := by polytime
 example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 >>> p.2)
-    (encPair encNat encNat) encNat := by fun_prop
+    (encPair encNat encNat) encNat := by polytime
+example : ComputableInPolyTime Nat.size encNat encUnary := by polytime
 example : ComputableInPolyTime Nat.size encNat encUnary := by fun_prop
 example : ComputableInPolyTime (fun p : ℕ × ℕ => min p.1 p.2)
+    (encPair encUnary encNat) encUnary := by polytime
+example : ComputableInPolyTime (fun p : ℕ × ℕ => min p.1 p.2)
     (encPair encUnary encNat) encUnary := by fun_prop
+example : ComputableInPolyTime
+    (fun p : List ℕ × ℕ => (p.1.foldl (fun acc _ => acc) p.2) &&& p.2)
+    (encPair (encList encNat) encNat) encNat := by polytime
 
 -- Literals, results, tests, addresses, moves and labels have live rejection paths.
 example : model.checkedConstant 3 4 = some 3 := by decide

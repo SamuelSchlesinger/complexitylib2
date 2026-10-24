@@ -99,7 +99,7 @@ private theorem checkFits_polyTime {k : ℕ} {val : ℕ × (Fin k → ℕ) → �
     (binary_lt' hval hpow).ite_decide ((optionSome encNat).comp hval) (const none)
 
 /-- A literal is checked against `2 ^ w` at every unary-encoded runtime width `w`. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem checkedConstant_polyTime (B : Basis) (c : ℕ) :
     ComputableInPolyTime (B.genericModel.checkedConstant c)
       encUnary (encOption encNat) := by
@@ -110,7 +110,7 @@ theorem checkedConstant_polyTime (B : Basis) (c : ℕ) :
     (binary_lt' (const c) binary_two_pow).ite_decide (const (some c)) (const none)
 
 /-- Both word-RAM register tests (`eq` and `lt`) are polynomial-time at every encoded width. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem evalTest_polyTime (B : Basis) (t : Bool) :
     ComputableInPolyTime (fun p => B.genericModel.evalTest p.1 t p.2)
       (encPair encUnary (encPi encNat)) (encOption encBool) := by
@@ -127,21 +127,21 @@ theorem evalTest_polyTime (B : Basis) (t : Bool) :
     exact .of_tidy <| (optionSome encBool).comp (binary_lt' hx hy)
 
 /-- Word-RAM address extraction is the total identity into `Option ℕ`. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem address_polyTime (B : Basis) :
     ComputableInPolyTime (fun p => B.genericModel.address p.1 p.2)
       (encPair encUnary encNat) (encOption encNat) :=
   .of_tidy <| (optionSome encNat).comp (snd encUnary encNat)
 
 /-- Copies, loads, stores and halts move existing words without an extra range check. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem validMove_polyTime (B : Basis) :
     ComputableInPolyTime (fun p => B.genericModel.validMove p.1 p.2)
       (encPair encUnary encNat) encBool :=
   .of_tidy (const true)
 
 /-- Control labels in `WordRAM` are unbounded natural numbers validated at instruction fetch. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem validPC_polyTime (B : Basis) :
     ComputableInPolyTime (fun p => B.genericModel.validPC p.1 p.2)
       (encPair encUnary encNat) encBool :=
@@ -167,7 +167,7 @@ theorem checkedShiftLeft_eq (w x y : ℕ) :
       simp [h1, h2]
 
 /-- Checked addition is polynomial in the full encoding: unary width and binary operands. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem checkedAdd_polyTime :
     ComputableInPolyTime (Basis.standard.genericModel.checkedOp (.bin .add))
       (encPair encUnary (encPi encNat)) (encOption encNat) := by
@@ -182,7 +182,7 @@ noncomputable def checkedAddCertificate :
   .ofPolyTime checkedAdd_polyTime.tidy
 
 /-- Every binary operation in `Basis.standard` has a polynomial-time checked implementation. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem checkedBinOp_polyTime (f : BinOp) :
     ComputableInPolyTime (Basis.standard.genericModel.checkedOp (.bin f))
       (encPair encUnary (encPi encNat)) (encOption encNat) := by
@@ -208,14 +208,14 @@ theorem checkedBinOp_polyTime (f : BinOp) :
   · exact checkFits_polyTime (ComputableInPolyTime.binary_shiftRight' hxp hyp).tidy
 
 /-- Reading the word size in `Basis.standard` is polynomial-time. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem checkedWidth_polyTime :
     ComputableInPolyTime (Basis.standard.genericModel.checkedOp .width)
       (encPair encUnary (encPi encNat)) (encOption encNat) :=
   checkFits_polyTime (unary_to_binary.comp (fst encUnary (encPi encNat (Index := Fin 0))))
 
 /-- Every operation in `Basis.standard` has a polynomial-time checked implementation. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem checkedOp_polyTime (op : StandardOp) :
     ComputableInPolyTime (Basis.standard.genericModel.checkedOp op)
       (encPair encUnary (encPi encNat)) (encOption encNat) := by
@@ -225,7 +225,7 @@ theorem checkedOp_polyTime (op : StandardOp) :
 
 /-- Every operation in `Basis.exact` has a polynomial-time checked implementation, preserving
 exact subtraction-underflow and zero-divisor faults. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem checkedExactOp_polyTime (op : StandardOp) :
     ComputableInPolyTime (Basis.exact.genericModel.checkedOp op)
       (encPair encUnary (encPi encNat)) (encOption encNat) := by

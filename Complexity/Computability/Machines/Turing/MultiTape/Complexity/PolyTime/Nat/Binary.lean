@@ -542,13 +542,14 @@ end Turing.MultiTapeTM.ComputableTidilyInPolyTime
 namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 /-- Any zero-preserving bitwise operation on binary naturals is polynomial-time. -/
+@[program_certificate]
 theorem binary_bitwise (op : Bool → Bool → Bool) (h0 : op false false = false) :
     ComputableInPolyTime (fun p : ℕ × ℕ => Nat.bitwise op p.1 p.2)
       (encPair encNat encNat) encNat :=
   .of_tidy (ComputableTidilyInPolyTime.binary_bitwise op h0)
 
 /-- Bitwise AND of binary naturals. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_and : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 &&& p.2)
     (encPair encNat encNat) encNat :=
   .of_tidy <| (ComputableTidilyInPolyTime.binary_bitwise and rfl).of_enc_eq fun p =>
@@ -556,7 +557,7 @@ theorem binary_and : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 &&& p.2)
       rw [Nat.testBit_bitwise rfl, Nat.testBit_and]
 
 /-- Bitwise OR of binary naturals. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_or : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ||| p.2)
     (encPair encNat encNat) encNat :=
   .of_tidy <| (ComputableTidilyInPolyTime.binary_bitwise or rfl).of_enc_eq fun p =>
@@ -564,7 +565,7 @@ theorem binary_or : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ||| p.2)
       rw [Nat.testBit_bitwise rfl, Nat.testBit_or]
 
 /-- Bitwise XOR of binary naturals. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_xor : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ^^^ p.2)
     (encPair encNat encNat) encNat :=
   .of_tidy <| (ComputableTidilyInPolyTime.binary_bitwise xor rfl).of_enc_eq fun p =>
@@ -572,7 +573,7 @@ theorem binary_xor : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ^^^ p.2)
       rw [Nat.testBit_bitwise rfl, Nat.testBit_xor]
 
 /-- Bitwise AND of computed binary naturals. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_and' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
     (hleft : ComputableInPolyTime left input encNat)
     (hright : ComputableInPolyTime right input encNat) :
@@ -580,7 +581,7 @@ theorem binary_and' {α : Type} {input : α ↪ List Bool} {left right : α → 
   binary_and.comp (hleft.prod hright)
 
 /-- Bitwise OR of computed binary naturals. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_or' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
     (hleft : ComputableInPolyTime left input encNat)
     (hright : ComputableInPolyTime right input encNat) :
@@ -588,7 +589,7 @@ theorem binary_or' {α : Type} {input : α ↪ List Bool} {left right : α → �
   binary_or.comp (hleft.prod hright)
 
 /-- Bitwise XOR of computed binary naturals. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_xor' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
     (hleft : ComputableInPolyTime left input encNat)
     (hright : ComputableInPolyTime right input encNat) :
@@ -596,7 +597,7 @@ theorem binary_xor' {α : Type} {input : α ↪ List Bool} {left right : α → 
   binary_xor.comp (hleft.prod hright)
 
 /-- The bit-length `Nat.size n` of a binary natural, returned in unary. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_size : ComputableInPolyTime Nat.size encNat encUnary :=
   .of_tidy <|
     ((ComputableTidilyInPolyTime.length encBool).comp
@@ -605,13 +606,13 @@ theorem binary_size : ComputableInPolyTime Nat.size encNat encUnary :=
 
 /-- The smaller of a unary natural and a binary natural, returned in unary by saturating binary
 decoding. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_min_unary : ComputableInPolyTime (fun p : ℕ × ℕ => min p.1 p.2)
     (encPair encUnary encNat) encUnary :=
   .of_tidy ComputableTidilyInPolyTime.binary_min_unary
 
 /-- Cap a computed binary natural by a computed unary bound, returning the result in unary. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_min_unary' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
     (hleft : ComputableInPolyTime left input encUnary)
     (hright : ComputableInPolyTime right input encNat) :
@@ -620,13 +621,13 @@ theorem binary_min_unary' {α : Type} {input : α ↪ List Bool} {left right : �
 
 /-- Right shift of binary naturals, by dropping at most the dividend's bit length of low-order
 digits. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_shiftRight : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 >>> p.2)
     (encPair encNat encNat) encNat :=
   .of_tidy ComputableTidilyInPolyTime.binary_shiftRight
 
 /-- Right shift of computed binary naturals. -/
-@[fun_prop]
+@[fun_prop, program_certificate]
 theorem binary_shiftRight' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
     (hleft : ComputableInPolyTime left input encNat)
     (hright : ComputableInPolyTime right input encNat) :
