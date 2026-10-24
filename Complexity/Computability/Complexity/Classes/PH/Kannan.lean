@@ -186,14 +186,10 @@ empty. -/
 def language (k : ℕ) : Language Bool :=
   {x | ∃ T, IsFirstHard k x.length T ∧ MCSP.tableValue T (x.take (arity k x.length)) = true}
 
-/-- Lists of the same length with the same binary value are equal. -/
-theorem binaryValue_injective {u v : List Bool} (hlen : u.length = v.length)
-    (h : BitString.binaryValue u = BitString.binaryValue v) : u = v :=
-  BitString.binaryValue_injective_of_length_eq hlen h
-
 theorem IsFirstHard.unique {k n : ℕ} {T₁ T₂ : List Bool} (h₁ : IsFirstHard k n T₁)
     (h₂ : IsFirstHard k n T₂) : T₁ = T₂ :=
-  binaryValue_injective (h₁.1.1.trans h₂.1.1.symm) ((h₁.2 _ h₂.1).antisymm (h₂.2 _ h₁.1))
+  BitString.binaryValue_injective_of_length_eq (h₁.1.1.trans h₂.1.1.symm)
+    ((h₁.2 _ h₂.1).antisymm (h₂.2 _ h₁.1))
 
 /-- If some truth table is hard, there is a first one. -/
 theorem exists_isFirstHard {k n : ℕ} (h : ∃ T, IsHard k n T) : ∃ T, IsFirstHard k n T := by
@@ -483,11 +479,6 @@ private theorem isAlternatingVerifier_verifier (k : ℕ) :
       exact hw
 
 /-! ### Polynomial time -/
-
-/-- Reading the binary digits of a reversed word, least significant first, gives the value of the
-word, most significant first. -/
-theorem ofBits_reverse (w : List Bool) : ofBits w.reverse = BitString.binaryValue w :=
-  Turing.MultiTapeTM.ofBits_reverse w
 
 open ComputableTidilyInPolyTime in
 /-- The binary value of a word is polynomial-time, in binary. -/
