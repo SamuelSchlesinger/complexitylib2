@@ -5,6 +5,9 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.GenericRAM.Native.Combinators
+import Complexity.Computability.GenericRAM.Native.Nat
+import Complexity.Computability.GenericRAM.Simulation.Turing
+import Mathlib.Data.Fin.VecNotation
 
 /-! Plain native certificates retain workspace, output charges, and runtime input encodings. -/
 
@@ -62,5 +65,14 @@ example : (NativeCertificate.iterate
 example {α β : Type} {f : α → β} {ei : α ↪ List Bool} {eo : β ↪ List Bool}
     (h : ComputableInPolyTime f ei eo) : (NativeCertificate.ofPolyTime h).IsPolynomial :=
   NativeCertificate.ofPolyTime_isPolynomial h
+
+-- Actual checked scalar semantics distinguish overflow, faults, and a false test result.
+example : BoundedNat.model.checkedOp () (10, ![3, 4]) = some 7 := by decide
+example : BoundedNat.model.checkedOp () (5, ![3, 4]) = none := by decide
+example : BoundedNat.model.evalTest 10 () ![4, 3] = some false := by decide
+example : BoundedNat.model.evalTest 5 () ![5, 0] = none := by decide
+example : BoundedNat.model.checkedConstant 0 0 = none := by decide
+
+example : BoundedNat.nativePrimitives.IsPolynomial := BoundedNat.nativePrimitives_isPolynomial
 
 end ComplexityTests.NativeCertificatePlain
