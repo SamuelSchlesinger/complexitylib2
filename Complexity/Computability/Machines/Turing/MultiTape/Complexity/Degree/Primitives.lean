@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
+import Mathlib.Data.Fintype.Lattice
 
 /-!
 # Direct primitives for plain degree bounds
@@ -22,6 +23,7 @@ No higher computability calculus is used in their proofs.
 ## Main results
 
 * `Turing.MultiTapeTM.ComputableInDegree.const`: a constant encoded result.
+* `Turing.MultiTapeTM.ComputableInDegree.of_finite`: a function on any finite input type.
 * `Turing.MultiTapeTM.ComputableInDegree.of_eq`: copy an unchanged encoded word.
 * `Turing.MultiTapeTM.ComputableInDegree.of_enc_eq`, `.of_encIn_eq`: transport encoded equality.
 
@@ -42,6 +44,16 @@ theorem const (b : β) : ComputableInDegree (fun _ : α => b) encIn encMid 1 0 :
   obtain ⟨c, h⟩ := computableInTimeAndSpace_of_const (encIn := encIn) (encOut := encMid) b
   exact ⟨⟨fun _ => c, fun _ => 0, DegreeBounded.const c, DegreeBounded.const 0, h⟩,
     DegreeBounded.const (encMid b).length⟩
+
+/-- A function on a finite input type has linear cost and constant output growth.
+The machine has constant time and zero workspace; no inhabitedness assumption is needed. -/
+theorem of_finite [Finite α] (f : α → β) : ComputableInDegree f encIn encMid 1 0 := by
+  obtain ⟨c, h⟩ := computableInTimeAndSpace_of_finite (encIn := encIn) (encOut := encMid) f
+  refine ⟨⟨fun _ => c, fun _ => 0, DegreeBounded.const c, DegreeBounded.const 0, h⟩, ?_⟩
+  rcases isEmpty_or_nonempty α with hα | hα
+  · exact ⟨0, fun a => isEmptyElim a⟩
+  · obtain ⟨a₀, ha₀⟩ := Finite.exists_max fun a => (encMid (f a)).length
+    exact ⟨_, fun a => by simpa using ha₀ a⟩
 
 /-- Copy a word whose output encoding is exactly its input encoding. -/
 theorem of_eq {f : α → β} (h : ∀ a, encMid (f a) = encIn a) :
