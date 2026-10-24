@@ -341,13 +341,29 @@ meta def Internal.withPlainRuleCache (action : TacticM Unit) : TacticM Unit := d
     for node in rules.theorems.tries do
       for rule in node.values do names := names.insert rule.thmName
       for (_, rule) in node.pending do names := names.insert rule.thmName
+  -- Imports are dependency-first. A theorem in a module with no raw-family declaration in
+  -- its import closure cannot hide one behind an alias: aliases cannot refer to later modules.
+  -- Unknown module metadata remains conservative, and current-module rules are always checked.
+  let mut rawModules : Std.HashMap Name Bool := {}
+  for i in [:env.header.moduleNames.size] do
+    let moduleName := env.header.moduleNames[i]!
+    let data := env.header.moduleData[i]!
+    let ownsRaw := data.constNames.any fun name =>
+      name.toString.startsWith "Turing.MultiTapeTM.ComputableTidily" ||
+        name.toString.startsWith "Turing.MultiTapeTM.ComputesTidily"
+    let importsRaw := data.imports.any fun imported => rawModules.getD imported.module true
+    rawModules := rawModules.insert moduleName (ownsRaw || importsRaw)
   let mut cache : Std.HashMap Name Bool := {}
-  for name in names do cache := cache.insert name (← hasRawPremise name)
+  for name in names do
+    let mayUseRaw := match env.getModuleIdxFor? name with
+      | some i => rawModules.getD env.header.moduleNames[i.toNat]! true
+      | none => true
+    cache := cache.insert name (← if mayUseRaw then hasRawPremise name else pure false)
   -- The cache is confined to this `withEnv`; unrelated tactics and later declarations see none.
   withEnv (rawPremiseCache.setState env cache) action
 
 open Lean Meta Elab Tactic Mathlib.Meta.FunProp in
-/-- Shared compositional backend with a fresh alias-aware transition boundary. The standard
+/-- Shared compositional backend with a fresh alias-aware raw-premise boundary. The standard
 assumption discharger and ordinary transition depth are retained; callers keep their step limit.
 PPT uses the same state so nested plain deterministic goals cannot enter raw search. -/
 meta def Internal.funPropWithPlainBoundary (maxSteps : Nat) : TacticM Unit := withMainContext do
