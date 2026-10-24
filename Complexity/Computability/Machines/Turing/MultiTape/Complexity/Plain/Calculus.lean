@@ -12,6 +12,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Tape
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Matrix.Binary
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.RotationMap.Walk
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace
@@ -1245,6 +1247,36 @@ theorem stackTape_toList
       (encList (encOption enc)) := by
   simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
   exact @ComputableTidilyInPolyTime.stackTape_toList Symbol enc
+
+/-- Read a computed fixed-width matrix entry from an arbitrary word. Dimensions and indices use
+unary encodings; the result uses the binary natural encoding. -/
+@[fun_prop]
+theorem matrixBinaryEntry {α : Type} {input : α ↪ List Bool}
+    {cols width row col : α → ℕ} {word : α → List Bool}
+    (hcols : ComputableInPolyTime cols input encUnary)
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hword : ComputableInPolyTime word input encBits)
+    (hrow : ComputableInPolyTime row input encUnary)
+    (hcol : ComputableInPolyTime col input encUnary) :
+    ComputableInPolyTime
+      (fun a => Cslib.Matrix.binaryEntry (cols a) (width a) (word a) (row a) (col a))
+      input encNat := by
+  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
+  exact ComputableTidilyInPolyTime.matrixBinaryEntry hcols hwidth hword hrow hcol
+
+/-- A fixed-length stopped walk uses the joint certificate for its runtime graph and retains
+all unused labels and signals. The length and signal alphabet are fixed parameters. -/
+@[fun_prop]
+theorem rotationMap_killedPowRotWithInput {P V D : Type} {input : P ↪ List Bool}
+    {vertex : V ↪ List Bool} {label : D ↪ List Bool} {rotate : P × (V × D) → V × D}
+    (hrotate : ComputableInPolyTime rotate
+      (encPair input (encPair vertex label)) (encPair vertex label))
+    (T q : ℕ) [NeZero q] (signal : Fin q ↪ List Bool) :
+    ComputableInPolyTime (Cslib.RotationMap.killedPowRotWithInput rotate T q)
+      (encPair input (encPair vertex (encPair (encPi label) (encPi signal))))
+      (encPair vertex (encPair (encPi label) (encPi signal))) := by
+  simp only [computableInPolyTime_iff_computableTidilyInPolyTime] at *
+  exact ComputableTidilyInPolyTime.rotationMap_killedPowRotWithInput hrotate T q signal
 
 end Turing.MultiTapeTM.ComputableInPolyTime
 

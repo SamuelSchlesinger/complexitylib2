@@ -189,3 +189,26 @@ set_option maxHeartbeats 2000 in
 /-- Primitive registration sanity; independent synthesis is checked by the inventory holdouts. -/
 example : ComputableInPolyTime (fun p : List Bool × ℕ => p.1.take p.2)
     (encPair encBits encUnary) encBits := by fun_prop
+
+-- Matrix access captures the original word and dimensions while the row index varies.
+example {α : Type} {input : α ↪ List Bool} {cols width col : α → ℕ}
+    {word : α → List Bool} (hcols : ComputableInPolyTime cols input encUnary)
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hword : ComputableInPolyTime word input encBits)
+    (hcol : ComputableInPolyTime col input encUnary) :
+    ComputableInPolyTime
+      (fun p : α × ℕ => Cslib.Matrix.binaryEntry (cols p.1) (width p.1) (word p.1) p.2 (col p.1))
+      (encPair input encUnary) encNat := by fun_prop
+
+-- The stopped-walk result composes with an ordinary projection; graph parameters remain runtime
+-- inputs, while the walk length and signal alphabet are fixed.
+example {P V D : Type} {input : P ↪ List Bool} {vertex : V ↪ List Bool}
+    {label : D ↪ List Bool} {rotate : P × (V × D) → V × D}
+    (hrotate : ComputableInPolyTime rotate
+      (encPair input (encPair vertex label)) (encPair vertex label))
+    (T q : ℕ) [NeZero q] (signal : Fin q ↪ List Bool) :
+    ComputableInPolyTime
+      (fun p : P × (V × ((Fin T → D) × (Fin T → Fin q))) =>
+        (Cslib.RotationMap.killedPowRotWithInput rotate T q p).1)
+      (encPair input (encPair vertex (encPair (encPi label) (encPi signal)))) vertex := by
+  fun_prop
