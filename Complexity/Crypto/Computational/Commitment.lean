@@ -182,7 +182,8 @@ theorem PseudorandomGenerator.naorCommit_indistinguishable_uniform
       (fun p : ℕ × List Bool => naorCommit id (r p.1) (b p.1) p.2)
       (encPair encUnary encBits) encBits := by
     apply computableTidilyInPolyTime_naorCommit <;> fun_prop
-  have hind := hG.indistinguishable.map (f := fun n y => naorCommit id (r n) (b n) y) hmap
+  have hind := hG.indistinguishable.map (f := fun n y => naorCommit id (r n) (b n) y)
+    (.of_tidy hmap)
   simpa only [← naorCommitEnsemble_eq_map, uniformList_map_naorCommit_id] using hind
 
 /-- **Computational hiding of Naor bit commitment (deterministic-family formulation).**
