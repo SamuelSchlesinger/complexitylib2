@@ -11,14 +11,8 @@ public import Complexity.Computability.Complexity.Classes.Oracle.Closure
 public import Complexity.Computability.Complexity.Classes.Space
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 import Complexity.Computability.Complexity.Classes.Oracle.Simulation
-import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
+import Complexity.Computability.Complexity.Classes.Space.Closure
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
-import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
-import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 
 /-!
 # Polynomial time relative to an oracle in polynomial space
@@ -36,10 +30,9 @@ So the space is polynomial, while the time charges the decider of `A` once per i
 (`Cslib.Complexity.ComputableInPolyTimeWithOracle.exists_computableTidilyInO`,
 `Cslib.Complexity.PWithOracle_subset_PSPACE`).
 
-For `NP` relative to `A`, the certificates of the required length are tried one after another, in
-binary order, keeping only the current certificate and whether some certificate was accepted
-(`Cslib.Complexity.mem_PSPACE_of_isVerifier`, `Cslib.Complexity.NPWithOracle_subset_PSPACE`). This
-deterministic search replaces the passage through `NPSPACE` and Savitch's theorem.
+For `NP` relative to `A`, `Cslib.Complexity.mem_PSPACE_of_isVerifier` and
+`Cslib.Complexity.NPWithOracle_subset_PSPACE` follow from closure of `PSPACE` under polynomially
+bounded existential quantification (`Cslib.Complexity.setOf_exists_mem_PSPACE`).
 
 ## Main results
 
@@ -61,8 +54,6 @@ deterministic search replaces the passage through `NPSPACE` and Savitch's theore
 namespace Cslib.Complexity
 
 open _root_.Turing _root_.Turing.MultiTapeTM
-open Cslib.BitString (increment lsbValue lsbValue_lt iterate_increment iterate_increment_lsbValue
-  length_increment)
 
 variable {α β : Type} {enc : α ↪ List Bool}
 
@@ -72,175 +63,33 @@ variable {α β : Type} {enc : α ↪ List Bool}
 length of the encoded instance. -/
 theorem exists_computableTidilyInO_of_mem_PSPACE {L : Set α} (hL : L ∈ PSPACE enc) :
     ∃ T S, PolyBounded (fun a => (enc a).length) S ∧
-      ∃ f : α → Bool, ComputableTidilyInO f enc encBool T S ∧ ∀ a, a ∈ L ↔ f a = true := by
-  obtain ⟨f, ⟨t, s, hs, hf⟩, hL⟩ := hL
-  obtain ⟨c, hc⟩ := hf.exists_computableTidilyInTimeAndSpace
-  refine ⟨fun a => 2 * t a + 3 * s a + c, fun a => c * (s a + 1),
-    (PolyBounded.const c).mul (hs.add (.const 1)), f,
-    .of_bounds hc 1 (fun a => by omega) (fun a => by omega) (fun a => ?_), hL⟩
-  rw [encBool_apply, List.length_singleton]
-  have := Nat.mul_le_mul_left c (Nat.le_add_left 1 (s a))
-  nlinarith
+      ∃ f : α → Bool, ComputableTidilyInO f enc encBool T S ∧ ∀ a, a ∈ L ↔ f a = true :=
+  let ⟨f, T, S, hf, hS, hL⟩ := mem_PSPACE_iff_computableTidilyInO.mp hL
+  ⟨T, S, hS, f, hf, hL⟩
 
 /-- A tidy decider within polynomial space puts a problem in `PSPACE`. -/
 theorem mem_PSPACE_of_computableTidilyInO {L : Set α} {f : α → Bool} {T S : α → ℕ}
     (hf : ComputableTidilyInO f enc encBool T S) (hS : PolyBounded (fun a => (enc a).length) S)
     (hL : ∀ a, a ∈ L ↔ f a = true) : L ∈ PSPACE enc :=
-  let ⟨c, hc, _⟩ := hf
-  ⟨f, ⟨_, _, (PolyBounded.const c).mul (hS.add (.const 1)), hc.computableInTimeAndSpace⟩, hL⟩
+  mem_PSPACE_iff_computableTidilyInO.mpr ⟨f, T, S, hf, hS, hL⟩
 
 /-! ### Certificate search -/
 
-/-- A round of the search: test a certificate, record the verdict, move to the next. -/
-private def searchStep (V : α × List Bool → Bool) (x : α × List Bool × Bool) :
-    α × List Bool × Bool :=
-  (x.1, increment x.2.1, x.2.2 || V (x.1, x.2.1))
-
-private theorem iterate_searchStep (V : α × List Bool → Bool) (a : α) (m : ℕ) : ∀ i,
-    (searchStep V)^[i] (a, List.replicate m false, false) =
-      (a, increment^[i] (List.replicate m false),
-        decide (∃ j < i, V (a, increment^[j] (List.replicate m false)) = true))
-  | 0 => by simp
-  | i + 1 => by
-    rw [Function.iterate_succ_apply', iterate_searchStep V a m i]
-    simp only [searchStep, Function.iterate_succ_apply', Prod.mk.injEq, true_and]
-    rw [Bool.eq_iff_iff, Bool.or_eq_true, decide_eq_true_iff, decide_eq_true_iff]
-    constructor
-    · rintro (⟨j, hj, h⟩ | h)
-      · exact ⟨j, by omega, h⟩
-      · exact ⟨i, by omega, h⟩
-    · rintro ⟨j, hj, h⟩
-      rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hj | rfl
-      · exact Or.inl ⟨j, hj, h⟩
-      · exact Or.inr h
-
-private theorem search_spec (V : α × List Bool → Bool) (a : α) (m : ℕ) :
-    ((searchStep V)^[2 ^ m] (a, List.replicate m false, false)).2.2 = true ↔
-      ∃ u : List Bool, u.length = m ∧ V (a, u) = true := by
-  rw [iterate_searchStep, decide_eq_true_iff]
-  constructor
-  · rintro ⟨j, hj, h⟩
-    exact ⟨_, (iterate_increment m j hj).2, h⟩
-  · rintro ⟨u, rfl, h⟩
-    exact ⟨lsbValue u, lsbValue_lt u, by rw [iterate_increment_lsbValue]; exact h⟩
-
-
 /-- **Certificate search in polynomial space.** A problem with a verifier decidable within
-polynomial space and certificates of polynomial length is in `PSPACE`: the certificates of the
-required length are tried one after another, keeping only the current one. -/
+polynomial space and certificates of polynomial length is in `PSPACE`, by closure of `PSPACE` under
+polynomially bounded existential quantification (`Cslib.Complexity.setOf_exists_mem_PSPACE`). -/
 theorem mem_PSPACE_of_isVerifier {p : Polynomial ℕ} {V : α × List Bool → Bool} {L : Set α}
     {T S : α × List Bool → ℕ} (hV : ComputableTidilyInO V (encPair enc encBits) encBool T S)
     (hS : PolyBounded (fun x => (encPair enc encBits x).length) S) (hL : IsVerifier enc p V L) :
     L ∈ PSPACE enc := by
-  classical
-  rcases isEmpty_or_nonempty α with hα | hα
-  · exact P_subset_PSPACE ⟨fun _ => false, ComputableInPolyTime.const false,
-      fun a => isEmptyElim a⟩
-  let _ : Inhabited α := Classical.inhabited_of_nonempty hα
-  obtain ⟨cS, dS, hS⟩ := hS.exists_le
-  set encS : α × List Bool × Bool ↪ List Bool := encPair enc (encPair encBits encBool)
-  -- a round of the search
-  have hstep : ∃ e, ComputableTidilyInO (searchStep V) encS encS
-      (fun x => ((encS x).length + 1) ^ e + T (x.1, x.2.1))
-      (fun x => ((encS x).length + 1) ^ e + S (x.1, x.2.1)) := by
-    have hproj : ComputableTidilyInPolyTime (fun x : α × List Bool × Bool => (x.1, x.2.1)) encS
-        (encPair enc encBits) := by fun_prop
-    have hfst : ComputableTidilyInPolyTime (fun x : α × List Bool × Bool => x.1) encS enc := by
-      fun_prop
-    have hinc : ComputableTidilyInPolyTime (fun x : α × List Bool × Bool => increment x.2.1) encS
-        encBits := ComputableTidilyInPolyTime.increment.comp (by fun_prop)
-    have hacc : ComputableTidilyInPolyTime (fun x : α × List Bool × Bool => x.2.2) encS
-        encBool := by fun_prop
-    have hor : ComputableTidilyInPolyTime (fun q : Bool × Bool => q.1 || q.2)
-        (encPair encBool encBool) encBool := ComputableTidilyInPolyTime.of_finite _
-    obtain ⟨d₁, _, h₁⟩ := hproj.exists_degree
-    obtain ⟨d₂, _, h₂⟩ := hfst.exists_degree
-    obtain ⟨d₃, _, h₃⟩ := hinc.exists_degree
-    obtain ⟨d₄, _, h₄⟩ := hacc.exists_degree
-    obtain ⟨d₅, _, h₅⟩ := hor.exists_degree
-    have h := h₂.inO.prod (h₃.inO.prod (h₅.inO.comp (h₄.inO.prod (hV.comp h₁.inO))))
-    refine ⟨d₁ + d₂ + d₃ + d₄ + d₅, (h.mono (5 ^ d₅ + 5) (fun x => ?_) fun x => ?_).of_enc_eq
-      fun x => rfl⟩
-    all_goals
-      simp only [Function.comp_apply, length_encPair, encBool_apply, List.length_singleton]
-      generalize (encS x).length = N
-      have hN : 1 ≤ N + 1 := by omega
-      have hpow (d : ℕ) (hd : d ≤ d₁ + d₂ + d₃ + d₄ + d₅) :
-          (N + 1) ^ d ≤ (N + 1) ^ (d₁ + d₂ + d₃ + d₄ + d₅) := Nat.pow_le_pow_right hN hd
-      have h5 : (2 * 1 + 1 + 1 + 1) ^ d₅ ≤ 5 ^ d₅ := le_rfl
-      have h₁' := hpow d₁ (by omega)
-      have h₂' := hpow d₂ (by omega)
-      have h₃' := hpow d₃ (by omega)
-      have h₄' := hpow d₄ (by omega)
-      have h5' : 1 ≤ 5 ^ d₅ := Nat.one_le_pow _ _ (by omega)
-      generalize (N + 1) ^ (d₁ + d₂ + d₃ + d₄ + d₅) = M at *
-      nlinarith
-  obtain ⟨e, hstep⟩ := hstep
-  -- the number of certificates, in binary, and the start
-  set m : α → ℕ := fun a => p.eval (enc a).length with hm_def
-  have hm : ComputableTidilyInPolyTime m enc encUnary :=
-    (ComputableTidilyInPolyTime.unary_eval p).comp (by fun_prop)
-  have hn : ComputableTidilyInPolyTime (fun a => 2 ^ m a) enc encNat :=
-    ((ComputableTidilyInDegree.two_pow_length encUnary).computableTidilyInPolyTime.comp
-      hm).of_enc_eq fun a => by simp [encUnary_apply]
-  have hinit : ComputableTidilyInPolyTime (fun a => (a, List.replicate (m a) false, false)) enc
-      encS :=
-    ComputableTidilyInPolyTime.id'.prod ((ComputableTidilyInPolyTime.listToBits.comp
-      (ComputableTidilyInPolyTime.replicate hm (ComputableTidilyInPolyTime.const false
-        (encMid := encBool)))).prod (ComputableTidilyInPolyTime.const false))
-  have hout : ComputableTidilyInPolyTime (fun x : α × List Bool × Bool => x.2.2) encS encBool := by
-    fun_prop
-  obtain ⟨dn, _, hn⟩ := hn.exists_degree
-  obtain ⟨di, _, hinit⟩ := hinit.exists_degree
-  obtain ⟨do', _, hout⟩ := hout.exists_degree
-  -- the states of the search
-  set B : α → ℕ := fun a => 2 * (enc a).length + 2 * m a + 3 with hB
-  have hiter (a : α) (i : ℕ) :
-      (searchStep V)^[i] (a, List.replicate (m a) false, false) =
-        (a, increment^[i] (List.replicate (m a) false),
-          decide (∃ j < i, V (a, increment^[j] (List.replicate (m a) false)) = true)) :=
-    iterate_searchStep V a (m a) i
-  have hlen (a : α) (i : ℕ) : (increment^[i] (List.replicate (m a) false)).length = m a := by
-    induction i with
-    | zero => exact List.length_replicate
-    | succ i ih => rw [Function.iterate_succ_apply', length_increment, ih]
-  have hstate (a : α) (i : ℕ) :
-      (encS ((searchStep V)^[i] (a, List.replicate (m a) false, false))).length = B a := by
-    rw [hiter]
-    simp only [encS, length_encPair, encBits_apply, hlen, encBool_apply, List.length_singleton, hB]
-    omega
-  have hit := ComputableTidilyInO.iterate hn.inO hinit.inO hstep
-    (R := fun a => (B a + 1) ^ e + wordMax (fun u => T (a, u)) (m a))
-    (Q := fun a => (B a + 1) ^ e + cS * (2 * (enc a).length + 1 + m a + 1) ^ dS) (B := B)
-    (fun a i _ => by
-      rw [hstate]
-      refine Nat.add_le_add_left ?_ _
-      rw [hiter]
-      exact le_wordMax (fun u => T (a, u)) (hlen a i).le)
-    (fun a i _ => by
-      rw [hstate]
-      refine Nat.add_le_add_left
-        ((hS _).trans (Nat.mul_le_mul_left cS (Nat.pow_le_pow_left ?_ dS))) _
-      rw [hiter]
-      simp only [length_encPair, encBits_apply, hlen]
-      omega)
-    (fun a i _ => (hstate a i).le)
-  have h := hout.inO.comp hit
-  refine mem_PSPACE_of_computableTidilyInO (h.mono_le (T' := fun a => _ + (B a + 1) ^ do')
-    (S' := fun a => ((enc a).length + 1) ^ dn + ((enc a).length + 1) ^ di +
-      ((B a + 1) ^ e + cS * (2 * (enc a).length + 1 + m a + 1) ^ dS) + B a + (m a + 1) +
-        (B a + 1) ^ do') (fun a => by simp only [hstate]; rfl)
-    (fun a => by
-      simp only [hstate, encNat_two_pow, List.length_append,
-        List.length_replicate, List.length_singleton]
-      rfl)) ?_ fun a => ?_
-  · exact PolyBounded.mono (PolyBounded.of_polynomiallyBounded (fun a => (enc a).length)
-      (bound := fun L => (L + 1) ^ dn + (L + 1) ^ di +
-        ((2 * L + 2 * p.eval L + 3 + 1) ^ e + cS * (2 * L + 1 + p.eval L + 1) ^ dS) +
-        (2 * L + 2 * p.eval L + 3) + (p.eval L + 1) + (2 * L + 2 * p.eval L + 3 + 1) ^ do')
-      (by fun_prop)) fun a => le_rfl
-  · rw [hL a]
-    exact (search_spec V a (m a)).symm
+  have hB : {x | V x = true} ∈ PSPACE (encPair enc encBits) :=
+    mem_PSPACE_of_computableTidilyInO hV hS fun _ => Iff.rfl
+  have hℓ : ComputableTidilyInPolyTime (fun a : α => p.eval (enc a).length) enc encUnary :=
+    (ComputableTidilyInPolyTime.unary_eval p).comp (.encoding_length enc)
+  have hEq : L = {x | ∃ w : List Bool, w.length = p.eval (enc x).length ∧
+      (x, w) ∈ {x : α × List Bool | V x = true}} :=
+    Set.ext fun a => hL a
+  exact hEq ▸ setOf_exists_mem_PSPACE hB hℓ
 
 /-! ### Oracles in polynomial space -/
 
@@ -273,7 +122,7 @@ theorem PWithOracle_subset_PSPACE {A : Set (List Bool)} (hA : A ∈ PSPACE encBi
 
 /-- **`NP` relative to an oracle in `PSPACE` is within `PSPACE`** [Arora and Barak, Theorem
 3.7][AroraBarak09]: the verifier runs within polynomial space, and its certificates are searched
-one after another. -/
+within polynomial space. -/
 theorem NPWithOracle_subset_PSPACE {A : Set (List Bool)} (hA : A ∈ PSPACE encBits) :
     NPWithOracle A enc ⊆ PSPACE enc := fun _ ⟨_, _, hV, hL⟩ =>
   let ⟨_, _, hS, h⟩ := hV.exists_computableTidilyInO hA
