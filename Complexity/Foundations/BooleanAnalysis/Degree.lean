@@ -131,6 +131,7 @@ It is `0` when there is no such `D`, which can only happen over infinitely many 
 noncomputable def totalDegree (f : (ι → Bool) → R) : ℕ :=
   sInf {D | f ∈ lowDegree R ι D}
 
+/-- Membership in `lowDegree R ι D` bounds `totalDegree f` above by `D`. -/
 theorem totalDegree_le_of_mem_lowDegree (h : f ∈ lowDegree R ι D) : totalDegree f ≤ D :=
   Nat.sInf_le h
 

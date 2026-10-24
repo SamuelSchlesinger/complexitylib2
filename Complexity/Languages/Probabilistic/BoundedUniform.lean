@@ -38,7 +38,8 @@ transcript/error and an extractor's implementation require separate proofs.
 
 * `Cslib.ProbComp.sampleUniformInterval`: bounded retry with an explicit failure result.
 * `Cslib.ProbComp.intervalFailure`, `Cslib.ProbComp.intervalSuccess`: exact event masses.
-* `Cslib.ProbComp.sampleIntegerBox`: coordinatewise finite-attempt integer-box sampling.
+* `Cslib.ProbComp.collectBox`, `Cslib.ProbComp.sampleIntegerBox`: coordinate gathering and
+  coordinatewise finite-attempt integer-box sampling.
 * `Cslib.ProbComp.integerBoxLaw`: the exact mathematical uniform reference law.
 
 ## Main results

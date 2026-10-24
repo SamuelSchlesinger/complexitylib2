@@ -30,9 +30,15 @@ an embedded program uses only the corresponding handler (`interpret_sumHandler_l
 
 ## Main results
 
-* `Cslib.OracleComp.interpret_sumHandler_liftLeft`, `.interpret_sumHandler_liftRight`: an
-  embedded program uses only its own side's handler.
+* `Cslib.OracleComp.interpret_sumHandler_liftLeft`,
+  `Cslib.OracleComp.interpret_sumHandler_liftRight`: an embedded program uses only its own side's
+  handler.
 * `Cslib.OracleComp.interpret_sumHandler`: interpretation distributes over the two sides.
+
+## References
+
+* See [VCVio](https://github.com/Verified-zkEVM/VCVio) for the oracle-interface sum combinators
+  `⊕ₒ` and `sumHandler`.
 -/
 
 @[expose] public section
@@ -63,9 +69,11 @@ abbrev sumHandler {m : Type v → Type w} (left : (q : ι₁) → m (spec₁ q))
   | .inl q => left q
   | .inr q => right q
 
+/-- `sumHandler` answers a left query `.inl q` with `left q`. -/
 theorem sumHandler_inl {m : Type v → Type w} (left : (q : ι₁) → m (spec₁ q))
     (right : (q : ι₂) → m (spec₂ q)) (q : ι₁) : sumHandler left right (.inl q) = left q := rfl
 
+/-- `sumHandler` answers a right query `.inr q` with `right q`. -/
 theorem sumHandler_inr {m : Type v → Type w} (left : (q : ι₁) → m (spec₁ q))
     (right : (q : ι₂) → m (spec₂ q)) (q : ι₂) : sumHandler left right (.inr q) = right q := rfl
 
@@ -77,34 +85,42 @@ def liftLeft (program : OracleComp spec₁ α) : OracleComp (spec₁ ⊕ₒ spec
 def liftRight (program : OracleComp spec₂ α) : OracleComp (spec₁ ⊕ₒ spec₂) α :=
   interpret (fun q => query (spec := spec₁ ⊕ₒ spec₂) (.inr q)) program
 
+/-- Lifting `pure a` from the left interface yields `pure a`. -/
 @[simp] theorem liftLeft_pure (a : α) :
     liftLeft (spec₂ := spec₂) (pure a : OracleComp spec₁ α) = pure a := rfl
 
+/-- Lifting `pure a` from the right interface yields `pure a`. -/
 @[simp] theorem liftRight_pure (a : α) :
     liftRight (spec₁ := spec₁) (pure a : OracleComp spec₂ α) = pure a := rfl
 
+/-- `liftLeft` commutes with monadic bind `>>=`. -/
 @[simp] theorem liftLeft_bind (program : OracleComp spec₁ α) (next : α → OracleComp spec₁ β) :
     liftLeft (spec₂ := spec₂) (program >>= next) =
       liftLeft program >>= fun a => liftLeft (next a) :=
   interpret_bind _ _ _
 
+/-- `liftRight` commutes with monadic bind `>>=`. -/
 @[simp] theorem liftRight_bind (program : OracleComp spec₂ α) (next : α → OracleComp spec₂ β) :
     liftRight (spec₁ := spec₁) (program >>= next) =
       liftRight program >>= fun a => liftRight (next a) :=
   interpret_bind _ _ _
 
+/-- `liftLeft` commutes with functorial map `<$>`. -/
 @[simp] theorem liftLeft_map (f : α → β) (program : OracleComp spec₁ α) :
     liftLeft (spec₂ := spec₂) (f <$> program) = f <$> liftLeft program :=
   interpret_map _ _ _
 
+/-- `liftRight` commutes with functorial map `<$>`. -/
 @[simp] theorem liftRight_map (f : α → β) (program : OracleComp spec₂ α) :
     liftRight (spec₁ := spec₁) (f <$> program) = f <$> liftRight program :=
   interpret_map _ _ _
 
+/-- Lifting a single query `query q` from the left interface produces `query (.inl q)`. -/
 @[simp] theorem liftLeft_query (q : ι₁) :
     liftLeft (spec₂ := spec₂) (query q) = query (spec := spec₁ ⊕ₒ spec₂) (.inl q) :=
   interpret_query _ _
 
+/-- Lifting a single query `query q` from the right interface produces `query (.inr q)`. -/
 @[simp] theorem liftRight_query (q : ι₂) :
     liftRight (spec₁ := spec₁) (query q) = query (spec := spec₁ ⊕ₒ spec₂) (.inr q) :=
   interpret_query _ _

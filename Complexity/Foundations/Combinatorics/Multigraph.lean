@@ -76,6 +76,7 @@ def toGraph : Graph V E where
   left_mem_of_isLink _ _ _ _ := Set.mem_univ _
 
 variable {ends} in
+/-- An edge `e` links `x` and `y` in `toGraph ends` iff its unordered endpoints are `s(x, y)`. -/
 @[simp] theorem toGraph_isLink {e : E} {x y : V} :
     (toGraph ends).IsLink e x y ↔ ends e = s(x, y) :=
   Iff.rfl

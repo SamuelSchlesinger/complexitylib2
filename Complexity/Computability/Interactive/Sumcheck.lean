@@ -34,14 +34,16 @@ development.
 
 ## Main definitions
 
-* `Sumcheck.Claim F i`: the claims of round `i`, a point of `F^i` and a value.
-* `Sumcheck.partialSum P r`: the sum of `P` over the Boolean hypercube in the coordinates from
-  `i` on, with the coordinates below `i` fixed to `r : Fin i → F`.
-* `Sumcheck.round d P i` reduces `rel P i` to `rel P (i + 1)` in one prover message (a univariate
-  polynomial) and one uniform challenge `z`, and appends `z` to the point.
-* `Sumcheck.finalCheck P` reduces `rel P n` to acceptance by evaluating `P` without interaction.
-* `Sumcheck.proof d P` is `round 0`, …, `round (n - 1)`, by `Reduction.iterate`, followed by
-  `finalCheck`.
+* `Sumcheck.Claim`: for a field `F` and round index `i`, a point of `F^i` and a claimed sum.
+* `Sumcheck.point`, `Sumcheck.partialSum`, `Sumcheck.rel`: hypercube point extension, partial sum
+  of a multivariate polynomial `P` over the remaining Boolean coordinates, and the round-`i`
+  relation.
+* `Sumcheck.roundPoly`, `Sumcheck.roundSpec`, `Sumcheck.accepts`, `Sumcheck.round`: honest round
+  polynomial, one-round protocol specification, verifier polynomial check, and one-round reduction
+  from `rel P i` to `rel P (i + 1)`.
+* `Sumcheck.finalCheck`: final reduction for an `n`-variate polynomial `P` from `rel P n` to
+  acceptance by evaluating `P` without interaction.
+* `Sumcheck.proof`: iterated sumcheck rounds followed by `finalCheck`.
 
 ## Main results
 

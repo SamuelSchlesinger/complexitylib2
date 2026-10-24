@@ -28,7 +28,13 @@ when the intermediate statement type is empty.
 
 ## Main definitions
 
-* `Interactive.Reduction.append`, `Interactive.Verifier.append`, `Interactive.Reduction.iterate`.
+* `Interactive.Spec.Transcript.append`, `Interactive.Spec.Transcript.split`,
+  `Interactive.Spec.PerChallenge.append`, `Interactive.Spec.PerChallenge.split`,
+  `Interactive.Spec.liftMsgLeft`, `Interactive.Spec.liftMsgRight`.
+* `Interactive.liftDecisionLeft`, `Interactive.liftDecisionRight`,
+  `Interactive.Verifier.append`, `Interactive.Reduction.append`,
+  `Interactive.iterSpec`, `Interactive.Reduction.id`, `Interactive.Reduction.iterate`,
+  `Interactive.PerChallenge.iterate`.
 * `Interactive.ProverStrategy.append`, `Interactive.ProverStrategy.split`,
   `Interactive.ProverStrategy.bindLeaf`.
 * `Interactive.Verifier.extractAppend`.

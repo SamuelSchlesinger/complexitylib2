@@ -34,6 +34,8 @@ namespace `Cslib`. It then also prints both forms back as `Pr[e]`.
 ## Main definitions
 
 * `Pr[e]`: the probability that the Boolean experiment `e` returns `true`, as a real number.
+* `Cslib.Probability.elabProbabilityTrue`, `Cslib.Probability.delabProbabilityTrue`: elaborator
+  and delaborator for `Pr[e]`.
 
 ## Main results
 
