@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Classes.Hierarchy.Time
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
+public import Complexity.Logics.Propositional.CNF.ModelCount
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
@@ -50,7 +51,6 @@ The negation of `ETH` is `Cslib.Complexity.DecidableInSubexpTime`: decidability 
 
 * `Cslib.Complexity.DecidableInTimeO`, `Cslib.Complexity.DecidableInExpTime`,
   `Cslib.Complexity.DecidableInSubexpTime`: time bounds in parameters of the instance.
-* `Cslib.Logic.PL.CNF.numVars`: the number of distinct variables of a formula.
 * `Cslib.Complexity.KSAT`, `Cslib.Complexity.satExponent`: `k`-SAT and its exponent.
 * `Cslib.Complexity.ETH`, `Cslib.Complexity.SETH`: the exponential time hypotheses.
 * `Cslib.Complexity.OV`, `Cslib.Complexity.encOV`, `Cslib.Complexity.OVH`: the orthogonal vectors
@@ -75,24 +75,6 @@ The negation of `ETH` is `Cslib.Complexity.DecidableInSubexpTime`: decidability 
 -/
 
 @[expose] public section
-
-namespace Cslib.Logic.PL
-
-variable {V : Type*} [DecidableEq V]
-
-/-- The number of distinct variables of a formula. -/
-def CNF.numVars (φ : CNF V) : ℕ := φ.vars.toFinset.card
-
-/-- A formula has at most as many distinct variables as occurrences of variables. -/
-theorem CNF.numVars_le_length_vars (φ : CNF V) : φ.numVars ≤ φ.vars.length :=
-  List.toFinset_card_le _
-
-/-- A formula with `m` clauses of at most `k` literals has at most `k m` variables. -/
-theorem CNF.numVars_le_mul_length {k : ℕ} {φ : CNF V} (h : ∀ c ∈ φ, c.length ≤ k) :
-    φ.numVars ≤ k * φ.length :=
-  φ.numVars_le_length_vars.trans (CNF.length_vars_le_mul_length h)
-
-end Cslib.Logic.PL
 
 namespace Cslib.Complexity
 

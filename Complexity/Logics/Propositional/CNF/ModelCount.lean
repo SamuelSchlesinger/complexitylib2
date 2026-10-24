@@ -28,6 +28,7 @@ with a given one on the variables of the formula (`CNF.modelCount_eq_one_iff`).
 
 ## Main definitions
 
+* `Cslib.Logic.PL.CNF.numVars`: the number of distinct variables of a formula.
 * `Cslib.Logic.PL.CNF.extendAssignment`: an assignment of the variables of a formula, extended by
   `false` to all variables.
 * `Cslib.Logic.PL.CNF.modelCount`: the number of satisfying assignments.
@@ -48,6 +49,18 @@ with a given one on the variables of the formula (`CNF.modelCount_eq_one_iff`).
 namespace Cslib.Logic.PL
 
 variable {V W : Type*} [DecidableEq V]
+
+/-- The number of distinct variables of a formula. -/
+def CNF.numVars (φ : CNF V) : ℕ := φ.vars.toFinset.card
+
+/-- A formula has at most as many distinct variables as occurrences of variables. -/
+theorem CNF.numVars_le_length_vars (φ : CNF V) : φ.numVars ≤ φ.vars.length :=
+  List.toFinset_card_le _
+
+/-- A formula with `m` clauses of at most `k` literals has at most `k m` variables. -/
+theorem CNF.numVars_le_mul_length {k : ℕ} {φ : CNF V} (h : ∀ c ∈ φ, c.length ≤ k) :
+    φ.numVars ≤ k * φ.length :=
+  φ.numVars_le_length_vars.trans (CNF.length_vars_le_mul_length h)
 
 /-- The assignment of all variables extending an assignment `τ` of the variables of `φ` by
 `false`. -/
