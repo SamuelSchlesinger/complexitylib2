@@ -9,7 +9,9 @@ module
 
 public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Computability.Probabilistic.Sampling
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
 import Complexity.Tactic.PPT
 
 /-!
@@ -26,6 +28,8 @@ loop is used.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_dyadicSize`: efficient unary range size.
 * `Cslib.Probability.isPPTOn_sampleBinaryNat`: uniform sampling with binary output.
 * `Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleBinaryNat`: sample a computed bit width.
+* `Cslib.Probability.isPPTOn_sampleModNat`: approximately uniform residues, for a computed bit width
+  and modulus.
 * `Cslib.Probability.isPPTOn_sampleDyadicIndex`: exact uniform sampling in the dyadic range.
 * `Cslib.Probability.isPPTOn_sampleBoundedIndex`: capped sampling with a rejection sentinel.
 * `Cslib.Probability.isPPTOn_sampleDyadicCoin`: exact capped dyadic probabilities.
@@ -95,3 +99,19 @@ theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleBinaryNat {α : Type
     Cslib.Probability.IsPPTOn input encNat
       (fun a => Cslib.Probability.sampleBinaryNat (width a)) :=
   Cslib.Probability.isPPTOn_sampleBinaryNat.preprocess hwidth
+
+namespace Cslib.Probability
+
+open Turing.MultiTapeTM
+
+/-- Approximately uniform residues: reducing a computed number of fair bits modulo a computed
+modulus is uniformly strict PPT, with binary output. -/
+theorem isPPTOn_sampleModNat {α : Type} {input : α ↪ List Bool} {width modulus : α → ℕ}
+    (hwidth : ComputableInPolyTime width input encUnary)
+    (hmodulus : ComputableInPolyTime modulus input encNat) :
+    IsPPTOn input encNat (fun a => sampleModNat (width a) (modulus a)) := by
+  unfold sampleModNat
+  exact (ComputableTidilyInPolyTime.sampleBinaryNat hwidth.tidy).map_with
+    (ComputableTidilyInPolyTime.binary_mod' (by fun_prop) (hmodulus.tidy.comp (by fun_prop)))
+
+end Cslib.Probability
