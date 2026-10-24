@@ -8,8 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Control.Monad.Memoize
-public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Languages.Probabilistic.QueryCount
+public import Complexity.Languages.Probabilistic.Sum
 public import Cslib.Probability.PMF
 import Complexity.Probability.PMF
 
@@ -66,9 +66,8 @@ open Probability OracleComp
 
 /-- The calls of a forger: a signing call names a message and returns a signature, and a hash call
 names a point and returns its digest. -/
-abbrev ForgerSpec (M Query Sig Digest : Type) : M ⊕ Query → Type
-  | .inl _ => Sig
-  | .inr _ => Digest
+abbrev ForgerSpec (M Query Sig Digest : Type) : OracleSpec (M ⊕ Query) :=
+  (fun _ : M => Sig) ⊕ₒ (fun _ : Query => Digest)
 
 /-- A signature scheme in the random-oracle model, with public keys `PK`, secret keys `SK`,
 messages `M`, signatures `Sig`, and oracle `H : Query → Digest`. Signing first draws coins. -/
