@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Complexity.Classes.Toda.Counting
@@ -111,5 +112,51 @@ example : True := by
         (encPair encUnary encUnary) encUnary := by
       fun_prop (config := { maxTransitionDepth := 0 })
   trivial
+
+
+private def repeatWord (p : ℕ × List Bool) : List Bool :=
+  (fun state => p.2 ++ state)^[p.1] []
+
+example : repeatWord (0, [true]) = [] := rfl
+example : repeatWord (2, [true, false]) = [true, false, true, false] := rfl
+
+-- A runtime word is captured by every step; the loop count remains unary.
+example : ComputableInPolyTime repeatWord (encPair encUnary encBits) encBits := by
+  unfold repeatWord
+  apply ComputableInPolyTime.iterateWithInput_of_bounded_growth
+    (growth := fun p => p.2.length)
+  case hcount => exact ComputableInPolyTime.fst encUnary encBits
+  case hinit => exact ComputableInPolyTime.const []
+  case hstep => fun_prop (config := { maxTransitionDepth := 0 })
+  case hbound =>
+    constructor
+    · exact (ComputableInPolyTime.snd encUnary encBits).polyBounded_length
+    · intro p state
+      simp only [encBits_apply, List.length_append]
+      omega
+
+private def repeatPerElement {α : Type} (p : List α × List Bool) : List Bool :=
+  p.1.foldl (fun state _ => p.2 ++ state) []
+
+example : repeatPerElement (([] : List ℕ), [true]) = [] := rfl
+example : repeatPerElement ([3, 4], [true]) = [true, true] := rfl
+
+-- Framed elements and raw accumulator bits have distinct encodings and full joint callbacks.
+example {α : Type} (item : α ↪ List Bool) :
+    ComputableInPolyTime (repeatPerElement (α := α))
+      (encPair (encList item) encBits) encBits := by
+  unfold repeatPerElement
+  apply ComputableInPolyTime.foldlWithInput_of_bounded_growth
+    (encA := item) (growth := fun p => p.2.length)
+  case hinit => exact ComputableInPolyTime.const []
+  case hcompute =>
+    refine ⟨ComputableInPolyTime.fst (encList item) encBits, ?_, inferInstance, inferInstance⟩
+    fun_prop (config := { maxTransitionDepth := 0 })
+  case hbound =>
+    constructor
+    · exact (ComputableInPolyTime.snd (encList item) encBits).polyBounded_length
+    · intro p state value _
+      simp only [encBits_apply, List.length_append]
+      omega
 
 end ComplexityTests.PlainAutomationSupport
