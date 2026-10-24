@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Fol
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Mathlib.Data.Nat.Bitwise
 import Mathlib.Tactic.Ring
 
@@ -95,16 +96,18 @@ public lemma linear_succStep :
     ComputableTidilyInLinearTimeAndSpace (fun p => succStep p.1 p.2)
       (encPair encAcc encBool) encAcc := by
   have hacc : ComputableTidilyInLinearTimeAndSpace Prod.fst (encPair encAcc encBool) encAcc :=
-    PairEncoding.fst encBool
+    Internal.normalizeLinear (PairEncoding.fst encBool)
   have hcarry : ComputableTidilyInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => p.1.1)
       (encPair encAcc encBool) encBool :=
-    (PairEncoding.fst encBits).comp hacc
+    (show ComputableTidilyInLinearTimeAndSpace _ _ _ from
+      Internal.normalizeLinear (PairEncoding.fst encBits)).comp hacc
   have hdigit : ComputableTidilyInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => p.2)
       (encPair encAcc encBool) encBool :=
-    PairEncoding.snd encAcc
+    Internal.normalizeLinear (PairEncoding.snd encAcc)
   have hdigits : ComputableTidilyInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool => p.1.2)
       (encPair encAcc encBool) encBits :=
-    (PairEncoding.snd encBool).comp hacc
+    (show ComputableTidilyInLinearTimeAndSpace _ _ _ from
+      Internal.normalizeLinear (PairEncoding.snd encBool)).comp hacc
   have hand : ComputableTidilyInLinearTimeAndSpace (fun p : (Bool × List Bool) × Bool =>
       p.1.1 && p.2) (encPair encAcc encBool) encBool := by
     convert hdigit.ite (hcarry.restrict _) ((const false).restrict _) using 1
@@ -126,11 +129,11 @@ public lemma linear_succStep :
 public lemma linear_succFinish :
     ComputableTidilyInLinearTimeAndSpace succFinish encAcc encBits := by
   have hdigits : ComputableTidilyInLinearTimeAndSpace Prod.snd encAcc encBits :=
-    PairEncoding.snd encBool
+    Internal.normalizeLinear (PairEncoding.snd encBool)
   have happend : ComputableTidilyInLinearTimeAndSpace (fun p => p.2 ++ [true]) encAcc encBits :=
     hdigits.append (const (encMid := encBool) true) (encOut := encBits) fun _ => rfl
   have hcarry : ComputableTidilyInLinearTimeAndSpace Prod.fst encAcc encBool :=
-    PairEncoding.fst encBits
+    Internal.normalizeLinear (PairEncoding.fst encBits)
   exact hcarry.ite (happend.restrict _) (hdigits.restrict _)
 
 end NatSucc

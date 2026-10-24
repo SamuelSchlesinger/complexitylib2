@@ -11,6 +11,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StreamFold
 import Mathlib.Tactic.Linarith
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # The successor in binary, as a streaming fold
 
@@ -60,9 +62,9 @@ lemma linear_parts :
     ComputableTidilyInLinearTimeAndSpace carry (encPair encBool encBool) encBool ∧
       ComputableTidilyInLinearTimeAndSpace sumDigit (encPair encBool encBool) encBool := by
   have hc : ComputableTidilyInLinearTimeAndSpace Prod.fst (encPair encBool encBool) encBool :=
-    PairEncoding.fst encBool
+    Internal.normalizeLinear (PairEncoding.fst encBool)
   have hd : ComputableTidilyInLinearTimeAndSpace Prod.snd (encPair encBool encBool) encBool :=
-    PairEncoding.snd encBool
+    Internal.normalizeLinear (PairEncoding.snd encBool)
   have hnot : ComputableTidilyInLinearTimeAndSpace (fun p : Bool × Bool => !p.1)
       (encPair encBool encBool) encBool := by
     convert hc.ite ((const false).restrict _) ((const true).restrict _) using 1

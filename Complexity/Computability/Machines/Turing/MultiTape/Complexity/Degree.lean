@@ -13,6 +13,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.
 import Mathlib.Data.Fintype.Lattice
 import Mathlib.Tactic.Ring
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Tidy computability with polynomial bounds of a given degree
 
@@ -188,7 +190,8 @@ public theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
     ComputableTidilyInDegree (fun x => (f x, g x)) encIn enc (max d₁ d₂) (max d₁ d₂) := by
   obtain ⟨⟨t₁, s₁, ht₁, hs₁, h₁⟩, -⟩ := hf
   obtain ⟨⟨t₂, s₂, ht₂, hs₂, h₂⟩, -⟩ := hg
-  obtain ⟨c, h⟩ := hP.pair_mono h₁ h₂
+  obtain ⟨c, h⟩ := hP.pair_mono h₁.computableInTimeAndSpace h₂.computableInTimeAndSpace
+  obtain ⟨c, h⟩ := Internal.normalizeBigO ⟨c, h⟩
   have ht := ((ht₁.add_max ht₂).add_const 1).smul c
   refine of_bounds ht ((((hs₁.add_max hs₂).add ht).add_const 1).smul c)
     (h.mono (fun _ => le_rfl) (fun x => Nat.mul_le_mul_left c ?_))
@@ -243,27 +246,27 @@ variable {enc₁ : β ↪ List Bool}
 /-- `Option.some`. -/
 public theorem optionSome {enc : Option β ↪ List Bool} [OptionEncoding enc₁ enc] :
     ComputableTidilyInDegree some enc₁ enc 1 1 :=
-  of_linear OptionEncoding.some
+  of_linear (Internal.normalizeLinear OptionEncoding.some)
 
 /-- `Option.getD`. -/
 public theorem getD {enc : Option β ↪ List Bool} [OptionEncoding enc₁ enc] (d : β) :
     ComputableTidilyInDegree (fun o => o.getD d) enc enc₁ 1 1 :=
-  of_linear (OptionEncoding.getD d)
+  of_linear (Internal.normalizeLinear (OptionEncoding.getD d))
 
 /-- `List.headD`. -/
 public theorem headD {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] (d : β) :
     ComputableTidilyInDegree (fun l => l.headD d) enc enc₁ 1 1 :=
-  of_linear (ListEncoding.headD d)
+  of_linear (Internal.normalizeLinear (ListEncoding.headD d))
 
 /-- `List.tail`. -/
 public theorem tail {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] :
     ComputableTidilyInDegree List.tail enc enc 1 1 :=
-  of_linear (ListEncoding.tail (enc₁ := enc₁))
+  of_linear (Internal.normalizeLinear (ListEncoding.tail (enc₁ := enc₁)))
 
 /-- `List.isEmpty`. -/
 public theorem isEmpty {enc : List β ↪ List Bool} [ListEncoding enc₁ enc] :
     ComputableTidilyInDegree List.isEmpty enc encBool 1 1 :=
-  of_linear (ListEncoding.isEmpty (enc₁ := enc₁))
+  of_linear (Internal.normalizeLinear (ListEncoding.isEmpty (enc₁ := enc₁)))
 
 end ComputableTidilyInDegree
 

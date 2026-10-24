@@ -10,6 +10,8 @@ module
 public import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Append
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Ite
+public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
@@ -22,8 +24,9 @@ distinctions, concatenation of encoded values and pairing, and contains constant
 functions computed by finite-state transducers.
 
 This file also states, as classes indexed by the encodings, what is required of encodings of
-pairs, options and lists: their basic operations are tidily computable in linear time and space,
-and pairing, which builds a value from a common input, preserves tidy computability. Theorems take
+pairs, options and lists: their basic operations are plainly computable in linear time and space,
+and pairing, which builds a value from a common input, preserves independent time and work-space
+bounds up to a constant, with explicit space for the encoded pair. Theorems take
 these classes as instance arguments, so they hold for every encoding with the required
 capabilities.
 
@@ -178,45 +181,45 @@ variable {α β : Type u}
 /-- `enc` encodes pairs compatibly with `enc₁` and `enc₂`. -/
 public class PairEncoding (enc₁ : α ↪ List Bool) (enc₂ : β ↪ List Bool)
     (enc : α × β ↪ List Bool) : Prop where
-  /-- Pairing is a combinator: functions `f` and `g` tidily computable from a common input within
+  /-- Pairing is a combinator: functions `f` and `g` computable from a common input within
   common bounds combine into `fun x => (f x, g x)`, within a constant factor of those bounds, plus
   space for the encoded pair. Different bounds are covered by
   `Turing.MultiTapeTM.PairEncoding.pair_mono`. -/
   pair {γ : Type u} {encIn : γ ↪ List Bool} {f : γ → α} {g : γ → β} {t s : γ → ℕ} :
-    ComputableTidilyInTimeAndSpace f encIn enc₁ t s →
-    ComputableTidilyInTimeAndSpace g encIn enc₂ t s →
-    ∃ c, ComputableTidilyInTimeAndSpace (fun x => (f x, g x)) encIn enc
+    ComputableInTimeAndSpace f encIn enc₁ t s →
+    ComputableInTimeAndSpace g encIn enc₂ t s →
+    ∃ c, ComputableInTimeAndSpace (fun x => (f x, g x)) encIn enc
       (fun x => c * (t x + 1)) (fun x => c * (s x + (enc (f x, g x)).length + 1))
-  /-- The first projection is tidily computable in linear time and space. -/
-  fst : ComputableTidilyInLinearTimeAndSpace Prod.fst enc enc₁
-  /-- The second projection is tidily computable in linear time and space. -/
-  snd : ComputableTidilyInLinearTimeAndSpace Prod.snd enc enc₂
+  /-- The first projection is computable in linear time and space. -/
+  fst : ComputableInLinearTimeAndSpace Prod.fst enc enc₁
+  /-- The second projection is computable in linear time and space. -/
+  snd : ComputableInLinearTimeAndSpace Prod.snd enc enc₂
 
 /-- `enc` encodes options compatibly with `enc₁`: `none` is encoded by the empty word. -/
 public class OptionEncoding (enc₁ : α ↪ List Bool) (enc : Option α ↪ List Bool) : Prop where
   /-- `none` is encoded by the empty word. -/
   none_eq : enc none = []
-  /-- `some` is tidily computable in linear time and space. -/
-  some : ComputableTidilyInLinearTimeAndSpace some enc₁ enc
-  /-- `Option.getD` is tidily computable in linear time and space. -/
-  getD (d : α) : ComputableTidilyInLinearTimeAndSpace (fun o => o.getD d) enc enc₁
+  /-- `some` is computable in linear time and space. -/
+  some : ComputableInLinearTimeAndSpace some enc₁ enc
+  /-- `Option.getD` is computable in linear time and space. -/
+  getD (d : α) : ComputableInLinearTimeAndSpace (fun o => o.getD d) enc enc₁
 
 /-- `enc` encodes lists compatibly with `enc₁`. -/
 public class ListEncoding (enc₁ : α ↪ List Bool) (enc : List α ↪ List Bool) : Prop where
-  /-- `List.headD` is tidily computable in linear time and space. -/
-  headD (d : α) : ComputableTidilyInLinearTimeAndSpace (fun l => l.headD d) enc enc₁
-  /-- `List.tail` is tidily computable in linear time and space. -/
-  tail : ComputableTidilyInLinearTimeAndSpace List.tail enc enc
-  /-- Testing a list for emptiness is tidily computable in linear time and space. -/
-  isEmpty : ComputableTidilyInLinearTimeAndSpace List.isEmpty enc encBool
+  /-- `List.headD` is computable in linear time and space. -/
+  headD (d : α) : ComputableInLinearTimeAndSpace (fun l => l.headD d) enc enc₁
+  /-- `List.tail` is computable in linear time and space. -/
+  tail : ComputableInLinearTimeAndSpace List.tail enc enc
+  /-- Testing a list for emptiness is computable in linear time and space. -/
+  isEmpty : ComputableInLinearTimeAndSpace List.isEmpty enc encBool
 
-/-- Pairing functions tidily computable within different bounds. -/
+/-- Pairing functions computable within different bounds. -/
 public theorem PairEncoding.pair_mono {enc₁ : α ↪ List Bool} {enc₂ : β ↪ List Bool}
     {enc : α × β ↪ List Bool} [h : PairEncoding enc₁ enc₂ enc] {γ : Type u}
     {encIn : γ ↪ List Bool} {f : γ → α} {g : γ → β} {t₁ s₁ t₂ s₂ : γ → ℕ}
-    (hf : ComputableTidilyInTimeAndSpace f encIn enc₁ t₁ s₁)
-    (hg : ComputableTidilyInTimeAndSpace g encIn enc₂ t₂ s₂) :
-    ∃ c, ComputableTidilyInTimeAndSpace (fun x => (f x, g x)) encIn enc
+    (hf : ComputableInTimeAndSpace f encIn enc₁ t₁ s₁)
+    (hg : ComputableInTimeAndSpace g encIn enc₂ t₂ s₂) :
+    ∃ c, ComputableInTimeAndSpace (fun x => (f x, g x)) encIn enc
       (fun x => c * (t₁ x + t₂ x + 1))
       (fun x => c * (s₁ x + s₂ x + (enc (f x, g x)).length + 1)) :=
   h.pair (hf.mono (fun _ => Nat.le_add_right _ _) (fun _ => Nat.le_add_right _ _))
@@ -233,10 +236,14 @@ public theorem ComputableTidilyInLinearTimeAndSpace.pair {α β₁ β₂ : Type 
     ComputableTidilyInLinearTimeAndSpace (fun x => (f x, g x)) encIn enc := by
   obtain ⟨c₁, h₁⟩ := hf
   obtain ⟨c₂, h₂⟩ := hg
-  obtain ⟨c, h⟩ := hP.pair (h₁.mono (t' := fun x => (c₁ + c₂) * ((encIn x).length + 1))
-    (s' := fun x => (c₁ + c₂) * ((encIn x).length + 1)) (fun x => by ring_nf; omega)
-    (fun x => by ring_nf; omega))
-    (h₂.mono (fun x => by ring_nf; omega) (fun x => by ring_nf; omega))
+  obtain ⟨c, h⟩ := hP.pair
+    (h₁.computableInTimeAndSpace.mono
+      (t' := fun x => (c₁ + c₂) * ((encIn x).length + 1))
+      (s' := fun x => (c₁ + c₂) * ((encIn x).length + 1))
+      (fun x => by ring_nf; omega) (fun x => by ring_nf; omega))
+    (h₂.computableInTimeAndSpace.mono
+      (fun x => by ring_nf; omega) (fun x => by ring_nf; omega))
+  obtain ⟨c, h⟩ := Internal.normalizeBigO ⟨c, h⟩
   refine ⟨c * (c + 2) * (c₁ + c₂ + 1), h.mono (fun x => ?_) (fun x => ?_)⟩
   · ring_nf
     omega

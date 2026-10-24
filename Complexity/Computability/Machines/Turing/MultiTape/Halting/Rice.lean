@@ -10,6 +10,8 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Rice's theorem
 
@@ -576,7 +578,8 @@ polynomial time. -/
 theorem computableTidilyInPolyTime_selfHardwire :
     ComputableTidilyInPolyTime (fun y : List Bool => eDesc (hardwire (decodeDesc y) (frame y)))
       encBits encBits := by
-  obtain ⟨_, _, hdec⟩ := exists_computableTidilyInDegree_decodeDesc
+  obtain ⟨_, _, hdec⟩ := exists_computableInDegree_decodeDesc
+  have hdec : ComputableTidilyInDegree _ _ _ _ _ := Internal.normalizeDegree hdec
   have hpair := hdec.computableTidilyInPolyTime.prod (ComputableTidilyInPolyTime.bitsFrame encBits)
   exact (ComputableTidilyInPolyTime.of_eq (f := fun d : Desc => eDesc d) (encIn := eDesc)
     (encMid := encBits) fun _ => rfl).comp (computableTidilyInPolyTime_hardwire.comp hpair)

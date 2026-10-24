@@ -307,6 +307,7 @@ import ComplexityTests.PPTruthTable
 import ComplexityTests.PRGStretch
 import ComplexityTests.Parameterized
 import ComplexityTests.PlainCalculus
+import ComplexityTests.PlainCodecCutover
 import ComplexityTests.PlainCoreBridge
 import ComplexityTests.PlainProjection
 import ComplexityTests.PlainResourceBridge

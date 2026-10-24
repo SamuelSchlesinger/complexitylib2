@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Comp
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Encoding
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.IterateWhile
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
@@ -87,7 +88,8 @@ lemma BigO.pair {α α₁ α₂ : Type u} {encIn : α ↪ List Bool} {t s : α �
     BigO (fun a => (f₁ a, f₂ a)) encIn enc t (fun a => s a + (enc (f₁ a, f₂ a)).length) := by
   obtain ⟨c₁, h₁⟩ := h₁
   obtain ⟨c₂, h₂⟩ := h₂
-  obtain ⟨c, hc⟩ := hP.pair_mono h₁ h₂
+  obtain ⟨c, hc⟩ := hP.pair_mono h₁.computableInTimeAndSpace h₂.computableInTimeAndSpace
+  obtain ⟨c, hc⟩ := Internal.normalizeBigO ⟨c, hc⟩
   refine ⟨c * (c₁ + c₂ + 1), hc.mono (fun a => ?_) (fun a => ?_)⟩ <;>
   · ring_nf
     omega
@@ -176,13 +178,27 @@ lemma bigO_foldStep (hLE : ListEncoding encA encL) (hBA : PairEncoding encB encA
     BigO (foldStep step a₀ b₀) encO encO
       (fun o => (encO o).length + roundCost step a₀ b₀ encS ts o)
       (fun o => (encO o).length + roundCost step a₀ b₀ encS ss o) := by
+  have hfst : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
+    Internal.normalizeLinear (hSE.fst)
+  have hsnd : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
+    Internal.normalizeLinear (hSE.snd)
+  have hsomeLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
+    Internal.normalizeLinear (hOE.some)
+  have htailLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
+    Internal.normalizeLinear (hLE.tail)
+  have hisEmptyLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
+    Internal.normalizeLinear (hLE.isEmpty)
+  have hheadLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
+    Internal.normalizeLinear (hLE.headD a₀)
+  have hgetLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
+    Internal.normalizeLinear (hOE.getD ([], b₀))
   -- the operations on the state, all in linear time and space
-  have hlist := hSE.fst.comp (hOE.getD ([], b₀))
-  have htail := BigO.of_linear (hLE.tail.comp hlist)
-  obtain ⟨c₁, h₁⟩ := hLE.isEmpty.comp hlist
+  have hlist := hfst.comp (hgetLinear)
+  have htail := BigO.of_linear (htailLinear.comp hlist)
+  obtain ⟨c₁, h₁⟩ := hisEmptyLinear.comp hlist
   -- the argument of `step`, the next state, and the next state wrapped in `some`
-  have harg := BigO.pair hBA (.of_linear (hSE.snd.comp (hOE.getD ([], b₀))))
-    (.of_linear ((hLE.headD a₀).comp hlist))
+  have harg := BigO.pair hBA (.of_linear (hsnd.comp (hgetLinear)))
+    (.of_linear ((hheadLinear).comp hlist))
   obtain ⟨c, hc⟩ := harg.length_le
   have hstepArg := ((BigO.of_computable hstep).comp harg hc).mono (2 * c + 2)
     (t' := fun o => (encO o).length + ts (arg a₀ b₀ o))
@@ -190,7 +206,7 @@ lemma bigO_foldStep (hLE : ListEncoding encA encL) (hBA : PairEncoding encB encA
     (fun o => by simp only [Function.comp_apply, arg]; ring_nf; omega)
     (fun o => by have := hc o; simp only [Function.comp_apply, arg] at *; ring_nf at *; omega)
   have hnext := BigO.pair hSE (htail.mono 1 (fun o => by omega) (fun o => by omega)) hstepArg
-  have hsome := ((BigO.of_linear hOE.some).comp hnext
+  have hsome := ((BigO.of_linear hsomeLinear).comp hnext
     (m := fun o => (encS (next step a₀ b₀ o)).length)
     fun o => le_rfl).mono 3
     (t' := fun o => (encO o).length + ts (arg a₀ b₀ o) + (encS (next step a₀ b₀ o)).length)
@@ -282,10 +298,17 @@ public theorem ComputableTidilyInTimeAndSpace.foldl {γ α β : Type u} {encIn :
     have := Nat.mul_le_mul_left ci (Nat.add_le_add_right hsup 1)
     ring_nf at this ⊢
     omega
+  have hsomeLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
+    Internal.normalizeLinear hOE.some
+  have hsnd : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
+    Internal.normalizeLinear hSE.snd
+  have hgetInitLinear : ComputableTidilyInLinearTimeAndSpace _ _ _ :=
+    Internal.normalizeLinear (hOE.getD ([], init x₀))
   -- the initial state
-  have hstart := (BigO.of_linear hOE.some).comp (hSE.pair hlist hinit) (m := lMax)
+  have hstart := (BigO.of_linear hsomeLinear).comp
+    (BigO.pair hSE (.of_computable hlist) (.of_computable hinit)) (m := lMax)
     (fun x => by simpa using hlMax x 0 (Nat.zero_le _))
-  obtain ⟨cs, hcs⟩ := (BigO.of_linear hOE.some).length_le
+  obtain ⟨cs, hcs⟩ := (BigO.of_linear hsomeLinear).length_le
   have hrun := (BigO.of_computable hloop).comp hstart (m := fun x => cs * (lMax x + 1))
     (fun x => (hcs _).trans (Nat.mul_le_mul_left cs (by simpa using hlMax x 0 (Nat.zero_le _))))
   -- the final state, and its accumulator
@@ -293,7 +316,7 @@ public theorem ComputableTidilyInTimeAndSpace.foldl {γ α β : Type u} {encIn :
       (some (list x, init x)) = some ([], (list x).foldl step (init x)) := by
     rw [rounds, Option.elim_some, iterate_foldStep step a₀ (init x₀) _ _ le_rfl]
     simp
-  have hall := (BigO.of_linear (hSE.snd.comp (hOE.getD ([], init x₀)))).comp hrun
+  have hall := (BigO.of_linear (hsnd.comp (hgetInitLinear))).comp hrun
     (m := fun x => cs * (lMax x + 1)) (fun x => by
       simp only [Function.comp_apply, hfinal]
       exact (hcs _).trans (Nat.mul_le_mul_left cs (by simpa using hlMax x _ le_rfl)))

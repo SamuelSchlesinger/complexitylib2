@@ -216,7 +216,8 @@ public theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁
     ComputableTidilyInPolyTime (fun x => (f x, g x)) encIn enc := by
   obtain ⟨t₁, s₁, ht₁, hs₁, h₁⟩ := hf
   obtain ⟨t₂, s₂, ht₂, hs₂, h₂⟩ := hg
-  obtain ⟨c, h⟩ := hP.pair_mono h₁ h₂
+  obtain ⟨c, h⟩ := hP.pair_mono h₁.computableInTimeAndSpace h₂.computableInTimeAndSpace
+  obtain ⟨c, h⟩ := Internal.normalizeBigO ⟨c, h⟩
   have ht := (PolyBounded.const c).mul ((ht₁.add ht₂).add (.const 1))
   refine ⟨_, _, ht, (PolyBounded.const c).mul (((hs₁.add hs₂).add ht).add (.const 1)),
     h.mono (fun _ => le_rfl) (fun x => Nat.mul_le_mul_left c ?_)⟩

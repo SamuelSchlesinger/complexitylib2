@@ -16,6 +16,8 @@ public import Complexity.Foundations.Data.Nat.Bits
 import Mathlib.Data.List.GetD
 import Mathlib.Data.Nat.Bitwise
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Polynomial-time arithmetic on binary naturals
 
@@ -225,7 +227,8 @@ namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 @[fun_prop]
 theorem bitsToNat : ComputableTidilyInPolyTime ofBits encBits encNat := by
   obtain ⟨d, e, h⟩ := Decoder.nat.computable
-  exact h.computableTidilyInPolyTime
+  exact (show ComputableTidilyInDegree _ _ _ _ _ from
+    Internal.normalizeDegree h).computableTidilyInPolyTime
 
 
 /-- The binary digits of a natural number, as a raw bit string. -/

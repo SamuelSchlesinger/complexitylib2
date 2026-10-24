@@ -14,6 +14,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Poly
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Universal input coding and polynomial-time simulation
 
@@ -131,7 +133,8 @@ theorem computableTidilyInDegree_map_eBit :
 @[fun_prop]
 theorem computableTidilyInPolyTime_decodeDesc :
     ComputableTidilyInPolyTime decodeDesc encBits eDesc :=
-  let ⟨_, _, h⟩ := exists_computableTidilyInDegree_decodeDesc
+  let ⟨_, _, h⟩ := exists_computableInDegree_decodeDesc
+  let h : ComputableTidilyInDegree _ _ _ _ _ := Internal.normalizeDegree h
   h.computableTidilyInPolyTime
 
 /-- The input of a machine as symbols is linear. -/

@@ -14,6 +14,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
+import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+
 /-!
 # Tidy computability within given bounds, up to constants
 
@@ -185,7 +187,8 @@ public theorem pair {α β₁ β₂ : Type} {encIn : α ↪ List Bool}
       fun x => S₁ x + S₂ x + (enc (f x, g x)).length := by
   obtain ⟨c₁, h₁, -⟩ := hf
   obtain ⟨c₂, h₂, -⟩ := hg
-  obtain ⟨c, h⟩ := hP.pair_mono h₁ h₂
+  obtain ⟨c, h⟩ := hP.pair_mono h₁.computableInTimeAndSpace h₂.computableInTimeAndSpace
+  obtain ⟨c, h⟩ := Internal.normalizeBigO ⟨c, h⟩
   refine of_bounds h ((c + 1) * (c + 1) * (c₁ + c₂ + 1)) (fun x => ?_) (fun x => ?_) (fun x => ?_)
   · ring_nf
     omega
