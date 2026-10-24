@@ -27,7 +27,7 @@ most one element of `A ∩ B`, and the other part carries the induction.
 
 Counting leaves, a protocol computing equality on `X` has at least `|X|` leaves labelled `true`,
 one for each diagonal pair, and at least two labelled `false`, since the pairs `(a, b)` and
-`(b, a)` for `a ≠ b` cannot share a leaf (`card_add_two_le_leaves_of_run_eq_equality`). Since
+`(b, a)` for `a ≠ b` cannot share a leaf (`card_add_two_le_leafCount_of_run_eq_equality`). Since
 negating the output does not change the communication complexity, non-equality costs as much as
 equality (`ecomplexityFun_not_equality`).
 
@@ -38,7 +38,7 @@ equality (`ecomplexityFun_not_equality`).
 * `Cslib.Communication.ecomplexityFun_equality`: equality on a finite type `X` costs exactly
   `⌈log₂ |X|⌉ + 1` bits.
 * `Cslib.Communication.ecomplexityFun_not_equality`: so does non-equality.
-* `Cslib.Communication.card_add_two_le_leaves_of_run_eq_equality`: a protocol computing equality
+* `Cslib.Communication.card_add_two_le_leafCount_of_run_eq_equality`: a protocol computing equality
   on `X` has at least `|X| + 2` leaves.
 
 ## References
@@ -162,8 +162,8 @@ theorem ecomplexityFun_not_equality (hX : 1 < Fintype.card X) :
 /-- A protocol computing equality on a finite type `X` with at least two elements has at least
 `|X| + 2` leaves: `|X|` labelled `true`, one for each diagonal pair, and two labelled `false`,
 reached by `(a, b)` and `(b, a)` for any `a ≠ b`. -/
-theorem card_add_two_le_leaves_of_run_eq_equality (hX : 1 < Fintype.card X)
-    {p : Protocol X X Bool} (hp : p.run = equality) : Fintype.card X + 2 ≤ p.leaves := by
+theorem card_add_two_le_leafCount_of_run_eq_equality (hX : 1 < Fintype.card X)
+    {p : Protocol X X Bool} (hp : p.run = equality) : Fintype.card X + 2 ≤ p.leafCount := by
   have hT := (isFoolingSet_equality (univ : Finset X)).card_le hp
   rw [card_image_of_injective _ fun x y h => congrArg Prod.fst h, card_univ] at hT
   obtain ⟨a, b, hab⟩ := Fintype.one_lt_card_iff.mp hX
@@ -176,7 +176,7 @@ theorem card_add_two_le_leaves_of_run_eq_equality (hX : 1 < Fintype.card X)
     rw [hp, hout hab] at this
     simp [equality] at this
   have hF : 2 ≤ #{i | p.leafOutput i = false} := by
-    have hsub : ({p.leaf a b, p.leaf b a} : Finset (Fin p.leaves)) ⊆
+    have hsub : ({p.leaf a b, p.leaf b a} : Finset (Fin p.leafCount)) ⊆
         univ.filter (p.leafOutput · = false) := by
       intro i hi
       rcases mem_insert.1 hi with rfl | hi
@@ -184,7 +184,7 @@ theorem card_add_two_le_leaves_of_run_eq_equality (hX : 1 < Fintype.card X)
       · rw [mem_singleton.1 hi]
         simpa using hout hab.symm
     simpa [card_pair hne] using card_le_card hsub
-  have hsum := card_filter_add_card_filter_not (s := (univ : Finset (Fin p.leaves)))
+  have hsum := card_filter_add_card_filter_not (s := (univ : Finset (Fin p.leafCount)))
     fun i => p.leafOutput i = true
   simp only [Bool.not_eq_true, card_univ, Fintype.card_fin] at hsum
   omega

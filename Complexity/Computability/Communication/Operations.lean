@@ -95,7 +95,8 @@ def swapPlayers : Protocol X Y Z → Protocol Y X Z
   | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [swapPlayers, ih₀, ih₁]
 
 /-- Exchanging the players does not change the number of leaves. -/
-@[simp] theorem leaves_swapPlayers (p : Protocol X Y Z) : p.swapPlayers.leaves = p.leaves := by
+@[simp] theorem leafCount_swapPlayers (p : Protocol X Y Z) :
+    p.swapPlayers.leafCount = p.leafCount := by
   induction p with
   | output z => rfl
   | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [swapPlayers, ih₀, ih₁]
@@ -133,7 +134,8 @@ def map (g : Z → Z') : Protocol X Y Z → Protocol X Y Z'
   | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [map, ih₀, ih₁]
 
 /-- Relabelling the outputs does not change the number of leaves. -/
-@[simp] theorem leaves_map (g : Z → Z') (p : Protocol X Y Z) : (p.map g).leaves = p.leaves := by
+@[simp] theorem leafCount_map (g : Z → Z') (p : Protocol X Y Z) :
+    (p.map g).leafCount = p.leafCount := by
   induction p with
   | output z => rfl
   | alice send p₀ p₁ ih₀ ih₁ | bob send p₀ p₁ ih₀ ih₁ => simp [map, ih₀, ih₁]

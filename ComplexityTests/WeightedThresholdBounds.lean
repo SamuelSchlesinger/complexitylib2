@@ -169,16 +169,16 @@ example (v : inputGates (Program.empty : Program signature 0 0) → Bool) :
 example (v : inputGates (Program.empty : Program signature 0 0) → Bool) :
     1 ≤ (∑ j ∈ Finset.range (inputActivityFrom (Program.empty : Program signature 0 0) v + 1),
       (inputGates (Program.empty : Program signature 0 0)).card.choose j) ^ 2 :=
-  two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode Program.empty
+  two_pow_le_sum_choose_inputActivityFrom_sq_of_dotProduct Program.empty
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm v (fun _ => false)
-    (fun _ _ => by simp [Bool.zero_eq_false])
+    (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 example (v : Fin 0 → Bool) :
     1 ≤ (∑ j ∈ Finset.range (gateActivityFrom (Program.empty : Program signature 0 0) v + 1),
       Nat.choose 0 j) ^ 2 :=
-  two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode Program.empty
+  two_pow_le_sum_choose_gateActivityFrom_sq_of_dotProduct Program.empty
     (finSumFinEquiv : Fin 0 ⊕ Fin 0 ≃ Fin 0).symm v (fun _ => false)
-    (fun _ _ => by simp [Bool.zero_eq_false])
+    (fun _ _ => by simp [dotProduct, Bool.zero_eq_false])
 
 -- Concrete pending-bias simulation and state-space bounds on `negatePrior`.
 private theorem negatePrior_gateWeight_one_zero : gateWeight negatePrior 1 0 = -1 := by
@@ -297,18 +297,18 @@ info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_summaries' dep
 #print axioms card_rows_le_card_summaries
 
 /--
-info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_summaries_of_hadamardCode' depends on axioms:
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_summaries_of_dotProduct' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms two_pow_le_card_summaries_of_hadamardCode
+#print axioms two_pow_le_card_summaries_of_dotProduct
 
 /--
-info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_pow_intSummary_of_hadamardCode' depends on axioms:
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_pow_intSummary_of_dotProduct' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms two_pow_le_pow_intSummary_of_hadamardCode
+#print axioms two_pow_le_pow_intSummary_of_dotProduct
 
 /--
 info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_pendingBiasStates_of_phased' depends on axioms:
@@ -318,11 +318,11 @@ info: 'Cslib.Circuits.Boolean.WeightedThreshold.card_rows_le_card_pendingBiasSta
 #print axioms card_rows_le_card_pendingBiasStates_of_phased
 
 /--
-info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_pendingBiasStates_of_phased_hadamardCode' depends on axioms:
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_card_pendingBiasStates_of_phased_dotProduct' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms two_pow_le_card_pendingBiasStates_of_phased_hadamardCode
+#print axioms two_pow_le_card_pendingBiasStates_of_phased_dotProduct
 
 -- Direction-menu bounds (Theorem 7.3 and Corollary 7.4) on `negateCircuit`.
 example :
@@ -680,18 +680,18 @@ depends on axioms: [propext, Classical.choice, Quot.sound]
 #print axioms card_mul_le_mul_sum_choose_gateActivityFrom_sq
 
 /--
-info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode'
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_inputActivityFrom_sq_of_dotProduct'
 depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms two_pow_le_sum_choose_inputActivityFrom_sq_of_hadamardCode
+#print axioms two_pow_le_sum_choose_inputActivityFrom_sq_of_dotProduct
 
 /--
-info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode'
+info: 'Cslib.Circuits.Boolean.WeightedThreshold.two_pow_le_sum_choose_gateActivityFrom_sq_of_dotProduct'
 depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms two_pow_le_sum_choose_gateActivityFrom_sq_of_hadamardCode
+#print axioms two_pow_le_sum_choose_gateActivityFrom_sq_of_dotProduct
 
 /-! ### Unambiguous transcript cells and quadratic-potential unique sinks -/
 

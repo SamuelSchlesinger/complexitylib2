@@ -77,22 +77,22 @@ variable {X Y Z : Type*}
 
 /-- The leaf a protocol reaches when Alice holds `x` and Bob holds `y`, numbering the leaves from
 left to right. -/
-def leaf : (p : Protocol X Y Z) → X → Y → Fin p.leaves
+def leaf : (p : Protocol X Y Z) → X → Y → Fin p.leafCount
   | output _, _, _ => (0 : Fin 1)
   | alice send p₀ p₁, x, y =>
-    cond (send x) (Fin.natAdd p₀.leaves (p₁.leaf x y)) (Fin.castAdd p₁.leaves (p₀.leaf x y))
+    cond (send x) (Fin.natAdd p₀.leafCount (p₁.leaf x y)) (Fin.castAdd p₁.leafCount (p₀.leaf x y))
   | bob send p₀ p₁, x, y =>
-    cond (send y) (Fin.natAdd p₀.leaves (p₁.leaf x y)) (Fin.castAdd p₁.leaves (p₀.leaf x y))
+    cond (send y) (Fin.natAdd p₀.leafCount (p₁.leaf x y)) (Fin.castAdd p₁.leafCount (p₀.leaf x y))
 
 /-- The label of each leaf, numbering the leaves from left to right. -/
-def leafOutput : (p : Protocol X Y Z) → Fin p.leaves → Z
+def leafOutput : (p : Protocol X Y Z) → Fin p.leafCount → Z
   | output z => fun _ => z
   | alice _ p₀ p₁ => Fin.append p₀.leafOutput p₁.leafOutput
   | bob _ p₀ p₁ => Fin.append p₀.leafOutput p₁.leafOutput
 
 /-- Alice's side of the rectangle of each leaf: the inputs of Alice consistent with the bits she
 sends on the path to the leaf. -/
-def leafAlice : (p : Protocol X Y Z) → Fin p.leaves → Set X
+def leafAlice : (p : Protocol X Y Z) → Fin p.leafCount → Set X
   | output _ => fun _ => Set.univ
   | alice send p₀ p₁ => Fin.append (fun i => {x | send x = false} ∩ p₀.leafAlice i)
       (fun i => {x | send x = true} ∩ p₁.leafAlice i)
@@ -100,7 +100,7 @@ def leafAlice : (p : Protocol X Y Z) → Fin p.leaves → Set X
 
 /-- Bob's side of the rectangle of each leaf: the inputs of Bob consistent with the bits he sends
 on the path to the leaf. -/
-def leafBob : (p : Protocol X Y Z) → Fin p.leaves → Set Y
+def leafBob : (p : Protocol X Y Z) → Fin p.leafCount → Set Y
   | output _ => fun _ => Set.univ
   | alice _ p₀ p₁ => Fin.append p₀.leafBob p₁.leafBob
   | bob send p₀ p₁ => Fin.append (fun i => {y | send y = false} ∩ p₀.leafBob i)
@@ -114,72 +114,75 @@ variable (z : Z) (send : X → Bool) (send' : Y → Bool) (p₀ p₁ : Protocol 
   rfl
 
 @[simp] theorem leaf_alice : (alice send p₀ p₁).leaf x y =
-    cond (send x) (Fin.natAdd p₀.leaves (p₁.leaf x y)) (Fin.castAdd p₁.leaves (p₀.leaf x y)) :=
+    cond (send x) (Fin.natAdd p₀.leafCount (p₁.leaf x y))
+      (Fin.castAdd p₁.leafCount (p₀.leaf x y)) :=
   rfl
 
 @[simp] theorem leaf_bob : (bob send' p₀ p₁).leaf x y =
-    cond (send' y) (Fin.natAdd p₀.leaves (p₁.leaf x y)) (Fin.castAdd p₁.leaves (p₀.leaf x y)) :=
+    cond (send' y) (Fin.natAdd p₀.leafCount (p₁.leaf x y))
+      (Fin.castAdd p₁.leafCount (p₀.leaf x y)) :=
   rfl
 
-@[simp] theorem leafOutput_output (i : Fin (output z : Protocol X Y Z).leaves) :
+@[simp] theorem leafOutput_output (i : Fin (output z : Protocol X Y Z).leafCount) :
     (output z : Protocol X Y Z).leafOutput i = z :=
   rfl
 
-@[simp] theorem leafOutput_alice_castAdd (i : Fin p₀.leaves) :
-    (alice send p₀ p₁).leafOutput (Fin.castAdd p₁.leaves i) = p₀.leafOutput i :=
+@[simp] theorem leafOutput_alice_castAdd (i : Fin p₀.leafCount) :
+    (alice send p₀ p₁).leafOutput (Fin.castAdd p₁.leafCount i) = p₀.leafOutput i :=
   Fin.append_left _ _ i
 
-@[simp] theorem leafOutput_alice_natAdd (i : Fin p₁.leaves) :
-    (alice send p₀ p₁).leafOutput (Fin.natAdd p₀.leaves i) = p₁.leafOutput i :=
+@[simp] theorem leafOutput_alice_natAdd (i : Fin p₁.leafCount) :
+    (alice send p₀ p₁).leafOutput (Fin.natAdd p₀.leafCount i) = p₁.leafOutput i :=
   Fin.append_right _ _ i
 
-@[simp] theorem leafOutput_bob_castAdd (i : Fin p₀.leaves) :
-    (bob send' p₀ p₁).leafOutput (Fin.castAdd p₁.leaves i) = p₀.leafOutput i :=
+@[simp] theorem leafOutput_bob_castAdd (i : Fin p₀.leafCount) :
+    (bob send' p₀ p₁).leafOutput (Fin.castAdd p₁.leafCount i) = p₀.leafOutput i :=
   Fin.append_left _ _ i
 
-@[simp] theorem leafOutput_bob_natAdd (i : Fin p₁.leaves) :
-    (bob send' p₀ p₁).leafOutput (Fin.natAdd p₀.leaves i) = p₁.leafOutput i :=
+@[simp] theorem leafOutput_bob_natAdd (i : Fin p₁.leafCount) :
+    (bob send' p₀ p₁).leafOutput (Fin.natAdd p₀.leafCount i) = p₁.leafOutput i :=
   Fin.append_right _ _ i
 
-@[simp] theorem leafAlice_output (i : Fin (output z : Protocol X Y Z).leaves) :
+@[simp] theorem leafAlice_output (i : Fin (output z : Protocol X Y Z).leafCount) :
     (output z : Protocol X Y Z).leafAlice i = Set.univ :=
   rfl
 
-@[simp] theorem leafAlice_alice_castAdd (i : Fin p₀.leaves) :
-    (alice send p₀ p₁).leafAlice (Fin.castAdd p₁.leaves i) =
+@[simp] theorem leafAlice_alice_castAdd (i : Fin p₀.leafCount) :
+    (alice send p₀ p₁).leafAlice (Fin.castAdd p₁.leafCount i) =
       {x | send x = false} ∩ p₀.leafAlice i :=
   Fin.append_left _ _ i
 
-@[simp] theorem leafAlice_alice_natAdd (i : Fin p₁.leaves) :
-    (alice send p₀ p₁).leafAlice (Fin.natAdd p₀.leaves i) = {x | send x = true} ∩ p₁.leafAlice i :=
+@[simp] theorem leafAlice_alice_natAdd (i : Fin p₁.leafCount) :
+    (alice send p₀ p₁).leafAlice (Fin.natAdd p₀.leafCount i) =
+      {x | send x = true} ∩ p₁.leafAlice i :=
   Fin.append_right _ _ i
 
-@[simp] theorem leafAlice_bob_castAdd (i : Fin p₀.leaves) :
-    (bob send' p₀ p₁).leafAlice (Fin.castAdd p₁.leaves i) = p₀.leafAlice i :=
+@[simp] theorem leafAlice_bob_castAdd (i : Fin p₀.leafCount) :
+    (bob send' p₀ p₁).leafAlice (Fin.castAdd p₁.leafCount i) = p₀.leafAlice i :=
   Fin.append_left _ _ i
 
-@[simp] theorem leafAlice_bob_natAdd (i : Fin p₁.leaves) :
-    (bob send' p₀ p₁).leafAlice (Fin.natAdd p₀.leaves i) = p₁.leafAlice i :=
+@[simp] theorem leafAlice_bob_natAdd (i : Fin p₁.leafCount) :
+    (bob send' p₀ p₁).leafAlice (Fin.natAdd p₀.leafCount i) = p₁.leafAlice i :=
   Fin.append_right _ _ i
 
-@[simp] theorem leafBob_output (i : Fin (output z : Protocol X Y Z).leaves) :
+@[simp] theorem leafBob_output (i : Fin (output z : Protocol X Y Z).leafCount) :
     (output z : Protocol X Y Z).leafBob i = Set.univ :=
   rfl
 
-@[simp] theorem leafBob_alice_castAdd (i : Fin p₀.leaves) :
-    (alice send p₀ p₁).leafBob (Fin.castAdd p₁.leaves i) = p₀.leafBob i :=
+@[simp] theorem leafBob_alice_castAdd (i : Fin p₀.leafCount) :
+    (alice send p₀ p₁).leafBob (Fin.castAdd p₁.leafCount i) = p₀.leafBob i :=
   Fin.append_left _ _ i
 
-@[simp] theorem leafBob_alice_natAdd (i : Fin p₁.leaves) :
-    (alice send p₀ p₁).leafBob (Fin.natAdd p₀.leaves i) = p₁.leafBob i :=
+@[simp] theorem leafBob_alice_natAdd (i : Fin p₁.leafCount) :
+    (alice send p₀ p₁).leafBob (Fin.natAdd p₀.leafCount i) = p₁.leafBob i :=
   Fin.append_right _ _ i
 
-@[simp] theorem leafBob_bob_castAdd (i : Fin p₀.leaves) :
-    (bob send' p₀ p₁).leafBob (Fin.castAdd p₁.leaves i) = {y | send' y = false} ∩ p₀.leafBob i :=
+@[simp] theorem leafBob_bob_castAdd (i : Fin p₀.leafCount) :
+    (bob send' p₀ p₁).leafBob (Fin.castAdd p₁.leafCount i) = {y | send' y = false} ∩ p₀.leafBob i :=
   Fin.append_left _ _ i
 
-@[simp] theorem leafBob_bob_natAdd (i : Fin p₁.leaves) :
-    (bob send' p₀ p₁).leafBob (Fin.natAdd p₀.leaves i) = {y | send' y = true} ∩ p₁.leafBob i :=
+@[simp] theorem leafBob_bob_natAdd (i : Fin p₁.leafCount) :
+    (bob send' p₀ p₁).leafBob (Fin.natAdd p₀.leafCount i) = {y | send' y = true} ∩ p₁.leafBob i :=
   Fin.append_right _ _ i
 
 end Simp
@@ -191,7 +194,7 @@ private theorem castAdd_ne_natAdd {m n : ℕ} (i : Fin m) (j : Fin n) :
 
 /-- **The inputs reaching a leaf form a rectangle**: the protocol reaches leaf `i` on `x` and `y`
 exactly when `x` is on Alice's side and `y` on Bob's side of its rectangle. -/
-theorem leaf_eq_iff {p : Protocol X Y Z} {x : X} {y : Y} {i : Fin p.leaves} :
+theorem leaf_eq_iff {p : Protocol X Y Z} {x : X} {y : Y} {i : Fin p.leafCount} :
     p.leaf x y = i ↔ x ∈ p.leafAlice i ∧ y ∈ p.leafBob i := by
   induction p with
   | output z =>
@@ -233,7 +236,7 @@ theorem run_eq_leafOutput_leaf (p : Protocol X Y Z) (x : X) (y : Y) :
     cases h : send y <;> simp [leaf, leafOutput, h, ih₀, ih₁]
 
 /-- **The output is constant on each leaf rectangle.** -/
-theorem run_eq_leafOutput {i : Fin p.leaves} (hx : x ∈ p.leafAlice i) (hy : y ∈ p.leafBob i) :
+theorem run_eq_leafOutput {i : Fin p.leafCount} (hx : x ∈ p.leafAlice i) (hy : y ∈ p.leafBob i) :
     p.run x y = p.leafOutput i := by
   rw [run_eq_leafOutput_leaf, leaf_eq_iff.mpr ⟨hx, hy⟩]
 
@@ -243,7 +246,7 @@ pair of inputs lies in exactly one of them and the output of the protocol is con
 theorem exists_rectangle_partition (p : Protocol X Y Z) :
     ∃ (n : ℕ) (A : Fin n → Set X) (B : Fin n → Set Y) (z : Fin n → Z), n ≤ 2 ^ p.depth ∧
       (∀ x y, ∃! i, x ∈ A i ∧ y ∈ B i) ∧ ∀ i, ∀ x ∈ A i, ∀ y ∈ B i, p.run x y = z i :=
-  ⟨p.leaves, p.leafAlice, p.leafBob, p.leafOutput, p.leaves_le_two_pow_depth,
+  ⟨p.leafCount, p.leafAlice, p.leafBob, p.leafOutput, p.leafCount_le_two_pow_depth,
     fun x y => ⟨p.leaf x y, leaf_eq_iff.mp rfl, fun _ hi => (leaf_eq_iff.mpr hi).symm⟩,
     fun _ _ hx _ hy => run_eq_leafOutput hx hy⟩
 
@@ -251,7 +254,7 @@ variable {R : X → Y → Z → Prop} {A : Set X} {B : Set Y}
 
 /-- **Leaf rectangles are monochromatic**: if a protocol solves `R` on `A × B`, the label of each
 leaf is a valid answer on the part of the leaf's rectangle inside `A × B`. -/
-theorem Solves.solves_leafOutput (hp : p.Solves R A B) (i : Fin p.leaves) :
+theorem Solves.solves_leafOutput (hp : p.Solves R A B) (i : Fin p.leafCount) :
     Communication.Solves (fun _ _ => p.leafOutput i) R (A ∩ p.leafAlice i) (B ∩ p.leafBob i) :=
   fun x hx y hy => run_eq_leafOutput hx.2 hy.2 ▸ hp x hx.1 y hy.1
 

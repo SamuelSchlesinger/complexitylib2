@@ -24,7 +24,7 @@ labelled `true`, of the indicator matrices of their rectangles, each of rank at 
 any commutative ring with the strong rank condition, such as a field, the rank of the communication
 matrix is at most the number of leaves labelled `true` (`Protocol.rank_communicationMatrix_le`), and
 the ranks of the matrices of `f` and of its negation add up to at most the number of leaves
-(`Protocol.rank_add_rank_not_le_leaves`). This is the *rank bound* `⌈log₂ rank M_f⌉ ≤ D(f)`
+(`Protocol.rank_add_rank_not_le_leafCount`). This is the *rank bound* `⌈log₂ rank M_f⌉ ≤ D(f)`
 (`clog_rank_le_ecomplexity`) [Mehlhorn and Schmidt][MehlhornSchmidt1982],
 [Kushilevitz and Nisan, Chapter 1][KushilevitzNisan1997].
 
@@ -39,7 +39,7 @@ by at most one (`rank_communicationMatrix_le_rank_signMatrix`). In characteristi
 fails: the sign matrix is the all-ones matrix.
 
 When `f` is false somewhere, some leaf is labelled `false`, so the rank of the communication
-matrix is less than the number of leaves (`Protocol.rank_communicationMatrix_lt_leaves`) and less
+matrix is less than the number of leaves (`Protocol.rank_communicationMatrix_lt_leafCount`) and less
 than `2 ^ d` (`Protocol.rank_communicationMatrix_lt_two_pow`). A protocol that is only correct on a
 rectangle `A × B` bounds the rank of the corresponding submatrix
 (`Protocol.Solves.rank_communicationMatrix_le`).
@@ -58,21 +58,21 @@ rank of its communication matrix over the reals (`LogRankConjecture`) [LovaszSak
 
 * `Cslib.Communication.Protocol.rank_communicationMatrix_le`: the rank of the communication matrix
   is at most the number of leaves labelled `true`.
-* `Cslib.Communication.Protocol.rank_add_rank_not_le_leaves`: the ranks of the matrices of `f` and
-  of `!f` add up to at most the number of leaves.
+* `Cslib.Communication.Protocol.rank_add_rank_not_le_leafCount`: the ranks of the matrices of `f`
+  and of `!f` add up to at most the number of leaves.
 * `Cslib.Communication.clog_rank_le_ecomplexity`: the rank bound.
 * `Cslib.Communication.Protocol.rank_comp_run_le`,
-  `Cslib.Communication.Protocol.rank_comp_le_leaves`: the rank bound for any relabelling of the
+  `Cslib.Communication.Protocol.rank_comp_le_leafCount`: the rank bound for any relabelling of the
   outputs.
 * `Cslib.Communication.Protocol.Solves.rank_communicationMatrix_le`: the rank bound on a rectangle.
-* `Cslib.Communication.Protocol.rank_communicationMatrix_lt_leaves`,
+* `Cslib.Communication.Protocol.rank_communicationMatrix_lt_leafCount`,
   `Cslib.Communication.Protocol.rank_communicationMatrix_lt_two_pow`: the strict rank bound for
   functions that are false somewhere.
 * `Cslib.Communication.rank_signMatrix_le`,
   `Cslib.Communication.rank_communicationMatrix_le_rank_signMatrix`: the sign matrix has rank at
   most one more than the communication matrix, and when `2 ≠ 0` the two ranks differ by at most
   one.
-* `Cslib.Communication.Protocol.rank_signMatrix_le_leaves`: the rank bound for sign matrices.
+* `Cslib.Communication.Protocol.rank_signMatrix_le_leafCount`: the rank bound for sign matrices.
 
 ## References
 
@@ -111,7 +111,7 @@ at `x` and `y` has rank at most the size of any set `T` of leaves outside which 
 labels: it is the sum, over the leaves in `T`, of rank-one matrices supported on their
 rectangles. -/
 theorem rank_comp_run_le {X' Y' : Type*} [Fintype Y'] (p : Protocol X Y Z) (a : X' → X)
-    (b : Y' → Y) (g : Z → R) {T : Finset (Fin p.leaves)}
+    (b : Y' → Y) (g : Z → R) {T : Finset (Fin p.leafCount)}
     (hT : ∀ i ∉ T, g (p.leafOutput i) = 0) :
     (Matrix.of fun x y => g (p.run (a x) (b y))).rank ≤ #T := by
   classical
@@ -163,8 +163,8 @@ variable {f : X → Y → Z} {p : Protocol X Y Z}
 
 /-- If a protocol computes `f`, then for every relabelling `g` of the outputs, the matrix with
 entry `g (f x y)` at `x` and `y` has rank at most the number of leaves. -/
-theorem rank_comp_le_leaves (hp : p.run = f) (g : Z → R) :
-    (Matrix.of fun x y => g (f x y)).rank ≤ p.leaves := by
+theorem rank_comp_le_leafCount (hp : p.run = f) (g : Z → R) :
+    (Matrix.of fun x y => g (f x y)).rank ≤ p.leafCount := by
   subst hp
   exact (rank_comp_run_le p id id g (T := univ) fun i hi => absurd (mem_univ i) hi).trans_eq
     (card_fin _)
@@ -173,7 +173,7 @@ theorem rank_comp_le_leaves (hp : p.run = f) (g : Z → R) :
 matrix with entry `g (f x y)` at `x` and `y` has rank at most `2 ^ d`. -/
 theorem rank_comp_le_two_pow (hp : p.run = f) (g : Z → R) :
     (Matrix.of fun x y => g (f x y)).rank ≤ 2 ^ p.depth :=
-  (rank_comp_le_leaves hp g).trans p.leaves_le_two_pow_depth
+  (rank_comp_le_leafCount hp g).trans p.leafCount_le_two_pow_depth
 
 end Comp
 
@@ -187,24 +187,24 @@ theorem rank_communicationMatrix_le (hp : p.run = f) :
 
 /-- The ranks of the communication matrices of `f` and of its negation add up to at most the
 number of leaves of a protocol computing `f`. -/
-theorem rank_add_rank_not_le_leaves (hp : p.run = f) :
+theorem rank_add_rank_not_le_leafCount (hp : p.run = f) :
     (communicationMatrix R f).rank + (communicationMatrix R fun x y => !f x y).rank ≤
-      p.leaves := by
+      p.leafCount := by
   refine (add_le_add (rank_communicationMatrix_le hp)
     (rank_communicationMatrix_comp_le hp not)).trans ?_
   rw [← card_union_of_disjoint (disjoint_filter.mpr fun i _ h => by simp [h])]
-  exact (card_le_univ _).trans_eq (card_fin p.leaves)
+  exact (card_le_univ _).trans_eq (card_fin p.leafCount)
 
 /-- A protocol computing `f` sends at least `log₂` of the rank of its communication matrix bits. -/
 theorem rank_communicationMatrix_le_two_pow (hp : p.run = f) :
     (communicationMatrix R f).rank ≤ 2 ^ p.depth :=
   (rank_communicationMatrix_le hp).trans ((card_le_univ _).trans
-    ((card_fin p.leaves).trans_le p.leaves_le_two_pow_depth))
+    ((card_fin p.leafCount).trans_le p.leafCount_le_two_pow_depth))
 
 /-- **The strict rank bound.** If a protocol computes a function `f` that is false somewhere, the
 rank of the communication matrix of `f` is less than the number of leaves. -/
-theorem rank_communicationMatrix_lt_leaves (hp : p.run = f) (h : ∃ x y, f x y = false) :
-    (communicationMatrix R f).rank < p.leaves := by
+theorem rank_communicationMatrix_lt_leafCount (hp : p.run = f) (h : ∃ x y, f x y = false) :
+    (communicationMatrix R f).rank < p.leafCount := by
   classical
   obtain ⟨x, y, hxy⟩ := h
   refine (rank_communicationMatrix_le hp).trans_lt
@@ -216,7 +216,7 @@ theorem rank_communicationMatrix_lt_leaves (hp : p.run = f) (h : ∃ x y, f x y 
 communication matrix of `f` is less than `2 ^ d`. -/
 theorem rank_communicationMatrix_lt_two_pow (hp : p.run = f) (h : ∃ x y, f x y = false) :
     (communicationMatrix R f).rank < 2 ^ p.depth :=
-  (rank_communicationMatrix_lt_leaves hp h).trans_le p.leaves_le_two_pow_depth
+  (rank_communicationMatrix_lt_leafCount hp h).trans_le p.leafCount_le_two_pow_depth
 
 end Protocol
 
@@ -301,13 +301,13 @@ variable [Fintype Y] {R : Type*} [CommRing R] [StrongRankCondition R] {f : X →
 
 /-- The rank of the sign matrix of a function computed by a protocol is at most the number of
 leaves. -/
-theorem rank_signMatrix_le_leaves (hp : p.run = f) : (signMatrix R f).rank ≤ p.leaves :=
-  rank_comp_le_leaves hp fun b => if b then -1 else 1
+theorem rank_signMatrix_le_leafCount (hp : p.run = f) : (signMatrix R f).rank ≤ p.leafCount :=
+  rank_comp_le_leafCount hp fun b => if b then -1 else 1
 
 /-- The rank of the sign matrix of a function computed by a protocol sending `d` bits is at most
 `2 ^ d`. -/
 theorem rank_signMatrix_le_two_pow (hp : p.run = f) : (signMatrix R f).rank ≤ 2 ^ p.depth :=
-  (rank_signMatrix_le_leaves hp).trans p.leaves_le_two_pow_depth
+  (rank_signMatrix_le_leafCount hp).trans p.leafCount_le_two_pow_depth
 
 end Protocol
 
