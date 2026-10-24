@@ -122,11 +122,11 @@ example (left right : Bool) :
     (cipher_supported left) (cipher_supported right)
 
 -- Both dimensions and both entire raw words vary with the input.
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : ℕ × ℕ × List Bool × List Bool => decryptSerialized p.1 p.2.1 p.2.2.1 p.2.2.2)
     (encPair encUnary (encPair encUnary (encPair encBits encBits))) encBool := by fun_prop
 
-example : ComputableTidilyInPolyTime
+example : ComputableInPolyTime
     (fun p : ℕ × ℕ × List Bool × List Bool => nandSerialized p.1 p.2.1 p.2.2.1 p.2.2.2)
     (encPair encUnary (encPair encUnary (encPair encBits encBits))) encBits := by fun_prop
 
@@ -165,14 +165,14 @@ info: 'Cslib.Crypto.Homomorphic.GSW.keyGenSerialized_nand_correct' depends on ax
 #guard_msgs in
 #print axioms keyGenSerialized_nand_correct
 /--
-info: 'Cslib.Crypto.Homomorphic.GSW.computableTidilyInPolyTime_decryptSerialized' depends on axioms:
+info: 'Cslib.Crypto.Homomorphic.GSW.computableInPolyTime_decryptSerialized' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms computableTidilyInPolyTime_decryptSerialized
+#print axioms computableInPolyTime_decryptSerialized
 /--
-info: 'Cslib.Crypto.Homomorphic.GSW.computableTidilyInPolyTime_nandSerialized' depends on axioms:
+info: 'Cslib.Crypto.Homomorphic.GSW.computableInPolyTime_nandSerialized' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms computableTidilyInPolyTime_nandSerialized
+#print axioms computableInPolyTime_nandSerialized
