@@ -183,6 +183,13 @@ theorem isPPTOn_learn {source : α → ProbComp (List Bool × Bool)} {base : α 
     IsPPTOn input encBits (fun a =>
       learn evaluate (source a) (base a) (count a) c d (width a) (inverseGap a)
         (params a) (state a)) := by
+  have hevaluate := hevaluate.tidy
+  have hbase := hbase.tidy
+  have hcount := hcount.tidy
+  have hwidth := hwidth.tidy
+  have hgap := hgap.tidy
+  have hparams := hparams.tidy
+  have hstate := hstate.tidy
   unfold learn
   fun_prop
 

@@ -34,12 +34,11 @@ example {α β γ : Type} {input : α ↪ List Bool} {middle : β ↪ List Bool}
       finish b) := by
   fun_prop
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- GGM's existing evaluator proof works after any certified seed/path sampler.
 example {α : Type} {input : α ↪ List Bool}
     {sample : α → ProbComp (List Bool × List Bool)} {generator : List Bool → List Bool}
     (hsample : IsPPTOn input (encPair encBits encBits) sample)
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits) :
+    (hgenerator : ComputableInPolyTime generator encBits encBits) :
     IsPPTOn input encBits (fun a => do
       let pair ← sample a
       pure (Crypto.GGM.eval generator pair.1 pair.2)) := by
@@ -70,11 +69,10 @@ example {sample : List Bool → ProbComp Bool} (hsample : IsPPTOn encBits encBoo
       pure (first :: second :: word)) := by
   fun_prop
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 -- GGM consumes the original query path after a seed has been sampled.
 example {sample : List Bool → ProbComp (List Bool)} {generator : List Bool → List Bool}
     (hsample : IsPPTOn encBits encBits sample)
-    (hgenerator : ComputableTidilyInPolyTime generator encBits encBits) :
+    (hgenerator : ComputableInPolyTime generator encBits encBits) :
     IsPPTOn encBits encBits (fun path => do
       let seed ← sample path
       pure (Crypto.GGM.eval generator seed path)) := by

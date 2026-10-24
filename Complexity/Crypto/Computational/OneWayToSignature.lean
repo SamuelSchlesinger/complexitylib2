@@ -138,7 +138,7 @@ theorem SignatureScheme.OneTimeEUFCMA.exists_oneWay {S : SignatureScheme}
     dsimp [schedule]
     polytime
   have hparam_unary : ComputableTidilyInPolyTime param encUnary encUnary :=
-    GeneratorReindex.isPolyTime_parameter hsched .id'
+    (GeneratorReindex.isPolyTime_parameter (.of_tidy hsched) (.of_tidy .id')).tidy
   have hparam : ComputableTidilyInPolyTime (fun seed : List Bool => param seed.length)
       encBits encUnary :=
     hparam_unary.comp ComputableTidilyInPolyTime.length_bits
@@ -602,7 +602,7 @@ noncomputable def lamportInverter (f : List Bool → List Bool)
 theorem isPPT_lamportInverter {f : List Bool → List Bool}
     (hf : ComputableInPolyTime f encBits encBits) {adversary : Forger}
     (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
-    IsPPT encBits (lamportInverter f (.of_tidy hf) adversary) := by
+    IsPPT encBits (lamportInverter f hf adversary) := by
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hf
   have hrun_base := (lamportScheme f (.of_tidy hf)).isPPTOn_run_oneTimeSigningOracle hadversary
   have hj : IsPPTOn (encPair encUnary encBits) encUnary
@@ -685,7 +685,7 @@ theorem OneWay.oneTimeEUFCMA_lamport {f : List Bool → List Bool} (hf : OneWay 
   apply SignatureScheme.OneTimeEUFCMA.of_negligible
   intro adversary hadversary
   let inverter := lamportInverter f hf.polyTime adversary
-  have hinv_ppt : IsPPT encBits inverter := isPPT_lamportInverter hf.polyTime.tidy hadversary
+  have hinv_ppt : IsPPT encBits inverter := isPPT_lamportInverter hf.polyTime hadversary
   have hinv_neg := hf.inversion_negligible inverter hinv_ppt
   have htwo_poly : ComputableTidilyInPolyTime (fun n : ℕ => 2 * n) encUnary encUnary := by polytime
   have hscaled : Negligible (fun n =>
