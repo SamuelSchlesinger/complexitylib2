@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Cslib.Foundations.Logic.InferenceSystem
 public import Complexity.Logics.Propositional.Resolution.Proof
 public import Complexity.Computability.DecisionTree.Leaves
 import Complexity.Logics.Propositional.Resolution.SizeWidth
@@ -47,12 +48,17 @@ nodes, so by induction its restriction is refutable in width `k + b - 1`, and th
 ## Main definitions
 
 * `Cslib.Logic.PL.CNF.Derivation`, `Cslib.Logic.PL.CNF.Derivation.size`: tree-like derivations
-  and their number of nodes.
+  and their number of nodes, providing `Cslib.Logic.InferenceSystem` (`{d | d ∈ φ}⇓c`) and
+  `Cslib.Logic.HasInferenceSystem` (`⇓(φ, c)`) instances.
 * `Cslib.Logic.PL.CNF.Derivation.toDecisionTree`: the decision tree of a tree-like derivation.
 * `Cslib.DecisionTree.FindsFalsifiedClause`: decision trees finding falsified clauses.
 
 ## Main results
 
+* `Cslib.Logic.PL.CNF.derives_iff_nonempty_derivation`,
+  `Cslib.Logic.PL.CNF.derives_iff_derivableIn`,
+  `Cslib.Logic.PL.CNF.derives_iff_derivable`: `φ.Derives c` is equivalent to
+  `Nonempty (φ.Derivation c)` and to `InferenceSystem.DerivableIn` / `InferenceSystem.Derivable`.
 * `Cslib.Logic.PL.CNF.Derivation.restrict`: restricting a tree-like derivation.
 * `Cslib.Logic.PL.CNF.Derivation.findsFalsifiedClause_toDecisionTree`,
   `Cslib.DecisionTree.FindsFalsifiedClause.exists_derivation`: tree-like refutations and decision
@@ -233,6 +239,46 @@ theorem eval_toDecisionTree : {c : Clause V} → (d : φ.Derivation c) → {σ :
       · exact hσ' l (Clause.mem_resolvent.2 (Or.inr ⟨hl, hlv⟩)) hl'
 
 end Derivation
+
+/-- A derivable clause has a tree-like derivation, unfolding each shared premise into its own
+subtree. -/
+theorem Derives.nonempty_derivation (h : φ.Derives c) : Nonempty (φ.Derivation c) := by
+  induction h with
+  | mem hc => exact ⟨.mem hc⟩
+  | resolvent v _ _ hv₁ hv₂ ih₁ ih₂ =>
+    obtain ⟨d₁⟩ := ih₁
+    obtain ⟨d₂⟩ := ih₂
+    exact ⟨.resolvent v d₁ d₂ hv₁ hv₂⟩
+
+/-- A clause is derivable from `φ` if and only if it has a tree-like derivation from `φ`. -/
+theorem derives_iff_nonempty_derivation : φ.Derives c ↔ Nonempty (φ.Derivation c) :=
+  ⟨Derives.nonempty_derivation, fun ⟨d⟩ => d.derives⟩
+
+/-- Tree-like resolution derivations from `φ` as a `Cslib.Logic.InferenceSystem` indexed by the
+clauses of `φ` (`{d // d ∈ φ}⇓c`). -/
+instance (φ : CNF V) : InferenceSystem {d // d ∈ φ} (Clause V) where
+  derivation := φ.Derivation
+
+/-- Tree-like resolution derivations from `φ` as a `Cslib.Logic.InferenceSystem` indexed by the
+clause set `{d | d ∈ φ}` (`{d | d ∈ φ}⇓c`). -/
+instance (φ : CNF V) : InferenceSystem ({d | d ∈ φ} : Set (Clause V)) (Clause V) where
+  derivation := φ.Derivation
+
+/-- Tree-like resolution derivations as a canonical `Cslib.Logic.HasInferenceSystem` on
+formula–clause pairs (`⇓(φ, c)`). -/
+instance : HasInferenceSystem (CNF V × Clause V) where
+  derivation p := p.1.Derivation p.2
+
+/-- Derivability by resolution is `Cslib.Logic.InferenceSystem.DerivableIn` for the clauses of
+`φ`. -/
+theorem derives_iff_derivableIn :
+    φ.Derives c ↔ InferenceSystem.DerivableIn {d | d ∈ φ} c :=
+  derives_iff_nonempty_derivation
+
+/-- Derivability by resolution is `Cslib.Logic.InferenceSystem.Derivable` for the pair `(φ, c)`. -/
+theorem derives_iff_derivable :
+    φ.Derives c ↔ InferenceSystem.Derivable (φ, c) :=
+  derives_iff_nonempty_derivation
 
 end CNF
 
