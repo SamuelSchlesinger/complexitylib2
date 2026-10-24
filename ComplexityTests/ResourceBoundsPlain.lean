@@ -9,6 +9,7 @@ import Complexity.Computability.Complexity.Classes.Space.TQBF.Membership
 import Complexity.Computability.Complexity.Parameterized
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace.Plain
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 import Complexity.Tactic.PolyTime
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
@@ -20,7 +21,73 @@ the deciders for `TQBF` and `SAT`, give plain ones. -/
 
 namespace ComplexityTests.ResourceBoundsPlain
 
+universe u v
+
 open Cslib Cslib.Complexity Turing Turing.MultiTapeTM
+
+/-! ### Independent plain polynomial degrees -/
+
+/-- A constant machine works on arbitrary encodings in unrelated universes, with zero degrees. -/
+theorem constant_degree {α β : Type*} (encIn : α ↪ List Bool) (encOut : β ↪ List Bool)
+    (b : β) : ComputableInDegree (Function.const α b) encIn encOut 0 0 := by
+  obtain ⟨c, hc⟩ := computableInTimeAndSpace_of_const (encIn := encIn) (encOut := encOut) b
+  exact ⟨⟨_, _, DegreeBounded.const c, DegreeBounded.const 0, hc⟩,
+    DegreeBounded.const (encOut b).length⟩
+
+example {α : Type u} {β : Type v} (encIn : α ↪ List Bool) (encOut : β ↪ List Bool) (b : β) :
+    ComputableInPolyTime (Function.const α b) encIn encOut :=
+  (constant_degree encIn encOut b).computableInPolyTime
+
+/-- The actual copy machine needs no output charge on its zero-workspace realization. -/
+theorem id_degree : ComputableInDegree (id : List Bool → List Bool) encBits encBits 1 1 :=
+  .of_bounds (DegreeBounded.self.add_const 1) (DegreeBounded.const 0)
+    computableInTimeAndSpace_id
+
+example : ComputableInDegree (id : List Bool → List Bool) encBits encBits 2 1 :=
+  id_degree.mono
+
+/-- Cost degree two does not authorize replacing the independent output degree by zero. -/
+example : ¬ComputableInDegree (id : List Bool → List Bool) encBits encBits 2 0 := by
+  rintro ⟨_, c, hl⟩
+  have h := hl (List.replicate (c + 1) true)
+  simp [encBits] at h
+
+/-- A small cumulative Stretch-shaped bound: quadratic rounds times linear callback cost give
+cost degree three, while the seed plus emitted rounds have output degree two. The realization
+is supplied once for both independent resource functions. -/
+theorem degree_of_streaming_bounds {f : List Bool → List Bool} {c : ℕ}
+    (hstream : ComputableInTimeAndSpace f encBits encBits
+      (fun w => c * ((w.length + 1) ^ 2 + w.length + w.length ^ 2 +
+        w.length ^ 2 * ((w.length + 1) + w.length + 1) + 1))
+      (fun w => c * ((w.length + 1) ^ 2 + w.length + w.length ^ 2 + 1)))
+    (hl : ∀ w, (f w).length ≤ w.length + w.length ^ 2) :
+    ComputableInDegree f encBits encBits 3 2 := by
+  have hn : DegreeBounded (fun w : List Bool => w.length) (fun w => w.length) 1 :=
+    DegreeBounded.self
+  have hp : DegreeBounded (fun w : List Bool => w.length) (fun w => (w.length + 1) ^ 2) 2 :=
+    ⟨1, fun _ => by simp⟩
+  have hround := ((hn.add_const 1).add hn).add_const 1
+  have hn2 : DegreeBounded (fun w : List Bool => w.length) (fun w => w.length ^ 2) 2 := by
+    simpa only [pow_two] using hn.mul hn
+  have ht := ((((hp.mono_deg (by decide)).add (hn.mono_deg (by decide))).add
+    (hn2.mono_deg (by decide))).add (hn2.mul hround)).add_const 1 |>.smul c
+  have hs := (((hp.add (hn.mono_deg (by decide))).add hn2).add_const 1).smul c
+  exact ⟨⟨_, _, ht, hs.mono_deg (by decide), hstream⟩,
+    ((hn.mono_deg (by decide)).add hn2).mono hl⟩
+
+/-- The cumulative-bound client is inhabited by an upstream machine, not merely conditional. -/
+example : ComputableInDegree (id : List Bool → List Bool) encBits encBits 3 2 := by
+  have h : ComputableInDegree (id : List Bool → List Bool) encBits encBits 3 2 := by
+    apply degree_of_streaming_bounds (c := 1)
+    · exact computableInTimeAndSpace_id.mono (fun w => by simp [encBits]; omega)
+        (fun _ => Nat.zero_le _)
+    · intro w
+      exact Nat.le_add_right _ _
+  fail_if_success
+    have : ComputableInDegree (id : List Bool → List Bool) encBits encBits 2 2 := h.mono
+  fail_if_success
+    have : ComputableInDegree (id : List Bool → List Bool) encBits encBits 3 1 := h.mono
+  exact h
 
 /-! ### From upstream machines to tidy certificates -/
 

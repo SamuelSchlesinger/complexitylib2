@@ -1077,6 +1077,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.S
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy.Redirect
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
+public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Run
 public import Complexity.Computability.Machines.Turing.MultiTape.SingleTape
 public import Complexity.Computability.Machines.Turing.MultiTape.Space
