@@ -34,3 +34,27 @@ example {α : Type} {input : α ↪ List Bool} {width row : α → ℕ} {word : 
 
 example : Cslib.BitString.listRow 0 7 [true] = [] := by decide
 example : Cslib.BitString.listRow 3 0 [true] = [true, false, false] := by decide
+
+-- The complete framed source is reused by both a raw-word operation and its unary count.
+example : ComputableInPolyTime
+    (fun votes : List Bool => Cslib.BitString.listNonpositiveMargin votes
+      (Cslib.BitString.listStrictMajority votes)) (encList encBool) encBool := by
+  fun_prop
+
+example {α : Type} {input : α ↪ List Bool} {votes : α → List Bool}
+    (hvotes : ComputableInPolyTime votes input encBits) :
+    ComputableInPolyTime (fun a => (votes a).count true) input encUnary := by
+  fun_prop
+
+-- A fixed Boolean operation needs no separate computational assumption.
+example (op : Bool → Bool → Bool) :
+    ComputableInPolyTime (fun p : List Bool × List Bool => p.1.zipWith op p.2)
+      (encPair encBits encBits) encBits := by
+  fun_prop
+
+-- The computed cap is essential to binary-to-unary conversion.
+example {α : Type} {input : α ↪ List Bool} {value bound : α → ℕ}
+    (hvalue : ComputableInPolyTime value input encNat)
+    (hbound : ComputableInPolyTime bound input encUnary) (hle : ∀ a, value a ≤ bound a) :
+    ComputableInPolyTime value input encUnary :=
+  ComputableInPolyTime.binary_to_unary_bounded hvalue hbound hle
