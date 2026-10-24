@@ -260,7 +260,7 @@ theorem computableTidilyInPolyTime_accepts [Finite Control] :
       accepts M q.1 q.2.1 q.2.2)
       (encPair encBits (encPair encBits encTaggedHistory)) encBool :=
   Interaction.computableTidilyInPolyTime_accepts matchTaggedOp Prod.snd M
-    (fun op => by unfold matchTaggedOp; fun_prop) (snd _ _)
+    (fun op => .of_tidy (by unfold matchTaggedOp; fun_prop)) (.of_tidy (snd _ _))
 
 /-! ### Correspondence between `accepts` and `coinProgram` against deterministic provers -/
 

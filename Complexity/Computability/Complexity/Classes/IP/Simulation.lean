@@ -236,8 +236,8 @@ section PolyTime
 open ComputableTidilyInPolyTime
 
 variable [Finite Control] [Fintype Operation] {encEntry : Entry ↪ List Bool}
-  (hmatch : ∀ op, ComputableTidilyInPolyTime (matchOp op) encEntry encBool)
-  (hpair : ComputableTidilyInPolyTime entryPair encEntry (encPair encBits encBits))
+  (hmatch : ∀ op, ComputableInPolyTime (matchOp op) encEntry encBool)
+  (hpair : ComputableInPolyTime entryPair encEntry (encPair encBits encBits))
 
 /-- Live replay states, encoded by their fields. -/
 private noncomputable abbrev encAliveState (encEntry : Entry ↪ List Bool) :
@@ -271,7 +271,8 @@ private theorem computableTidilyInPolyTime_answerFromHistory (op : Operation) (n
         answerFromHistory matchOp entryPair p.1.1 op next p.1.2)
       (encPair (encPair encUnary (encAliveState encEntry)) encBool)
       (encAliveState encEntry) := by
-  have hmatchOp := hmatch op
+  have hmatchOp := (hmatch op).tidy
+  have hpairTidy := hpair.tidy
   unfold answerFromHistory
   fun_prop
 
@@ -414,7 +415,8 @@ theorem computableTidilyInPolySpace_countAccepts [Finite Control]
       (encPair enc encHistory) encUnary := hfuel.comp (ComputableTidilyInPolyTime.fst _ _)
   have hacc := computableTidilyInPolyTime_accepts (fun _ _ => true) id MUnit
     (encEntry := encPair encBits encBits)
-    (fun _ => ComputableTidilyInPolyTime.const true) ComputableTidilyInPolyTime.id'
+    (fun _ => .of_tidy (ComputableTidilyInPolyTime.const true))
+    (.of_tidy ComputableTidilyInPolyTime.id')
   have hverify : ComputableTidilyInPolyTime
       (fun p : (α × History) × List Bool =>
         accepts (fun _ _ => true) id MUnit (enc p.1.1) p.2 p.1.2)
