@@ -38,7 +38,8 @@ The plain notion, `Turing.MultiTapeTM.ComputableInPolyTime`, is the one for defi
 statements; the tidy notion is a proof device. Proofs switch between them with
 `Turing.MultiTapeTM.ComputableInPolyTime.tidy` and
 `Turing.MultiTapeTM.ComputableInPolyTime.of_tidy`.
-The canonical closure and Boolean rules live in their original `PolyTime` and `PolyTime.Basic`
+The canonical closure and Boolean rules live in their original `PolyTime` and
+`PolyTime.Basic`
 providers as ordinary plain declarations. This module re-exports the core provider and retains
 the transitional construction bridges while the remaining topics are being converted. Ordinary topic rules remain in their original provider modules; this integration adds no
 parallel calculus or sidecar definitions.

@@ -10,7 +10,6 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Complexity
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 
-import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 
 /-!
 # Decoding descriptions of machines
@@ -53,13 +52,10 @@ def signDecoder : Decoder encSign where
   decode w := signOf (w.isEmpty, w.headD false)
   decode_enc m := by cases m <;> rfl
   computable := by
-    apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
-      let ⟨d, e, h⟩ := h
-      ⟨d, e, Internal.forgetDegree h⟩)
-    exact ⟨_, _, (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool)
+    exact ⟨_, _, (ComputableInDegree.of_finite (encIn := encPair encBool encBool)
     (encMid := encSign) signOf).comp
-      ((ComputableTidilyInDegree.isEmpty (enc₁ := encBool) (enc := encBits)).prod
-        (ComputableTidilyInDegree.headD (enc₁ := encBool) (enc := encBits) false))⟩
+      ((ComputableInDegree.isEmpty (enc₁ := encBool) (enc := encBits)).prod
+        (ComputableInDegree.headD (enc₁ := encBool) (enc := encBits) false))⟩
 
 /-- Symbols and blanks. -/
 def symDecoder : Decoder eSym := .option .unary

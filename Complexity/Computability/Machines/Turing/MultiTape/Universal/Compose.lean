@@ -31,7 +31,7 @@ and counting down its emitted symbols to the one needed.
 * `Turing.MultiTapeTM.ComputableInTimeAndSpace.comp_space`: composition within small space.
 * `Turing.MultiTapeTM.ComputableInTimeAndSpace.comp_logSpace`: logarithmic space is closed under
   composition.
-* `Turing.MultiTapeTM.Universal.computableTidily_compose`: the composition, on descriptions, as a
+* `Turing.MultiTapeTM.Universal.computable_compose`: the composition, on descriptions, as a
   multi-pass fold.
 -/
 
@@ -364,36 +364,36 @@ public abbrev eCtl : Ctl ↪ List Bool :=
 /-- The encoding of states of the fold. -/
 public abbrev eCSt : CSt ↪ List Bool := encPair eCtl (encPair encNat encUnary)
 
-open ComputableTidilyInO
+open ComputableInO
 
 /-- The input position of a configuration computed within bounds. -/
 lemma inputPos_inO {α : Type} {enc : α ↪ List Bool} {c : α → SCfg} {T S : α → ℕ}
-    (h : ComputableTidilyInO c enc eCfg T S) :
-    ComputableTidilyInO (fun a => (c a).inputPos) enc encNat T S :=
+    (h : ComputableInO c enc eCfg T S) :
+    ComputableInO (fun a => (c a).inputPos) enc encNat T S :=
   (h.of_enc_eq (encOut := eCfgFields)
     (g := fun a => ((c a).state, (c a).inputPos, (c a).workTapes)) fun _ => rfl).snd'.fst'
 
 /-- Whether a configuration computed within bounds has halted. -/
 lemma halted_inO {α : Type} {enc : α ↪ List Bool} {c : α → SCfg} {T S : α → ℕ}
-    (h : ComputableTidilyInO c enc eCfg T S) :
-    ComputableTidilyInO (fun a => (c a).state.isNone) enc encBool T S :=
-  ((ComputableTidilyInDegree.of_finite (encIn := encBool) (encMid := encBool)
+    (h : ComputableInO c enc eCfg T S) :
+    ComputableInO (fun a => (c a).state.isNone) enc encBool T S :=
+  ((ComputableInDegree.of_finite (encIn := encBool) (encMid := encBool)
     fun b : Bool => !b).inO_one.comp_linear
-      ((ComputableTidilyInDegree.isSome encUnary).inO_one.comp_linear
+      ((ComputableInDegree.isSome encUnary).inO_one.comp_linear
         (state_inO.comp_linear h))).of_enc_eq fun a => by
         simp only [Function.comp_apply]
         cases (c a).state <;> rfl
 
 /-- The symbol under a countdown, from the input position and the countdown. -/
 lemma countSym_inO {α : Type} {enc : α ↪ List Bool} {p k cur : α → ℕ} {T S : α → ℕ}
-    (hp : ComputableTidilyInO p enc encNat T S) (hk : ComputableTidilyInO k enc encNat T S)
-    (hcur : ComputableTidilyInO cur enc encUnary T S) :
-    ComputableTidilyInO (fun a => if p a = 0 ∨ k a ≠ 0 then none else some (cur a)) enc eSym
+    (hp : ComputableInO p enc encNat T S) (hk : ComputableInO k enc encNat T S)
+    (hcur : ComputableInO cur enc encUnary T S) :
+    ComputableInO (fun a => if p a = 0 ∨ k a ≠ 0 then none else some (cur a)) enc eSym
       (fun a => T a + (enc a).length) fun a => S a + (enc a).length := by
-  have hor := (ComputableTidilyInDegree.of_finite (encIn := encPair encBool encBool)
+  have hor := (ComputableInDegree.of_finite (encIn := encPair encBool encBool)
     (encMid := encBool) fun b : Bool × Bool => b.1 || !b.2).inO_one.comp_linear
       ((natIsZero.comp_linear hp).prod (natIsZero.comp_linear hk))
-  refine (((hor.ite (const none) ((ComputableTidilyInDegree.optionSome (enc₁ := encUnary)
+  refine (((hor.ite (const none) ((ComputableInDegree.optionSome (enc₁ := encUnary)
     (enc := eSym)).inO_one.comp_linear hcur)).of_enc_eq fun a => ?_)).mono 4 (fun a => ?_)
     fun a => ?_
   · simp only [Function.comp_apply]
@@ -416,7 +416,7 @@ public lemma wTime_le' (c : WCtx) : wTime c ≤ 2 * ((eWCtx c).length + 1) ^ 3 :
 
 /-- A step of `g`, with the symbol found by the countdown. -/
 public lemma stepG_inO :
-    ComputableTidilyInO (fun s : CSt => stepWith s.1.1.1.1 s.1.1.1.2 (gSym s.1))
+    ComputableInO (fun s : CSt => stepWith s.1.1.1.1 s.1.1.1.2 (gSym s.1))
     eCSt (encPair eCfg eSym) (fun s => ((eCSt s).length + 1) ^ 3) fun s => (eCSt s).length + 1 := by
   have hc := fst eCtl (encPair encNat encUnary)
   have hg := hc.fst'.fst'
@@ -444,7 +444,7 @@ public lemma stepG_inO :
     omega
 
 /-- A step of `f`, with the symbol found by the countdown over the input. -/
-public lemma stepF_inO : ComputableTidilyInO (fun s : CSt => stepWith s.1.1.2.1 s.1.1.2.2 (xSym s))
+public lemma stepF_inO : ComputableInO (fun s : CSt => stepWith s.1.1.2.1 s.1.1.2.2 (xSym s))
     eCSt (encPair eCfg eSym) (fun s => ((eCSt s).length + 1) ^ 3) fun s => (eCSt s).length + 1 := by
   have hc := fst eCtl (encPair encNat encUnary)
   have hn := snd eCtl (encPair encNat encUnary)
@@ -473,7 +473,7 @@ public lemma stepF_inO : ComputableTidilyInO (fun s : CSt => stepWith s.1.1.2.1 
     omega
 
 /-- The `g` branch of a step of the composition: a step of `g`, restarting `f`. -/
-lemma gBranch_inO : ComputableTidilyInO (fun s : CSt =>
+lemma gBranch_inO : ComputableInO (fun s : CSt =>
     (((s.1.1.1.1, (stepWith s.1.1.1.1 s.1.1.1.2 (gSym s.1)).1), (s.1.1.2.1, init s.1.1.2.1)),
       ((stepWith s.1.1.1.1 s.1.1.1.2 (gSym s.1)).1.inputPos, 0))) eCSt eCtl
     (fun s => ((eCSt s).length + 1) ^ 3) fun s => (eCSt s).length + 1 := by
@@ -503,7 +503,7 @@ lemma emitScan_eq (p : ℕ × ℕ) (o : Option ℕ) : emitScan p o =
 
 /-- The `f` branch of a step of the composition: a step of `f`, counting down its emitted
 symbol. -/
-lemma fBranch_inO : ComputableTidilyInO (fun s : CSt =>
+lemma fBranch_inO : ComputableInO (fun s : CSt =>
     ((s.1.1.1, (s.1.1.2.1, (stepWith s.1.1.2.1 s.1.1.2.2 (xSym s)).1)),
       emitScan s.1.2 (stepWith s.1.1.2.1 s.1.1.2.2 (xSym s)).2)) eCSt eCtl
     (fun s => ((eCSt s).length + 1) ^ 3) fun s => (eCSt s).length + 1 := by
@@ -511,11 +511,11 @@ lemma fBranch_inO : ComputableTidilyInO (fun s : CSt =>
   have ho := stepF_inO.snd'
   have hk := hc.snd'.fst'
   have hcur := hc.snd'.snd'
-  have hsome := (ComputableTidilyInDegree.isSome encUnary).inO_one.comp_linear ho
-  have hn := (ComputableTidilyInDegree.getD (enc₁ := encUnary) (enc := eSym) 0).inO_one.comp_linear
+  have hsome := (ComputableInDegree.isSome encUnary).inO_one.comp_linear ho
+  have hn := (ComputableInDegree.getD (enc₁ := encUnary) (enc := eSym) 0).inO_one.comp_linear
     ho
   have hk1 := (eq encNat).comp (hk.prod (const (encMid := encNat) 1))
-  have hsum := ComputableTidilyInO.append (g := fun s : CSt => s.1.2.2 +
+  have hsum := ComputableInO.append (g := fun s : CSt => s.1.2.2 +
     (stepWith s.1.1.2.1 s.1.1.2.2 (xSym s)).2.getD 0) (encOut := encUnary) hcur hn
     fun s => by simp
   have hnew := hsome.ite ((natPred.comp hk).prod (hk1.ite hsum hcur)) (hk.prod hcur)
@@ -552,7 +552,7 @@ lemma fBranch_inO : ComputableTidilyInO (fun s : CSt =>
     split_ifs <;> omega
 
 /-- A step of the composition at the end of a pass. -/
-lemma cstep_inO : ComputableTidilyInO (fun s : CSt => cstep s.1 (xSym s)) eCSt eCtl
+lemma cstep_inO : ComputableInO (fun s : CSt => cstep s.1 (xSym s)) eCSt eCtl
     (fun s => ((eCSt s).length + 1) ^ 3) fun s => (eCSt s).length + 1 := by
   have hcf := (fst eCtl (encPair encNat encUnary)).fst'.snd'.snd'
   refine (((halted_inO hcf).ite gBranch_inO fBranch_inO).of_enc_eq (g := fun s : CSt =>
@@ -566,7 +566,7 @@ lemma cstep_inO : ComputableTidilyInO (fun s : CSt => cstep s.1 (xSym s)) eCSt e
     split_ifs <;> omega
 
 /-- **The end of a pass.** -/
-public lemma cEnd_inO : ComputableTidilyInO cEnd eCSt eCSt
+public lemma cEnd_inO : ComputableInO cEnd eCSt eCSt
     (fun s => ((eCSt s).length + 1) ^ 3) fun s => (eCSt s).length + 1 :=
   (cstep_inO.prod ((inputPos_inO cstep_inO.fst'.snd'.snd').prod
     (const (encMid := encUnary) 0))).mono 3 (fun s => by
@@ -574,16 +574,16 @@ public lemma cEnd_inO : ComputableTidilyInO cEnd eCSt eCSt
       omega) fun s => by omega
 
 /-- **What a pass emits.** -/
-public lemma cEmit_inO : ComputableTidilyInO (fun s : CSt => gEmit s.1) eCSt encBits
+public lemma cEmit_inO : ComputableInO (fun s : CSt => gEmit s.1) eCSt encBits
     (fun s => ((eCSt s).length + 1) ^ 3) fun s => (eCSt s).length + 1 := by
   have hcf := (fst eCtl (encPair encNat encUnary)).fst'.snd'.snd'
   have ho := stepG_inO.snd'
-  have hsome := (ComputableTidilyInDegree.isSome encUnary).inO_one.comp_linear ho
-  have hn := (ComputableTidilyInDegree.getD (enc₁ := encUnary) (enc := eSym) 0).inO_one.comp_linear
+  have hsome := (ComputableInDegree.isSome encUnary).inO_one.comp_linear ho
+  have hn := (ComputableInDegree.getD (enc₁ := encUnary) (enc := eSym) 0).inO_one.comp_linear
     ho
-  have hz : ComputableTidilyInO (fun n => decide (n ≠ 0)) encUnary encBool
+  have hz : ComputableInO (fun n => decide (n ≠ 0)) encUnary encBool
       (fun n => (encUnary n).length) fun n => (encUnary n).length :=
-    ((ComputableTidilyInDegree.of_finite (encIn := encBool) (encMid := encBool)
+    ((ComputableInDegree.of_finite (encIn := encBool) (encMid := encBool)
       fun b : Bool => !b).inO_one.comp_linear (of_linear (.of_isEmpty (f := fun n => decide (n = 0))
         fun n => by cases n <;> simp))).of_enc_eq fun n => by simp
   have hb := (hz.comp_linear hn).of_enc_eq (encOut := encBits) (g := fun s : CSt =>
@@ -601,9 +601,9 @@ public lemma cEmit_inO : ComputableTidilyInO (fun s : CSt => gEmit s.1) eCSt enc
     split_ifs <;> omega
 
 /-- Whether another pass follows: `g` has not halted. -/
-public lemma cCont_inO : ComputableTidilyInO (fun s : CSt => s.1.1.1.2.state.isSome) eCSt encBool
+public lemma cCont_inO : ComputableInO (fun s : CSt => s.1.1.1.2.state.isSome) eCSt encBool
     (fun s => ((eCSt s).length + 1) ^ 3) fun s => (eCSt s).length + 1 :=
-  (((ComputableTidilyInDegree.isSome encUnary).inO_one.comp_linear
+  (((ComputableInDegree.isSome encUnary).inO_one.comp_linear
     (state_inO.comp_linear (fst eCtl (encPair encNat encUnary)).fst'.fst'.snd'))).mono 1
     (fun s => by
       have hL : (eCSt s).length + 1 ≤ ((eCSt s).length + 1) ^ 3 := Nat.le_self_pow (by norm_num) _
@@ -613,7 +613,7 @@ public lemma cCont_inO : ComputableTidilyInO (fun s : CSt => s.1.1.1.2.state.isS
       omega) fun s => by dsimp only [eCSt]; omega
 
 /-- **A round**: one bit of the countdown over the input. -/
-public lemma cNext_inO : ComputableTidilyInO cNext (encPair eCSt encBool) eCSt
+public lemma cNext_inO : ComputableInO cNext (encPair eCSt encBool) eCSt
     (fun p => ((encPair eCSt encBool p).length + 1) ^ 2)
     fun p => (encPair eCSt encBool p).length + 1 := by
   have hs := fst eCSt encBool
@@ -621,7 +621,7 @@ public lemma cNext_inO : ComputableTidilyInO cNext (encPair eCSt encBool) eCSt
   have hk := hs.snd'.fst'
   have hcur := hs.snd'.snd'
   have hk1 := (eq encNat).comp (hk.prod (const (encMid := encNat) 1))
-  have hbit := (ComputableTidilyInDegree.of_finite (encIn := encBool) (encMid := encUnary)
+  have hbit := (ComputableInDegree.of_finite (encIn := encBool) (encMid := encUnary)
     eBit).inO_one.comp_linear hb
   refine ((hs.fst'.prod ((natPred.comp hk).prod (hk1.ite hbit hcur))).of_enc_eq (g := cNext)
     fun p => ?_).mono 100 (fun p => ?_) fun p => ?_
@@ -684,8 +684,8 @@ public lemma length_eCSt_le (dg df : Desc) (w : List Bool) (y : List ℕ) (uf ug
         simp only [List.mem_range] at hj ⊢
         omega) ((run dg y (i / (uf + 1))).inputPos) 0 (by omega) (fun _ => rfl)
   obtain ⟨hkx, hcur⟩ := bitScan_le (w.take j) ((run df x (i % (uf + 1))).inputPos) 0 (by omega)
-  have h₁ := ComputableTidilyInO.length_encNat_mono (hk.trans hp)
-  have h₂ := ComputableTidilyInO.length_encNat_mono (hkx.trans hpf)
+  have h₁ := ComputableInO.length_encNat_mono (hk.trans hp)
+  have h₂ := ComputableInO.length_encNat_mono (hkx.trans hpf)
   simp only [emitCount] at hk hfound h₁ ⊢
   simp only [length_encPair, encUnary_apply, List.length_replicate, composeSpace, descLen,
     List.length_map, x] at *
@@ -719,9 +719,9 @@ lemma compose_time (c N L E Q : ℕ) (hE : E ≤ L) (hQ : 1 ≤ Q) :
 
 /-- **The composition, on given descriptions.** If the machine described by `df` halts on the
 bits of every input after `uf` steps with the symbols `y`, which are bits, and the machine
-described by `dg` halts on `y` after `ug` steps with the encoded value of `h`, then `h` is tidily
+described by `dg` halts on `y` after `ug` steps with the encoded value of `h`, then `h` is plainly
 computable in space linear in `composeSpace`. -/
-public theorem computableTidily_compose {α γ : Type} {encIn : α ↪ List Bool}
+public theorem computable_compose {α γ : Type} {encIn : α ↪ List Bool}
     {encOut : γ ↪ List Bool} (h : α → γ) (dg df : Desc) (y : α → List ℕ) (uf ug : α → ℕ)
     (hhaltf : ∀ a r, (run df ((encIn a).map eBit) r).state = none ↔ uf a ≤ r)
     (hy : ∀ a, ((List.range (uf a)).map fun j => (step df ((encIn a).map eBit)
@@ -729,7 +729,7 @@ public theorem computableTidily_compose {α γ : Type} {encIn : α ↪ List Bool
     (hbits : ∀ a, ∀ n ∈ y a, n ≤ 1)
     (hhaltg : ∀ a q, (run dg (y a) q).state = none ↔ ug a ≤ q) (hug : ∀ a, 0 < ug a)
     (hout : ∀ a, encOut (h a) = (simulate dg (y a) (ug a)).1.map fun n => decide (n ≠ 0)) :
-    ∃ c, ComputableTidilyInTimeAndSpace h encIn encOut
+    ∃ c, ComputableInTimeAndSpace h encIn encOut
       (fun a => c * (ug a * (uf a + 1) * ((encIn a).length + 1) ^ 2 *
         (composeSpace dg df ((encIn a).map eBit) (y a) (uf a) (ug a) + 1) ^ 3))
       (fun a => c * (composeSpace dg df ((encIn a).map eBit) (y a) (uf a) (ug a) + 1)) := by
@@ -741,15 +741,15 @@ public theorem computableTidily_compose {α γ : Type} {encIn : α ↪ List Bool
         (bitTr.events (encIn a)) j)).length ≤ L a := by
     rw [bitTr_events]
     exact length_eCSt_le dg df (encIn a) (y a) (uf a) (ug a) (hhaltf a) (hy a) (hbits a) hi j
-  have hinit : ComputableTidilyInO (fun _ : α => cInit dg df) encIn eCSt
+  have hinit : ComputableInO (fun _ : α => cInit dg df) encIn eCSt
       (fun a => (encIn a).length) fun _ => 0 := by
     obtain ⟨c₀, hc₀⟩ := computableInTimeAndSpace_of_const (encIn := encIn) (encOut := eCSt)
       (cInit dg df)
-    exact .of_bounds hc₀.computableTidilyInTimeAndSpace (2 * c₀ + 2 + (eCSt (cInit dg df)).length)
+    exact .of_bounds hc₀ (2 * c₀ + 2 + (eCSt (cInit dg df)).length)
       (fun a => by nlinarith) (fun _ => Nat.zero_le _) (fun a => by simp)
-  refine Exists.elim (ComputableTidilyInTimeAndSpace.multiPassFold_translate bitTr
+  refine Exists.elim (ComputableInTimeAndSpace.multiPassFold_translate bitTr
     (encQ := encUnit) hinit cNext_inO cEmit_inO cEnd_inO cCont_inO
-    (ComputableTidilyInO.const (encMid := encUnit) ())
+    (ComputableInO.const (encMid := encUnit) ())
     (passes := fun a => ug a * (uf a + 1) - 1) (g := h) (encOut := encOut) ?_ ?_
     (tMax := fun a => 9 * (L a + 1) ^ 3) (sMax := fun a => 9 * (L a + 1)) (lMax := L)
     ?_ ?_ ?_ ?_ ?_ ?_) fun c hc => ?_
@@ -907,7 +907,7 @@ public theorem ComputableInTimeAndSpace.comp_space {α β γ : Type} {encIn : α
   set dg := desc ⟨eg, heg⟩ eBit tmg
   choose uf huf_le huf using fun a => exists_haltsAt_of_runsInTime (htmf a).2.1
   choose ug hug_le hug using fun a => exists_haltsAt_of_runsInTime (htmg (f a)).2.1
-  obtain ⟨c, hc⟩ := computableTidily_compose (encIn := encIn) (encOut := encOut) (g ∘ f) dg df
+  obtain ⟨c, hc⟩ := computable_compose (encIn := encIn) (encOut := encOut) (g ∘ f) dg df
     (fun a => (encMid (f a)).map eBit) uf ug
     (fun a => run_desc_halted _ tmf (encIn a) (huf a))
     (fun a => (congrArg Prod.fst (simulate_eq df _ (uf a))).symm.trans
@@ -933,7 +933,7 @@ public theorem ComputableInTimeAndSpace.comp_space {α β γ : Type} {encIn : α
     have := composeSpace_le (descLen dg) (descLen df) _ _ _ _ _ _ _ _ hg hf
     simp only [composeSpace, List.length_map] at this ⊢
     omega
-  refine ⟨c * K ^ 3, hc.computableInTimeAndSpace.mono (fun a => ?_) fun a => ?_⟩
+  refine ⟨c * K ^ 3, hc.mono (fun a => ?_) fun a => ?_⟩
   · exact final_time_le c K _ _ _ _ _ (Nat.mul_le_mul (by have := hug_le a; omega)
       (by have := huf_le a; omega)) (hK a)
   · exact final_space_le c K _ _ (hK a)
@@ -985,10 +985,10 @@ public theorem ComputableInTimeAndSpace.comp_logSpace {α β γ : Type} {encIn :
         (encNat ((encMid (f a)).length + 1)).length + 1 ≤
           M * (encNat ((encIn a).length + 1)).length := by
     have hℓ : 1 ≤ (encNat ((encIn a).length + 1)).length :=
-      ComputableTidilyInO.length_encNat_mono (m := 1) (by omega)
+      ComputableInO.length_encNat_mono (m := 1) (by omega)
     have hy : (encNat ((encMid (f a)).length + 1)).length ≤
         (d + 1) * (encNat ((encIn a).length + 1)).length :=
-      (ComputableTidilyInO.length_encNat_mono (hlen a)).trans
+      (ComputableInO.length_encNat_mono (hlen a)).trans
         ((length_encNat_pow_le _ d).trans (by nlinarith))
     have := Nat.mul_le_mul_left kg hy
     have e : M * (encNat ((encIn a).length + 1)).length =
