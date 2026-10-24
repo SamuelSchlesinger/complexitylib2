@@ -47,6 +47,8 @@ transcript/error and an extractor's implementation require separate proofs.
   `Cslib.Probability.eval_sampleUniformInterval_some_toReal`: the full interval law.
 * `Cslib.Probability.sampleUniformInterval_conditional`: conditional uniformity at observable
   success events.
+* `Cslib.Probability.sampleUniformInterval_test_error_le`: unconditional interval error,
+  including the binary-bound implementation.
 * `Cslib.Probability.eval_sampleIntegerBox_some`, `Cslib.Probability.eval_sampleIntegerBox_none`:
   the full joint success/failure law.
 * `Cslib.Probability.sampleIntegerBox_test_error_le`: explicit unconditional statistical error.
@@ -606,22 +608,20 @@ private theorem optional_test {α : Type} (μ : PMF (Option α)) (ν : PMF α)
     · simp [ht, h]
     · simp [ht]
 
-/-- Any Boolean test changes acceptance probability by at most the explicit failure mass when
-compared with an exact uniform box. This is an unconditional statistical-error statement. -/
-theorem sampleIntegerBox_test_error (radius dimension attempts : ℕ)
-    (test : Option (List ℤ) → Bool) :
-    |(((ProbComp.eval (sampleIntegerBox radius dimension attempts)).map test) true).toReal -
-      (((integerBoxLaw radius dimension).map (fun out => test (some out))) true).toReal| ≤
-        (ProbComp.eval (sampleIntegerBox radius dimension attempts) none).toReal := by
-  let μ := ProbComp.eval (sampleIntegerBox radius dimension attempts)
-  let ν := integerBoxLaw radius dimension
-  let mass : ℝ≥0∞ := (intervalSuccess (2 * radius + 1) attempts : ℝ≥0∞) ^ dimension
-  have hd := optional_test μ ν mass (eval_sampleIntegerBox_some radius dimension attempts) test
+private theorem optional_test_error {α : Type} (μ : PMF (Option α)) (ν : PMF α)
+    (mass : ℝ≥0∞) (hmass_top : mass ≠ ⊤) (h : ∀ a, μ (some a) = mass * ν a)
+    (test : Option α → Bool) :
+    |((μ.map test) true).toReal - ((ν.map (fun a => test (some a))) true).toReal| ≤
+      (μ none).toReal := by
+  have hd := optional_test μ ν mass h test
+  have htotal := μ.tsum_coe
+  rw [tsum_option_eq] at htotal
+  simp_rw [h] at htotal
+  rw [ENNReal.tsum_mul_left, ν.tsum_coe, mul_one] at htotal
   have hmass : mass.toReal = 1 - (μ none).toReal := by
-    dsimp only [mass, μ]
-    rw [ENNReal.toReal_pow, ENNReal.coe_toReal, eval_sampleIntegerBox_none,
-      ← intervalSuccess_coe]
-    ring
+    have hr := congrArg ENNReal.toReal htotal
+    rw [ENNReal.toReal_add (μ.apply_ne_top _) hmass_top, ENNReal.toReal_one] at hr
+    linarith
   let u := ((ν.map (fun out => test (some out))) true).toReal
   have hu0 : 0 ≤ u := ENNReal.toReal_nonneg
   have hu1 : u ≤ 1 := by
@@ -633,7 +633,7 @@ theorem sampleIntegerBox_test_error (radius dimension attempts : ℕ)
     · exact μ.apply_ne_top _
     · exact ENNReal.zero_ne_top
   have hprod : mass * (ν.map (fun out => test (some out))) true ≠ ⊤ :=
-    ENNReal.mul_ne_top (ENNReal.pow_ne_top ENNReal.coe_ne_top) (PMF.apply_ne_top _ _)
+    ENNReal.mul_ne_top hmass_top (PMF.apply_ne_top _ _)
   have hreal := congrArg ENNReal.toReal hd
   rw [ENNReal.toReal_add hfirst hprod, ENNReal.toReal_mul, hmass] at hreal
   change |(μ.map test true).toReal - u| ≤ (μ none).toReal
@@ -647,6 +647,34 @@ theorem sampleIntegerBox_test_error (radius dimension attempts : ℕ)
     rw [hreal, show (μ none).toReal + (1 - (μ none).toReal) * u - u =
       (μ none).toReal * (1 - u) by ring, abs_of_nonneg (mul_nonneg hf0 (sub_nonneg.mpr hu1))]
     simpa only [mul_one] using mul_le_mul_of_nonneg_left (by linarith : 1 - u ≤ 1) hf0
+
+/-- Any Boolean test changes acceptance probability by at most the explicit failure mass when
+compared with an exact uniform box. This is an unconditional statistical-error statement. -/
+theorem sampleIntegerBox_test_error (radius dimension attempts : ℕ)
+    (test : Option (List ℤ) → Bool) :
+    |(((ProbComp.eval (sampleIntegerBox radius dimension attempts)).map test) true).toReal -
+      (((integerBoxLaw radius dimension).map (fun out => test (some out))) true).toReal| ≤
+        (ProbComp.eval (sampleIntegerBox radius dimension attempts) none).toReal :=
+  optional_test_error _ _ _ (ENNReal.pow_ne_top ENNReal.coe_ne_top)
+    (eval_sampleIntegerBox_some radius dimension attempts) test
+
+/-- For a positive interval, every Boolean test has unconditional error at most the dyadic
+retry-failure bound against exact uniformity. This applies to binary cryptographic bounds too;
+it neither discards failure nor asserts an exact non-dyadic fair-bit sampler. -/
+theorem sampleUniformInterval_test_error_le (bound attempts : ℕ) [NeZero bound]
+    (test : Option ℕ → Bool) :
+    |(((ProbComp.eval (sampleUniformInterval bound attempts)).map test) true).toReal -
+      ((((PMF.uniformOfFintype (Fin bound)).map Fin.val).map
+        (fun value => test (some value))) true).toReal| ≤ (1 / 2 : ℝ) ^ attempts := by
+  calc
+    _ ≤ (ProbComp.eval (sampleUniformInterval bound attempts) none).toReal :=
+      optional_test_error _ _ _ ENNReal.coe_ne_top
+        (fun value => eval_sampleUniformInterval_some_eq bound attempts value) test
+    _ ≤ _ := by
+      rw [eval_sampleUniformInterval_none, ENNReal.toReal_pow, ENNReal.coe_toReal]
+      gcongr
+      have h := intervalFailure_le_half (Nat.pos_of_ne_zero (NeZero.ne bound))
+      exact_mod_cast h
 
 /-- Explicit statistical error of the bounded box sampler for every Boolean test. -/
 theorem sampleIntegerBox_test_error_le (radius dimension attempts : ℕ)

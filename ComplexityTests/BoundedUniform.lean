@@ -41,6 +41,12 @@ example : (ProbComp.eval (sampleUniformInterval 3 1) (some 0)).toReal /
     (((ProbComp.eval (sampleUniformInterval 3 1)).map Option.isSome) true).toReal = 1 / 3 :=
   sampleUniformInterval_conditional (by decide) (by decide) (by decide)
 
+example (test : Option ℕ → Bool) :
+    |(((ProbComp.eval (sampleUniformInterval 3 8)).map test) true).toReal -
+      ((((PMF.uniformOfFintype (Fin 3)).map Fin.val).map
+        (fun value => test (some value))) true).toReal| ≤ 1 / 256 := by
+  convert sampleUniformInterval_test_error_le 3 8 test using 1; norm_num
+
 example (radius : ℕ) : sampleIntegerBox radius 0 0 = pure (some []) := rfl
 
 example : (ProbComp.eval (sampleIntegerBox 1 2 0) none).toReal = 1 := by
