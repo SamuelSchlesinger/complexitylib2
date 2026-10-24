@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 
 /-! Original Core/Basic imports provide plain composition, guards, folds and degree extraction. -/
 
@@ -55,3 +56,15 @@ run_meta do
       `Turing.MultiTapeTM.computableTidilyInPolyTime_succ] do
     if (← Lean.getEnv).contains name then
       throwError "the superseded source export {name} remains"
+
+
+universe u v
+
+example {α : Type u} {β : Type v} {input : α ↪ List Bool} {output : β ↪ List Bool}
+    {f : α → β} (h : ComputableInPolyTime f input output) :
+    ∃ d e, ComputableInDegree f input output d e := h.exists_degree
+
+example {α : Type u} {β : Type v} {input : α ↪ List Bool} {output : β ↪ List Bool}
+    {f : α → β} {d e : ℕ} (h : ComputableInDegree f input output d e) :
+    ComputableInO f input output (fun a => ((input a).length + 1) ^ d)
+      (fun a => ((input a).length + 1) ^ d) := h.inO

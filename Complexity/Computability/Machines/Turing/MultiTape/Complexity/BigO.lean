@@ -305,6 +305,22 @@ public theorem ComputableTidilyInDegree.inO {α β : Type} {encIn : α ↪ List 
     (fun a => (hf.length_le a).trans
       ((ht a).trans (Nat.mul_le_mul (Nat.le_add_right _ _) (Nat.le_succ _))))
 
+/-- Fixed degree `d` for time and work space gives charged `O((n + 1) ^ d)` bounds.
+The encoded value fits because its length is bounded by the realizing machine's time. The
+independent output-growth degree `e` need not be compared with `d`; either degree may be
+zero. -/
+public theorem ComputableInDegree.inO {α : Type*} {β : Type*} {encIn : α ↪ List Bool}
+    {encOut : β ↪ List Bool} {f : α → β} {d e : ℕ}
+    (h : ComputableInDegree f encIn encOut d e) :
+    ComputableInO f encIn encOut (fun a => ((encIn a).length + 1) ^ d)
+      fun a => ((encIn a).length + 1) ^ d := by
+  obtain ⟨⟨t, s, ⟨ct, ht⟩, ⟨cs, hs⟩, hf⟩, _⟩ := h
+  have ht' : ∀ a, t a ≤ (ct + cs) * (((encIn a).length + 1) ^ d + 1) := fun a =>
+    (ht a).trans (Nat.mul_le_mul (Nat.le_add_right _ _) (Nat.le_succ _))
+  exact ⟨ct + cs, hf.mono ht' fun a =>
+    (hs a).trans (Nat.mul_le_mul (Nat.le_add_left _ _) (Nat.le_succ _)),
+    fun a => (hf.length_le a).trans (ht' a)⟩
+
 /-- Linear bounds in the length of the encoded input. -/
 public theorem ComputableTidilyInDegree.inO_one {α β : Type} {encIn : α ↪ List Bool}
     {encOut : β ↪ List Bool} {f : α → β} {e : ℕ}
