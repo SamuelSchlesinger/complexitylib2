@@ -88,6 +88,7 @@ noncomputable def wordInverter (f : List Bool → List Bool)
   return wordDecode f (fun query => evaluate (n, image ++ query) coins ^^ flip)
     degree n image masks
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Every fixed degree gives one strict PPT inverter for all parameters and images. -/
 @[program_certificate]
 theorem isPPT_wordInverter {f : List Bool → List Bool}
@@ -104,8 +105,7 @@ theorem isPPT_wordInverter {f : List Bool → List Bool}
           degree p.1.1.1.1 p.1.1.1.2 p.2)
       (encPair (encPair (encPair (encPair encUnary encBits) encBool) encBits) encBits)
       encBits := by
-    apply ComputableInPolyTime.of_tidy
-    fun_prop
+    apply polyTime_wordDecode degree hf <;> fun_prop
   unfold wordInverter coinBudget
   ppt
 

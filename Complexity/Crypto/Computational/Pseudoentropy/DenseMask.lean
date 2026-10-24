@@ -117,7 +117,13 @@ theorem HasGap.eventually_exists_indexed_mask {pair : SamplablePair} {gap : ℕ 
   have hparams : ComputableTidilyInPolyTime (fun input => params input.1 input.2)
       base Parameters.encoding := by
     dsimp only [params, base]
-    fun_prop
+    apply ComputableInPolyTime.tidy
+    apply SequenceLearner.isPolyTime_parameters
+    · exact .of_tidy (by fun_prop)
+    · exact .of_tidy (by fun_prop)
+    · exact .of_tidy (by fun_prop)
+    · exact .of_tidy (by fun_prop)
+    · fun_prop
   have hrate : ComputableTidilyInPolyTime (fun n => (params n 0).rateBound)
       encUnary encUnary := by
     dsimp only [params, SequenceLearner.parameters]

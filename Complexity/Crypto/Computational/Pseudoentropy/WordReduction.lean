@@ -107,6 +107,7 @@ noncomputable def wordInverter (f : List Bool → List Bool)
   return wordDecode f (predictWithCoins evaluate n image index matrix digest coins)
     degree n image masks
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- The complete inverter is one strict PPT program for every parameter and image. -/
 @[program_certificate]
 theorem isPPT_wordInverter {f : List Bool → List Bool}
@@ -116,7 +117,27 @@ theorem isPPT_wordInverter {f : List Bool → List Bool}
       (fun p : (ℕ × List Bool) × List Bool => evaluate p.1 p.2)
       (encPair (encPair encUnary encBits) encBits) encBool)
     (c d degree : ℕ) : IsPPT encBits (wordInverter f evaluate c d degree) := by
-  unfold wordInverter
+  have hf := hf.tidy
+  have hevaluate := hevaluate.tidy
+  have hhash : ComputableTidilyInPolyTime hashCount encUnary encUnary :=
+    (computableInPolyTime_hashCount (.of_tidy (by fun_prop))).tidy
+  have hbudget : ComputableTidilyInPolyTime
+      (fun a : ℕ × List Bool => coinBudget c d a.1 a.2.length)
+      (encPair encUnary encBits) encUnary :=
+    (computableInPolyTime_coinBudget c d (.of_tidy (by fun_prop))
+      (.of_tidy (by fun_prop))).tidy
+  have hdecode {β : Type} {encode : β ↪ List Bool}
+      {predictor : β → List Bool → Bool} {dimension : β → ℕ} {image masks : β → List Bool}
+      (hpredictor : ComputableTidilyInPolyTime (fun p : β × List Bool => predictor p.1 p.2)
+        (encPair encode encBits) encBool)
+      (hdimension : ComputableTidilyInPolyTime dimension encode encUnary)
+      (himage : ComputableTidilyInPolyTime image encode encBits)
+      (hmasks : ComputableTidilyInPolyTime masks encode encBits) :
+      ComputableTidilyInPolyTime (fun a => wordDecode f (predictor a) degree (dimension a)
+        (image a) (masks a)) encode encBits :=
+    (polyTime_wordDecode degree (.of_tidy hf) (.of_tidy hpredictor)
+      (.of_tidy hdimension) (.of_tidy himage) (.of_tidy hmasks)).tidy
+  unfold wordInverter predictWithCoins
   fun_prop
 
 /-- The tape budget covers every well-formed public observation at this dimension. -/

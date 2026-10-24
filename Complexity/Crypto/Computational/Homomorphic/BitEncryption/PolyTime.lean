@@ -58,7 +58,7 @@ theorem isPPTOn_encryptBitsHybrid
   have hpk := hpk.tidy
   have hbits := hbits.tidy
   have hcut := hcut.tidy
-  apply isPPTOn_encryptBits hencrypt hn hpk
+  apply isPPTOn_encryptBits hencrypt (.of_tidy hn) (.of_tidy hpk)
   fun_prop
 
 /-- Copy the full supplied ciphertext between independently encrypted zero and original words. -/
@@ -76,10 +76,10 @@ theorem isPPTOn_spliceEncryptedBit
   have hbefore := hbefore.tidy
   have hafter := hafter.tidy
   have hchallenge := hchallenge.tidy
-  have hfront := isPPTOn_encryptBits hencrypt hn hpk
-    (show ComputableTidilyInPolyTime (fun a => List.replicate (before a) false)
-      input encBits by fun_prop)
-  have hback := isPPTOn_encryptBits hencrypt hn hpk hafter
+  have hfront := isPPTOn_encryptBits hencrypt (.of_tidy hn) (.of_tidy hpk)
+    (.of_tidy (show ComputableTidilyInPolyTime
+      (fun a => List.replicate (before a) false) input encBits by fun_prop))
+  have hback := isPPTOn_encryptBits hencrypt (.of_tidy hn) (.of_tidy hpk) (.of_tidy hafter)
   unfold spliceEncryptedBit
   ppt
 
