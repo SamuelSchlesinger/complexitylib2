@@ -53,7 +53,7 @@ at `5ff69ca93402e7c947208dc56396d6d86203ccd8`, using typed saved seeds and the t
 
 namespace Cslib.Crypto.Pseudoentropy.HashPair
 
-open Probability BitString GoldreichLevin Turing.MultiTapeTM
+open ProbComp Probability BitString GoldreichLevin Turing.MultiTapeTM
 
 /-- One polynomial tape budget covers all digest lengths and parity queries for an image. -/
 def coinBudget (c d n imageLength : ℕ) : ℕ :=

@@ -18,8 +18,8 @@ and exercise captured parameters in the complete masked-sequence predictor.
 
 namespace ComplexityTests.PseudoentropyMasking
 
-open Cslib Cslib.Probability Cslib.Probability.PMF Cslib.Crypto Cslib.Crypto.Pseudoentropy
-  Cslib.Crypto.Pseudoentropy.Boosting Cslib.BitString Turing.MultiTapeTM
+open Cslib Cslib.ProbComp Cslib.Probability Cslib.Probability.PMF Cslib.Crypto
+  Cslib.Crypto.Pseudoentropy Cslib.Crypto.Pseudoentropy.Boosting Cslib.BitString Turing.MultiTapeTM
 
 example : listStrictMajority [] = false ∧ listStrictMajority [true, false] = false ∧
     listNonpositiveMargin [true, false] true = true := by decide

@@ -59,7 +59,7 @@ Adapted from Crypto/Computational/Stretch.lean on the cslib `crypto` branch at
 
 namespace Cslib.Crypto.PRGStretch
 
-open Probability BitString Turing.MultiTapeTM
+open ProbComp Probability BitString Turing.MultiTapeTM
 
 /-- Hybrid `i` has `i` genuinely random suffix bits and `total - i` seed expansions left. -/
 noncomputable def hybrid (generator : List Bool → List Bool) (n total i : ℕ) : PMF (List Bool) :=
@@ -372,7 +372,7 @@ end Cslib.Crypto.PRGStretch
 
 namespace Cslib.Crypto
 
-open Probability BitString Turing.MultiTapeTM
+open ProbComp Probability BitString Turing.MultiTapeTM
 
 /-- Amplify a one-bit PRG to any efficiently computed, strictly larger output length. -/
 theorem PseudorandomGenerator.amplify {generator : List Bool → List Bool}

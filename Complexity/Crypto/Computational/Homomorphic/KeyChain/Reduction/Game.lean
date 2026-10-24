@@ -39,7 +39,7 @@ outgoing link has been erased.
 
 namespace Cslib.Crypto.Homomorphic.Scheme
 
-open Probability
+open ProbComp Probability
 open scoped NNReal
 
 variable (E : Scheme)

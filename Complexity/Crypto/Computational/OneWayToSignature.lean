@@ -86,7 +86,7 @@ one-way hash functions and GMR/Merkle authentication trees.
 
 namespace Cslib.Crypto
 
-open Filter Probability Turing.MultiTapeTM
+open Filter ProbComp Probability Turing.MultiTapeTM
 open scoped NNReal ENNReal
 
 @[fun_prop]

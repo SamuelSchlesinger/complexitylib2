@@ -51,7 +51,7 @@ arithmetic, the complete GSW key-generation or encryption algorithms, or computa
 
 namespace Cslib.Crypto.Homomorphic.GSW
 
-open Probability Turing.MultiTapeTM
+open ProbComp Probability Turing.MultiTapeTM
 
 /-- Secret entries, public-matrix rows and signed errors, without dependent dimensions. -/
 abbrev SerializedKeyInputs := List ℕ × (List (List ℕ) × List ℤ)

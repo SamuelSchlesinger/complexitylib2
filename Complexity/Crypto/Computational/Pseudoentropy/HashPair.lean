@@ -55,7 +55,7 @@ Adapted from Crypto/Computational/Pseudoentropy/HashPair.lean on the cslib `cryp
 
 namespace Cslib.Crypto.Pseudoentropy.HashPair
 
-open Cslib.Probability Cslib.Probability.PMF BitString Turing.MultiTapeTM
+open Cslib.ProbComp Cslib.Probability Cslib.Probability.PMF BitString Turing.MultiTapeTM
 
 /-- The number of possible hash lengths. Six extra lengths leave room for the truncation
 threshold in the inversion proof; rounding up makes sampling exact with fair bits. -/

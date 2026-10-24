@@ -17,7 +17,7 @@ are checked separately. No security or complete matrix-algorithm efficiency clai
 
 namespace ComplexityTests.GSWSampling
 
-open Cslib Cslib.Probability Cslib.Crypto.Homomorphic.GSW
+open Cslib Cslib.ProbComp Cslib.Probability Cslib.Crypto.Homomorphic.GSW
 open Turing.MultiTapeTM
 
 -- The smallest nontrivial noise law has masses 1/4, 1/2 and 1/4.

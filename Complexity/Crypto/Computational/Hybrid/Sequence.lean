@@ -48,7 +48,7 @@ Adapted from Crypto/Computational/Hybrid/Sequence.lean on the cslib `crypto` bra
 
 namespace Cslib.Crypto
 
-open Probability Turing.MultiTapeTM
+open ProbComp Probability Turing.MultiTapeTM
 open scoped NNReal
 
 variable {α : Type}

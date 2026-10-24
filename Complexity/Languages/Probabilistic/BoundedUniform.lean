@@ -36,29 +36,30 @@ transcript/error and an extractor's implementation require separate proofs.
 
 ## Main definitions
 
-* `Cslib.Probability.sampleUniformInterval`: bounded retry with an explicit failure result.
-* `Cslib.Probability.intervalFailure`, `Cslib.Probability.intervalSuccess`: exact event masses.
-* `Cslib.Probability.sampleIntegerBox`: coordinatewise finite-attempt integer-box sampling.
-* `Cslib.Probability.integerBoxLaw`: the exact mathematical uniform reference law.
+* `Cslib.ProbComp.sampleUniformInterval`: bounded retry with an explicit failure result.
+* `Cslib.ProbComp.intervalFailure`, `Cslib.ProbComp.intervalSuccess`: exact event masses.
+* `Cslib.ProbComp.sampleIntegerBox`: coordinatewise finite-attempt integer-box sampling.
+* `Cslib.ProbComp.integerBoxLaw`: the exact mathematical uniform reference law.
 
 ## Main results
 
-* `Cslib.Probability.eval_sampleUniformInterval_none`,
-  `Cslib.Probability.eval_sampleUniformInterval_some_toReal`: the full interval law.
-* `Cslib.Probability.sampleUniformInterval_conditional`: conditional uniformity at observable
+* `Cslib.ProbComp.eval_sampleUniformInterval_none`,
+  `Cslib.ProbComp.eval_sampleUniformInterval_some_toReal`: the full interval law.
+* `Cslib.ProbComp.sampleUniformInterval_conditional`: conditional uniformity at observable
   success events.
-* `Cslib.Probability.sampleUniformInterval_test_error_le`: unconditional interval error,
+* `Cslib.ProbComp.sampleUniformInterval_test_error_le`: unconditional interval error,
   including the binary-bound implementation.
-* `Cslib.Probability.eval_sampleIntegerBox_some`, `Cslib.Probability.eval_sampleIntegerBox_none`:
+* `Cslib.ProbComp.eval_sampleIntegerBox_some`, `Cslib.ProbComp.eval_sampleIntegerBox_none`:
   the full joint success/failure law.
-* `Cslib.Probability.sampleIntegerBox_test_error_le`: explicit unconditional statistical error.
-* `Cslib.Probability.sampleIntegerBox_support`: exact output dimension and integer bounds.
+* `Cslib.ProbComp.sampleIntegerBox_test_error_le`: explicit unconditional statistical error.
+* `Cslib.ProbComp.sampleIntegerBox_support`: exact output dimension and integer bounds.
 -/
 
 @[expose] public section
 
-namespace Cslib.Probability
+namespace Cslib.ProbComp
 
+open Probability
 open scoped ENNReal NNReal
 
 /-- The probability that one capped draw is rejected. At bound zero every draw is rejected. -/
@@ -740,4 +741,4 @@ theorem integerBoxLaw_apply_index (radius dimension : ℕ)
   simp_rw [hcoord]
   simp
 
-end Cslib.Probability
+end Cslib.ProbComp

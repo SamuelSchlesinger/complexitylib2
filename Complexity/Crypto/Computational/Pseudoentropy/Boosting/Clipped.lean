@@ -49,7 +49,7 @@ Adapted from the cslib `crypto` branch at `5ff69ca93402e7c947208dc56396d6d86203c
 
 namespace Cslib.Crypto.Pseudoentropy.Boosting
 
-open Probability BitString Turing.MultiTapeTM
+open ProbComp Probability BitString Turing.MultiTapeTM
 
 /-- The clipped affine probability associated with a signed margin. -/
 noncomputable def clippedProbability (slope margin : ℝ) : ℝ :=
