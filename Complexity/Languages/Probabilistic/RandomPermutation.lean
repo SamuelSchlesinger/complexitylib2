@@ -43,12 +43,13 @@ association-list cache `Cache α = List (α × α)`:
    `forgetfulAnswer` coincides with `memoize (fun _ => PMF.uniformOfFintype α)` and therefore with
    a uniformly random function `f ← PMF.uniformOfFintype (α → α)`, yielding the classical
    **PRP/PRF switching lemma** (`abs_sub_uniformPerm_uniformFunc_le`, [BonehShoup2023],
-   Section 4.4.3, Theorem 4.4).
+   Section 4.4, Theorem 4.4).
 
 ## Main definitions
 
-* `Cslib.RandomPermutation.PermQuery`, `PermOracleSpec`, `evalPerm`, `liftForward`: bidirectional
-  permutation queries, oracle specification, deterministic evaluation, and forward-only lifting.
+* `Cslib.RandomPermutation.PermQuery`, `PermOracleSpec`, `evalPerm`, `liftForward`, `liftBoolProd`:
+  bidirectional permutation queries, oracle specification, deterministic evaluation, and query
+  liftings.
 * `Cslib.RandomPermutation.Cache`, `invLookup`, `AgreesWith`, `IsPartialBijection`, `extPerms`,
   `unusedDomain`, `unusedRange`: partial bijection caches and extension sets.
 * `Cslib.RandomPermutation.answer`, `complete`, `forgetfulAnswer`: exact and forgetful lazy
@@ -56,22 +57,22 @@ association-list cache `Cache α = List (α × α)`:
 
 ## Main results
 
-* `Cslib.RandomPermutation.run_interpret_answer_complete`,
+* `Cslib.RandomPermutation.answer_complete`,
+  `Cslib.RandomPermutation.run_interpret_answer_complete`,
   `Cslib.RandomPermutation.uniform_interpret_eq_lazy`: exact eager/lazy equivalence for
   bidirectional random permutations.
 * `Cslib.RandomPermutation.toOuterMeasure_bad_choose_two_le`: quadratic union bound
   `(n * size s + n.choose 2) * δ` for bad events with linearly growing step probability.
-* `Cslib.RandomPermutation.abs_sub_uniformPerm_forgetful_le`: bidirectional random-permutation
-  switching bound `Q.choose 2 / |α|`.
+* `Cslib.RandomPermutation.uniformPerm_bind_apply_le_forgetful`,
+  `Cslib.RandomPermutation.abs_sub_uniformPerm_forgetful_le`: bidirectional random-permutation
+  switching bounds (`Q.choose 2 / |α|`).
 * `Cslib.RandomPermutation.abs_sub_uniformPerm_uniformFunc_le`: the PRP/PRF switching lemma
-  ([BonehShoup2023], Section 4.4.3, Theorem 4.4).
+  ([BonehShoup2023], Section 4.4, Theorem 4.4).
 
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
-  Version 0.6][BonehShoup2023], Sections 4.4.3 and 4.7.
-* [M. Bellare, P. Rogaway, *The Security of Triple Encryption and a Framework for Code-Based
-  Game-Playing Proofs*][BellareRogaway2006].
+  Version 0.6][BonehShoup2023], Sections 4.4 and 4.7 (Theorems 4.4 and 4.7).
 -/
 
 @[expose] public section
@@ -755,7 +756,7 @@ theorem run_interpret_forgetfulAnswer_liftForward {β : Type}
 
 /-- Forgetful lazy handler instrumented with a `bad` flag that records whether a fresh forward draw
 collided with `ran(cache)` or a fresh inverse draw collided with `dom(cache)`. -/
-noncomputable def forgetfulWithBad (q : PermQuery α) :
+private noncomputable def forgetfulWithBad (q : PermQuery α) :
     StateT (Cache α × Bool) PMF α := fun (cache, bad) =>
   match q with
   | .forward x =>
@@ -774,27 +775,27 @@ noncomputable def forgetfulWithBad (q : PermQuery α) :
 /-- Coupled exact lazy handler with a `bad` flag: draw a candidate uniformly from `α`; if it lies in
 `unusedRange` (resp. `unusedDomain`), use it directly, and otherwise set `bad := true` and resample
 uniformly from `unusedRange` (resp. `unusedDomain`). -/
-noncomputable def exactWithBad (q : PermQuery α) :
+private noncomputable def exactWithBad (q : PermQuery α) :
     StateT (Cache α × Bool) PMF α := fun (cache, bad) =>
   match q with
   | .forward x =>
     match cache.lookup x with
     | some y => PMF.pure (y, (cache, bad))
-    | none =>
-      (PMF.uniformOfFintype α).bind fun y₀ =>
-        if (invLookup cache y₀).isSome then
-          (answer (.forward x) cache).map fun (y, cache') => (y, (cache', true))
-        else
-          PMF.pure (y₀, ((x, y₀) :: cache, bad))
+    | none => do
+      let y₀ ← PMF.uniformOfFintype α
+      if (invLookup cache y₀).isSome then
+        (answer (.forward x) cache).map fun (y, cache') => (y, (cache', true))
+      else
+        PMF.pure (y₀, ((x, y₀) :: cache, bad))
   | .inverse y =>
     match invLookup cache y with
     | some x => PMF.pure (x, (cache, bad))
-    | none =>
-      (PMF.uniformOfFintype α).bind fun x₀ =>
-        if (cache.lookup x₀).isSome then
-          (answer (.inverse y) cache).map fun (x, cache') => (x, (cache', true))
-        else
-          PMF.pure (x₀, ((x₀, y) :: cache, bad))
+    | none => do
+      let x₀ ← PMF.uniformOfFintype α
+      if (cache.lookup x₀).isSome then
+        (answer (.inverse y) cache).map fun (x, cache') => (x, (cache', true))
+      else
+        PMF.pure (x₀, ((x₀, y) :: cache, bad))
 
 private theorem forgetfulWithBad_map_fst (q : PermQuery α) (st : Cache α × Bool) :
     (forgetfulWithBad q st).map (fun (a, st') => (a, st'.1)) = forgetfulAnswer q st.1 := by
@@ -807,7 +808,7 @@ private theorem forgetfulWithBad_map_fst (q : PermQuery α) (st : Cache α × Bo
     cases h : invLookup cache y <;>
       simp [forgetfulWithBad, forgetfulAnswer, h, PMF.pure_map, PMF.map_comp, Function.comp_def]
 
-theorem run_interpret_forgetfulWithBad_map_fst {β : Type}
+private theorem run_interpret_forgetfulWithBad_map_fst {β : Type}
     (program : OracleComp (PermOracleSpec α) β) (cache : Cache α) (bad : Bool) :
     ((OracleComp.interpret forgetfulWithBad program).run (cache, bad)).map
       (fun (a, st') => (a, st'.1)) =
@@ -874,14 +875,14 @@ private theorem uniformOfFintype_bind_ite_uniformOfFinset (S : Finset α) (hS : 
       simp [ha₀, PMF.pure_apply, hne]
     · simp [ha₀, PMF.uniformOfFinset_apply, ha]
 
-theorem exactWithBad_preserve_isPartialBijection (q : PermQuery α) (st : Cache α × Bool)
+private theorem exactWithBad_preserve_isPartialBijection (q : PermQuery α) (st : Cache α × Bool)
     (hst : IsPartialBijection st.1) (a : α) (st' : Cache α × Bool)
     (hmem : (a, st') ∈ (exactWithBad q st).support) :
     IsPartialBijection st'.1 := by
   rcases st with ⟨cache, bad⟩
   cases q with
   | forward x =>
-    dsimp [exactWithBad] at hmem
+    dsimp [exactWithBad, Probability.PMF.monad_bind_eq_bind] at hmem
     cases hx : cache.lookup x with
     | some y =>
       rw [hx, PMF.mem_support_pure_iff] at hmem
@@ -898,7 +899,7 @@ theorem exactWithBad_preserve_isPartialBijection (q : PermQuery α) (st : Cache 
         obtain ⟨_, rfl⟩ := Prod.mk.inj hy₀
         exact hst.cons_of_lookup_eq_none hx (Option.not_isSome_iff_eq_none.mp his)
   | inverse y =>
-    dsimp [exactWithBad] at hmem
+    dsimp [exactWithBad, Probability.PMF.monad_bind_eq_bind] at hmem
     cases hy : invLookup cache y with
     | some x =>
       rw [hy, PMF.mem_support_pure_iff] at hmem
@@ -921,7 +922,7 @@ private theorem exactWithBad_map_fst (q : PermQuery α) (st : Cache α × Bool)
   rcases st with ⟨cache, bad⟩
   cases q with
   | forward x =>
-    dsimp [exactWithBad]
+    dsimp [exactWithBad, Probability.PMF.monad_bind_eq_bind]
     cases hx : cache.lookup x with
     | some y => simp [answer, hx, PMF.pure_map]
     | none =>
@@ -945,7 +946,7 @@ private theorem exactWithBad_map_fst (q : PermQuery α) (st : Cache α × Bool)
           exact fun h => hy₀ (mem_unusedRange_iff.mpr h)
         simp [hy₀, his, hans, PMF.map_comp, Function.comp_def]
   | inverse y =>
-    dsimp [exactWithBad]
+    dsimp [exactWithBad, Probability.PMF.monad_bind_eq_bind]
     cases hy : invLookup cache y with
     | some x => simp [answer, hy, PMF.pure_map]
     | none =>
@@ -969,7 +970,7 @@ private theorem exactWithBad_map_fst (q : PermQuery α) (st : Cache α × Bool)
           exact fun h => hx₀ (mem_unusedDomain_iff.mpr h)
         simp [hx₀, his, hans, PMF.map_comp, Function.comp_def]
 
-theorem run_interpret_exactWithBad_map_fst {β : Type}
+private theorem run_interpret_exactWithBad_map_fst {β : Type}
     (program : OracleComp (PermOracleSpec α) β) (cache : Cache α) (bad : Bool)
     (hcache : IsPartialBijection cache) :
     ((OracleComp.interpret exactWithBad program).run (cache, bad)).map
@@ -980,7 +981,7 @@ theorem run_interpret_exactWithBad_map_fst {β : Type}
     exactWithBad_map_fst program (cache, bad) hcache
 
 /-- `exactWithBad` and `forgetfulWithBad` are identical until `bad = true`. -/
-theorem identicalUntilBad_exactWithBad_forgetfulWithBad :
+private theorem identicalUntilBad_exactWithBad_forgetfulWithBad :
     IdenticalUntilBad (spec := PermOracleSpec α) exactWithBad forgetfulWithBad
       (fun st : Cache α × Bool => st.2 = true) where
   agree q st hst a st' hst' := by
@@ -991,7 +992,7 @@ theorem identicalUntilBad_exactWithBad_forgetfulWithBad :
     subst hbad hbad'
     cases q with
     | forward x =>
-      dsimp [exactWithBad, forgetfulWithBad]
+      dsimp [exactWithBad, forgetfulWithBad, Probability.PMF.monad_bind_eq_bind]
       cases hx : cache.lookup x with
       | some y => rfl
       | none =>
@@ -1011,7 +1012,7 @@ theorem identicalUntilBad_exactWithBad_forgetfulWithBad :
           rw [ite_eq_right his, his', Bool.false_or, PMF.pure_apply]
           by_cases heq : (a, cache', false) = (y₀, (x, y₀) :: cache, false) <;> simp [heq]
     | inverse y =>
-      dsimp [exactWithBad, forgetfulWithBad]
+      dsimp [exactWithBad, forgetfulWithBad, Probability.PMF.monad_bind_eq_bind]
       cases hy : invLookup cache y with
       | some x => rfl
       | none =>
@@ -1036,7 +1037,7 @@ theorem identicalUntilBad_exactWithBad_forgetfulWithBad :
     subst hst
     cases q with
     | forward x =>
-      dsimp [exactWithBad] at hp
+      dsimp [exactWithBad, Probability.PMF.monad_bind_eq_bind] at hp
       cases hx : cache.lookup x with
       | some y =>
         rw [hx, PMF.mem_support_pure_iff] at hp
@@ -1051,7 +1052,7 @@ theorem identicalUntilBad_exactWithBad_forgetfulWithBad :
         · rw [ite_eq_right his, PMF.mem_support_pure_iff] at hy₀
           rw [hy₀]
     | inverse y =>
-      dsimp [exactWithBad] at hp
+      dsimp [exactWithBad, Probability.PMF.monad_bind_eq_bind] at hp
       cases hy : invLookup cache y with
       | some x =>
         rw [hy, PMF.mem_support_pure_iff] at hp
@@ -1170,7 +1171,7 @@ private theorem card_filter_invLookup_isSome_le (cache : Cache α) :
 
 /-- Over an `n`-query-bounded program starting from `(cache, false)`, `forgetfulWithBad` reaches
 `bad = true` with probability at most `(n * cache.length + n.choose 2) * |α|⁻¹`. -/
-theorem toOuterMeasure_bad_forgetfulWithBad_le {β : Type}
+private theorem toOuterMeasure_bad_forgetfulWithBad_le {β : Type}
     {program : OracleComp (PermOracleSpec α) β} {n : ℕ}
     (hn : IsQueryBounded program n) (cache : Cache α) :
     ((OracleComp.interpret forgetfulWithBad program).run (cache, false)).toOuterMeasure
@@ -1285,7 +1286,7 @@ theorem abs_sub_uniformPerm_forgetful_le {β γ : Type}
   simpa only [ENNReal.toReal_mul, ENNReal.toReal_natCast, ENNReal.toReal_inv] using
     ENNReal.toReal_mono htop hbad
 
-/-- **The PRP/PRF switching lemma (`ℝ`, two-sided, [BonehShoup2023], Section 4.4.3, Theorem 4.4)**:
+/-- **The PRP/PRF switching lemma (`ℝ`, two-sided, [BonehShoup2023], Section 4.4, Theorem 4.4)**:
 for any `Q`-query forward-only adaptive program `program : OracleComp (fun _ : α => α) β`, the
 acceptance probabilities under a uniformly random permutation
 `π ← PMF.uniformOfFintype (Equiv.Perm α)` and under a uniformly random function

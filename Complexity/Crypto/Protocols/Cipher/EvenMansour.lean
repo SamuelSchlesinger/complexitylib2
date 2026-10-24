@@ -78,7 +78,7 @@ We formalize four aspects of the Even–Mansour construction:
   `singleKeyEvenMansourEquiv`: Even–Mansour encryption, decryption, and bundled permutations.
 * `Cslib.Crypto.EvenMansour.preWhitenEquiv`, `postWhitenEquiv`, `preWhitenKeyRecoveryAttack`,
   `postWhitenKeyRecoveryAttack`: single-whitening variants and 2-query key-recovery attacks.
-* `Cslib.Crypto.EvenMansour.PermQuery`, `PermOracleSpec`, `EvenMansourSpec`, `IsCallBounded`:
+* `Cslib.Crypto.EvenMansour.EvenMansourSpec`, `IsCallBounded`:
   bidirectional cipher and primitive permutation oracle interface and separate query budgets.
 * `Cslib.Crypto.EvenMansour.evenMansourRealGame`, `singleKeyEvenMansourRealGame`,
   `evenMansourIdealGame`, `idealLazyHandler`: real and ideal bidirectional permutation games and the
@@ -118,7 +118,7 @@ We formalize four aspects of the Even–Mansour construction:
 
 namespace Cslib.Crypto.EvenMansour
 
-open Probability OracleComp
+open Probability OracleComp RandomPermutation
 open scoped ENNReal NNReal BigOperators
 
 /-! ### Algebraic Even–Mansour cipher over an additive group -/
@@ -296,25 +296,6 @@ theorem postWhitenKeyRecovery_spec (π : Equiv.Perm G) (k₁ x : G) :
 end Algebraic
 
 /-! ### Bidirectional ideal-permutation oracle interface and games -/
-
-/-- A bidirectional query to a permutation on `G` (`RandomPermutation.PermQuery`). -/
-abbrev PermQuery (G : Type) := RandomPermutation.PermQuery G
-
-/-- The oracle specification of a bidirectional permutation on `G`
-(`RandomPermutation.PermOracleSpec`). -/
-abbrev PermOracleSpec (G : Type) : OracleSpec (PermQuery G) :=
-  RandomPermutation.PermOracleSpec G
-
-/-- Answer a bidirectional permutation query using `P : Equiv.Perm G`
-(`RandomPermutation.evalPerm`). -/
-abbrev evalPerm {G : Type} (P : Equiv.Perm G) : PermQuery G → G :=
-  RandomPermutation.evalPerm P
-
-@[simp] theorem evalPerm_forward {G : Type} (P : Equiv.Perm G) (x : G) :
-    evalPerm P (.forward x) = P x := rfl
-
-@[simp] theorem evalPerm_inverse {G : Type} (P : Equiv.Perm G) (y : G) :
-    evalPerm P (.inverse y) = P.symm y := rfl
 
 /-- The combined oracle interface in the Even–Mansour security experiment ([BonehShoup2023],
 Section 4.7): left queries (`.inl`) call the cipher permutation `E` and right queries (`.inr`)

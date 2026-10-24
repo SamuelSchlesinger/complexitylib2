@@ -197,6 +197,26 @@ example :
         (idealStrongGame (feistel3CCAAttack (0 : ZMod 7) 1 2)) : ℝ) :=
   le_advantage_feistel3CCAAttack_idealStrongGame_of_ne f₁ f₂ f₃ (by decide)
 
+-- Concrete `Fin 3` instance for `RandomPermutation.uniform_interpret_eq_lazy` and
+-- `RandomPermutation.abs_sub_uniformPerm_forgetful_le`.
+example (program : OracleComp (RandomPermutation.PermOracleSpec (Fin 3)) Bool) :
+    (do
+      let π ← PMF.uniformOfFintype (Equiv.Perm (Fin 3))
+      OracleComp.interpret (fun q => PMF.pure (RandomPermutation.evalPerm π q)) program) =
+    (((OracleComp.interpret RandomPermutation.answer program).run []).map Prod.fst) :=
+  RandomPermutation.uniform_interpret_eq_lazy program
+
+example (program : OracleComp (RandomPermutation.PermOracleSpec (Fin 3)) Bool)
+    (hQ : OracleComp.IsQueryBounded program 2) :
+    |(((do
+        let π ← PMF.uniformOfFintype (Equiv.Perm (Fin 3))
+        OracleComp.interpret (fun q => PMF.pure (RandomPermutation.evalPerm π q)) program).bind
+          PMF.pure) true).toReal -
+      (((((OracleComp.interpret RandomPermutation.forgetfulAnswer program).run []).map
+        Prod.fst).bind PMF.pure) true).toReal| ≤
+      ((2 : ℕ).choose 2 : ℝ) * (Fintype.card (Fin 3) : ℝ)⁻¹ :=
+  RandomPermutation.abs_sub_uniformPerm_forgetful_le hQ PMF.pure true
+
 -- Separation against the independent-table game `independentTableStrongGame` over `ZMod 7`.
 example :
     independentTableStrongGame (feistel3CCAAttack (0 : ZMod 7) 1 2) true =
@@ -357,11 +377,25 @@ info: 'Cslib.RandomPermutation.answer_complete' depends on axioms:
 #print axioms Cslib.RandomPermutation.answer_complete
 
 /--
+info: 'Cslib.RandomPermutation.uniform_interpret_eq_lazy' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RandomPermutation.uniform_interpret_eq_lazy
+
+/--
 info: 'Cslib.RandomPermutation.uniformPerm_bind_apply_le_forgetful' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.RandomPermutation.uniformPerm_bind_apply_le_forgetful
+
+/--
+info: 'Cslib.RandomPermutation.abs_sub_uniformPerm_forgetful_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.RandomPermutation.abs_sub_uniformPerm_forgetful_le
 
 /--
 info: 'Cslib.RandomPermutation.abs_sub_uniformPerm_uniformFunc_le' depends on axioms:
