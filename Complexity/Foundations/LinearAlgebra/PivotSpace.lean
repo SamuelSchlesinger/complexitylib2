@@ -24,14 +24,12 @@ up to the dimension of `V`.
 
 ## Main definitions
 
-* `Cslib.AffineDisperser.pivotSpace`: the `i`-th pivot space of a subspace of `Fin r → M`.
+* `Cslib.pivotSpace`: the `i`-th pivot space of a subspace of `Fin r → M`.
 
 ## Main results
 
-* `Cslib.AffineDisperser.mem_pivotSpace`: pivot vectors lift to vectors of `V` vanishing below
-  their block.
-* `Cslib.AffineDisperser.sum_finrank_pivotSpace`: the dimensions of the pivot spaces add up to
-  the dimension of `V`.
+* `Cslib.mem_pivotSpace`: pivot vectors lift to vectors of `V` vanishing below their block.
+* `Cslib.sum_finrank_pivotSpace`: the dimensions of the pivot spaces add up to the dimension of `V`.
 
 ## References
 
@@ -41,7 +39,7 @@ up to the dimension of `V`.
 
 @[expose] public section
 
-namespace Cslib.AffineDisperser
+namespace Cslib
 
 open Module
 
@@ -134,4 +132,4 @@ theorem sum_finrank_pivotSpace [FiniteDimensional K M] (V : Submodule K (Fin r �
   rw [h0]
   exact Finset.sum_congr (by simp) fun _ _ => rfl
 
-end Cslib.AffineDisperser
+end Cslib

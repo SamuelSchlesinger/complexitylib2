@@ -19,23 +19,23 @@ import Mathlib.NumberTheory.Chebyshev
 
 The explicit affine disperser works over `𝔽_{2 ^ n}` for `n` a product of distinct primes from an
 interval `(L, 4 L]`, kept below a target `T` by a greedy walk through the primes in increasing
-order (`Cslib.AffineDisperser.selectBelow`). The walk either takes every prime or ends within a
-factor `4 L` of `T` (`Cslib.AffineDisperser.prod_le_or_lt_mul_prod_selectBelow`), and Chebyshev's
+order (`Cslib.selectBelow`). The walk either takes every prime or ends within a
+factor `4 L` of `T` (`Cslib.prod_le_or_lt_mul_prod_selectBelow`), and Chebyshev's
 bounds show that the product of all primes in `(L, 4 L]` is at least `4 ^ L` up to a factor
-`(4 L + 1) ^ (4 √L + 5)` (`Cslib.AffineDisperser.four_pow_le_mul_prod_primesIoc`): the lower bound
+`(4 L + 1) ^ (4 √L + 5)` (`Cslib.four_pow_le_mul_prod_primesIoc`): the lower bound
 `θ (4 L) ≥ 4 L log 2 - O(√L log L)` beats the upper bound `θ L ≤ 2 L log 2` by `2 L log 2`.
 
 ## Main definitions
 
-* `Cslib.AffineDisperser.primesIoc`: the primes in `(a, b]`, in increasing order.
-* `Cslib.AffineDisperser.selectBelow`: the greedy choice of primes with product at most `T`.
+* `Cslib.primesIoc`: the primes in `(a, b]`, in increasing order.
+* `Cslib.selectBelow`: the greedy choice of primes with product at most `T`.
 
 ## Main results
 
-* `Cslib.AffineDisperser.prod_selectBelow_le`: the chosen product is at most `T`.
-* `Cslib.AffineDisperser.prod_le_or_lt_mul_prod_selectBelow`: either every prime is chosen or the
+* `Cslib.prod_selectBelow_le`: the chosen product is at most `T`.
+* `Cslib.prod_le_or_lt_mul_prod_selectBelow`: either every prime is chosen or the
   product exceeds `T / B`, for `B` a bound on the primes.
-* `Cslib.AffineDisperser.four_pow_le_mul_prod_primesIoc`: `4 ^ L` is at most
+* `Cslib.four_pow_le_mul_prod_primesIoc`: `4 ^ L` is at most
   `(4 L + 1) ^ (4 ⌊√L⌋ + 5)` times the product of the primes in `(L, 4 L]`.
 
 ## References
@@ -45,7 +45,7 @@ bounds show that the product of all primes in `(L, 4 L]` is at least `4 ^ L` up 
 
 @[expose] public section
 
-namespace Cslib.AffineDisperser
+namespace Cslib
 
 /-- The primes `p` with `a < p ≤ b`, in increasing order. -/
 def primesIoc (a b : ℕ) : List ℕ :=
@@ -176,4 +176,4 @@ theorem four_pow_le_mul_prod_primesIoc (L : ℕ) :
     linarith
   exact_mod_cast hreal
 
-end Cslib.AffineDisperser
+end Cslib

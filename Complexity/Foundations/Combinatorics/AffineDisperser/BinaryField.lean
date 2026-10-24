@@ -8,8 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Foundations.Combinatorics.AffineDisperser.TensorBasis
 public import Complexity.Foundations.FieldTheory.Finite.BinaryField
+public import Complexity.Foundations.FieldTheory.TensorBasis
 public import Mathlib.FieldTheory.Finite.GaloisField
 import Mathlib.FieldTheory.Minpoly.Field
 import Mathlib.RingTheory.AdjoinRoot

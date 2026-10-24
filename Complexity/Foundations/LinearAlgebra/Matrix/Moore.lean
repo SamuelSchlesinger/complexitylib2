@@ -8,8 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Foundations.Combinatorics.AffineDisperser.CubeSum
-public import Complexity.Foundations.Combinatorics.AffineDisperser.SubspacePolynomial
+public import Complexity.Foundations.FieldTheory.Finite.LinearizedPolynomial
+public import Complexity.Foundations.LinearAlgebra.CubeSum
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 public import Mathlib.LinearAlgebra.Matrix.Permanent
 import Mathlib.Algebra.CharP.Lemmas
@@ -34,15 +34,14 @@ with coefficient the permanent of `(a (τ l - m) ^ 2 ^ m)_{l, m}`
 
 ## Main definitions
 
-* `Cslib.AffineDisperser.mooreMatrix`: the matrix `(u l ^ 2 ^ m)`.
+* `Cslib.mooreMatrix`: the matrix `(u l ^ 2 ^ m)`.
 
 ## Main results
 
-* `Cslib.AffineDisperser.det_eq_permanent`: determinant and permanent agree in characteristic two.
-* `Cslib.AffineDisperser.sum_cube_pow_eq_det_mooreMatrix`: the Moore determinant as a finite
-  difference.
-* `Cslib.AffineDisperser.permanent_mooreMatrix_linearizedEval`: the monomial expansion of the Moore
-  permanent of a composition with a linearized function.
+* `Matrix.det_eq_permanent_of_charTwo`: determinant and permanent agree in characteristic two.
+* `Cslib.sum_cube_pow_eq_det_mooreMatrix`: the Moore determinant as a finite difference.
+* `Cslib.permanent_mooreMatrix_linearizedEval`: the monomial expansion of the Moore permanent of a
+  composition with a linearized function.
 
 ## References
 
@@ -51,7 +50,7 @@ with coefficient the permanent of `(a (τ l - m) ^ 2 ^ m)_{l, m}`
 
 @[expose] public section
 
-namespace Cslib.AffineDisperser
+namespace Cslib
 
 open Module
 
@@ -68,8 +67,8 @@ theorem mooreMatrix_apply {k : ℕ} (u : Fin k → F) (l m : Fin k) :
   rfl
 
 /-- In characteristic two the determinant of a matrix is its permanent. -/
-theorem det_eq_permanent {R ι : Type*} [CommRing R] [CharP R 2] [Fintype ι] [DecidableEq ι]
-    (M : Matrix ι ι R) : M.det = M.permanent := by
+theorem _root_.Matrix.det_eq_permanent_of_charTwo {R ι : Type*} [CommRing R] [CharP R 2]
+    [Fintype ι] [DecidableEq ι] (M : Matrix ι ι R) : M.det = M.permanent := by
   rw [Matrix.det_apply, Matrix.permanent]
   refine Finset.sum_congr rfl fun σ _ => ?_
   rcases Int.units_eq_one_or (Equiv.Perm.sign σ) with h | h
@@ -89,13 +88,13 @@ variable [Algebra (ZMod 2) F]
 `∑_{c ∈ 𝔽₂ᵏ} (a + ∑ cₗ uₗ) ^ (2 ^ k - 1)` is the Moore determinant of `u`. -/
 theorem sum_cube_pow_eq_det_mooreMatrix {k : ℕ} (a : F) (u : Fin k → F) :
     ∑ c : Fin k → ZMod 2, (a + ∑ l, c l • u l) ^ (2 ^ k - 1) = (mooreMatrix u).det := by
-  have : CharP F 2 := charP_of_injective_algebraMap' (ZMod 2) 2
   have hfrob : ∀ (c : Fin k → ZMod 2) (m : Fin k), (a + ∑ l, c l • u l) ^ 2 ^ (m : ℕ) =
       a ^ 2 ^ (m : ℕ) + ∑ l, c l • (u l ^ 2 ^ (m : ℕ)) := fun c m => by
     rw [add_pow_char_pow, sum_pow_char_pow]
     simp_rw [smul_pow, ZMod.pow_card_pow]
   simp_rw [pow_two_pow_sub_one_eq_prod, hfrob]
-  rw [sum_cube_prod_affine_eq_permanent, det_eq_permanent, ← Matrix.permanent_transpose]
+  rw [sum_cube_prod_affine_eq_permanent, Matrix.det_eq_permanent_of_charTwo,
+    ← Matrix.permanent_transpose]
   rfl
 
 /-- **Monomial expansion of a Moore permanent**, an analogue of [BenSassonKopparty2012,
@@ -122,4 +121,4 @@ theorem permanent_mooreMatrix_linearizedEval [Finite F] {n : ℕ} [NeZero n]
   congr 1
   exact Equiv.prod_comp σ fun l => w l ^ 2 ^ (τ l).val
 
-end Cslib.AffineDisperser
+end Cslib
