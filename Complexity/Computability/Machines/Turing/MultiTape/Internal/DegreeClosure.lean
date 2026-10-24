@@ -72,4 +72,52 @@ theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
       (max e₁ e₂) :=
   ⟨(hf.pair hg).1, (((hf.2.smul 2).add_const 1).add_max hg.2).mono fun x => by simp⟩
 
+/-- Case distinction retains independent branch output degrees, including zero. -/
+theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β} {dc ec : ℕ}
+    (hc : ComputableInDegree c encIn encC dc ec)
+    (hf : ComputableInDegree (f ∘ Subtype.val)
+      ((Function.Embedding.subtype (c · = true)).trans encIn) encMid d₁ e₁)
+    (hg : ComputableInDegree (g ∘ Subtype.val)
+      ((Function.Embedding.subtype (c · = false)).trans encIn) encMid d₂ e₂) :
+    ComputableInDegree (fun x => if c x then f x else g x) encIn encMid
+      (max dc (max d₁ d₂)) (max e₁ e₂) := by
+  obtain ⟨tc, sc, htc, hsc, kc, Qc, _, tmc, hmc⟩ := Internal.NormalForm.degree hc
+  obtain ⟨tf, sf, ⟨ctf, htf⟩, ⟨csf, hsf⟩, kf, Qf, _, tmf, hmf⟩ :=
+    Internal.NormalForm.degree hf
+  obtain ⟨tg, sg, ⟨ctg, htg⟩, ⟨csg, hsg⟩, kg, Qg, _, tmg, hmg⟩ :=
+    Internal.NormalForm.degree hg
+  obtain ⟨clf, hlf⟩ := hf.2
+  obtain ⟨clg, hlg⟩ := hg.2
+  let h₀ : ComputableTidilyInTimeAndSpace c encIn encC tc sc :=
+    ⟨kc, Qc, inferInstance, tmc, hmc⟩
+  let h₁ : ComputableTidilyInTimeAndSpace (f ∘ Subtype.val)
+      ((Function.Embedding.subtype (c · = true)).trans encIn) encMid tf sf :=
+    ⟨kf, Qf, inferInstance, tmf, hmf⟩
+  let h₂ : ComputableTidilyInTimeAndSpace (g ∘ Subtype.val)
+      ((Function.Embedding.subtype (c · = false)).trans encIn) encMid tg sg :=
+    ⟨kg, Qg, inferInstance, tmg, hmg⟩
+  -- the bounds of the branches, extended to all inputs
+  let ext (u : {x // c x = true} → ℕ) (v : {x // c x = false} → ℕ) (x : α) : ℕ :=
+    if h : c x = true then u ⟨x, h⟩ else v ⟨x, by simpa using h⟩
+  obtain ⟨k, h⟩ := ComputableTidilyInTimeAndSpace.ite h₀ (tf := ext tf tg) (sf := ext sf sg)
+    (tg := ext tf tg) (sg := ext sf sg)
+    (h₁.mono (fun x => by simp [ext, x.2]) (fun x => by simp [ext, x.2]))
+    (h₂.mono (fun x => by simp [ext, x.2]) (fun x => by simp [ext, x.2]))
+  have hext {u v} {cu du cv dv : ℕ}
+      (hu : ∀ x : {x // c x = true}, u x ≤ cu * ((encIn x).length + 1) ^ du)
+      (hv : ∀ x : {x // c x = false}, v x ≤ cv * ((encIn x).length + 1) ^ dv) :
+      DegreeBounded (fun a => (encIn a).length) (ext u v) (max du dv) :=
+    ((DegreeBounded.mono_deg ⟨cu, fun _ => le_rfl⟩ (le_max_left du dv)).add
+      (DegreeBounded.mono_deg ⟨cv, fun _ => le_rfl⟩ (le_max_right du dv))).mono fun x => by
+      by_cases hx : c x = true
+      · simpa [ext, hx] using Nat.le_add_right_of_le (hu ⟨x, hx⟩)
+      · simpa [ext, hx] using Nat.le_add_left_of_le (hv ⟨x, by simpa using hx⟩)
+  have hd : max d₁ d₂ ≤ max dc (max d₁ d₂) := le_max_right _ _
+  obtain ⟨km, Qm, hmfin, tm, htm⟩ := h
+  refine ⟨⟨_, _, ((htc.mono_deg (le_max_left _ _)).add ((hext htf htg).mono_deg hd)).add_const k,
+    ((hsc.mono_deg (le_max_left _ _)).add ((hext hsf hsg).mono_deg hd)).add_const k,
+    km, Qm, hmfin, tm, fun x => ((htm x).mono ?_ ?_).computesInTimeAndSpace⟩,
+    (hext hlf hlg).mono fun x => ?_⟩ <;>
+  · by_cases hx : c x = true <;> simp [ext, hx]
+
 end Turing.MultiTapeTM.ComputableInDegree
