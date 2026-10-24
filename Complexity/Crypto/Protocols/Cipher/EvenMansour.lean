@@ -10,8 +10,10 @@ module
 public import Complexity.Crypto.Game
 public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Languages.Probabilistic.QueryCount
+public import Complexity.Languages.Probabilistic.RandomPermutation
 public import Complexity.Languages.Probabilistic.Sum
 public import Mathlib.Data.Fintype.Perm
+import Complexity.Languages.Probabilistic.Simulation
 import Complexity.Probability.BitString
 import Complexity.Probability.PMF.Bind
 import Complexity.Probability.PMF.Uniform
@@ -42,12 +44,14 @@ We formalize four aspects of the Even–Mansour construction:
    query, `IsCallBounded _ 1 1`) to recover the secret key with probability `1` and achieve
    key-recovery game advantage `1 - |G|⁻¹` against an independent uniform permutation and uniform
    target key (`advantage_preWhitenKeyRecoveryGame_eq`, `advantage_postWhitenKeyRecoveryGame_eq`).
-3. **One-sided query security**: because `evenMansourPermEquiv k₀ k₁` is a bijection on
-   `Equiv.Perm G`, any adversary that queries only the cipher oracle (`liftLeft`) or only the
-   primitive permutation oracle (`liftRight`) has zero distinguishing advantage between the real
-   Even–Mansour game and two independent uniform permutations
-   (`advantage_evenMansourRealGame_liftLeft_eq_zero`,
-   `advantage_evenMansourRealGame_liftRight_eq_zero`).
+3. **One-sided query security and lazy ideal-permutation equivalence**: because
+   `evenMansourPermEquiv k₀ k₁` is a bijection on `Equiv.Perm G`, any adversary that queries only
+   the cipher oracle (`liftLeft`) or only the primitive permutation oracle (`liftRight`) has zero
+   distinguishing advantage between the real Even–Mansour game and two independent uniform
+   permutations (`advantage_evenMansourRealGame_liftLeft_eq_zero`,
+   `advantage_evenMansourRealGame_liftRight_eq_zero`). Moreover, `evenMansourIdealGame` is
+   identically distributed to running two independent lazy bidirectional permutation samplers
+   (`idealLazyHandler`) from empty caches (`evenMansourIdealGame_eq_lazy`).
 4. **Bad-key transcript intersection bound ([BonehShoup2023], Theorem 4.10)**: given a cipher
    transcript `T_e : List (G × G)` and a primitive permutation transcript `T_π : List (G × G)`, a
    key `(k₀, k₁)` is bad (`isBadEvenMansourKey T_e T_π k`) when some `(x, y) ∈ T_e` and
@@ -63,9 +67,10 @@ We formalize four aspects of the Even–Mansour construction:
    `IsCallBounded program Q_e Q_π`, `OracleComp.IsCostBounded.transcript_cost_le` bounds every
    supported transcript by `|T_e| ≤ Q_e` and `|T_π| ≤ Q_π`, yielding the `2 * Q_e * Q_π / |G|`
    bad-key bound on every supported execution path (`IsCallBounded.badEvenMansourKey_toReal_le`,
-   `IsCallBounded.badSingleKeyEvenMansour_toReal_le`). The lazy-sampled bidirectional
-   random-permutation coupling step connecting this bad-key intersection bound to full two-sided
-   `Game.advantage (evenMansourRealGame program) (evenMansourIdealGame program)` remains open.
+   `IsCallBounded.badSingleKeyEvenMansour_toReal_le`). The final key-shifted coupling step
+   connecting `evenMansourRealGame` to `idealLazyHandler` via this bad-key intersection bound to
+   bound `Game.advantage (evenMansourRealGame program) (evenMansourIdealGame program)` remains
+   open.
 
 ## Main definitions
 
@@ -76,7 +81,8 @@ We formalize four aspects of the Even–Mansour construction:
 * `Cslib.Crypto.EvenMansour.PermQuery`, `PermOracleSpec`, `EvenMansourSpec`, `IsCallBounded`:
   bidirectional cipher and primitive permutation oracle interface and separate query budgets.
 * `Cslib.Crypto.EvenMansour.evenMansourRealGame`, `singleKeyEvenMansourRealGame`,
-  `evenMansourIdealGame`: real and ideal bidirectional permutation games.
+  `evenMansourIdealGame`, `idealLazyHandler`: real and ideal bidirectional permutation games and the
+  lazy two-permutation handler.
 * `Cslib.Crypto.EvenMansour.isBadKeyPair`, `isBadEvenMansourKey`, `isBadSingleKeyEvenMansour`,
   `transcriptCipher`, `transcriptPerm`: bad-key collision predicates and transcript projections.
 
@@ -87,9 +93,11 @@ We formalize four aspects of the Even–Mansour construction:
 * `Cslib.Crypto.EvenMansour.advantage_preWhitenKeyRecoveryGame_eq`,
   `Cslib.Crypto.EvenMansour.advantage_postWhitenKeyRecoveryGame_eq`: 2-query attacks achieve
   key-recovery game advantage `1 - |G|⁻¹` when either whitening key is omitted.
-* `Cslib.Crypto.EvenMansour.advantage_evenMansourRealGame_liftLeft_eq_zero`,
-  `Cslib.Crypto.EvenMansour.advantage_evenMansourRealGame_liftRight_eq_zero`: zero advantage when
-  queries are restricted to one oracle.
+* `Cslib.Crypto.EvenMansour.evenMansourIdealGame_eq_lazy`,
+  `Cslib.Crypto.EvenMansour.advantage_evenMansourRealGame_liftLeft_eq_zero`,
+  `Cslib.Crypto.EvenMansour.advantage_evenMansourRealGame_liftRight_eq_zero`: lazy two-permutation
+  equivalence for `evenMansourIdealGame` and zero advantage when queries are restricted to one
+  oracle.
 * `Cslib.Crypto.EvenMansour.toOuterMeasure_isBadEvenMansourKey_toReal_le`,
   `Cslib.Crypto.EvenMansour.toOuterMeasure_isBadSingleKeyEvenMansour_toReal_le`,
   `Cslib.Crypto.EvenMansour.IsCallBounded.badEvenMansourKey_toReal_le`,
@@ -289,23 +297,18 @@ end Algebraic
 
 /-! ### Bidirectional ideal-permutation oracle interface and games -/
 
-/-- A bidirectional query to a permutation on `G`: either evaluate in the forward direction or
-evaluate the inverse permutation. -/
-inductive PermQuery (G : Type) where
-  /-- Forward query `x ↦ P(x)`. -/
-  | forward (x : G)
-  /-- Inverse query `y ↦ P⁻¹(y)`. -/
-  | inverse (y : G)
-  deriving DecidableEq
+/-- A bidirectional query to a permutation on `G` (`RandomPermutation.PermQuery`). -/
+abbrev PermQuery (G : Type) := RandomPermutation.PermQuery G
 
-/-- The oracle specification of a bidirectional permutation on `G`. -/
+/-- The oracle specification of a bidirectional permutation on `G`
+(`RandomPermutation.PermOracleSpec`). -/
 abbrev PermOracleSpec (G : Type) : OracleSpec (PermQuery G) :=
-  fun _ => G
+  RandomPermutation.PermOracleSpec G
 
-/-- Answer a bidirectional permutation query using `P : Equiv.Perm G`. -/
-def evalPerm {G : Type} (P : Equiv.Perm G) : PermQuery G → G
-  | .forward x => P x
-  | .inverse y => P.symm y
+/-- Answer a bidirectional permutation query using `P : Equiv.Perm G`
+(`RandomPermutation.evalPerm`). -/
+abbrev evalPerm {G : Type} (P : Equiv.Perm G) : PermQuery G → G :=
+  RandomPermutation.evalPerm P
 
 @[simp] theorem evalPerm_forward {G : Type} (P : Equiv.Perm G) (x : G) :
     evalPerm P (.forward x) = P x := rfl
@@ -509,6 +512,100 @@ noncomputable def evenMansourIdealGame (program : OracleComp (EvenMansourSpec G)
   let E ← PMF.uniformOfFintype (Equiv.Perm G)
   let π ← PMF.uniformOfFintype (Equiv.Perm G)
   return evalTwoPerms E π program
+
+/-- Lazy bidirectional two-permutation handler for `evenMansourIdealGame`: left (cipher) queries
+are answered lazily from `cache_e` and right (primitive permutation) queries are answered lazily
+from `cache_π` via `RandomPermutation.answer`. -/
+noncomputable def idealLazyHandler (q : PermQuery G ⊕ PermQuery G) :
+    StateT (RandomPermutation.Cache G × RandomPermutation.Cache G) PMF (EvenMansourSpec G q) :=
+  fun (cache_e, cache_π) =>
+    match q with
+    | .inl qe =>
+      (RandomPermutation.answer qe cache_e).map fun (y, cache_e') => (y, (cache_e', cache_π))
+    | .inr qπ =>
+      (RandomPermutation.answer qπ cache_π).map fun (v, cache_π') => (v, (cache_e, cache_π'))
+
+omit [AddGroup G] [Fintype G] [DecidableEq G] [Nonempty G] in
+private theorem pure_evalTwoPerms {α : Type} (E π : Equiv.Perm G)
+    (program : OracleComp (EvenMansourSpec G) α) :
+    (PMF.pure (evalTwoPerms E π program) : PMF α) =
+      OracleComp.interpret
+        (sumHandler (fun q => PMF.pure (evalPerm E q)) (fun q => PMF.pure (evalPerm π q)))
+        program := by
+  induction program with
+  | pure a => rfl
+  | liftBind q cont ih =>
+    change PMF.pure (evalTwoPerms E π (OracleComp.query q >>= cont)) =
+      OracleComp.interpret
+        (sumHandler (fun q => PMF.pure (evalPerm E q)) (fun q => PMF.pure (evalPerm π q)))
+        (OracleComp.query q >>= cont)
+    cases q <;>
+      · simp only [evalTwoPerms, sumHandler, OracleComp.interpret_bind, OracleComp.interpret_query,
+          Id.run_bind, PMF.monad_bind_eq_bind, PMF.pure_bind]
+        exact ih _
+
+omit [AddGroup G] in
+/-- **Ideal Even–Mansour game equals lazy bidirectional two-permutation sampling**: sampling two
+independent uniform permutations `E, π ← PMF.uniformOfFintype (Equiv.Perm G)` has the exact same
+output distribution as running `idealLazyHandler` from `([], [])`. -/
+theorem evenMansourIdealGame_eq_lazy (program : OracleComp (EvenMansourSpec G) Bool) :
+    evenMansourIdealGame program =
+      (((OracleComp.interpret idealLazyHandler program).run ([], [])).map Prod.fst) := by
+  let sim (st : RandomPermutation.Cache G × RandomPermutation.Cache G) :
+      PMF (Equiv.Perm G × Equiv.Perm G) :=
+    (RandomPermutation.complete st.1).bind fun E => (RandomPermutation.complete st.2).map (E, ·)
+  let inv (st : RandomPermutation.Cache G × RandomPermutation.Cache G) : Prop :=
+    RandomPermutation.IsPartialBijection st.1 ∧ RandomPermutation.IsPartialBijection st.2
+  let readH (q : PermQuery G ⊕ PermQuery G) (p : Equiv.Perm G × Equiv.Perm G) :
+      PMF (EvenMansourSpec G q) :=
+    sumHandler (fun q => PMF.pure (evalPerm p.1 q)) (fun q => PMF.pure (evalPerm p.2 q)) q
+  have hpres : ∀ q st, inv st →
+      ∀ a st', (a, st') ∈ (idealLazyHandler q st).support → inv st' := by
+    rintro (qe | qπ) ⟨c_e, c_π⟩ ⟨he, hπ⟩ a ⟨c_e', c_π'⟩ hmem
+    · simp only [idealLazyHandler, PMF.mem_support_map_iff] at hmem
+      obtain ⟨⟨a₀, ce₀⟩, hmem₀, hpair⟩ := hmem
+      cases hpair
+      exact ⟨RandomPermutation.answer_preserve_isPartialBijection qe c_e he a₀ ce₀ hmem₀, hπ⟩
+    · simp only [idealLazyHandler, PMF.mem_support_map_iff] at hmem
+      obtain ⟨⟨a₀, cπ₀⟩, hmem₀, hpair⟩ := hmem
+      cases hpair
+      exact ⟨he, RandomPermutation.answer_preserve_isPartialBijection qπ c_π hπ a₀ cπ₀ hmem₀⟩
+  have hstep : ∀ q st, inv st →
+      (do let (a, st') ← idealLazyHandler q st; (a, ·) <$> sim st') =
+      (do let p ← sim st; let y ← (·, p) <$> readH q p; pure y) := by
+    rintro (qe | qπ) ⟨c_e, c_π⟩ ⟨he, hπ⟩
+    · have h1 := congrArg
+        (fun m : PMF (G × Equiv.Perm G) =>
+          m.bind fun (y, E) => (RandomPermutation.complete c_π).map fun π => (y, (E, π)))
+        (RandomPermutation.answer_complete qe c_e he)
+      simpa only [idealLazyHandler, sim, readH, sumHandler, PMF.monad_bind_eq_bind,
+        PMF.monad_map_eq_map, PMF.monad_pure_eq_pure, PMF.bind_map, PMF.map_bind,
+        PMF.bind_bind, PMF.pure_map, PMF.pure_bind, PMF.map_comp, PMF.map,
+        Function.comp_def] using h1
+    · have h2 := congrArg
+        (fun m : PMF (G × Equiv.Perm G) =>
+          (RandomPermutation.complete c_e).bind fun E =>
+            m.map fun (v, π) => (v, (E, π)))
+        (RandomPermutation.answer_complete qπ c_π hπ)
+      simp only [idealLazyHandler, sim, readH, sumHandler, PMF.monad_bind_eq_bind,
+        PMF.monad_map_eq_map, PMF.bind_bind, PMF.pure_bind, PMF.map, Function.comp_def] at h2 ⊢
+      rw [PMF.bind_comm]
+      exact h2
+  have hsim := OracleComp.run_interpret_simulation_of_invariant idealLazyHandler
+    (fun q p => (·, p) <$> readH q p) sim inv hpres hstep program ([], [])
+    ⟨RandomPermutation.isPartialBijection_nil, RandomPermutation.isPartialBijection_nil⟩
+  have hsim' := congrArg (PMF.map Prod.fst) hsim
+  simp only [sim, RandomPermutation.complete_nil, PMF.monad_map_eq_map,
+    PMF.map, Function.comp_def, PMF.bind_bind,
+    PMF.pure_bind, PMF.bind_const] at hsim'
+  refine Eq.trans ?_ hsim'.symm
+  simp only [evenMansourIdealGame, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
+  refine congrArg ((PMF.uniformOfFintype (Equiv.Perm G)).bind) (funext fun E => ?_)
+  refine congrArg ((PMF.uniformOfFintype (Equiv.Perm G)).bind) (funext fun π => ?_)
+  rw [pure_evalTwoPerms]
+  simpa only [readH, PMF.monad_map_eq_map, PMF.map_comp, PMF.map, Function.comp_def,
+    PMF.bind_bind, PMF.pure_bind, PMF.bind_pure] using
+    (congrArg (PMF.map Prod.fst) (OracleComp.run_interpret_readOnly readH program (E, π))).symm
 
 /-- For any adversary `program` that queries only the cipher oracle (`liftLeft program`), the real
 Even–Mansour game is identically distributed to the ideal game. -/
