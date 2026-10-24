@@ -107,12 +107,12 @@ noncomputable def proof :
 /-! ### Component theorems (milestone 2) -/
 
 /-- Each round is perfectly complete. -/
-theorem round_complete (hP : ∀ j, P.degreeOf j ≤ d) (i : ℕ) :
+theorem round_complete (hP : ∀ j, P.degreeOf j ≤ d) {i : ℕ} (hi : i < n) :
     (round d P i).Complete World.plain (rel P i) (rel P (i + 1)) 0 := by
   sorry
 
 /-- Each round is round-by-round sound with error `d / |F|` (Schwartz–Zippel for one variable). -/
-theorem round_rbrSound (hP : ∀ j, P.degreeOf j ≤ d) (i : ℕ) :
+theorem round_rbrSound (hP : ∀ j, P.degreeOf j ≤ d) {i : ℕ} (hi : i < n) :
     (round d P i).verifier.RbrSound (language (rel P i)) (language (rel P (i + 1)))
       ((d : ℝ≥0∞) / Fintype.card F, ()) := by
   sorry
@@ -148,7 +148,8 @@ theorem finalCheck_rbrSound :
 /-- **Completeness of sumcheck with the final check.** -/
 theorem proof_complete (hP : ∀ j, P.degreeOf j ≤ d) :
     (proof d P).Complete World.plain (rel P 0) Accept 0 := by
-  have h := (Reduction.Complete.iterate (round_complete d P hP) n).append (finalCheck_complete P)
+  have h := (Reduction.Complete.iterate (rel := rel P) n fun i hi =>
+    round_complete d P hP hi).append (finalCheck_complete P)
   simp only [Finset.sum_const_zero, add_zero] at h
   exact h
 
@@ -157,8 +158,8 @@ most `n * (d / |F|)`. -/
 theorem proof_sound (hP : ∀ j, P.degreeOf j ≤ d) :
     (proof d P).verifier.Sound (oP := emptySpec) World.plain (language (rel P 0)) Set.univ
       (n * ((d : ℝ≥0∞) / Fintype.card F)) := by
-  have h := ((Verifier.RbrSound.iterate (R := round d P) (round_rbrSound d P hP) n).append
-    (finalCheck_rbrSound P)).sound
+  have h := ((Verifier.RbrSound.iterate (R := round d P) (L := fun i => language (rel P i)) n
+    fun i hi => round_rbrSound d P hP hi).append (finalCheck_rbrSound P)).sound
   simp only [PerChallenge.sum_append, PerChallenge.sum_iterate] at h
   simp only [PerChallenge.sum, add_zero, Finset.sum_const, Finset.card_range, nsmul_eq_mul] at h
   exact h

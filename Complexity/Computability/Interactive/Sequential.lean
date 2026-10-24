@@ -370,14 +370,23 @@ theorem Verifier.Sound.append (h₁ : V₁.Sound (oP := emptySpec) World.plain L
     (V₁.append V₂).Sound (oP := emptySpec) World.plain L₁ L₃ (ε₁ + ε₂) := by
   sorry
 
-/-- Straight-line extractors compose: extract the intermediate witness from the second half of
-the transcript, then the input witness from the first half. -/
+/-- The composed straight-line extractor: extract the intermediate witness from the second half of
+the transcript, at the statement the first verifier outputs, then the input witness from the first
+half. The default intermediate statement `y₀` is used only when the first verifier rejects, when
+the composed verifier rejects too. -/
+noncomputable def Verifier.extractAppend (V₁ : Verifier emptySpec s₁ S₁ S₂)
+    (E₁ : S₁ → Transcript s₁ → W₂ → W₁) (E₂ : S₂ → Transcript s₂ → W₃ → W₂) (y₀ : S₂) :
+    S₁ → Transcript (s₁ ++ s₂) → W₃ → W₁ := fun x τ w₃ =>
+  E₁ x (Transcript.split s₁ s₂ τ).1
+    (E₂ ((V₁.outputOn x (Transcript.split s₁ s₂ τ).1).getD y₀) (Transcript.split s₁ s₂ τ).2 w₃)
+
+/-- **Straight-line extractors compose**, with the sum of the knowledge errors. -/
 theorem Verifier.KnowledgeSound.append {E₁ : S₁ → Transcript s₁ → W₂ → W₁}
     {E₂ : S₂ → Transcript s₂ → W₃ → W₂}
     (h₁ : V₁.KnowledgeSound (oP := emptySpec) World.plain rel₁ rel₂ E₁ ε₁)
-    (h₂ : V₂.KnowledgeSound (oP := emptySpec) World.plain rel₂ rel₃ E₂ ε₂) :
-    ∃ E : S₁ → Transcript (s₁ ++ s₂) → W₃ → W₁,
-      (V₁.append V₂).KnowledgeSound (oP := emptySpec) World.plain rel₁ rel₃ E (ε₁ + ε₂) := by
+    (h₂ : V₂.KnowledgeSound (oP := emptySpec) World.plain rel₂ rel₃ E₂ ε₂) (y₀ : S₂) :
+    (V₁.append V₂).KnowledgeSound (oP := emptySpec) World.plain rel₁ rel₃
+      (V₁.extractAppend E₁ E₂ y₀) (ε₁ + ε₂) := by
   sorry
 
 /-- The total error of concatenated per-round errors. -/
@@ -441,9 +450,10 @@ theorem Reduction.id_rbrSound (L : Set S) :
   exact this ▸ hx'
 
 /-- **Iterated completeness**: if every step `R i` is complete from `rel i` to `rel (i + 1)` with
-error `ε i`, the first `k` steps are complete from `rel 0` to `rel k` with the sum of the errors. -/
-theorem Reduction.Complete.iterate {rel : ℕ → S → W → Prop} {ε : ℕ → ℝ≥0∞}
-    (h : ∀ i, (R i).Complete World.plain (rel i) (rel (i + 1)) (ε i)) (k : ℕ) :
+error `ε i` for `i < k`, the first `k` steps are complete from `rel 0` to `rel k` with the sum of
+the errors. -/
+theorem Reduction.Complete.iterate {rel : ℕ → S → W → Prop} {ε : ℕ → ℝ≥0∞} (k : ℕ)
+    (h : ∀ i < k, (R i).Complete World.plain (rel i) (rel (i + 1)) (ε i)) :
     (Reduction.iterate R k).Complete World.plain (rel 0) (rel k) (∑ i ∈ Finset.range k, ε i) := by
   induction k with
   | zero =>
@@ -451,15 +461,15 @@ theorem Reduction.Complete.iterate {rel : ℕ → S → W → Prop} {ε : ℕ �
     exact Reduction.id_complete (rel 0)
   | succ k ih =>
     rw [Finset.sum_range_succ]
-    exact ih.append (h k)
+    exact (ih fun i hi => h i (by omega)).append (h k (by omega))
 
 /-- **Iterated round-by-round soundness**, with the per-round errors of the steps in order. -/
 theorem Verifier.RbrSound.iterate {L : ℕ → Set S} {ε : ℕ → PerChallenge (fun _ => ℝ≥0∞) s}
-    (h : ∀ i, (R i).verifier.RbrSound (L i) (L (i + 1)) (ε i)) (k : ℕ) :
+    (k : ℕ) (h : ∀ i < k, (R i).verifier.RbrSound (L i) (L (i + 1)) (ε i)) :
     (Reduction.iterate R k).verifier.RbrSound (L 0) (L k) (PerChallenge.iterate ε k) := by
   induction k with
   | zero => exact Reduction.id_rbrSound (L 0)
-  | succ k ih => exact ih.append (h k)
+  | succ k ih => exact (ih fun i hi => h i (by omega)).append (h k (by omega))
 
 /-- The total error of repeated per-round errors. -/
 theorem PerChallenge.sum_iterate (ε : ℕ → PerChallenge (fun _ => ℝ≥0∞) s) (k : ℕ) :
