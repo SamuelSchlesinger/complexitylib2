@@ -166,12 +166,9 @@ theorem interpret_prob_eq_lazy [DecidableEq Query]
         (handler ProbComp.unifOracle (fun q => PMF.pure (table q))) program) =
       ((OracleComp.interpret
         (handler (fun n => StateT.lift (ProbComp.unifOracle n)) (answer distribution))
-          program).run (fun _ => none)).map Prod.fst := by
-  have h := congrArg (PMF.map Prod.fst)
+          program).run (fun _ => none)).map Prod.fst :=
+  pi_bind_eq_map_fst_of_complete_eq distribution
     (run_interpret_answer_complete_prob distribution program (fun _ => none))
-  simpa only [PMF.monad_bind_eq_bind, complete_empty, PMF.map_bind, PMF.map_comp, PMF.map,
-    Function.comp_def,
-    PMF.bind_const, PMF.bind_pure, PMF.bind_bind, PMF.pure_bind] using h.symm
 
 /-- A uniform random function can be implemented by consistent lazy uniform replies even when
 the client uses private randomness between its adaptive queries. -/
