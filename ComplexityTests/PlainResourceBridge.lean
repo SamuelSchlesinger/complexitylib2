@@ -6,41 +6,27 @@ Authors: Samuel Schlesinger
 
 module
 
-import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id
 
-/-! Private normalization keeps the original quantitative contracts, including degree zero and
-uncharged output under independent BigO bounds. These examples add no public tidy interface. -/
+/-! Plain independent degree bounds, zero degrees, and uncharged output. -/
 
 open Turing.MultiTapeTM
 
 universe u v
 
 example {α : Type u} {β : Type v} {f : α → β} {encIn : α ↪ List Bool}
-    {encOut : β ↪ List Bool} {d e : ℕ} :
-    ComputableInDegree f encIn encOut d e ↔ ComputableTidilyInDegree f encIn encOut d e :=
-  ⟨Internal.normalizeDegree, Internal.forgetDegree⟩
+    {encOut : β ↪ List Bool} {d e d' e' : ℕ}
+    (h : ComputableInDegree f encIn encOut d e) (hd : d ≤ d') (he : e ≤ e') :
+    ComputableInDegree f encIn encOut d' e' := h.mono hd he
 
 example {α : Type u} {β : Type v} {f : α → β} {encIn : α ↪ List Bool}
-    {encOut : β ↪ List Bool} {e : ℕ} :
-    ComputableInDegree f encIn encOut 0 e ↔ ComputableTidilyInDegree f encIn encOut 0 e :=
-  ⟨Internal.normalizeDegree, Internal.forgetDegree⟩
-
-example {α : Type u} {β : Type v} {f : α → β} {encIn : α ↪ List Bool}
-    {encOut : β ↪ List Bool} :
-    ComputableInLinearTimeAndSpace f encIn encOut ↔
-      (∃ c, ComputableTidilyInTimeAndSpace f encIn encOut
-        (fun a => c * ((encIn a).length + 1)) (fun a => c * ((encIn a).length + 1))) :=
-  ⟨Internal.normalizeLinear, Internal.forgetLinear⟩
-
-example {α : Type u} {β : Type v} {f : α → β} {encIn : α ↪ List Bool}
-    {encOut : β ↪ List Bool} {T S : α → ℕ} :
-    ComputableInBigO f encIn encOut T S ↔ ComputableTidilyInBigO f encIn encOut T S :=
-  ⟨Internal.normalizeBigO, Internal.forgetBigO⟩
+    {encOut : β ↪ List Bool} {e : ℕ}
+    (h : ComputableInDegree f encIn encOut 0 e) : ComputableInPolyTime f encIn encOut :=
+  h.computableInPolyTime
 
 -- Constant output on the infinite word domain realizes both degree-zero bounds.
 example : ComputableInDegree (fun _ : List Bool => false) encBits encBool 0 0 := by
