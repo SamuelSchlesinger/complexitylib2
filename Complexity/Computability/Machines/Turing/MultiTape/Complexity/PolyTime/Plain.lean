@@ -225,6 +225,21 @@ theorem polyBounded_length {f : α → β} (h : ComputableInPolyTime f encIn enc
     PolyBounded (fun a => (encIn a).length) fun a => (encMid (f a)).length :=
   h.tidy.polyBounded_length
 
+/-- Every polynomial-time function admits explicit degrees: time and work space of degree `d` and
+encoded output of degree `e`. The plain counterpart of
+`Turing.MultiTapeTM.ComputableTidilyInPolyTime.exists_degree`. -/
+theorem exists_degree {f : α → β} (h : ComputableInPolyTime f encIn encMid) :
+    ∃ d e, ComputableInDegree f encIn encMid d e := by
+  obtain ⟨t, s, ht, hs, h⟩ := h
+  obtain ⟨ct, dt, ht⟩ :=
+    (PolyBounded.of_polynomiallyBounded (fun a => (encIn a).length) ht).exists_le
+  obtain ⟨cs, ds, hs⟩ :=
+    (PolyBounded.of_polynomiallyBounded (fun a => (encIn a).length) hs).exists_le
+  have hT : DegreeBounded (fun a => (encIn a).length) (fun a => t (encIn a).length) (max dt ds) :=
+    DegreeBounded.mono_deg ⟨ct, ht⟩ (le_max_left dt ds)
+  exact ⟨max dt ds, max dt ds,
+    ⟨_, _, hT, DegreeBounded.mono_deg ⟨cs, hs⟩ (le_max_right dt ds), h⟩, hT.mono h.length_le⟩
+
 theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β₁ ↪ List Bool}
     {enc₂ : β₂ ↪ List Bool} {enc : β₁ × β₂ ↪ List Bool} [PairEncoding enc₁ enc₂ enc]
     {f : α → β₁} {g : α → β₂} (hf : ComputableInPolyTime f encIn enc₁)

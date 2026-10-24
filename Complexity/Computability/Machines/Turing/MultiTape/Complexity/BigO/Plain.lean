@@ -93,6 +93,20 @@ theorem ComputableTidilyInO.computableInO (h : ComputableTidilyInO f encIn encOu
     ComputableInO f encIn encOut T S :=
   .of_tidy h
 
+/-- **Degree bounds are bounds up to constants.** A function computable within time and space of
+degree `d` is computable within time and space `O((n + 1) ^ d)` in the length `n` of the encoded
+input; its encoded values, bounded by the time, fit in that space. The plain counterpart of
+`Turing.MultiTapeTM.ComputableTidilyInDegree.inO`. -/
+theorem ComputableInDegree.inO {d e : ℕ} (h : ComputableInDegree f encIn encOut d e) :
+    ComputableInO f encIn encOut (fun a => ((encIn a).length + 1) ^ d)
+      fun a => ((encIn a).length + 1) ^ d := by
+  obtain ⟨⟨t, s, ⟨ct, ht⟩, ⟨cs, hs⟩, hf⟩, -⟩ := h
+  have ht' : ∀ a, t a ≤ (ct + cs) * (((encIn a).length + 1) ^ d + 1) := fun a =>
+    (ht a).trans (Nat.mul_le_mul (Nat.le_add_right _ _) (Nat.le_succ _))
+  exact ⟨ct + cs, hf.mono ht' fun a =>
+    (hs a).trans (Nat.mul_le_mul (Nat.le_add_left _ _) (Nat.le_succ _)),
+    fun a => (hf.length_le a).trans (ht' a)⟩
+
 /-- **Plain and tidy computability within bounds up to constants agree.** -/
 theorem computableInO_iff_computableTidilyInO :
     ComputableInO f encIn encOut T S ↔ ComputableTidilyInO f encIn encOut T S :=
