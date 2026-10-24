@@ -15,7 +15,8 @@ An algorithm that always names its only answer is accepted with probability `1`,
 succeeds with probability at least `1 - 1 / 2`; it succeeds exactly when two independent bits
 differ, so the bound is attained. The oracle program that asks one query and names it satisfies
 the hypotheses of the oracle forking lemma, which gives a positive forking probability; a
-successful fork gives two runs that ask the same query.
+successful fork gives two runs that ask the same query. A program that names a position without
+asking any query never forks successfully.
 -/
 
 namespace ComplexityTests.Crypto.Forking
@@ -61,9 +62,12 @@ example : (1 : ℝ) / 4 ≤ ((Forking.fork (PMF.pure ())
   have h := OracleComp.le_add_sqrt_fork (PMF.pure ()) askOnce false askOnce_queries
   have hacc : ((do
       let s ← PMF.pure ()
-      let result ← OracleComp.interpret (fun _ => PMF.uniformOfFintype Bool) (askOnce s)
-      return (OracleComp.indexBelow 1 result.1).isSome : PMF Bool) true).toReal = 1 := by
-    simp [askOnce, OracleComp.indexBelow]
+      let run ← (OracleComp.interpret OracleComp.countingUniform (askOnce s)).run 0
+      return (OracleComp.validIndex 1 run.2 run.1.1).isSome : PMF Bool) true).toReal = 1 := by
+    rw [Probability.PMF.monad_bind_eq_bind, PMF.pure_bind, Probability.PMF.monad_bind_eq_bind,
+      OracleComp.run_interpret_countingUniform_eq false (askOnce ()) (askOnce_queries ()),
+      PMF.bind_map]
+    simp [Function.comp_def, askOnce, OracleComp.validIndex]
   rw [hacc] at h
   simp only [Fintype.card_bool, Nat.cast_ofNat, Nat.cast_one, one_mul] at h
   have hsqrt : (1 : ℝ) / 2 ≤ √(((Forking.fork (PMF.pure ())
@@ -79,8 +83,15 @@ example {j : Fin 1} {out out' : (Option ℕ × Bool) × List Unit}
     (hfork : some (j, out, out') ∈
       (Forking.fork (PMF.pure ()) (OracleComp.forkingAlgorithm false 1 askOnce)).support) :
     out.2.take (j + 1) = out'.2.take (j + 1) := by
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, htake⟩ := OracleComp.mem_support_fork hfork
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, htake, -⟩ := OracleComp.mem_support_fork hfork
   exact htake
+
+/-- A program that names position `0` without asking any query does not validly name it, so its
+fork never succeeds. -/
+example : (Forking.fork (PMF.pure ()) (OracleComp.forkingAlgorithm false 1
+    (fun _ : Unit => (pure (some 0, ()) : OracleComp (fun _ : Unit => Bool) (Option ℕ × Unit))))).map
+    Option.isSome true = 0 := by
+  simp [Forking.fork, OracleComp.forkingAlgorithm, OracleComp.validIndex]
 
 /-! ### Axioms -/
 
