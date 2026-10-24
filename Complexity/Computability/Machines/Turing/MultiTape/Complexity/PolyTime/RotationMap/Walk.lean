@@ -35,11 +35,11 @@ results do not claim a bound uniform in either parameter.
 * `Cslib.RotationMap.walkAtWithInput_eq`: agreement with a mathematical trajectory.
 * `Cslib.RotationMap.powRotWithInput_eq`: agreement with a mathematical power rotation.
 * `Cslib.RotationMap.killedPowRotWithInput_eq`: agreement with a killed power rotation.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_walkAtWithInput`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_walkAtWithInput`:
   a vertex along a fixed walk.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_powRotWithInput`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_powRotWithInput`:
   a fixed power rotation.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_killedPowRotWithInput`:
+* `Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_killedPowRotWithInput`:
   a fixed killed power.
 
 ## References
@@ -123,20 +123,20 @@ theorem killedPowRotWithInput_eq (T q : ℕ) [NeZero q]
 
 end Cslib.RotationMap
 
-namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
+namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 open Cslib
 
 variable {P V D : Type} {input : P ↪ List Bool} {vertex : V ↪ List Bool}
   {label : D ↪ List Bool} {rotate : P × (V × D) → V × D}
-  (hrotate : ComputableTidilyInPolyTime rotate
+  (hrotate : ComputableInPolyTime rotate
     (encPair input (encPair vertex label)) (encPair vertex label))
 
 include hrotate in
 /-- A fixed step of a fixed-length walk uses the joint certificate for the runtime graph. -/
 @[fun_prop]
 theorem rotationMap_walkAtWithInput (T m : ℕ) :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (fun p : P × (V × (Fin T → D)) => RotationMap.walkAtWithInput rotate p m)
       (encPair input (encPair vertex (encPi label))) vertex := by
   induction m with
@@ -149,11 +149,11 @@ theorem rotationMap_walkAtWithInput (T m : ℕ) :
     · simpa only [RotationMap.walkAtWithInput, dite_eq_right hm] using ih
 
 private theorem polytime_finTail (T : ℕ) :
-    ComputableTidilyInPolyTime (@Fin.tail T (fun _ => D)) (encPi label) (encPi label) :=
+    ComputableInPolyTime (@Fin.tail T (fun _ => D)) (encPi label) (encPi label) :=
   pi fun i => pi_apply label i.succ
 
 private theorem polytime_finSnoc (T : ℕ) :
-    ComputableTidilyInPolyTime (fun p : (Fin T → D) × D => Fin.snoc p.1 p.2)
+    ComputableInPolyTime (fun p : (Fin T → D) × D => Fin.snoc p.1 p.2)
       (encPair (encPi label) label) (encPi label) := by
   apply pi
   intro i
@@ -166,12 +166,12 @@ include hrotate in
 /-- A fixed power reverses all return labels while charging the runtime graph at every call. -/
 @[fun_prop]
 theorem rotationMap_powRotWithInput (T : ℕ) :
-    ComputableTidilyInPolyTime (RotationMap.powRotWithInput rotate T)
+    ComputableInPolyTime (RotationMap.powRotWithInput rotate T)
       (encPair input (encPair vertex (encPi label))) (encPair vertex (encPi label)) := by
   induction T with
   | zero => exact snd _ _
   | succ T ih =>
-    have hhead : ComputableTidilyInPolyTime
+    have hhead : ComputableInPolyTime
         (fun p : P × (V × (Fin (T + 1) → D)) => rotate (p.1, p.2.1, p.2.2 0))
         (encPair input (encPair vertex (encPi label))) (encPair vertex label) :=
       hrotate.comp ((fst _ _).prod
@@ -185,21 +185,21 @@ include hrotate in
 walk, and retains every unused label and every signal in the result. -/
 @[fun_prop]
 theorem rotationMap_killedPowRotWithInput (T q : ℕ) [NeZero q] (signal : Fin q ↪ List Bool) :
-    ComputableTidilyInPolyTime
+    ComputableInPolyTime
       (RotationMap.killedPowRotWithInput rotate T q)
       (encPair input (encPair vertex (encPair (encPi label) (encPi signal))))
       (encPair vertex (encPair (encPi label) (encPi signal))) := by
-  have hbranch (c : Fin T → Fin q) : ComputableTidilyInPolyTime
+  have hbranch (c : Fin T → Fin q) : ComputableInPolyTime
       (fun p : P × (V × ((Fin T → D) × (Fin T → Fin q))) =>
         RotationMap.killedPowRotWithInput rotate T q (p.1, p.2.1, p.2.2.1, c))
       (encPair input (encPair vertex (encPair (encPi label) (encPi signal))))
       (encPair vertex (encPair (encPi label) (encPi signal))) := by
-    have hprefix : ComputableTidilyInPolyTime
-        (fun k : Fin T → D => Fin.take _ (killTime_le c) k)
+    have hprefix : ComputableInPolyTime
+        (fun k : Fin T → D => Fin.take _ (RotationMap.killTime_le c) k)
         (encPi label) (encPi label) :=
-      pi fun i : Fin (killTime c) =>
-        pi_apply label (⟨i.val, i.isLt.trans_le (killTime_le c)⟩ : Fin T)
-    have hwalk : ComputableTidilyInPolyTime
+      pi fun i : Fin (RotationMap.killTime c) =>
+        pi_apply label (⟨i.val, i.isLt.trans_le (RotationMap.killTime_le c)⟩ : Fin T)
+    have hwalk : ComputableInPolyTime
         (fun p : P × (V × ((Fin T → D) × (Fin T → Fin q))) =>
           RotationMap.powRotWithInput rotate (killTime c)
             (p.1, p.2.1, Fin.take _ (killTime_le c) p.2.2.1))
@@ -220,4 +220,4 @@ theorem rotationMap_killedPowRotWithInput (T q : ℕ) [NeZero q] (signal : Fin q
   exact ((snd input (encPair vertex (encPair (encPi label) (encPi signal)))).snd'.snd').finite_cases
     hbranch
 
-end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+end Turing.MultiTapeTM.ComputableInPolyTime

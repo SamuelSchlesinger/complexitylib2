@@ -15,7 +15,7 @@ import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
-import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 
 /-!
 # Folds behind a finite-state translator
@@ -34,7 +34,7 @@ amount of state, so it applies to streaming and multi-pass folds alike.
 ## Main results
 
 * `Turing.MultiTapeTM.Translator.foldl_lift`: the lifted fold folds over the events.
-* `Turing.MultiTapeTM.ComputableTidilyInO.lift`: the lifted step is tidily computable.
+* `Turing.MultiTapeTM.ComputableInO.lift`: the lifted step is plain computable.
 -/
 
 namespace Turing.MultiTapeTM
@@ -142,16 +142,16 @@ public lemma length_run_take_le (q : Q) (w : List Bool) (k : ℕ) :
 
 end Translator
 
-namespace ComputableTidilyInO
+namespace ComputableInO
 
 variable {Q E σ : Type} [Finite Q] [Inhabited E] {encQ : Q ↪ List Bool}
   {encE : E ↪ List Bool} {encS : σ ↪ List Bool} {next : σ × E → σ} {T S : σ × E → ℕ}
 
-/-- **The lifted step is tidily computable**, within the bounds of the inner step on the emitted
+/-- **The lifted step is plain computable**, within the bounds of the inner step on the emitted
 event, if any, plus the length of its input. -/
 public theorem lift (tr : Translator Q E)
-    (h : ComputableTidilyInO next (encPair encS encE) encS T S) :
-    ComputableTidilyInO (tr.lift next) (encPair (encPair encQ encS) encBool) (encPair encQ encS)
+    (h : ComputableInO next (encPair encS encE) encS T S) :
+    ComputableInO (tr.lift next) (encPair (encPair encQ encS) encBool) (encPair encQ encS)
       (fun p => (encPair (encPair encQ encS) encBool p).length +
         (tr.step p.1.1 p.2).2.elim 0 fun e => T (p.1.2, e))
       (fun p => (encPair (encPair encQ encS) encBool p).length +
@@ -162,11 +162,11 @@ public theorem lift (tr : Translator Q E)
     omega
   have h₁ := fst (encPair encQ encS) encBool
   have hqb := (fst' h₁).prod (snd (encPair encQ encS) encBool)
-  have hstate := ((ComputableTidilyInDegree.of_finite (encIn := encPair encQ encBool)
+  have hstate := ((ComputableInDegree.of_finite (encIn := encPair encQ encBool)
     (encMid := encQ) fun qb : Q × Bool => (tr.step qb.1 qb.2).1).inO_one).comp hqb
-  have hsome := ((ComputableTidilyInDegree.of_finite (encIn := encPair encQ encBool)
+  have hsome := ((ComputableInDegree.of_finite (encIn := encPair encQ encBool)
     (encMid := encBool) fun qb : Q × Bool => (tr.step qb.1 qb.2).2.isSome).inO_one).comp hqb
-  have hevent := ((ComputableTidilyInDegree.of_finite (encIn := encPair encQ encBool)
+  have hevent := ((ComputableInDegree.of_finite (encIn := encPair encQ encBool)
     (encMid := encE) fun qb : Q × Bool => (tr.step qb.1 qb.2).2.getD default).inO_one).comp hqb
   have hs := snd' h₁
   have hnext := h.comp (hs.prod hevent)
@@ -178,7 +178,7 @@ public theorem lift (tr : Translator Q E)
     have := hl p
     cases h : (tr.step p.1.1 p.2).2 <;> simp only [Function.comp_apply, h] <;> simp <;> omega
 
-end ComputableTidilyInO
+end ComputableInO
 
 /-! ### Bounds -/
 
@@ -254,19 +254,19 @@ parts computable within the given bounds. Each pass reads every bit, so its time
 the input times the bounds on a round; the space is that of the fold on the events. The bounds
 `tMax`, `sMax` and `lMax` bound the time and space of a round and of the end of a pass, and the
 lengths of the states. -/
-public theorem ComputableTidilyInTimeAndSpace.multiPassFold_translate {Q E σ γ ε' φ ω : Type}
+private theorem multiPassFold_translate_raw {Q E σ γ ε' φ ω : Type}
     [Finite Q] [Inhabited E] {encQ : Q ↪ List Bool} {encE : E ↪ List Bool}
     {encS : σ ↪ List Bool} {encE' : ε' ↪ List Bool} {encF : φ ↪ List Bool}
     {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} (tr : Translator Q E)
     {init : γ → σ} {next : σ × E → σ} {passEmit : σ → ε'} {passEnd : σ → σ} {cont : σ → Bool}
     {finish : σ → φ} {g : γ → ω} {passes : γ → ℕ} {TI SI : γ → ℕ} {T S : σ × E → ℕ}
     {TPE SPE TPN SPN TC SC TF SF : σ → ℕ}
-    (hinit : ComputableTidilyInO init encIn encS TI SI)
-    (hnext : ComputableTidilyInO next (encPair encS encE) encS T S)
-    (hpassEmit : ComputableTidilyInO passEmit encS encE' TPE SPE)
-    (hpassEnd : ComputableTidilyInO passEnd encS encS TPN SPN)
-    (hcont : ComputableTidilyInO cont encS encBool TC SC)
-    (hfinish : ComputableTidilyInO finish encS encF TF SF)
+    (hinit : ComputableInO init encIn encS TI SI)
+    (hnext : ComputableInO next (encPair encS encE) encS T S)
+    (hpassEmit : ComputableInO passEmit encS encE' TPE SPE)
+    (hpassEnd : ComputableInO passEnd encS encS TPN SPN)
+    (hcont : ComputableInO cont encS encBool TC SC)
+    (hfinish : ComputableInO finish encS encF TF SF)
     (hpasses : ∀ x, ∀ i ≤ passes x,
       cont (passState (init x) next passEnd (tr.events (encIn x)) (i + 1)) = decide (i < passes x))
     (hg : ∀ x, encOut (g x) = ((List.range (passes x + 1)).map fun i =>
@@ -309,23 +309,23 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold_translate {Q E σ γ
     · obtain ⟨q, hq⟩ := Finite.exists_max fun q => (encQ q).length
       exact ⟨_, hq⟩
   -- the parts on the states with the translator
-  have hpre : ComputableTidilyInO (fun s : σ => (tr.q₀, s)) encS (encPair encQ encS)
+  have hpre : ComputableInO (fun s : σ => (tr.q₀, s)) encS (encPair encQ encS)
       (fun s => (encS s).length + (encS s).length)
       (fun s => (encS s).length + (encS s).length) :=
-    ComputableTidilyInO.append (enc₂ := encS) (f₂ := id) (g := fun s => (tr.q₀, s))
+    ComputableInO.append (enc₂ := encS) (f₂ := id) (g := fun s => (tr.q₀, s))
       (encOut := encPair encQ encS)
       (.of_linear (.const (encMid := encFramed encQ) tr.q₀)) (.of_linear (.of_eq fun _ => rfl))
       fun s => by simp
-  have hsnd := ComputableTidilyInO.snd encQ encS
-  obtain ⟨cI, hI, -⟩ := hpre.comp hinit
-  obtain ⟨cN, hN, -⟩ := ComputableTidilyInO.lift (encQ := encQ) tr hnext
+  have hsnd := ComputableInO.snd encQ encS
+  obtain ⟨cI, hI, -⟩ := Internal.normalizeO (hpre.comp hinit)
+  obtain ⟨cN, hN, -⟩ := Internal.normalizeO (ComputableInO.lift (encQ := encQ) tr hnext)
   obtain ⟨cE, hE⟩ := Internal.normalizeLinear
     (ComputableInLinearTimeAndSpace.const (α := (Q × σ) × Bool)
       (encIn := encPair (encPair encQ encS) encBool) (encMid := encBits) [])
-  obtain ⟨cPE, hPE, -⟩ := hpassEmit.comp hsnd
-  obtain ⟨cPN, hPN, -⟩ := hpre.comp (hpassEnd.comp hsnd)
-  obtain ⟨cC, hC, -⟩ := hcont.comp hsnd
-  obtain ⟨cF, hF, -⟩ := hfinish.comp hsnd
+  obtain ⟨cPE, hPE, -⟩ := Internal.normalizeO (hpassEmit.comp hsnd)
+  obtain ⟨cPN, hPN, -⟩ := Internal.normalizeO (hpre.comp (hpassEnd.comp hsnd))
+  obtain ⟨cC, hC, -⟩ := Internal.normalizeO (hcont.comp hsnd)
+  obtain ⟨cF, hF, -⟩ := Internal.normalizeO (hfinish.comp hsnd)
   have hI' : ComputableTidilyInTimeAndSpace (fun x => (tr.q₀, init x)) encIn (encPair encQ encS)
       _ _ := hI
   have hPE' : ComputableTidilyInTimeAndSpace (fun p : Q × σ => passEmit p.2) (encPair encQ encS)
@@ -459,5 +459,61 @@ public theorem ComputableTidilyInTimeAndSpace.multiPassFold_translate {Q E σ γ
   · rw [Translator.passState_lift]
     exact space_le c cI cF cQ K _ _ _ _ _ _ (hps x 0 (Nat.zero_le _))
       (hlen x tr.q₀ _ (hps x _ le_rfl))
+
+/-- Translate a complete event-stream computation to its input bits at the stated independent
+bounds. The result uses a plain realization; raw machine construction stays private. -/
+public theorem ComputableInTimeAndSpace.multiPassFold_translate {Q E σ γ ε' φ ω : Type}
+    [Finite Q] [Inhabited E] {encQ : Q ↪ List Bool} {encE : E ↪ List Bool}
+    {encS : σ ↪ List Bool} {encE' : ε' ↪ List Bool} {encF : φ ↪ List Bool}
+    {encIn : γ ↪ List Bool} {encOut : ω ↪ List Bool} (tr : Translator Q E)
+    {init : γ → σ} {next : σ × E → σ} {passEmit : σ → ε'} {passEnd : σ → σ} {cont : σ → Bool}
+    {finish : σ → φ} {g : γ → ω} {passes : γ → ℕ} {TI SI : γ → ℕ} {T S : σ × E → ℕ}
+    {TPE SPE TPN SPN TC SC TF SF : σ → ℕ}
+    (hinit : ComputableInO init encIn encS TI SI)
+    (hnext : ComputableInO next (encPair encS encE) encS T S)
+    (hpassEmit : ComputableInO passEmit encS encE' TPE SPE)
+    (hpassEnd : ComputableInO passEnd encS encS TPN SPN)
+    (hcont : ComputableInO cont encS encBool TC SC)
+    (hfinish : ComputableInO finish encS encF TF SF)
+    (hpasses : ∀ x, ∀ i ≤ passes x,
+      cont (passState (init x) next passEnd (tr.events (encIn x)) (i + 1)) = decide (i < passes x))
+    (hg : ∀ x, encOut (g x) = ((List.range (passes x + 1)).map fun i =>
+      encE' (passEmit (streamState (passState (init x) next passEnd (tr.events (encIn x)) i)
+        next (tr.events (encIn x)) (tr.events (encIn x)).length))).flatten ++
+      encF (finish (passState (init x) next passEnd (tr.events (encIn x)) (passes x + 1))))
+    {tMax sMax lMax : γ → ℕ}
+    (htMax : ∀ x, ∀ i ≤ passes x, ∀ j (hj : j < (tr.events (encIn x)).length),
+      T (streamState (passState (init x) next passEnd (tr.events (encIn x)) i) next
+        (tr.events (encIn x)) j, (tr.events (encIn x))[j]) ≤ tMax x)
+    (hsMax : ∀ x, ∀ i ≤ passes x, ∀ j (hj : j < (tr.events (encIn x)).length),
+      S (streamState (passState (init x) next passEnd (tr.events (encIn x)) i) next
+        (tr.events (encIn x)) j, (tr.events (encIn x))[j]) ≤ sMax x)
+    (htEnd : ∀ x, ∀ i ≤ passes x,
+      TPE (streamState (passState (init x) next passEnd (tr.events (encIn x)) i) next
+          (tr.events (encIn x)) (tr.events (encIn x)).length) +
+        TPN (streamState (passState (init x) next passEnd (tr.events (encIn x)) i) next
+          (tr.events (encIn x)) (tr.events (encIn x)).length) +
+        TC (passState (init x) next passEnd (tr.events (encIn x)) (i + 1)) ≤ tMax x)
+    (hsEnd : ∀ x, ∀ i ≤ passes x,
+      SPE (streamState (passState (init x) next passEnd (tr.events (encIn x)) i) next
+          (tr.events (encIn x)) (tr.events (encIn x)).length) +
+        SPN (streamState (passState (init x) next passEnd (tr.events (encIn x)) i) next
+          (tr.events (encIn x)) (tr.events (encIn x)).length) +
+        SC (passState (init x) next passEnd (tr.events (encIn x)) (i + 1)) ≤ sMax x)
+    (hS : ∀ x, ∀ i ≤ passes x, ∀ j ≤ (tr.events (encIn x)).length,
+      (encS (streamState (passState (init x) next passEnd (tr.events (encIn x)) i) next
+        (tr.events (encIn x)) j)).length ≤ lMax x)
+    (hSlast : ∀ x, (encS (passState (init x) next passEnd (tr.events (encIn x))
+      (passes x + 1))).length ≤ lMax x) :
+    ∃ c, ComputableInTimeAndSpace g encIn encOut
+      (fun x => c * (TI x + TF (passState (init x) next passEnd (tr.events (encIn x))
+        (passes x + 1)) + (passes x + 1) * ((encIn x).length +
+          ((encIn x).length + 1) * (tMax x + lMax x + 1))))
+      (fun x => c * (SI x + SF (passState (init x) next passEnd (tr.events (encIn x))
+        (passes x + 1)) + sMax x + lMax x + 1)) := by
+  obtain ⟨c, h⟩ := multiPassFold_translate_raw (encQ := encQ) tr
+    hinit hnext hpassEmit hpassEnd hcont hfinish
+    hpasses hg htMax hsMax htEnd hsEnd hS hSlast
+  exact ⟨c, h.computableInTimeAndSpace⟩
 
 end Turing.MultiTapeTM

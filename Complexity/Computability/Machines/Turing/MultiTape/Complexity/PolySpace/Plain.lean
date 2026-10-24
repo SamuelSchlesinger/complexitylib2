@@ -75,50 +75,5 @@ theorem computableInPolySpace_iff_computableTidilyInPolySpace :
     ComputableInPolySpace f encIn encOut ↔ ComputableTidilyInPolySpace f encIn encOut :=
   ⟨ComputableInPolySpace.tidy, ComputableInPolySpace.of_tidy⟩
 
-namespace ComputableInPolySpace
-
-variable {γ δ : Type} {encMid : β ↪ List Bool} {encD : δ ↪ List Bool}
-
-/-! ### Closure and automation -/
-
-/-- Polynomial time is within polynomial space. -/
-@[fun_prop]
-theorem of_polyTime (h : ComputableInPolyTime f encIn encOut) :
-    ComputableInPolySpace f encIn encOut :=
-  .of_tidy (.of_polyTime h.tidy)
-
-/-- The identity. -/
-@[fun_prop]
-theorem id' : ComputableInPolySpace (fun a : α => a) encIn encIn :=
-  .of_tidy .id'
-
-/-- Composition. -/
-theorem comp {f : β → γ} {g : α → β} {encOut : γ ↪ List Bool}
-    (hf : ComputableInPolySpace f encMid encOut) (hg : ComputableInPolySpace g encIn encMid) :
-    ComputableInPolySpace (fun a => f (g a)) encIn encOut :=
-  .of_tidy (hf.tidy.comp hg.tidy)
-
-/-- Pairing. -/
-@[fun_prop]
-theorem prod {g : α → δ} (hf : ComputableInPolySpace f encIn encOut)
-    (hg : ComputableInPolySpace g encIn encD) :
-    ComputableInPolySpace (fun a => (f a, g a)) encIn (encPair encOut encD) :=
-  .of_tidy (hf.tidy.prod hg.tidy)
-
-/-- Case distinction. -/
-@[fun_prop]
-theorem ite {c : α → Bool} {g : α → β} (hc : ComputableInPolySpace c encIn encBool)
-    (hf : ComputableInPolySpace f encIn encOut) (hg : ComputableInPolySpace g encIn encOut) :
-    ComputableInPolySpace (fun a => if c a then f a else g a) encIn encOut :=
-  .of_tidy (hc.tidy.ite hf.tidy hg.tidy)
-
-/-- Composition, in the form used by `fun_prop`. -/
-@[fun_prop]
-theorem comp' {f : β → γ} {g : α → β} {encOut : γ ↪ List Bool}
-    (hf : ComputableInPolySpace f encMid encOut) (hg : ComputableInPolySpace g encIn encMid) :
-    ComputableInPolySpace (fun a => f (g a)) encIn encOut :=
-  hf.comp hg
-
-end ComputableInPolySpace
 
 end Turing.MultiTapeTM

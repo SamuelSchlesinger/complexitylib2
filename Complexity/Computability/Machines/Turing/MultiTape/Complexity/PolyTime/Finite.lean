@@ -20,7 +20,7 @@ independently of runtime input; this does not enumerate a family whose size grow
 
 ## Main results
 
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.finite_cases`: finite dispatch with captured input.
+* `Turing.MultiTapeTM.ComputableInPolyTime.finite_cases`: finite dispatch with captured input.
 
 ## References
 
@@ -30,16 +30,16 @@ Adapts Computability/Probabilistic/Finite.lean on the cslib `crypto` branch at
 
 @[expose] public section
 
-namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
+namespace Turing.MultiTapeTM.ComputableInPolyTime
 
 /-- A fixed finite tag selects a certified branch, charging the tag and captured input.
 Neither the tag nor the result type requires a default inhabitant. -/
 theorem finite_cases
     {α β Tag : Type} [Finite Tag] {input : α ↪ List Bool} {output : β ↪ List Bool}
     {tagEncoding : Tag ↪ List Bool} {tag : α → Tag} {branch : Tag → α → β}
-    (htag : ComputableTidilyInPolyTime tag input tagEncoding)
-    (hbranch : ∀ choice, ComputableTidilyInPolyTime (branch choice) input output) :
-    ComputableTidilyInPolyTime (fun a => branch (tag a) a) input output := by
+    (htag : ComputableInPolyTime tag input tagEncoding)
+    (hbranch : ∀ choice, ComputableInPolyTime (branch choice) input output) :
+    ComputableInPolyTime (fun a => branch (tag a) a) input output := by
   classical
   let _ := Fintype.ofFinite Tag
   cases isEmpty_or_nonempty Tag with
@@ -48,7 +48,7 @@ theorem finite_cases
     exact of_finite _
   | inr hnonempty =>
     let fallback := Classical.choice hnonempty
-    have hselect (tags : List Tag) : ComputableTidilyInPolyTime (fun a =>
+    have hselect (tags : List Tag) : ComputableInPolyTime (fun a =>
         tags.foldr (fun choice rest => if tag a = choice then branch choice a else rest)
           (branch fallback a)) input output := by
       induction tags with
@@ -57,4 +57,4 @@ theorem finite_cases
     simpa only [List.foldr_ite_eq_of_mem, Finset.mem_toList, Finset.mem_univ] using
       hselect (Finset.univ.toList : List Tag)
 
-end Turing.MultiTapeTM.ComputableTidilyInPolyTime
+end Turing.MultiTapeTM.ComputableInPolyTime
