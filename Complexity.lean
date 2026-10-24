@@ -1670,12 +1670,7 @@ public import Complexity.Foundations.Data.BitString.Parity
 public import Complexity.Foundations.Data.BitString.Parity.Weight
 public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.PartialAssignment.Counting
-public import Complexity.Foundations.Data.BitString.Projection
 public import Complexity.Foundations.Data.BitString.Propagation
-public import Complexity.Foundations.Data.BitString.QuadraticForm
-public import Complexity.Foundations.Data.BitString.Point
-public import Complexity.Foundations.Data.BitString.Propagation
-public import Complexity.Foundations.Data.BitString.Selection
 public import Complexity.Foundations.Data.BitString.ShortWords
 public import Complexity.Foundations.Data.BitString.Sign
 public import Complexity.Foundations.Data.BitString.Threshold
