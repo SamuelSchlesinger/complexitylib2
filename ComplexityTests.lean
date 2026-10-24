@@ -22,6 +22,7 @@ import ComplexityTests.BasicClasses
 import ComplexityTests.BatchLookup
 import ComplexityTests.BatchOr
 import ComplexityTests.BipartiteMatching
+import ComplexityTests.BitString
 import ComplexityTests.BitStringProjection
 import ComplexityTests.BitStringRows
 import ComplexityTests.BitonicSort
