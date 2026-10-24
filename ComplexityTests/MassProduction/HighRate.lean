@@ -4,10 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Foundations.Combinatorics.LineCode.Field
 import Complexity.Foundations.Combinatorics.LineCode.HighRate
 import Complexity.Foundations.Combinatorics.LineCode.HighRate.Packing
 import Complexity.Foundations.FieldTheory.Finite.ReducedMonomial
+import Complexity.Foundations.FieldTheory.Finite.Subfield
 import Mathlib.FieldTheory.Finite.GaloisField
 
 /-!
@@ -184,14 +184,14 @@ info: 'Cslib.LineCode.HighRate.nonempty_embedding_packingCopies' depends on axio
 #print axioms nonempty_embedding_packingCopies
 
 /--
-info: 'Cslib.LineCode.nonempty_addEquiv_bitString' depends on axioms:
+info: 'Cslib.nonempty_addEquiv_bitString' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms nonempty_addEquiv_bitString
 
 /--
-info: 'Cslib.LineCode.exists_field_card_eq_two_pow' depends on axioms:
+info: 'Cslib.exists_field_card_eq_two_pow' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in

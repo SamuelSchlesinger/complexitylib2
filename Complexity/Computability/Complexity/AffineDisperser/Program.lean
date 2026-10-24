@@ -172,8 +172,8 @@ theorem natDegree_minpoly_of_aeval_eq_zero {N : ℕ} {j : Fin (degreePrimes N).l
     {a : ExplicitField N} (ha : aeval a (leastIrreducible (degreePrime N j)) = 0) :
     (minpoly (ZMod 2) a).natDegree = degreePrime N j := by
   have hp := (degreePrime_prime N j).ne_zero
-  rw [← minpoly.eq_of_irreducible_of_monic (irreducible_leastIrreducible hp) ha
-    (monic_leastIrreducible hp), natDegree_leastIrreducible hp]
+  rw [← minpoly.eq_of_irreducible_of_monic (irreducible_leastIrreducible _) ha
+    (monic_leastIrreducible _), natDegree_leastIrreducible hp]
 
 /-- The monomial basis of `ExplicitField N` in any roots `α j` of the least-code irreducible
 polynomials of the prime degrees. -/
@@ -213,7 +213,7 @@ private theorem isMulTable_explicitTable (N : ℕ)
   have hcode0 : code ≠ 0 := by
     intro h
     rw [h, polyOfCode_zero] at hcode
-    exact (irreducible_leastIrreducible hp).ne_zero hcode.symm
+    exact (irreducible_leastIrreducible p).ne_zero hcode.symm
   obtain ⟨l, hl⟩ := exists_bits_eq_append_true hcode0
   have hpoly : polyOfBits (l ++ [true]) = leastIrreducible p := by
     rw [← hl, polyOfBits_bits, hcode]

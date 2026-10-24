@@ -101,7 +101,7 @@ explicit binary field of degree `w = 4 b`, read from the first `(M + 1) w` input
 `b = blockLength M N`; constant when `b = 0`. -/
 noncomputable def encodedSlice (L : Language Bool) (M N : ℕ) : BooleanFunction N :=
   if hb : blockLength M N = 0 then fun _ => false else
-    fun y => hardnessEncode (BinaryField.equivBits (w := 4 * blockLength M N) (by omega))
+    fun y => hardnessEncode (BinaryField.equivBits (w := 4 * blockLength M N) (by omega)).toEquiv
       (BinaryField.embed (by omega) (by omega)) (L.slice (M * blockLength M N))
       (fun i => y (Fin.castLE (encodedLength_le M N) i))
 
@@ -386,14 +386,14 @@ theorem isAverageCaseHard_encodedSlice_of {L : Language Bool} {M N σ : ℕ} (hM
   intro g hg
   by_contra hcon
   push Not at hcon
-  have hslice : encodedSlice L M N = fun y => hardnessEncode (BinaryField.equivBits hw0)
+  have hslice : encodedSlice L M N = fun y => hardnessEncode (BinaryField.equivBits hw0).toEquiv
       (BinaryField.embed hw0 (by omega)) (L.slice (M * b))
       (fun i => y (Fin.castLE (encodedLength_le M N) i)) := by
     rw [encodedSlice, dite_eq_right hb0]
   rw [hslice, lt_div_iff₀ (by positivity)] at hcon
   obtain ⟨C, hC, hCagree⟩ := exists_complexity_le_of_agree_prefix (encodedLength_le M N) _ g hcon
   -- the reconstruction
-  have hrec := complexity_le_pow_of_agree_hardnessEncode (BinaryField.equivBits hw0)
+  have hrec := complexity_le_pow_of_agree_hardnessEncode (BinaryField.equivBits hw0).toEquiv
     (BinaryField.embed hw0 (by omega : b ≤ 4 * b)) (L.slice (M * b)) (C := C)
     (s := 2 ^ σ + 2) (hC.trans (by omega)) (ε := 1 / ((2 ^ σ : ℕ) : ℝ)) (by positivity)
     hCagree.le (K := 2 * σ + Nat.log 2 (4 * b) + 2) (D := 2 ^ (3 * b - b / 4))

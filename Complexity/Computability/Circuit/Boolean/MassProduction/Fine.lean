@@ -15,11 +15,11 @@ import Complexity.Computability.Circuit.Boolean.MassProduction.Pipeline
 import Complexity.Computability.Circuit.Boolean.MassProduction.Scheduler
 import Complexity.Computability.Circuit.Boolean.MassProduction.FineParameters
 import Complexity.Computability.Circuit.Boolean.MassProduction.Uhlig
-import Complexity.Foundations.Combinatorics.LineCode.Field
 import Complexity.Foundations.Combinatorics.LineCode.HighRate
 import Complexity.Foundations.Combinatorics.LineCode.HighRate.Packing
 import Complexity.Foundations.Combinatorics.LineCode.Menu
 import Complexity.Foundations.Data.BitString.Basic
+import Complexity.Foundations.FieldTheory.Finite.Subfield
 import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring

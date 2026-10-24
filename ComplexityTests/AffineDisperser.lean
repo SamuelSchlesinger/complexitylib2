@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Foundations.Combinatorics.AffineDisperser
 import Complexity.Foundations.Combinatorics.AffineDisperser.Threshold
+import Complexity.Foundations.FieldTheory.Finite.Subfield
 import Mathlib.FieldTheory.Finite.GaloisField
 import Mathlib.Tactic.NormNum.Prime
 
@@ -238,7 +239,7 @@ info: 'Cslib.AffineDisperser.top_le_span_prod_pow' depends on axioms:
 #print axioms top_le_span_prod_pow
 
 /--
-info: 'Cslib.AffineDisperser.card_subfield_le_of_lt_prime' depends on axioms:
+info: 'Cslib.card_subfield_le_of_lt_prime' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
@@ -252,7 +253,7 @@ info: 'Cslib.AffineDisperser.four_pow_le_mul_prod_primesIoc' depends on axioms:
 #print axioms four_pow_le_mul_prod_primesIoc
 
 /--
-info: 'Cslib.AffineDisperser.exists_code_leastIrreducible' depends on axioms:
+info: 'Cslib.exists_code_leastIrreducible' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
