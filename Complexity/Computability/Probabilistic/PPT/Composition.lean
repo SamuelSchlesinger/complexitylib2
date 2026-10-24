@@ -68,7 +68,7 @@ theorem IsPPTOn.preprocess {program : β → ProbComp γ} {prepare : α → β}
     (hprogram : IsPPTOn middle output program)
     (hprepare : ComputableInPolyTime prepare input middle) :
     IsPPTOn input output (fun a => program (prepare a)) := by
-  simpa only [pure_bind] using hprepare.tidy.isPPTOn.bind hprogram
+  simpa only [pure_bind] using hprepare.isPPTOn.bind hprogram
 
 /-- Polynomial-time deterministic processing of each sampled result preserves PPT. -/
 @[fun_prop]
