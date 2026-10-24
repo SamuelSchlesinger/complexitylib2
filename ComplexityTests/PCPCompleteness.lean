@@ -8,7 +8,8 @@ import Complexity.Computability.PCP.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
-/-! Public PCP theorem clients for ordinary SAT and framed Boolean words. -/
+/-! Public PCP theorem clients for ordinary SAT and framed Boolean words, and axiom guards for
+the PCP theorem. -/
 
 namespace ComplexityTests.PCPCompleteness
 
@@ -25,5 +26,21 @@ example : {word : List Bool | word.headD false = true} ∈
   refine ⟨0, fun p => p.1.headD false, by fun_prop, ?_⟩
   intro word
   simp [Polynomial.eval_zero]
+
+/-! ### Axioms -/
+
+/--
+info: 'Cslib.Complexity.NP_subset_PCP_log' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.NP_subset_PCP_log
+
+/--
+info: 'Cslib.Complexity.NP_eq_PCP_log' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.NP_eq_PCP_log
 
 end ComplexityTests.PCPCompleteness

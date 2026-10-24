@@ -87,11 +87,23 @@ example {n : ℕ} (f : BooleanFunction n) :
   ⟨approxDegree_le_degree (by norm_num), DecisionTree.degree_le_complexity f⟩
 
 /-- A single bit has approximate degree `1`: `1 ≤ 6 adeg²` and `adeg ≤ deg = 1`. -/
-example : approxDegree (1 / 3) (threshold 1 1) = 1 := by
+private theorem approxDegree_threshold_one_one : approxDegree (1 / 3) (threshold 1 1) = 1 := by
   have h₁ := card_le_six_mul_approxDegree_threshold_one_right_sq (n := 1)
   have h₂ := (approxDegree_le_degree (f := threshold 1 1) (by norm_num : (0 : ℝ) ≤ 1 / 3)).trans
     degree_threshold_one_right.le
   interval_cases h : approxDegree (1 / 3) (threshold 1 1) <;> simp_all
+
+/-- Negation preserves approximate degree: the negated bit also has approximate degree `1`. -/
+example : approxDegree (1 / 3) (fun x => !threshold 1 1 x) = 1 :=
+  (approxDegree_not _ _).trans approxDegree_threshold_one_one
+
+/-- The negated disjunction of `n` bits has approximate degree at least `√(n / 6)`, as the
+disjunction does, and at most its number of bits `n`. -/
+example {n : ℕ} : n ≤ 6 * approxDegree (1 / 3) (fun x => !threshold n 1 x) ^ 2 ∧
+    approxDegree (1 / 3) (fun x => !threshold n 1 x) ≤ n := by
+  refine ⟨?_, approxDegree_le_card (by norm_num)⟩
+  rw [approxDegree_not]
+  exact card_le_six_mul_approxDegree_threshold_one_right_sq
 
 /-- The disjunction of `n` bits has approximate degree `Θ(√n)`. -/
 example {n : ℕ} : n ≤ 6 * approxDegree (1 / 3) (threshold n 1) ^ 2 ∧
