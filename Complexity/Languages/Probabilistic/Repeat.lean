@@ -10,6 +10,7 @@ module
 public import Complexity.Languages.Probabilistic.Basic
 public import Complexity.Probability.BitString.List
 public import Complexity.Probability.Product
+public import Complexity.Probability.IID
 import Mathlib.Algebra.BigOperators.Fin
 
 /-!
@@ -28,6 +29,7 @@ is certified separately in `Computability.Probabilistic.Repeat`.
 
 * `Cslib.OracleComp.replicate_add`, `.replicate_snoc`: split an execution into segments.
 * `Cslib.ProbComp.eval_replicate`: finite outputs have the independent product law.
+* `Cslib.ProbComp.eval_replicate_iid`: the independent law on arbitrary output types.
 * `Cslib.ProbComp.eval_replicate_map`: transport a sampling law through repeated draws.
 * `Cslib.ProbComp.eval_replicate_splice`: draw one coordinate first without changing the joint law.
 * `Cslib.ProbComp.eval_countTrue`: the success count is a sum of independent indicators.
@@ -150,6 +152,18 @@ theorem eval_replicate_map {β : Type} {source : ProbComp α} {encoded : ProbCom
       (eval (OracleComp.replicate count source)).map (List.map encode) := by
   rw [← eval_map] at h
   rw [eval_replicate_congr h, OracleComp.replicate_map, eval_map]
+
+/-- Independent repetition on arbitrary output types, including integers and failure options.
+Unlike the finite-product specialization, this law needs no finiteness assumption. -/
+theorem eval_replicate_iid (count : ℕ) (program : ProbComp α) :
+    eval (OracleComp.replicate count program) =
+      (Probability.PMF.iid (eval program) count).map List.ofFn := by
+  induction count with
+  | zero => simp [Probability.PMF.iid]
+  | succ count ih =>
+    simp only [OracleComp.replicate_succ, eval_bind, eval_map, ih, Probability.PMF.iid,
+      PMF.monad_bind_eq_bind, PMF.map_bind, PMF.map_comp, Function.comp_def,
+      List.ofFn_succ, Fin.cons_zero, Fin.cons_succ]
 
 /-- Repeated closed runs have the independent product law for any finite output distribution. -/
 theorem eval_replicate [Finite α] (count : ℕ) (program : ProbComp α) :
