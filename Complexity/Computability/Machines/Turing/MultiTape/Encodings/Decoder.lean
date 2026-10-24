@@ -14,7 +14,7 @@ public import Mathlib.Data.List.DropRight
 import Complexity.Foundations.Data.Nat.Bits
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
-import all Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
 import Mathlib.Data.Nat.Size
 
 /-!
@@ -269,13 +269,10 @@ def nat : Decoder encNat where
   -- A tactic proof keeps the foundational binary-digit lemma a proof-only dependency.
   decode_enc n := by exact Nat.foldr_bit_bits n
   computable := by
-    apply (fun h : ∃ d e, ComputableTidilyInDegree _ _ _ d e =>
-      let ⟨d, e, h⟩ := h
-      ⟨d, e, Internal.forgetDegree h⟩)
-    have hd : ComputableTidilyInPolyTime (fun w : List Bool => w.dropWhile (!·)) encBits encBits :=
+    have hd : ComputableInPolyTime (fun w : List Bool => w.dropWhile (!·)) encBits encBits :=
       .of_linear (dropFalsesT.computableInLinearTimeAndSpace fun w =>
         (dropFalsesT_run w).symm)
-    have h : ComputableTidilyInPolyTime (fun w : List Bool => (w.reverse.dropWhile (!·)).reverse)
+    have h : ComputableInPolyTime (fun w : List Bool => (w.reverse.dropWhile (!·)).reverse)
         encBits encBits := by
       fun_prop
     exact (h.of_enc_eq fun w => by rw [encNat_apply, bits_ofBits]; rfl).exists_degree
