@@ -70,6 +70,7 @@ theorem natCast_lt_minDist_iff {r : ℕ} :
   rw [← ENat.natCast_add_one_le_iff, le_minDist_iff]
   simp only [ENat.natCast_add_one_le_iff, Nat.cast_lt]
 
+/-- Distinct codewords are separated by at least the minimum distance of the code. -/
 theorem minDist_le_hammingDist (hx : x ∈ C) (hy : y ∈ C) (hxy : x ≠ y) :
     minDist C ≤ hammingDist x y :=
   le_minDist_iff.1 le_rfl x hx y hy hxy
@@ -85,10 +86,12 @@ theorem minDist_eq_top_iff : minDist C = ⊤ ↔ C.Subsingleton := by
   by_contra hxy
   exact ENat.natCast_ne_top _ (top_le_iff.1 (h x hx y hy hxy))
 
+/-- The empty code has minimum distance `⊤`. -/
 @[simp]
 theorem minDist_empty : minDist (∅ : Set (∀ i, β i)) = ⊤ :=
   minDist_eq_top_iff.2 Set.subsingleton_empty
 
+/-- A singleton code has minimum distance `⊤`. -/
 @[simp]
 theorem minDist_singleton (x : ∀ i, β i) : minDist {x} = ⊤ :=
   minDist_eq_top_iff.2 Set.subsingleton_singleton

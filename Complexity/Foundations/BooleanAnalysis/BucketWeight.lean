@@ -62,6 +62,7 @@ with `U ∩ J = S`, written `W^{S | J̄} [F]` by O'Donnell, where `J̄` is the c
 noncomputable def bucketWeight (F : (ι → Bool) → ℝ) (J S : Finset ι) : ℝ :=
   ∑ U with U ∩ J = S, fourierCoeff F U ^ 2
 
+/-- Every bucket weight is nonnegative. -/
 theorem bucketWeight_nonneg (F : (ι → Bool) → ℝ) (J S : Finset ι) : 0 ≤ bucketWeight F J S :=
   sum_nonneg fun _ _ => sq_nonneg _
 

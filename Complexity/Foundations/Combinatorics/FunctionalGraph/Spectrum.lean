@@ -89,6 +89,7 @@ section Fintype
 
 variable {α : Type u} [Fintype α] (f : α → α)
 
+/-- The cycle length from any state is at most the cardinality of the state space. -/
 theorem cycleLength_le_card (x : α) : cycleLength f x ≤ Fintype.card α :=
   (Nat.le_add_left _ _).trans (transientDepth_add_cycleLength_le_card f x)
 

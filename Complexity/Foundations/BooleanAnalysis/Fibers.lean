@@ -58,6 +58,8 @@ light-patterns lemma.
 * `Cslib.BitString.expect_uniformDeficit_coordinateFiber`: Korten's entropy lemma.
 * `Cslib.BitString.coordinateFiber_good_probability`: most fibers have small deficit.
 * `Cslib.BitString.exists_uniformDeficit_fiber_le`: pigeonhole for deficits.
+* `Cslib.BitString.uniformMass_le_rpow`, `Cslib.BitString.uniformDensity_le_rpow`: a deficit
+  bound bounds the uniform probability mass and density pointwise.
 * `Cslib.BitString.coordinateDensity_eq_expect`: the density of a fiber is the probability
   that resampling the coordinates in `s` lands in the set.
 * `Cslib.BitString.projectionAverage_eq_coordinateMarginal`,
@@ -159,7 +161,7 @@ theorem uniformDeficit_le_iff {ι : Type*} [Fintype ι] {X : Finset (ι → Bool
 
 /-- A uniform deficit bound implies the light-patterns lemma's pointwise
 probability-mass hypothesis. -/
-private theorem uniformMass_le_rpow {ι : Type*} [Fintype ι]
+theorem uniformMass_le_rpow {ι : Type*} [Fintype ι]
     {X : Finset (ι → Bool)} (hX : X.Nonempty) {k : ℝ} (hdef : uniformDeficit X ≤ k)
     (x : ι → Bool) : uniformMass X x ≤ (2 : ℝ) ^ (k - Fintype.card ι) := by
   calc

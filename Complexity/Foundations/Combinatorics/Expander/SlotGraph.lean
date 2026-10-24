@@ -215,7 +215,7 @@ theorem card_slotLabel : Fintype.card SlotLabel = 3 :=
   rfl
 
 /-- The slots of a vertex are reachable from each other along the cycles of `σ`. -/
-theorem reachable_slotGraph_zpow (v w : V) (i : ℤ) :
+private theorem reachable_slotGraph_zpow (v w : V) (i : ℤ) :
     (slotGraph G σ).toSimpleGraph.Reachable (v, w) (v, (σ ^ i) w) := by
   induction i using Int.induction_on with
   | zero => rfl
