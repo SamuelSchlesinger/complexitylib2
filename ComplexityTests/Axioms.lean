@@ -2609,22 +2609,22 @@ info: 'Cslib.RotationMap.spectralExpansion_affinePlaneTower_le' depends on axiom
 #print axioms Cslib.RotationMap.spectralExpansion_affinePlaneTower_le
 
 /--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_tensor' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_tensor' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_tensor
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_tensor
 
 /--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_zigzag' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_zigzag' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_zigzag
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_zigzag
 
 /--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_affinePlane' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_affinePlane' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_affinePlane
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_affinePlane
 
 /--
 info: 'Cslib.RotationMap.card_interedges_le_contract' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -2663,10 +2663,10 @@ info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionElimWithInput' depend
 #print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.optionElimWithInput
 
 /--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_contract' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_contract' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_contract
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_contract
 
 /--
 info: 'Cslib.RotationMap.spectralExpansion_reindex' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -2717,10 +2717,10 @@ info: 'Cslib.RotationMap.arithmeticExpanderFamily' depends on axioms: [propext, 
 #print axioms Cslib.RotationMap.arithmeticExpanderFamily
 
 /--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_reindex' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_reindex' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.ComputableTidilyInPolyTime.rotationMap_reindex
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.rotationMap_reindex
 
 
 /--
@@ -4094,16 +4094,16 @@ info: 'Cslib.Complexity.CookLevin.computableTidilyInPolyTime_parameters' depends
 #print axioms Cslib.Complexity.CookLevin.computableTidilyInPolyTime_parameters
 
 /--
-info: 'Turing.MultiTapeTM.Universal.computableTidilyInO_universal' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.Universal.computableInO_universal' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.computableTidilyInO_universal
+#print axioms Turing.MultiTapeTM.Universal.computableInO_universal
 
 /--
-info: 'Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_universal_inPlace' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Turing.MultiTapeTM.Universal.computableInTimeAndSpace_universal_inPlace' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_universal_inPlace
+#print axioms Turing.MultiTapeTM.Universal.computableInTimeAndSpace_universal_inPlace
 
 /--
 info: 'Turing.MultiTapeTM.Universal.stateSpace_desc' depends on axioms: [propext, Classical.choice, Quot.sound]
