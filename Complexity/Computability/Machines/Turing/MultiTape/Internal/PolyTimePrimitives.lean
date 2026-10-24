@@ -50,7 +50,7 @@ is no longer than the time of the inner machine. -/
 @[fun_prop]
 theorem comp {f : β → γ} {g : α → β} (hf : ComputableInPolyTime f encMid encOut)
     (hg : ComputableInPolyTime g encIn encMid) :
-    ComputableInPolyTime (fun a => f (g a)) encIn encOut := by
+    ComputableInPolyTime (f ∘ g) encIn encOut := by
   obtain ⟨c₁, d₁, k₁, S₁, _, tm₁, h₁⟩ := Internal.NormalForm.polyTime hg
   obtain ⟨c₂, d₂, k₂, S₂, _, tm₂, h₂⟩ := Internal.NormalForm.polyTime hf
   refine of_computesTidily (tm := tm₂.comp tm₁ true)

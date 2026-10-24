@@ -141,7 +141,7 @@ theorem foldlWith {γ α β π : Type} {encIn : γ ↪ List Bool} {encA : α ↪
       exact Nat.add_le_add_left (hstates x i hi) _)
   have hsecond : ComputableInPolyTime (fun p : π × β => p.2) (encPair encP encB) encB :=
     ComputableInPolyTime.snd encP encB
-  simpa only [foldlCapture] using ComputableInPolyTime.comp hsecond hfold
+  simpa only [Function.comp_def, foldlCapture] using ComputableInPolyTime.comp hsecond hfold
 
 /-- A computed captured parameter and a unary loop count give a uniform loop when every
 reachable iterate has polynomially bounded encoded size. -/
