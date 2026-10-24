@@ -151,7 +151,6 @@ theorem merkleDamgardChain_append (h : List Bool → List Bool → List Bool)
       merkleDamgardChain h k (merkleDamgardChain h k iv bs₁) bs₂ :=
   List.foldl_append
 
-@[simp]
 theorem merkleDamgardChain_concat (h : List Bool → List Bool → List Bool)
     (k iv : List Bool) (blocks : List (List Bool)) (b : List Bool) :
     merkleDamgardChain h k iv (blocks ++ [b]) =
