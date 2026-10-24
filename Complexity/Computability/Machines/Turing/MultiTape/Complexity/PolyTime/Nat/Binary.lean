@@ -14,6 +14,8 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 public import Complexity.Foundations.Data.Nat.Bits
+import Complexity.Foundations.Data.BitString.List.Binary
+import Complexity.Tactic.PolyTime.Init
 import Mathlib.Data.List.GetD
 import Mathlib.Data.Nat.Bitwise
 
@@ -64,6 +66,12 @@ multiplication.
   composition rules for `fun_prop`.
 * `Turing.MultiTapeTM.ComputableInPolyTime.binary_mul'`, `.binary_sub'`, `.binary_pow'`:
   composition rules for `fun_prop`.
+* `Turing.MultiTapeTM.ComputableInPolyTime.binary_bitwise`, `.binary_and`, `.binary_or`,
+  `.binary_xor`, `.binary_and'`, `.binary_or'`, `.binary_xor'`: bitwise operations on binary
+  naturals, and their composition rules.
+* `Turing.MultiTapeTM.ComputableInPolyTime.binary_size`, `.binary_min_unary`,
+  `.binary_min_unary'`, `.binary_shiftRight`, `.binary_shiftRight'`: bit-length in unary, capping
+  a binary natural by a unary bound, and binary right shift.
 * `Turing.MultiTapeTM.ComputableInPolyTime.binary_testBit`: a bit of a binary number at a
   unary position.
 -/
@@ -219,6 +227,49 @@ lemma sub_eq (p : ℕ × ℕ) : p.1 - p.2 =
   cases h : ((digitPairs p).foldl subStep (false, [])).1 <;>
     simp only [h, Bool.toNat_true, Bool.toNat_false, Bool.false_eq_true, ↓reduceIte] at hval ⊢ <;>
     lia
+
+private lemma foldl_append_singleton {α β : Type} (f : α → β) (l : List α) (out : List β) :
+    l.foldl (fun acc a => acc ++ [f a]) out = out ++ l.map f := by
+  induction l generalizing out with
+  | nil => simp
+  | cons a l ih => simp [ih]
+
+/-- Any zero-preserving bitwise operation on `ℕ` is read off by folding `op` over `digitPairs`. -/
+private lemma bitwise_eq (op : Bool → Bool → Bool) (h0 : op false false = false) (p : ℕ × ℕ) :
+    Nat.bitwise op p.1 p.2 =
+      ofBits ((digitPairs p).foldl (fun acc d => acc ++ [op d.1 d.2]) []) := by
+  rw [foldl_append_singleton, List.nil_append, ofBits]
+  have hmap : (digitPairs p).map (fun d => op d.1 d.2) =
+      (List.range (p.1.bits.length + p.2.bits.length)).map
+        (Nat.bitwise op p.1 p.2).testBit := by
+    simp only [digitPairs, List.map_map, Function.comp_def, bits_getD, ← Nat.testBit_bitwise h0]
+  rw [hmap, Nat.foldr_bit_testBit]
+  rw [Nat.size_eq_bits_len, Nat.size_eq_bits_len]
+  refine Nat.size_le.2 (Nat.bitwise_lt_two_pow ?_ ?_)
+  · exact (Nat.lt_size_self p.1).trans_le (Nat.pow_le_pow_right (by lia) (by lia))
+  · exact (Nat.lt_size_self p.2).trans_le (Nat.pow_le_pow_right (by lia) (by lia))
+
+private lemma ofBits_tail (w : List Bool) : ofBits w.tail = ofBits w / 2 := by
+  cases w with
+  | nil => simp [ofBits]
+  | cons b w =>
+    simp only [List.tail_cons, ofBits, List.foldr_cons, Nat.bit_val]
+    cases b <;> simp only [Bool.toNat_false, Bool.toNat_true] <;> lia
+
+private lemma ofBits_drop (w : List Bool) (k : ℕ) : ofBits (w.drop k) = ofBits w / 2 ^ k := by
+  induction k generalizing w with
+  | zero => simp
+  | succ k ih =>
+    rw [← List.drop_tail, ih, ofBits_tail, Nat.div_div_eq_div_mul, Nat.pow_succ']
+
+/-- Right shift drops at most the dividend's bit length of least-significant digits. -/
+private lemma shiftRight_eq_ofBits_drop (p : ℕ × ℕ) :
+    p.1 >>> p.2 = ofBits (p.1.bits.drop (min p.1.bits.length p.2)) := by
+  have hdrop : p.1.bits.drop (min p.1.bits.length p.2) = p.1.bits.drop p.2 := by
+    rcases le_total p.1.bits.length p.2 with h | h
+    · rw [Nat.min_eq_left h, List.drop_eq_nil_of_le le_rfl, List.drop_eq_nil_of_le h]
+    · rw [Nat.min_eq_right h]
+  rw [hdrop, ofBits_drop, ofBits, Nat.foldr_bit_bits, Nat.shiftRight_eq_div_pow]
 
 end Turing.MultiTapeTM.BinarySub
 
@@ -427,4 +478,130 @@ theorem binary_testBit {α : Type} {input : α ↪ List Bool} {n i : α → ℕ}
   simp only [Function.comp_apply, Nat.testBit_eq_inth, ← List.getD_default_eq_getI]
   rfl
 
+/-- Any zero-preserving bitwise operation on binary naturals is polynomial-time. -/
+@[program_certificate]
+theorem binary_bitwise (op : Bool → Bool → Bool) (h0 : op false false = false) :
+    ComputableInPolyTime (fun p : ℕ × ℕ => Nat.bitwise op p.1 p.2)
+      (encPair encNat encNat) encNat := by
+  have hpairs : ComputableInPolyTime BinarySub.digitPairs (encPair encNat encNat)
+      (encList (encPair encBool encBool)) := by
+    unfold BinarySub.digitPairs
+    fun_prop
+  have hop : ComputableInPolyTime (fun d : Bool × Bool => op d.1 d.2)
+      (encPair encBool encBool) encBool := of_finite _
+  have hstep : ComputableInPolyTime
+      (fun p : List Bool × (Bool × Bool) => p.1 ++ [op p.2.1 p.2.2])
+      (encPair encBits (encPair encBool encBool)) encBits :=
+    bitsAppend (fst _ _) (bitsCons (hop.comp (snd _ _)) (const []))
+  have hfold := foldl_of_bounded_growth (encA := encPair encBool encBool)
+    (encL := encList (encPair encBool encBool)) (encB := encBits)
+    (step := fun acc d => acc ++ [op d.1 d.2])
+    (init := fun _ => []) hpairs (const []) hstep (growth := 1) (fun _ _ => by simp)
+  convert bitsToNat.comp hfold using 1
+  funext p
+  exact BinarySub.bitwise_eq op h0 p
+
+/-- The smaller of a unary natural and a binary natural, returned in unary by saturating binary
+decoding. -/
+@[fun_prop, program_certificate]
+theorem binary_min_unary : ComputableInPolyTime (fun p : ℕ × ℕ => min p.1 p.2)
+    (encPair encUnary encNat) encUnary := by
+  have h := foldlWith (encA := encBool) (encL := encBits) (encP := encUnary)
+    (par := Prod.fst) (list := fun p : ℕ × ℕ => p.2.bits.reverse)
+    (step := fun cap value bit => min cap (2 * value + bit.toNat))
+    (fst encUnary encNat) (bitsReverse.comp (natBits.comp (snd encUnary encNat)))
+    (const 0) (by fun_prop) (B := Prod.fst)
+    (by simpa only [encUnary_apply, List.length_replicate] using
+      (fst encUnary encNat).polyBounded_length)
+    (fun p i _ => by
+      simpa only [encUnary_apply, List.length_replicate, Cslib.BitString.boundedBinaryValue] using
+        Cslib.BitString.boundedBinaryValue_le p.1 (p.2.bits.reverse.take i))
+  convert h using 1
+  funext p
+  rw [← Cslib.BitString.boundedBinaryValue, Cslib.BitString.boundedBinaryValue_eq,
+    Cslib.BitString.binaryValue_reverse_bits]
+
+/-- Cap a computed binary natural by a computed unary bound, returning the result in unary. -/
+@[fun_prop, program_certificate]
+theorem binary_min_unary' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encUnary)
+    (hright : ComputableInPolyTime right input encNat) :
+    ComputableInPolyTime (fun a => min (left a) (right a)) input encUnary :=
+  binary_min_unary.comp (hleft.prod hright)
+
+/-- Right shift of binary naturals, by dropping at most the dividend's bit length of low-order
+digits. -/
+@[fun_prop, program_certificate]
+theorem binary_shiftRight : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 >>> p.2)
+    (encPair encNat encNat) encNat := by
+  have hbits := natBits.comp (fst encNat encNat)
+  have hlen : ComputableInPolyTime (fun p : ℕ × ℕ => p.1.bits.length)
+      (encPair encNat encNat) encUnary := (length encBool).comp hbits
+  have hdrop := bitsDropWithInput hbits (binary_min_unary' hlen (snd encNat encNat))
+  convert bitsToNat.comp hdrop using 1
+  funext p
+  exact BinarySub.shiftRight_eq_ofBits_drop p
+
+/-- Bitwise AND of binary naturals. -/
+@[fun_prop, program_certificate]
+theorem binary_and : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 &&& p.2)
+    (encPair encNat encNat) encNat :=
+  (ComputableInPolyTime.binary_bitwise and rfl).of_enc_eq fun p =>
+    congrArg encNat <| Nat.eq_of_testBit_eq fun i => by
+      rw [Nat.testBit_bitwise rfl, Nat.testBit_and]
+
+/-- Bitwise OR of binary naturals. -/
+@[fun_prop, program_certificate]
+theorem binary_or : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ||| p.2)
+    (encPair encNat encNat) encNat :=
+  (ComputableInPolyTime.binary_bitwise or rfl).of_enc_eq fun p =>
+    congrArg encNat <| Nat.eq_of_testBit_eq fun i => by
+      rw [Nat.testBit_bitwise rfl, Nat.testBit_or]
+
+/-- Bitwise XOR of binary naturals. -/
+@[fun_prop, program_certificate]
+theorem binary_xor : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 ^^^ p.2)
+    (encPair encNat encNat) encNat :=
+  (ComputableInPolyTime.binary_bitwise xor rfl).of_enc_eq fun p =>
+    congrArg encNat <| Nat.eq_of_testBit_eq fun i => by
+      rw [Nat.testBit_bitwise rfl, Nat.testBit_xor]
+
+/-- Bitwise AND of computed binary naturals. -/
+@[fun_prop, program_certificate]
+theorem binary_and' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encNat)
+    (hright : ComputableInPolyTime right input encNat) :
+    ComputableInPolyTime (fun a => left a &&& right a) input encNat :=
+  binary_and.comp (hleft.prod hright)
+
+/-- Bitwise OR of computed binary naturals. -/
+@[fun_prop, program_certificate]
+theorem binary_or' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encNat)
+    (hright : ComputableInPolyTime right input encNat) :
+    ComputableInPolyTime (fun a => left a ||| right a) input encNat :=
+  binary_or.comp (hleft.prod hright)
+
+/-- Bitwise XOR of computed binary naturals. -/
+@[fun_prop, program_certificate]
+theorem binary_xor' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encNat)
+    (hright : ComputableInPolyTime right input encNat) :
+    ComputableInPolyTime (fun a => left a ^^^ right a) input encNat :=
+  binary_xor.comp (hleft.prod hright)
+
+/-- The bit-length `Nat.size n` of a binary natural, returned in unary. -/
+@[fun_prop, program_certificate]
+theorem binary_size : ComputableInPolyTime Nat.size encNat encUnary :=
+  ((ComputableInPolyTime.length encBool).comp
+      ComputableInPolyTime.natBits).of_enc_eq fun n =>
+      congrArg encUnary (Nat.size_eq_bits_len n).symm
+
+/-- Right shift of computed binary naturals. -/
+@[fun_prop, program_certificate]
+theorem binary_shiftRight' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encNat)
+    (hright : ComputableInPolyTime right input encNat) :
+    ComputableInPolyTime (fun a => left a >>> right a) input encNat :=
+  binary_shiftRight.comp (hleft.prod hright)
 end Turing.MultiTapeTM.ComputableInPolyTime

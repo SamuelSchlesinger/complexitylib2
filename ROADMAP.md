@@ -1446,8 +1446,10 @@ space bounds. Further class-level work needs resource certificates for the actua
   native TM time/space bounds; it is equivalent to native computability when bounds are unrestricted.
   Polynomial bounds yield native polynomial time. A
   [bounded-natural addition model](Complexity/Computability/GenericRAM/Native/Nat.lean) supplies every
-  scalar certificate, and [checked word addition](Complexity/Computability/WordRAM/Native.lean)
-  handles all unary-encoded widths with binary operands. The native tidy calculus has
+  scalar certificate, and [WordRAM native primitives](Complexity/Computability/WordRAM/Native.lean)
+  supply complete polynomial-time `NativePrimitives` bundles for `Basis.standard`, `Basis.additive`,
+  `Basis.arithmetic`, and `Basis.exact` (plus restricted sub-bases and homomorphic preimages) across
+  all unary-encoded widths with binary operands (#489). The native tidy calculus has
   [fixed finite tuple rules](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Pi.lean)
   with linear access/gather/update and arbitrary summed construction bounds,
   [retained-input option elimination](Complexity/Computability/Machines/Turing/MultiTape/Complexity/BigO/Option.lean)
