@@ -1215,11 +1215,24 @@ Jukna coverage below is an additional target beyond the V1 port:
   certificates for the identification simulator and extractor; SIS for a general (prime) modulus;
   module SIS and module LWE over polynomial rings, and Dilithium-style signatures as theory, not a
   parameter set or ciphersuite.
-* **Zero-knowledge proof systems toward libzk (#643, #640).** A public-coin interactive-reduction
-  core with sequential composition and round-by-round soundness, and sumcheck as its first client,
-  are in review (#701, #703). Open, in order:
-  - oracle statements, so a later phase can query an earlier phase's oracle (ArkLib-style virtual
-    output oracles), together with knowledge soundness and zero knowledge in oracle worlds;
+* **Zero-knowledge proof systems toward libzk (#643, #640).** The
+  [interactive-reduction core](Complexity/Computability/Interactive/Basic.lean) has typed
+  public-coin protocols with oracle access to the prover's messages, worlds for the oracle model,
+  and named extractors and simulators. It defines completeness, soundness, straight-line knowledge
+  soundness, round-by-round soundness and HVZK; knowledge soundness and HVZK are stated in the
+  plain model. In the plain model,
+  [sequential composition](Complexity/Computability/Interactive/Sequential.lean) is proved for
+  completeness, soundness, knowledge soundness and round-by-round soundness, and so is per-stage
+  iteration. [Round-by-round soundness implies soundness](Complexity/Computability/Interactive/Plain.lean).
+  Sumcheck, the first client, is in review (#703). Open, in order:
+  - the `PublicCoin → IP` bridge, with a uniform word verifier and adversarial decoding;
+  - parallel and AND/OR composition, and round-by-round knowledge soundness;
+  - oracle statements. Today a later phase cannot query an earlier phase's oracle message,
+    because `Verifier.append` routes the second verifier's queries only to its own messages.
+    Sumcheck followed by an evaluation query on a committed polynomial needs this, and so do FRI
+    and Ligero. The design item is virtual output oracles, as in ArkLib's
+    `OracleOutputSimulation`. Knowledge soundness and zero knowledge in oracle worlds go with it:
+    extractors that see the prover's queries, and simulators that program the world;
   - efficiency-certified simulators and extractors, and auxiliary-input zero knowledge (#704)
     on the core;
   - polynomial commitment and evaluation-query reductions, and the Ligero IOP;
@@ -1228,6 +1241,8 @@ Jukna coverage below is an additional target beyond the V1 port:
   - VOLE as an ideal functionality and VOLE-in-the-head;
   - the compositional structure of libzk (Shelat's IETF draft) as a composition of these
     components, stated as theory without concrete ciphersuites.
+
+  The design is on #643, and the TQBF, PCP and GMW bridges are recorded there.
 * **Classic symmetric constructions (#640, track D).** Proved: PRF-based MACs (#677), keyed
   collision-resistant hash families and Merkle–Damgård (#678), and universal hashing (#663).
   Open: Luby–Rackoff (three Feistel rounds over a PRF give a PRP, four give a strong PRP), strongly
