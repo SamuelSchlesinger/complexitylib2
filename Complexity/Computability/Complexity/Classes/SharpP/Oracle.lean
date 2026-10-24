@@ -135,7 +135,7 @@ theorem add_mem {f₁ f₂ : α → ℕ} (h₁ : f₁ ∈ SharpPWithOracle A enc
   obtain ⟨p₂, V₂, hV₂, hf₂⟩ := h₂
   have hfalse : ComputableInPolyTimeWithOracle A (allFalseVerifier (α := α))
       (encPair enc encBits) encBool :=
-    computableInPolyTime_allFalseVerifier.tidy.computableInPolyTimeWithOracle A
+    computableInPolyTime_allFalseVerifier.computableInPolyTimeWithOracle A
   refine ⟨p₁ + p₂ + 1, selectVerifier
       (andVerifier (fun a => p₁.eval (enc a).length) V₁ allFalseVerifier)
       (andVerifier (fun a => p₂.eval (enc a).length) V₂ allFalseVerifier),

@@ -80,14 +80,14 @@ example : ∃ t, ComputableInBigO (fun I : Instance => List.ofFn I.tree.eval) en
   computableInSpace_eval
 
 open Turing MultiTapeTM Reader in
-/-- Instantiating `computableTidilyInSpace_eval` on `sample` (`spaceBound 2 2 + 7 = 22`) yields a
-finite-state multi-tape machine that tidily computes `[false, true]` from
+/-- Instantiating `computableInSpace_eval` on `sample` (`spaceBound 2 2 + 7 = 22`) yields a
+finite-state multi-tape machine that computes `[false, true]` from
 `encInstance ⟨2, 2, sample⟩` within `c * 23` space cells. -/
 example : ∃ (t c k : ℕ) (State : Type) (_ : Finite State) (tm : MultiTapeTM k Bool State),
-    tm.ComputesTidilyInTimeAndSpace (encInstance ⟨2, 2, sample⟩) [false, true]
+    tm.ComputesInTimeAndSpace (encInstance ⟨2, 2, sample⟩) [false, true]
       (c * (t + 1)) (c * 23) := by
-  obtain ⟨t, c, k, State, hfinite, tm, htm⟩ := computableTidilyInSpace_eval
-  have h : tm.ComputesTidilyInTimeAndSpace (encInstance ⟨2, 2, sample⟩)
+  obtain ⟨t, c, k, State, hfinite, tm, htm⟩ := computableInSpace_eval
+  have h : tm.ComputesInTimeAndSpace (encInstance ⟨2, 2, sample⟩)
       (List.ofFn sample.eval) (c * (t ⟨2, 2, sample⟩ + 1))
       (c * (spaceBound 2 2 + (encNat ((encInstance ⟨2, 2, sample⟩).length + 1)).length + 1)) :=
     htm ⟨2, 2, sample⟩
@@ -137,14 +137,14 @@ example : ∃ t, ComputableInBigO
   computableInSpace_eval_log_mul_log_log
 
 open Turing MultiTapeTM in
-/-- Instantiating `computableTidilyInSpace_eval_log_mul_log_log` on `sampleNontrivial`
-(`7 * 3 = 21`) yields a finite-state multi-tape machine that tidily computes `[false, true]` from
+/-- Instantiating `computableInSpace_eval_log_mul_log_log` on `sampleNontrivial`
+(`7 * 3 = 21`) yields a finite-state multi-tape machine that computes `[false, true]` from
 `encNontrivialInstance sampleNontrivial` within `c * 22` space cells. -/
 example : ∃ (t c k : ℕ) (State : Type) (_ : Finite State) (tm : MultiTapeTM k Bool State),
-    tm.ComputesTidilyInTimeAndSpace (encNontrivialInstance sampleNontrivial) [false, true]
+    tm.ComputesInTimeAndSpace (encNontrivialInstance sampleNontrivial) [false, true]
       (c * (t + 1)) (c * 22) := by
-  obtain ⟨t, c, k, State, hfinite, tm, htm⟩ := computableTidilyInSpace_eval_log_mul_log_log
-  have h : tm.ComputesTidilyInTimeAndSpace (encNontrivialInstance sampleNontrivial)
+  obtain ⟨t, c, k, State, hfinite, tm, htm⟩ := computableInSpace_eval_log_mul_log_log
+  have h : tm.ComputesInTimeAndSpace (encNontrivialInstance sampleNontrivial)
       (List.ofFn sampleNontrivial.1.tree.eval) (c * (t sampleNontrivial + 1))
       (c * ((encNat (encNontrivialInstance sampleNontrivial).length).length *
         (encNat (encNat (encNontrivialInstance sampleNontrivial).length).length).length + 1)) :=
