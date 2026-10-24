@@ -58,11 +58,11 @@ example : outputStep 0 (some false) = 2 := by decide
 example (b : Bool) : outputStep 1 (some b) = 2 := by cases b <;> decide
 example (b : Option Bool) : outputStep 2 b = 2 := by rcases b with _ | _ | _ <;> decide
 
-example (D : ℕ) : ComputableTidilyInSpace
+example (D : ℕ) : ComputableInSpace
     (fun a : ℕ × ℕ => queryIndex (k := 0) D a.1 a.2)
     encVertex encNat (fun a => (encVertex a).length) := queryIndex_inSpace D
 
-example (D : ℕ) : ComputableTidilyInSpace
+example (D : ℕ) : ComputableInSpace
     (fun a : ℕ × ℕ × ℕ × Option Bool =>
       edgeWithSymbol acceptMachine D a.1 a.2.1 a.2.2.1 a.2.2.2)
     encEdge encBool (fun a => (encEdge a).length) := edgeWithSymbol_inSpace acceptMachine D
